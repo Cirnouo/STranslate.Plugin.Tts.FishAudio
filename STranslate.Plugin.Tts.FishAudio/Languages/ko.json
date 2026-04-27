@@ -1,0 +1,4 @@
+{
+  "Name": "Fish Audio TTS",
+  "Description": "Fish Audio API 기반 음성 합성 플러그인. 모델 검색 및 선택, S2-Pro/S1 엔진, 운율 제어, 다양한 생성 매개변수 지원"
+}

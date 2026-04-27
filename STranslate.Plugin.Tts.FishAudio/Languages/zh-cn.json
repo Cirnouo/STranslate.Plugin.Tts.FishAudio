@@ -1,0 +1,4 @@
+{
+  "Name": "Fish Audio TTS",
+  "Description": "基于 Fish Audio API 的语音合成插件，支持模型搜索与选择、S2-Pro/S1 引擎、韵律控制和丰富的生成参数"
+}

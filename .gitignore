@@ -1,0 +1,23 @@
+.vs/
+bin/
+obj/
+*.user
+.idea/
+.dist/
+
+packages/
+
+.DS_Store
+
+
+publish/
+
+# rust
+target/
+
+.artifacts/
+*.spkg
+
+CLAUDE.md
+.sisyphus
+.scratch/
