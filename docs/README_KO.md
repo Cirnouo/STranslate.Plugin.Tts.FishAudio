@@ -57,6 +57,9 @@
 > [!NOTE]
 > API 잔액 구매/충전: [콘솔 > 개발자 > 청구 > 잔액 > 크레딧 구매](https://fish.audio/app/developers/billing/). 잔액 차감이 지연될 수 있습니다. 재생 직후 잔액을 새로고침하면 이전 값이 일시적으로 표시될 수 있습니다.
 
+> [!TIP]
+> `.edu` 이메일로 가입하고 학생 인증을 완료하면 미화 5달러 무료 크레딧을 받을 수 있습니다. 입구: [Fish Audio Students](https://fish.audio/students/).
+
 ## 설정
 
 <details>

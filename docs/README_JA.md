@@ -57,6 +57,9 @@
 > [!NOTE]
 > API 残高の購入・チャージ：[コンソール > 開発者 > 請求 > 残高 > クレジット購入](https://fish.audio/app/developers/billing/)。残高の差し引きに遅延が生じる場合があります。再生直後に残高を更新すると古い値が表示されることがあります。
 
+> [!TIP]
+> `.edu` メールアドレスで登録して学生認証を完了すると、5 米ドル分の無料クレジットを受け取れます。入口：[Fish Audio Students](https://fish.audio/students/)。
+
 ## 設定
 
 <details>

@@ -57,6 +57,9 @@
 > [!NOTE]
 > API 餘額購買/儲值入口：[控制台 > 開發者 > 帳單 > 餘額 > 購買積分](https://fish.audio/app/developers/billing/)。餘額扣除可能存在延遲，播放完成後立即重新整理餘額可能短暫顯示舊值。
 
+> [!TIP]
+> 使用 `.edu` 信箱註冊並完成學生認證，可免費獲得 5 美元額度，入口：[Fish Audio Students](https://fish.audio/students/)。
+
 ## 設定說明
 
 <details>

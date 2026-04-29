@@ -57,6 +57,9 @@
 > [!NOTE]
 > To purchase/top-up API credits: [Console > Developer > Billing > Balance > Purchase Credits](https://fish.audio/app/developers/billing/). Credit deduction may be delayed — refreshing immediately after playback may briefly show stale values.
 
+> [!TIP]
+> Sign up with a `.edu` email and complete student verification to receive US$5 in free credits: [Fish Audio Students](https://fish.audio/students/).
+
 ## Configuration
 
 <details>

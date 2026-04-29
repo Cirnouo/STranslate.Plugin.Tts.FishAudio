@@ -57,6 +57,9 @@
 > [!NOTE]
 > API 余额购买/充值入口：[控制台 > 开发者 > 账单 > 余额 > 购买积分](https://fish.audio/app/developers/billing/)。余额扣除可能存在延迟，播放完成后立即刷新余额可能短暂显示旧值。
 
+> [!TIP]
+> 使用 `.edu` 邮箱注册并完成学生认证，可免费获得 5 美元额度，入口：[Fish Audio Students](https://fish.audio/students/)。
+
 ## 配置说明
 
 <details>
