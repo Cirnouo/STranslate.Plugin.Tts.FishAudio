@@ -23,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - ApplyCachedModel 判断条件从 Id 改为 Title
 - CachedModelId 取自 ReferenceId 而非 CachedModelInfo.Id
 - 清除按钮和使用次数可见性绑定从 CachedModelTitle 改为 CachedModelId
-- MP3 比特率从 192 kbps 改为 128 kbps
 - 搜索结果卡片按钮增加 MinHeight/Padding 统一样式
 - 刷新按钮与延迟文本布局调整（按钮在前，延迟在后）
 - 截图更新为最新 UI

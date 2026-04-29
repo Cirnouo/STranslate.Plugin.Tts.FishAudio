@@ -15,7 +15,7 @@ internal static class FishAudioApi
         {
             ["text"] = text,
             ["format"] = "mp3",
-            ["mp3_bitrate"] = 128,
+            ["mp3_bitrate"] = 192,
             ["temperature"] = settings.Temperature,
             ["top_p"] = settings.TopP,
             ["normalize"] = settings.Normalize,
