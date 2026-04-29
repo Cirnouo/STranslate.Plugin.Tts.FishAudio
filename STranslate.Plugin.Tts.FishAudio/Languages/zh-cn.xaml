@@ -54,6 +54,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">核采样多样性控制</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">延迟模式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">延迟与质量的权衡</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">质量优先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">平衡</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">低延迟优先</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">文本规范化</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">自动将数字转换为文字等</sys:String>
 
@@ -65,5 +68,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">请先设置 API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文本为空</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">未找到该模型</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">随机模型</sys:String>
 
 </ResourceDictionary>

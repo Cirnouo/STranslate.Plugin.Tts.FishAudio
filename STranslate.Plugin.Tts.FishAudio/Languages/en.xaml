@@ -47,6 +47,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">Nucleus sampling diversity control</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">Latency Mode</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">Trade-off between latency and quality</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">Quality First</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">Balanced</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">Low Latency</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">Text Normalization</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Auto-convert numbers to words, etc.</sys:String>
 
@@ -56,5 +59,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">Please set API Key first</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Text is empty</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">Model not found</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">Random Model</sys:String>
 
 </ResourceDictionary>

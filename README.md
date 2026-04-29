@@ -54,6 +54,9 @@
 - Fish Audio API Key（[获取地址](https://fish.audio/app/api-keys)）
 - Fish Audio 账户余额 > 0
 
+> [!NOTE]
+> API 余额购买/充值入口：[控制台 > 开发者 > 账单 > 余额 > 购买积分](https://fish.audio/app/developers/billing/)。余额扣除可能存在延迟，播放完成后立即刷新余额可能短暂显示旧值。
+
 ## 配置说明
 
 <details>
@@ -62,7 +65,7 @@
 | 参数 | 默认值 | 说明 |
 | :-- | :--: | :-- |
 | API Key | — | Fish Audio API 密钥（必填） |
-| 模型 ID | — | 语音模型 ID，可通过搜索选择或手动输入 |
+| 模型 ID | —（随机模型） | 语音模型 ID，可通过搜索选择或手动输入。为空时使用随机模型（系统默认音色） |
 | 合成引擎 | `s2-pro` | `s2-pro`（推荐）或 `s1` |
 | 语速 | `1.0` | 0.5 ~ 2.0 |
 | 音量 | `0 dB` | -10 ~ +10 dB，0.1 dB 精度 |
@@ -81,29 +84,29 @@
 
 #### 账户与 API
 
-<img src="docs/images/account_and_api.png" alt="账户与 API" width="450" />
+<img src="docs/images/account_and_api.png" alt="账户与 API" width="360" />
 
 #### 模型选择与搜索
 
 <div> 
-    <img src="docs/images/model_selection.png" alt="模型选择" width="450" />
+    <img src="docs/images/model_selection.png" alt="模型选择" width="360" />
 </div>
 
 <div>
-    <img src="docs/images/model_search.png" alt="模型搜索" width="450" />
+    <img src="docs/images/model_search.png" alt="模型搜索" width="360" />
 </div>
 
 ### 语音合成引擎
 
-<img src="docs/images/engine.png" alt="语音合成引擎" width="450" />
+<img src="docs/images/engine.png" alt="语音合成引擎" width="360" />
 
 #### 韵律控制
 
-<img src="docs/images/prosody.png" alt="韵律控制" width="450" />
+<img src="docs/images/prosody.png" alt="韵律控制" width="360" />
 
 #### 生成参数
 
-<img src="docs/images/generation.png" alt="生成参数" width="450" />
+<img src="docs/images/generation.png" alt="生成参数" width="360" />
 
 </details>
 

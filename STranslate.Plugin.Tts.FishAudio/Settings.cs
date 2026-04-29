@@ -17,11 +17,9 @@ public class Settings
 
 public class CachedModelInfo
 {
-    public string Id { get; set; } = "";
     public string Title { get; set; } = "";
     public string CoverImage { get; set; } = "";
     public string AuthorName { get; set; } = "";
-    public string AuthorAvatar { get; set; } = "";
+    public int TaskCount { get; set; }
     public string? SampleAudioUrl { get; set; }
-    public string? SampleText { get; set; }
 }

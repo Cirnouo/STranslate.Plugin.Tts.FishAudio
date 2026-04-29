@@ -69,6 +69,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string? CachedModelSampleUrl { get; set; }
 
+    [ObservableProperty]
+    public partial int CachedModelTaskCount { get; set; }
+
     // ── 韵律 ──
 
     [ObservableProperty]
@@ -159,16 +162,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         if (pendingCreditTask is not null)
             _ = ApplyPendingCreditAsync(pendingCreditTask);
     }
-
-    // ── 延迟模式显示名映射 ──
-
-    public static string GetLatencyDisplayName(string value) => value switch
-    {
-        "normal" => "质量优先",
-        "balanced" => "平衡",
-        "low" => "低延迟优先",
-        _ => value,
-    };
 
     // ── 账户命令 ──
 
@@ -296,9 +289,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 CoverUrl = FishAudioApi.BuildCoverUrl(m.CoverImage),
                 TaskCount = m.TaskCount,
                 SampleAudioUrl = m.Samples.FirstOrDefault()?.Audio,
-                SampleText = m.Samples.FirstOrDefault()?.Text,
                 CoverImage = m.CoverImage,
-                AuthorAvatar = m.Author?.Avatar ?? "",
             }).ToList();
         }
         catch (Exception ex)
@@ -342,13 +333,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
         var cached = new CachedModelInfo
         {
-            Id = item.Id,
             Title = item.Title,
             CoverImage = item.CoverImage,
             AuthorName = item.AuthorName,
-            AuthorAvatar = item.AuthorAvatar,
+            TaskCount = item.TaskCount,
             SampleAudioUrl = item.SampleAudioUrl,
-            SampleText = item.SampleText,
         };
         _settings.CachedModel = cached;
         _context.SaveSettingStorage<Settings>();
@@ -392,21 +381,23 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void ApplyCachedModel(CachedModelInfo? cached)
     {
-        if (cached is null || string.IsNullOrEmpty(cached.Id))
+        if (cached is null || string.IsNullOrEmpty(cached.Title))
         {
             CachedModelId = null;
-            CachedModelTitle = null;
+            CachedModelTitle = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_RandomModel");
             CachedModelCoverUrl = null;
             CachedModelAuthor = null;
             CachedModelSampleUrl = null;
+            CachedModelTaskCount = 0;
             return;
         }
 
-        CachedModelId = cached.Id;
+        CachedModelId = ReferenceId;
         CachedModelTitle = cached.Title;
         CachedModelCoverUrl = FishAudioApi.BuildCoverUrl(cached.CoverImage, 128);
         CachedModelAuthor = cached.AuthorName;
         CachedModelSampleUrl = cached.SampleAudioUrl;
+        CachedModelTaskCount = cached.TaskCount;
     }
 
     // ── 模型 ID 变更 → 自动查询 ──
@@ -444,13 +435,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
             var cached = new CachedModelInfo
             {
-                Id = model.Id,
                 Title = model.Title,
                 CoverImage = model.CoverImage,
                 AuthorName = model.Author?.Nickname ?? "",
-                AuthorAvatar = model.Author?.Avatar ?? "",
+                TaskCount = model.TaskCount,
                 SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
-                SampleText = model.Samples.FirstOrDefault()?.Text,
             };
             _settings.CachedModel = cached;
             _context.SaveSettingStorage<Settings>();
@@ -508,7 +497,5 @@ public class ModelSearchItem
     public string CoverUrl { get; set; } = "";
     public int TaskCount { get; set; }
     public string? SampleAudioUrl { get; set; }
-    public string? SampleText { get; set; }
     public string CoverImage { get; set; } = "";
-    public string AuthorAvatar { get; set; } = "";
 }

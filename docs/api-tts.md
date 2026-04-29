@@ -30,6 +30,8 @@ POST https://api.fish.audio/v1/tts
 |:--|:--|:--:|:--|
 | `reference_id` | string/null | `null` | 语音模型 ID。不传则使用系统默认音色 |
 
+> 实测：请求体完全省略 `reference_id` 时，`model: s2-pro` 仍可成功合成语音。
+
 ### 韵律控制 (`prosody` 对象)
 
 | 字段 | 类型 | 默认值 | 范围 | 说明 |
@@ -92,8 +94,42 @@ POST https://api.fish.audio/v1/tts
 
 - Content-Type: 取决于请求的 `format`（如 `audio/mpeg` for mp3）
 - 直接将响应体写入文件即可播放
+- 响应体不包含音频 URL；TTS 结果不是 CDN/R2 链接
 
 > 这是与 Vocu API 的核心差异：Vocu 返回 JSON 含音频 URL，Fish Audio 直接返回二进制音频流。
+
+### 实测成功响应：省略 `reference_id`
+
+请求条件：
+
+- Header: `model: s2-pro`
+- Body: 省略 `reference_id`
+- Body: `format=mp3`, `mp3_bitrate=128`, `latency=normal`
+- Text: `测试。`
+
+响应：
+
+| 项 | 值 |
+|:--|:--|
+| HTTP 状态 | `200` |
+| `Content-Type` | `audio/mpeg` |
+| `Transfer-Encoding` | `chunked` |
+| `Content-Length` | 无 |
+| 响应体 | MP3 二进制数据 |
+| 实测大小 | `14209` bytes |
+| MP3 起始字节 | `ff fb 90 c4 ...` |
+
+### 余额扣除时机
+
+实测一次省略 `reference_id` 的短文本 TTS 后，余额接口存在延迟更新：
+
+| 查询时机 | `credit` |
+|:--|:--|
+| TTS 前 | `14.761455` |
+| TTS 后约 3 秒 | `14.761455` |
+| TTS 后约 60 秒 | `14.761320` |
+
+结论：省略 `reference_id` 的 TTS 不是免费调用；余额扣除可能异步写入。插件若在播放完成后立即刷新余额，可能短时间内读到扣费前的旧余额。
 
 ## 错误响应
 

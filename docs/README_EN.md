@@ -54,6 +54,9 @@
 - Fish Audio API Key ([get one here](https://fish.audio/app/api-keys))
 - Fish Audio account balance > 0
 
+> [!NOTE]
+> To purchase/top-up API credits: [Console > Developer > Billing > Balance > Purchase Credits](https://fish.audio/app/developers/billing/). Credit deduction may be delayed — refreshing immediately after playback may briefly show stale values.
+
 ## Configuration
 
 <details>
@@ -62,7 +65,7 @@
 | Parameter | Default | Description |
 | :-- | :--: | :-- |
 | API Key | — | Fish Audio API key (required) |
-| Model ID | — | Voice model ID; search to select or enter manually |
+| Model ID | — (Random Model) | Voice model ID; search to select or enter manually. When empty, a random model (system default voice) is used |
 | Engine | `s2-pro` | `s2-pro` (recommended) or `s1` |
 | Speed | `1.0` | 0.5–2.0 |
 | Volume | `0 dB` | -10 to +10 dB, 0.1 dB precision |
@@ -81,29 +84,29 @@
 
 #### Account & API
 
-<img src="images/account_and_api.png" alt="Account & API" width="450" />
+<img src="images/account_and_api.png" alt="Account & API" width="360" />
 
 #### Model Selection & Search
 
 <div>
-    <img src="images/model_selection.png" alt="Model Selection" width="450" />
+    <img src="images/model_selection.png" alt="Model Selection" width="360" />
 </div>
 
 <div>
-    <img src="images/model_search.png" alt="Model Search" width="450" />
+    <img src="images/model_search.png" alt="Model Search" width="360" />
 </div>
 
 ### TTS Engine
 
-<img src="images/engine.png" alt="TTS Engine" width="450" />
+<img src="images/engine.png" alt="TTS Engine" width="360" />
 
 #### Prosody Control
 
-<img src="images/prosody.png" alt="Prosody Control" width="450" />
+<img src="images/prosody.png" alt="Prosody Control" width="360" />
 
 #### Generation Parameters
 
-<img src="images/generation.png" alt="Generation Parameters" width="450" />
+<img src="images/generation.png" alt="Generation Parameters" width="360" />
 
 </details>
 

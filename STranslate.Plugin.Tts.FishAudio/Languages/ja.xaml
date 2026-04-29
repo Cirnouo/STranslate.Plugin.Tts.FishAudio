@@ -47,6 +47,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">核サンプリング多様性制御</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">レイテンシモード</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">レイテンシと品質のトレードオフ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">品質優先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">バランス</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">低レイテンシ</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">テキスト正規化</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">数字からテキストへの自動変換など</sys:String>
 
@@ -56,5 +59,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">API Key を設定してください</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">テキストが空です</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">モデルが見つかりません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">ランダムモデル</sys:String>
 
 </ResourceDictionary>

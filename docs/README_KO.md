@@ -54,6 +54,9 @@
 - Fish Audio API Key ([여기에서 발급](https://fish.audio/app/api-keys))
 - Fish Audio 계정 잔액 > 0
 
+> [!NOTE]
+> API 잔액 구매/충전: [콘솔 > 개발자 > 청구 > 잔액 > 크레딧 구매](https://fish.audio/app/developers/billing/). 잔액 차감이 지연될 수 있습니다. 재생 직후 잔액을 새로고침하면 이전 값이 일시적으로 표시될 수 있습니다.
+
 ## 설정
 
 <details>
@@ -62,7 +65,7 @@
 | 매개변수 | 기본값 | 설명 |
 | :-- | :--: | :-- |
 | API Key | — | Fish Audio API 키 (필수) |
-| 모델 ID | — | 음성 모델 ID, 검색으로 선택하거나 직접 입력 |
+| 모델 ID | — (무작위 모델) | 음성 모델 ID, 검색으로 선택하거나 직접 입력. 비어 있으면 무작위 모델 (시스템 기본 음성) 사용 |
 | 합성 엔진 | `s2-pro` | `s2-pro` (권장) 또는 `s1` |
 | 속도 | `1.0` | 0.5~2.0 |
 | 음량 | `0 dB` | -10~+10 dB, 0.1 dB 정밀도 |
@@ -81,29 +84,29 @@
 
 #### 계정 및 API
 
-<img src="images/account_and_api.png" alt="계정 및 API" width="450" />
+<img src="images/account_and_api.png" alt="계정 및 API" width="360" />
 
 #### 모델 선택 및 검색
 
 <div>
-    <img src="images/model_selection.png" alt="모델 선택" width="450" />
+    <img src="images/model_selection.png" alt="모델 선택" width="360" />
 </div>
 
 <div>
-    <img src="images/model_search.png" alt="모델 검색" width="450" />
+    <img src="images/model_search.png" alt="모델 검색" width="360" />
 </div>
 
 ### 음성 합성 엔진
 
-<img src="images/engine.png" alt="음성 합성 엔진" width="450" />
+<img src="images/engine.png" alt="음성 합성 엔진" width="360" />
 
 #### 운율 제어
 
-<img src="images/prosody.png" alt="운율 제어" width="450" />
+<img src="images/prosody.png" alt="운율 제어" width="360" />
 
 #### 생성 매개변수
 
-<img src="images/generation.png" alt="생성 매개변수" width="450" />
+<img src="images/generation.png" alt="생성 매개변수" width="360" />
 
 </details>
 

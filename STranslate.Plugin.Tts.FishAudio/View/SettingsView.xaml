@@ -45,16 +45,16 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Person_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button
+                    Command="{Binding RefreshCreditCommand}"
+                    Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Refresh}" />
                 <TextBlock
-                    Margin="0,0,8,0"
+                    Margin="8,0,0,0"
                     VerticalAlignment="Center"
                     FontSize="12"
                     Foreground="{Binding LatencyBrush}"
                     Text="{Binding LatencyText}"
                     Visibility="{Binding LatencyText, Converter={StaticResource StringToVisibilityConverter}}" />
-                <Button
-                    Command="{Binding RefreshCreditCommand}"
-                    Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Refresh}" />
             </StackPanel>
         </ui:SettingsCard>
 
@@ -97,16 +97,32 @@
         <!-- 当前选中模型 -->
         <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_CurrentModel}">
             <ui:SettingsCard.Description>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse
-                        Width="40" Height="40"
-                        Margin="0,0,8,0"
-                        Visibility="{Binding CachedModelCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <Button
+                            Margin="0,0,4,0"
+                            Padding="8,4"
+                            Command="{Binding PlaySampleCommand}"
+                            CommandParameter="{Binding CachedModelSampleUrl}"
+                            Content="&#xE768;"
+                            FontFamily="Segoe MDL2 Assets"
+                            ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}"
+                            Visibility="{Binding CachedModelSampleUrl, Converter={StaticResource StringToVisibilityConverter}}" />
+                        <Button
+                            Padding="8,4"
+                            Command="{Binding ClearModelCommand}"
+                            Content="&#xE711;"
+                            FontFamily="Segoe MDL2 Assets"
+                            ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearModel}"
+                            Visibility="{Binding CachedModelId, Converter={StaticResource StringToVisibilityConverter}}" />
+                    </StackPanel>
+                    <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Center"
+                             Visibility="{Binding CachedModelCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
                         <Ellipse.Fill>
                             <ImageBrush ImageSource="{Binding CachedModelCoverUrl}" Stretch="UniformToFill" />
                         </Ellipse.Fill>
                     </Ellipse>
-                    <StackPanel VerticalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
                         <TextBlock
                             Text="{Binding CachedModelTitle, FallbackValue=''}"
                             Visibility="{Binding CachedModelTitle, Converter={StaticResource StringToVisibilityConverter}}"
@@ -117,37 +133,27 @@
                             FontSize="11"
                             FontFamily="Consolas"
                             Visibility="{Binding CachedModelId, Converter={StaticResource StringToVisibilityConverter}}" />
-                        <TextBlock
-                            Text="{Binding CachedModelAuthor}"
-                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                            FontSize="12"
-                            Visibility="{Binding CachedModelAuthor, Converter={StaticResource StringToVisibilityConverter}}" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Text="{Binding CachedModelAuthor}"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                FontSize="12"
+                                Visibility="{Binding CachedModelAuthor, Converter={StaticResource StringToVisibilityConverter}}" />
+                            <TextBlock
+                                Margin="12,0,0,0"
+                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                FontSize="11"
+                                Visibility="{Binding CachedModelId, Converter={StaticResource StringToVisibilityConverter}}">
+                                <Run Text="{Binding CachedModelTaskCount, Converter={StaticResource TaskCountConverter}, Mode=OneWay}" />
+                                <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_UsageCount}" />
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
+                </DockPanel>
             </ui:SettingsCard.Description>
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.PersonVoice_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
-            <StackPanel Orientation="Horizontal">
-                <Button
-                    Margin="0,0,4,0"
-                    Command="{Binding PlaySampleCommand}"
-                    CommandParameter="{Binding CachedModelSampleUrl}"
-                    Content="&#xE768;"
-                    FontFamily="Segoe MDL2 Assets"
-                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}"
-                    Visibility="{Binding CachedModelSampleUrl, Converter={StaticResource StringToVisibilityConverter}}" />
-                <Button
-                    Margin="0,0,4,0"
-                    Command="{Binding ClearModelCommand}"
-                    Content="&#xE711;"
-                    FontFamily="Segoe MDL2 Assets"
-                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearModel}"
-                    Visibility="{Binding CachedModelTitle, Converter={StaticResource StringToVisibilityConverter}}" />
-                <Button
-                    Command="{Binding ToggleSearchPanelCommand}"
-                    Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchModel}" />
-            </StackPanel>
         </ui:SettingsCard>
 
         <!-- Reference ID (手动输入) -->
@@ -155,10 +161,26 @@
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.NumberSymbol_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
-            <TextBox
-                MinWidth="300"
-                ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ReferenceId_Placeholder}"
-                Text="{Binding ReferenceId, UpdateSourceTrigger=PropertyChanged}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    Grid.Column="0"
+                    MinWidth="200"
+                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ReferenceId_Placeholder}"
+                    Text="{Binding ReferenceId, UpdateSourceTrigger=PropertyChanged}" />
+                <Button
+                    Grid.Column="1"
+                    Margin="8,0,0,0"
+                    Padding="8,4"
+                    VerticalAlignment="Stretch"
+                    Command="{Binding ToggleSearchPanelCommand}"
+                    Content="&#xE721;"
+                    FontFamily="Segoe MDL2 Assets"
+                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchModel}" />
+            </Grid>
         </ui:SettingsCard>
 
         <!-- 模型搜索面板 -->
@@ -195,19 +217,23 @@
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                                         <Button
                                             Margin="0,0,4,0"
+                                            MinHeight="28"
+                                            Padding="8,4"
+                                            VerticalContentAlignment="Center"
                                             Command="{Binding DataContext.PlaySampleCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding SampleAudioUrl}"
                                             Content="&#xE768;"
                                             FontFamily="Segoe MDL2 Assets"
                                             FontSize="12"
-                                            Padding="6,4"
                                             ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}"
                                             Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}" />
                                         <Button
+                                            MinHeight="28"
+                                            Padding="8,4"
+                                            VerticalContentAlignment="Center"
                                             Command="{Binding DataContext.SelectModelCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}"
-                                            Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Select}"
-                                            Padding="8,4" />
+                                            Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Select}" />
                                     </StackPanel>
                                     <!-- 封面（左侧） -->
                                     <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Center">

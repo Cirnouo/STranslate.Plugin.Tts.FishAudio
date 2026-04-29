@@ -15,7 +15,7 @@ internal static class FishAudioApi
         {
             ["text"] = text,
             ["format"] = "mp3",
-            ["mp3_bitrate"] = 192,
+            ["mp3_bitrate"] = 128,
             ["temperature"] = settings.Temperature,
             ["top_p"] = settings.TopP,
             ["normalize"] = settings.Normalize,
@@ -110,9 +110,4 @@ internal static class FishAudioApi
         return $"{CdnBase}cdn-cgi/image/width={width},format=auto/{coverImage}";
     }
 
-    public static string BuildAvatarUrl(string avatar, int width = 32)
-    {
-        if (string.IsNullOrEmpty(avatar)) return "";
-        return $"{CdnBase}cdn-cgi/image/width={width},format=auto/{avatar}";
-    }
 }

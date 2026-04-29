@@ -1,4 +1,4 @@
 {
   "Name": "Fish Audio TTS",
-  "Description": "Fish Audio APIを利用した音声合成プラグイン。モデル検索・選択、S2-Pro/S1エンジン、韻律制御、豊富な生成パラメータに対応"
+  "Description": "Fish Audio API を利用した音声合成プラグイン"
 }

@@ -19,5 +19,6 @@ target/
 *.spkg
 
 CLAUDE.md
+AGENTS.md
 .sisyphus
 .scratch/

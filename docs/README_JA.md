@@ -54,6 +54,9 @@
 - Fish Audio API Key（[取得はこちら](https://fish.audio/app/api-keys)）
 - Fish Audio アカウント残高 > 0
 
+> [!NOTE]
+> API 残高の購入・チャージ：[コンソール > 開発者 > 請求 > 残高 > クレジット購入](https://fish.audio/app/developers/billing/)。残高の差し引きに遅延が生じる場合があります。再生直後に残高を更新すると古い値が表示されることがあります。
+
 ## 設定
 
 <details>
@@ -62,7 +65,7 @@
 | パラメータ | デフォルト | 説明 |
 | :-- | :--: | :-- |
 | API Key | — | Fish Audio API キー（必須） |
-| モデル ID | — | 音声モデル ID、検索で選択または手動入力 |
+| モデル ID | —（ランダムモデル） | 音声モデル ID、検索で選択または手動入力。空の場合はランダムモデル（システムデフォルト音声）を使用 |
 | 合成エンジン | `s2-pro` | `s2-pro`（推奨）または `s1` |
 | 速度 | `1.0` | 0.5〜2.0 |
 | 音量 | `0 dB` | -10〜+10 dB、0.1 dB 精度 |
@@ -81,29 +84,29 @@
 
 #### アカウントと API
 
-<img src="images/account_and_api.png" alt="アカウントと API" width="450" />
+<img src="images/account_and_api.png" alt="アカウントと API" width="360" />
 
 #### モデル選択と検索
 
 <div>
-    <img src="images/model_selection.png" alt="モデル選択" width="450" />
+    <img src="images/model_selection.png" alt="モデル選択" width="360" />
 </div>
 
 <div>
-    <img src="images/model_search.png" alt="モデル検索" width="450" />
+    <img src="images/model_search.png" alt="モデル検索" width="360" />
 </div>
 
 ### 音声合成エンジン
 
-<img src="images/engine.png" alt="音声合成エンジン" width="450" />
+<img src="images/engine.png" alt="音声合成エンジン" width="360" />
 
 #### 韻律制御
 
-<img src="images/prosody.png" alt="韻律制御" width="450" />
+<img src="images/prosody.png" alt="韻律制御" width="360" />
 
 #### 生成パラメータ
 
-<img src="images/generation.png" alt="生成パラメータ" width="450" />
+<img src="images/generation.png" alt="生成パラメータ" width="360" />
 
 </details>
 
