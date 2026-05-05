@@ -27,7 +27,13 @@ public class Main : ITtsPlugin
         Context = context;
         Settings = context.LoadSettingStorage<Settings>();
 
-        if (!string.IsNullOrWhiteSpace(Settings.ApiKey))
+        if (Settings.NeedsMigration)
+        {
+            Settings.Migrate();
+            context.SaveSettingStorage<Settings>();
+        }
+
+        if (Settings.IsValidApiKeyFormat(Settings.ApiKey))
             _pendingCreditTask = FishAudioApi.GetCreditAsync(context, Settings.ApiKey, CancellationToken.None);
     }
 

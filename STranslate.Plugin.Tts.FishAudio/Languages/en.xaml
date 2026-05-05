@@ -4,8 +4,8 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Account">Account</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Voice">Voice</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Model">Model</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Engine">TTS Engine</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Prosody">Prosody</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_AudioOutput">Audio Output</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Generation">Generation</sys:String>
@@ -18,31 +18,43 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder">Enter Fish Audio API Key</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentModel">Current Model</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId">Model ID</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId_Placeholder">Enter model ID or search to select</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchModel">Search Models</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentVoice">Selected Voice</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoVoiceSelected">No voice selected</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Search">Search</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">By ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">Search Voices</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">Search</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Search by model name...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Search by voice name...</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">Select</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">Selected</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">Preview</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearModel">Clear</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_UsageCount"> uses</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">Pause</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">Clear</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">Popularity</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount"> results</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">No matching voices</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">Prev</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">Next</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PageOf">/ </sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Label">Voice ID (full ID)</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder">Enter voice ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SetVoice">Set Voice</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomVoice">Random Voice</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model">Engine</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_Description">S2-Pro recommended, 80+ languages with emotion markup</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">Synthesis Model</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">S2-Pro recommended, 80+ languages with emotion markup</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">Speed</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">Volume</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">Volume offset in dB, positive to increase, negative to decrease</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">Normalize Loudness</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2-Pro engine only</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2-Pro model only</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">Output Format</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 Bitrate (kbps)</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature">Expressiveness</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">Higher values produce more varied output</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">Higher values produce more varied output; lower values increase consistency</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP">Diversity</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">Nucleus sampling diversity control</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">Latency Mode</sys:String>
@@ -51,14 +63,23 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">Balanced</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">Low Latency</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">Text Normalization</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Auto-convert numbers to words, etc.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Auto-convert numbers, unit symbols, etc. into readable text</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">Support</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio website</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">Context Conditioning</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Use previous audio as context for voice consistency</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">Paste</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">Confirm</sys:String>
+
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">Please set API Key first</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">Invalid API Key format</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">Incorrect API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Text is empty</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">Model not found</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">Random Model</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">Please enter a Voice ID first</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">Invalid Voice ID format</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">Voice not found</sys:String>
 
 </ResourceDictionary>

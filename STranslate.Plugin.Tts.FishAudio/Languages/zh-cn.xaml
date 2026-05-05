@@ -5,8 +5,8 @@
 
     <!-- 分组标题 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Account">账户</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Voice">声音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Model">模型</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Engine">语音合成引擎</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Prosody">韵律</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_AudioOutput">音频输出</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Generation">生成参数</sys:String>
@@ -20,28 +20,40 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder">输入 Fish Audio API Key</sys:String>
 
-    <!-- 模型 -->
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentModel">当前模型</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId">模型 ID</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId_Placeholder">输入模型 ID 或通过搜索选择</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchModel">搜索模型</sys:String>
+    <!-- 声音 -->
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentVoice">已选声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoVoiceSelected">未选择声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Search">搜索</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">通过 ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">搜索声音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">搜索</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">输入模型名称搜索...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">输入声音名称搜索...</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">选择</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">已选</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">试听</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearModel">清除</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_UsageCount">次使用</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">暂停</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">清除</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">热度</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount">个结果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">没有匹配的声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">上一页</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">下一页</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PageOf">/ </sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Label">声音 ID（完整 ID）</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder">输入声音 ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SetVoice">设为声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomVoice">随机声音</sys:String>
 
-    <!-- 引擎 -->
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model">合成引擎</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_Description">S2-Pro 推荐，支持 80+ 种语言和情绪标记</sys:String>
+    <!-- 模型 (原引擎) -->
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">合成模型</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">推荐 S2-Pro，支持 80+ 种语言和情绪标记</sys:String>
 
     <!-- 韵律 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">语速</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量偏移 (dB)，正值增大、负值减小</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">响度归一化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">仅 S2-Pro 引擎支持</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">仅 S2-Pro 模型支持</sys:String>
 
     <!-- 音频输出 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">输出格式</sys:String>
@@ -49,25 +61,36 @@
 
     <!-- 生成参数 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature">表现力</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">越高越多样化</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">越高越多样化，越低一致性越强</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP">多样性</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">核采样多样性控制</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">延迟模式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">延迟与质量的权衡</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">质量优先</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">平衡</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">低延迟优先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">低延迟</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">文本规范化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">自动将数字转换为文字等</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">自动将数字、单位符号等内容转换为可读的文本</sys:String>
 
     <!-- 其他 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">支持</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 官网</sys:String>
 
+    <!-- 生成参数 (续) -->
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">上下文关联</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">使用前序音频作为上下文以保持声音一致性</sys:String>
+
+    <!-- 操作 -->
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">粘贴</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">确认</sys:String>
+
     <!-- 运行时消息 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">请先设置 API Key</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key 格式不正确</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key 不正确</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文本为空</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">未找到该模型</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">随机模型</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">请先输入声音 ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">声音 ID 格式不正确</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">未找到该声音</sys:String>
 
 </ResourceDictionary>

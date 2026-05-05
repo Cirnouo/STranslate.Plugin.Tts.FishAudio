@@ -4,8 +4,8 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Account">アカウント</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Voice">ボイス</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Model">モデル</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Engine">音声合成エンジン</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Prosody">韻律</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_AudioOutput">音声出力</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Generation">生成パラメータ</sys:String>
@@ -18,31 +18,43 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder">Fish Audio API Key を入力</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentModel">現在のモデル</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId">モデル ID</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ReferenceId_Placeholder">モデル ID を入力または検索して選択</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchModel">モデル検索</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentVoice">選択中のボイス</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoVoiceSelected">ボイス未選択</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Search">検索</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">ID で指定</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">ボイス検索</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">検索</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">モデル名で検索...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">ボイス名で検索...</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">選択</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">選択済</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">試聴</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearModel">クリア</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_UsageCount">回使用</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">一時停止</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">クリア</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">人気度</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount">件の結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">一致するボイスがありません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">前へ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">次へ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PageOf">/ </sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Label">ボイス ID（完全な ID）</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder">ボイス ID を入力</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SetVoice">ボイスに設定</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomVoice">ランダムボイス</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model">合成エンジン</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_Description">S2-Pro 推奨、80+ 言語と感情マーカーに対応</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">合成モデル</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">S2-Pro を推奨、80+ 言語と感情マーカーに対応</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">速度</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量オフセット (dB)、正値で増加、負値で減少</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">ラウドネス正規化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2-Pro エンジンのみ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2-Pro モデルのみ</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">出力形式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 ビットレート (kbps)</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature">表現力</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">高いほど多様な出力</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">高いほど多様な出力、低いほど一貫性が向上</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP">多様性</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">核サンプリング多様性制御</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">レイテンシモード</sys:String>
@@ -51,14 +63,23 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">バランス</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">低レイテンシ</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">テキスト正規化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">数字からテキストへの自動変換など</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">数字・単位記号などを読み上げ可能なテキストに自動変換</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">サポート</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 公式サイト</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">コンテキスト連携</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">前の音声をコンテキストとして使用し、ボイスの一貫性を維持</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">貼り付け</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">確認</sys:String>
+
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">API Key を設定してください</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key の形式が正しくありません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key が正しくありません</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">テキストが空です</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Model_NotFound">モデルが見つかりません</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomModel">ランダムモデル</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">ボイス ID を入力してください</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">ボイス ID の形式が正しくありません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">ボイスが見つかりません</sys:String>
 
 </ResourceDictionary>

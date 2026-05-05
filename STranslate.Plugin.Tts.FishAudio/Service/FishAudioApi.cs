@@ -15,11 +15,12 @@ internal static class FishAudioApi
         {
             ["text"] = text,
             ["format"] = "mp3",
-            ["mp3_bitrate"] = 192,
+            ["mp3_bitrate"] = settings.Mp3Bitrate,
             ["temperature"] = settings.Temperature,
             ["top_p"] = settings.TopP,
             ["normalize"] = settings.Normalize,
             ["latency"] = settings.Latency,
+            ["condition_on_previous_chunks"] = settings.ConditionOnPreviousChunks,
             ["prosody"] = new Dictionary<string, object>
             {
                 ["speed"] = settings.Speed,
@@ -28,8 +29,8 @@ internal static class FishAudioApi
             },
         };
 
-        if (!string.IsNullOrWhiteSpace(settings.ReferenceId))
-            body["reference_id"] = settings.ReferenceId;
+        if (!string.IsNullOrWhiteSpace(settings.VoiceId))
+            body["reference_id"] = settings.VoiceId;
 
         var option = new Options
         {

@@ -1,0 +1,166 @@
+# Design Decisions
+
+Architecture Decision Records (ADR) for STranslate.Plugin.Tts.FishAudio.
+Each entry records a behavior, its motivation, and which code it affects.
+
+---
+
+## DD-001: Silent credit refresh on startup
+
+**Date:** 2026-04-27
+**Context:** When the plugin initializes, it validates the saved API Key by calling `GetCreditAsync`. Showing error UI during startup would surprise users who haven't interacted with the plugin yet.
+**Decision:** The startup credit check does not show error snackbars or latency text — it only populates the credit balance silently. If the key is invalid, the user discovers it when they interact with a feature that requires it.
+**Affects:** `Main.Init()`, `SettingsViewModel` constructor, `ApplyPendingCreditAsync`, `FetchCreditAsync` `showError`/`showLatency` params.
+
+---
+
+## DD-002: API Key format validation before API call
+
+**Date:** 2026-05-06
+**Context:** Fish Audio API Keys follow the MD5 hex format: exactly 32 lowercase hex characters `[0-9a-f]{32}`. Calling the credit API with an obviously invalid key wastes a network round-trip and may confuse users with a generic error.
+**Decision:** Validate 32-hex format client-side first. Only call the API when the format passes. Display a specific "format incorrect" message for malformed inputs. This applies to both API Key (`Settings.IsValidApiKeyFormat`) and Voice ID (`Settings.IsValidVoiceIdFormat`) — they share the same regex (`^[0-9a-f]{32}$`).
+**Affects:** `Settings.IsValidApiKeyFormat()`, `Settings.IsValidVoiceIdFormat()`, `SettingsViewModel.ConfirmApiKeyAsync()`, `SettingsViewModel.SubmitVoiceIdAsync()`.
+
+---
+
+## DD-003: API Key persistence — confirm-button-only
+
+**Date:** 2026-05-06
+**Context:** If an incorrect API Key is persisted, the plugin will attempt to use it on next launch and fail silently. Users might not realize their key is bad.
+**Decision:** API Key is persisted exclusively through the confirm button click. On success → write key to config and save. On any failure (empty, bad format, API rejection) → write empty string to config and save. `Dispose` does not touch `_settings.ApiKey`. If the user edits the key but never clicks confirm, the previously persisted value (from the last successful confirm, or empty) is retained.
+**Affects:** `SettingsViewModel.ConfirmApiKeyAsync()`, `SettingsViewModel.OnPropertyChanged()` (does not persist), `SettingsViewModel.Dispose()` (does not touch API Key).
+
+---
+
+## DD-004: Voice search and voice-by-ID use dummy API Key when user key is invalid
+
+**Date:** 2026-05-06
+**Context:** Fish Audio's model list (`GET /model`) and model detail (`GET /model/{id}`) endpoints do not require a valid API Key. Users should be able to browse and preview voices even before entering their key.
+**Decision:** When `IsApiKeyValid` is false, pass `"dummy"` as the Authorization bearer token for search and get-model calls. When `IsApiKeyValid` is true, pass the user's real key (for potentially better rate limits). Remove all API Key gates from search and by-ID flows.
+**Affects:** `SettingsViewModel.EffectiveApiKeyForSearch`, `ExecuteSearchAsync()`, `SubmitVoiceIdAsync()`.
+
+---
+
+## DD-005: Auto-save on property change for all settings except API Key
+
+**Date:** 2026-04-27 (extended 2026-05-06)
+**Context:** Users expect slider and toggle changes to persist immediately without a "Save" button. However, API Key is special — it goes through a validation lifecycle and should only be saved when valid (see DD-003).
+**Decision:** `OnPropertyChanged` writes every settings property to `_settings` and calls `SaveSettingStorage` immediately — except for `ApiKey`, which triggers validation instead.
+**Affects:** `SettingsViewModel.OnPropertyChanged()`.
+
+---
+
+## DD-006: Latency text is shown temporarily after manual refresh
+
+**Date:** 2026-05-06
+**Context:** The API latency value (`XXX ms`) is only meaningful right after a refresh. Leaving it visible permanently may mislead users into thinking it's a live indicator.
+**Decision:** After a manual credit refresh, show the latency text for 4 seconds, then auto-hide it. A `DispatcherTimer` handles the timeout. Startup credit checks do not show latency at all (see DD-001).
+**Affects:** `SettingsViewModel.StartLatencyHideTimer()`, `FetchCreditAsync` `showLatency` param.
+
+---
+
+## DD-007: Config migration for renamed fields
+
+**Date:** 2026-05-06
+**Context:** v1.0.2 renamed `Settings.ReferenceId` to `VoiceId` and `CachedModel` to `CachedVoice`. Users upgrading from v1.0.x have configs with the old field names.
+**Decision:** Keep nullable "shim" properties (`ReferenceId`, `CachedModel`) in `Settings`. The JSON deserializer populates them from old configs. `Settings.Migrate()` copies values to the new fields, nulls the old ones, and `Main.Init()` calls it once on load, then saves.
+**Affects:** `Settings.cs` (shim properties, `NeedsMigration`, `Migrate()`), `Main.Init()`.
+
+---
+
+## DD-008: Preview state keyed by voice ID, not by UI card
+
+**Date:** 2026-05-06
+**Context:** The same voice can appear in both the display area (selected voice) and the search results list simultaneously. If preview state were bound to a specific UI card, switching pages or tabs would desync the play/pause button state.
+**Decision:** Preview state (`PreviewingVoiceId`, `PreviewProgress`) is stored in the ViewModel and keyed by voice ID. `UpdatePreviewState()` and `SyncPreviewStateToResults()` propagate the state to all VoiceSearchItems that match the current previewing voice ID. The display area's `IsDisplayVoicePreviewing` is also derived from the same voice ID comparison.
+**Affects:** `SettingsViewModel` preview system, `VoiceSearchItem.IsBeingPreviewed`/`PreviewProgress`.
+
+---
+
+## DD-009: `condition_on_previous_chunks` and `mp3_bitrate` as user-configurable settings
+
+**Date:** 2026-05-06
+**Context:** `mp3_bitrate` affects audio quality vs. file size tradeoff. `condition_on_previous_chunks` affects voice consistency across long texts. Different use cases benefit from different values.
+**Decision:** Expose both as configurable settings. `Mp3Bitrate` defaults to 192 (high quality), options: 64/128/192. `ConditionOnPreviousChunks` defaults to `true` (enabled). Both are sent in the TTS request body.
+**Affects:** `Settings.cs`, `SettingsViewModel`, `FishAudioApi.PostTtsAsync()`, `SettingsView.xaml`.
+
+---
+
+## DD-010: Random voice when VoiceId is empty
+
+**Date:** 2026-04-27
+**Context:** When no `reference_id` is sent in the TTS request, Fish Audio uses a random/default voice. This still costs credit (deducted asynchronously, ~60s delay).
+**Decision:** When `VoiceId` is empty, show a localized "Random Voice" title in the display area instead of blank. `FishAudioApi.PostTtsAsync` omits `reference_id` from the body entirely (does not send empty string).
+**Affects:** `SettingsViewModel.ApplyCachedVoice()`, `FishAudioApi.PostTtsAsync()`.
+
+---
+
+## DD-011: TextBox focus behavior — click blank space to unfocus
+
+**Date:** 2026-05-06
+**Context:** WPF TextBoxes do not lose focus when clicking blank space (unlike HTML inputs). This means the page input TextBox keeps focus after typing, preventing `LostFocus` bindings from firing.
+**Decision:** Add a `PreviewMouseLeftButtonDown` handler on the UserControl root. Only clear focus when a TextBox currently holds keyboard focus AND the click target is not inside any interactive control (TextBox, PasswordBox, ButtonBase, ComboBox, Slider, Thumb). This prevents interfering with ComboBox selection and other controls. Page input also supports Enter key to commit immediately via `InputBindings`.
+**Affects:** `SettingsView.xaml.cs` (`HasInteractiveAncestor`), page input TextBox `InputBindings`.
+
+---
+
+## DD-012: API Key commit on validation success
+
+**Date:** 2026-05-06
+**Context:** `OnPropertyChanged` no longer auto-saves `ApiKey` to `_settings` (see DD-005). But `Main.PlayAudioAsync` checks `Settings.ApiKey` (the `_settings` object) to guard TTS calls. Without committing the key on validation, `_settings.ApiKey` remains empty/stale.
+**Decision:** `ConfirmApiKeyAsync` is the sole writer of `_settings.ApiKey`. On valid result → write key and save. On invalid result → write empty and save. `Dispose` does not touch `_settings.ApiKey` (see DD-003).
+**Affects:** `SettingsViewModel.ConfirmApiKeyAsync()`.
+
+---
+
+## DD-013: API Key validation via explicit confirm button, simplified state
+
+**Date:** 2026-05-06
+**Context:** Auto-validation on text change caused spurious API calls due to WPF LostFocus behavior. The original 5-state `ApiKeyState` enum was only consumed as a binary "valid vs. not valid" distinction — the intermediate states were transient error messages.
+**Decision:** Replace `ApiKeyState` enum with a single `bool IsApiKeyValid` and a transient `bool IsValidatingApiKey` (for button disable). Validation only runs when the user clicks the confirm button (checkmark icon). On text change, `IsApiKeyValid` resets to false silently. Format errors are shown inline via `ApiKeyStatusText`; API errors are shown via snackbar (same as refresh button). The confirm button does not display latency — only the refresh button does.
+**Affects:** `SettingsViewModel.ConfirmApiKeyCommand`, `IsApiKeyValid`, `IsValidatingApiKey`, `OnPropertyChanged` ApiKey handler.
+
+---
+
+## DD-014: Pagination centering with Grid layout
+
+**Date:** 2026-05-06
+**Context:** The search pagination used a `DockPanel` with Prev docked left and Next docked right. When boundary buttons collapsed (Prev on page 1, Next on last page), the remaining Fill area changed size, causing the center "page / total" control to shift horizontally.
+**Decision:** Replace `DockPanel` with a 3-column `Grid` using `*` / `Auto` / `*` sizing. The two `*` columns split remaining space equally, guaranteeing the center `Auto` column stays at the midpoint regardless of Prev/Next visibility.
+**Affects:** `SettingsView.xaml` pagination section.
+
+---
+
+## DD-015: Preview stop icon instead of pause
+
+**Date:** 2026-05-06
+**Context:** The preview button showed a pause icon (&#xE769;, double bars) when audio was playing. However, the actual behavior is stop (audio restarts from the beginning on next play), not pause (which would resume from the current position).
+**Decision:** Replace the pause glyph with a filled square (Border element) to match the actual stop behavior. Both display area and search result preview buttons use a Grid containing a play TextBlock icon and a stop Border, toggled via DataTrigger on preview state.
+**Affects:** `SettingsView.xaml` display area preview button, search result DataTemplate preview button.
+
+---
+
+## DD-016: Voice ID format validation before API call
+
+**Date:** 2026-05-06
+**Context:** Voice IDs follow the same 32-hex format as API Keys. Calling `GET /model/{id}` with a malformed ID always returns 404, wasting a network round-trip.
+**Decision:** Check `Settings.IsValidVoiceIdFormat(id)` before calling `GetModelAsync`. On format failure, show localized "Voice ID format incorrect" error inline (`VoiceIdError`) and skip the API call. The regex is shared with `IsValidApiKeyFormat` — both use `HexId32Regex`.
+**Affects:** `SettingsViewModel.SubmitVoiceIdAsync()`, `Settings.IsValidVoiceIdFormat()`.
+
+---
+
+## DD-017: Page input — LostFocus commit and numeric-only restriction
+
+**Date:** 2026-05-06
+**Context:** The page input TextBox only committed on Enter key. Users who typed a page number and clicked elsewhere expected the navigation to happen, but the value was silently discarded. The TextBox also accepted non-digit characters, which always failed validation.
+**Decision:** Add a `LostFocus` handler that invokes `CommitPageInputCommand` (same as Enter). Add a `PreviewTextInput` handler that rejects non-digit characters. `CommitPageInputCommand` already handles out-of-range values by reverting to the current page.
+**Affects:** `SettingsView.xaml` PageInputBox, `SettingsView.xaml.cs` (`PageInputBox_PreviewTextInput`, `PageInputBox_LostFocus`).
+
+---
+
+## DD-018: Persistent UI text must use DynamicResource, not GetTranslation
+
+**Date:** 2026-05-06
+**Context:** STranslate supports runtime language switching. `DynamicResource` bindings in XAML auto-update when the resource dictionary changes, but strings obtained via `_context.GetTranslation()` or `Application.Current.TryFindResource()` in value converters are captured at call time and become stale. This caused two bugs: the "Random Voice" title and the latency mode display names (Quality First / Balanced / Low Latency) did not update when the language changed.
+**Decision:** All user-visible text that persists on screen must use `DynamicResource` in XAML. For conditional text (e.g., "Random Voice" shown only when `CachedVoiceId` is null), use `DataTrigger` + `DynamicResource`. For enum-to-display mappings (e.g., latency mode "normal" → "Quality First"), use `DataTrigger` per value with `DynamicResource` instead of a value converter. Transient text (error messages, snackbar) may use `GetTranslation()` since it's re-triggered on user action.
+**Affects:** `SettingsView.xaml` (voice title, latency ComboBox). Removed `LatencyDisplayConverter.cs`.

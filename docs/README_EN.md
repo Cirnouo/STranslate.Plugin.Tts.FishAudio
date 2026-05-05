@@ -30,9 +30,10 @@
 
 ## Features
 
-- **High-quality synthesis** — Powered by Fish Audio S2-Pro / S1 engines, supporting 80+ languages
-- **Model search** — Search, browse, preview and select voice models directly in the settings panel with pagination
-- **Manual ID validation** — Enter a model ID manually and it auto-validates and loads the model info
+- **High-quality synthesis** — Powered by Fish Audio S2-Pro / S1 models, supporting 80+ languages
+- **Voice search** — Search, browse, preview and select voices directly in the settings panel with pagination
+- **Voice preview** — Preview buttons with progress ring, mid-playback switching, state synced by voice ID
+- **Manual ID validation** — Enter a voice ID manually and it validates and loads the voice info
 - **Emotion markup** — Control speech emotion via inline text markers (S2-Pro: `[laugh]`, S1: `(happy)`)
 - **Prosody control** — Speed (0.5x–2.0x), volume (±10 dB, 0.1 dB precision), loudness normalization
 - **Generation parameters** — Expressiveness, diversity, latency mode (Quality / Balanced / Low Latency), text normalization
@@ -68,48 +69,15 @@
 | Parameter | Default | Description |
 | :-- | :--: | :-- |
 | API Key | — | Fish Audio API key (required) |
-| Model ID | — (Random Model) | Voice model ID; search to select or enter manually. When empty, a random model (system default voice) is used |
-| Engine | `s2-pro` | `s2-pro` (recommended) or `s1` |
+| Voice ID | — (Random Voice) | Voice ID; search to select or enter manually. When empty, a random voice (system default) is used |
+| Synthesis Model | `s2-pro` | `s2-pro` (recommended) or `s1` |
 | Speed | `1.0` | 0.5–2.0 |
 | Volume | `0 dB` | -10 to +10 dB, 0.1 dB precision |
-| Loudness Normalization | On | Shown only when using S2-Pro engine |
+| Loudness Normalization | On | Shown only when using S2-Pro model |
 | Expressiveness | `0.7` | 0–1, higher = more varied |
 | Diversity | `0.7` | 0–1 |
 | Latency Mode | Quality | Quality / Balanced / Low Latency |
 | Text Normalization | Off | Auto-convert numbers to words, etc. |
-
-</details>
-
-### Screenshots
-
-<details>
-<summary><b>UI Screenshots</b> (click to expand)</summary>
-
-#### Account & API
-
-<img src="images/account_and_api.png" alt="Account & API" width="360" />
-
-#### Model Selection & Search
-
-<div>
-    <img src="images/model_selection.png" alt="Model Selection" width="360" />
-</div>
-
-<div>
-    <img src="images/model_search.png" alt="Model Search" width="360" />
-</div>
-
-### TTS Engine
-
-<img src="images/engine.png" alt="TTS Engine" width="360" />
-
-#### Prosody Control
-
-<img src="images/prosody.png" alt="Prosody Control" width="360" />
-
-#### Generation Parameters
-
-<img src="images/generation.png" alt="Generation Parameters" width="360" />
 
 </details>
 

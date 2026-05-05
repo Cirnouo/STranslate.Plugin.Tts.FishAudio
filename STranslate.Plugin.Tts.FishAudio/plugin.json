@@ -1,9 +1,9 @@
 {
   "PluginID": "f1183ad1f848454dad5c4a770a68f36a",
   "Name": "Fish Audio TTS",
-  "Description": "Fish Audio 语音合成插件，支持模型搜索与选择、S2-Pro/S1 引擎、韵律控制和丰富的生成参数",
+  "Description": "Fish Audio 语音合成插件，支持声音搜索与试听、S2-Pro/S1 模型、韵律控制和丰富的生成参数",
   "Author": "pwpy",
-  "Version": "1.0.1",
+  "Version": "1.0.2",
   "Website": "https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/",
   "ExecuteFileName": "STranslate.Plugin.Tts.FishAudio.dll",
   "IconPath": "icon.png"
