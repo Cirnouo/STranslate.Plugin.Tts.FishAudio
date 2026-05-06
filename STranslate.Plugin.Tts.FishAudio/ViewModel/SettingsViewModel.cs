@@ -245,13 +245,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private async Task ConfirmApiKeyAsync()
     {
         var key = ApiKey;
+        ClearAppliedApiKeyState();
 
         if (string.IsNullOrEmpty(key))
         {
             ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Empty");
             ApiKeyStatusKind = ApiKeyStatusKind.Error;
-            IsApiKeyValid = false;
-            UserCredit = "";
             _settings.ApiKey = "";
             _context.SaveSettingStorage<Settings>();
             return;
@@ -261,8 +260,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         {
             ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat");
             ApiKeyStatusKind = ApiKeyStatusKind.Error;
-            IsApiKeyValid = false;
-            UserCredit = "";
             _settings.ApiKey = "";
             _context.SaveSettingStorage<Settings>();
             return;
@@ -277,7 +274,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             var (result, _) = await FishAudioApi.GetCreditAsync(_context, key, CancellationToken.None);
 
             if (ApiKey != key)
+            {
+                IsApiKeyValid = false;
+                ApiKeyStatusKind = ApiKeyStatusKind.None;
+                UserCredit = "";
                 return;
+            }
 
             if (result is not null)
             {
@@ -290,9 +292,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             }
             else
             {
-                IsApiKeyValid = false;
                 ApiKeyStatusKind = ApiKeyStatusKind.None;
-                UserCredit = "";
                 _settings.ApiKey = "";
                 _context.SaveSettingStorage<Settings>();
                 _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid"));
@@ -301,11 +301,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             if (ApiKey != key)
+            {
+                IsApiKeyValid = false;
+                ApiKeyStatusKind = ApiKeyStatusKind.None;
+                UserCredit = "";
                 return;
+            }
 
-            IsApiKeyValid = false;
             ApiKeyStatusKind = ApiKeyStatusKind.None;
-            UserCredit = "";
             _settings.ApiKey = "";
             _context.SaveSettingStorage<Settings>();
             _context.Snackbar.ShowError(ex.Message);
@@ -316,7 +319,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
     }
 
-    private string EffectiveApiKeyForSearch => IsApiKeyValid ? ApiKey : "dummy";
+    private string EffectiveAppliedApiKey => IsApiKeyValid ? _settings.ApiKey : "";
+    private string EffectiveApiKeyForSearch => IsApiKeyValid ? _settings.ApiKey : "dummy";
 
     [RelayCommand]
     private void PasteApiKey()
@@ -363,12 +367,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             if (result is not null)
             {
                 IsApiKeyValid = true;
+                ApiKeyStatusText = null;
+                ApiKeyStatusKind = ApiKeyStatusKind.Success;
                 ApplyCreditResult(result);
             }
         }
         catch
         {
-            // Startup credit check is silent — no error UI
+            // Startup credit check is silent for failures; success still updates visible account state.
         }
     }
 
@@ -383,7 +389,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
         try
         {
-            var (result, ms) = await FishAudioApi.GetCreditAsync(_context, ApiKey, CancellationToken.None);
+            var (result, ms) = await FishAudioApi.GetCreditAsync(_context, EffectiveAppliedApiKey, CancellationToken.None);
             ApplyCreditResult(result);
 
             if (showLatency)
@@ -786,13 +792,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (e.PropertyName == nameof(ApiKey))
         {
-            if (IsApiKeyValid && ApiKey == _settings.ApiKey)
-                return;
-
-            IsApiKeyValid = false;
-            ApiKeyStatusText = null;
-            ApiKeyStatusKind = ApiKeyStatusKind.None;
-            UserCredit = "";
             return;
         }
 
@@ -821,6 +820,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         StopPreview();
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();
+    }
+
+    private void ClearAppliedApiKeyState()
+    {
+        IsApiKeyValid = false;
+        ApiKeyStatusText = null;
+        ApiKeyStatusKind = ApiKeyStatusKind.None;
+        UserCredit = "";
     }
 }
 

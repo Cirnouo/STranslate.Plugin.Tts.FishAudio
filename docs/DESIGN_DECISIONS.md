@@ -9,7 +9,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-04-27
 **Context:** When the plugin initializes, it validates the saved API Key by calling `GetCreditAsync`. Showing error UI during startup would surprise users who haven't interacted with the plugin yet.
-**Decision:** The startup credit check does not show error snackbars or latency text — it only populates the credit balance silently. If the key is invalid, the user discovers it when they interact with a feature that requires it.
+**Decision:** The startup credit check does not show error snackbars or latency text, but when it succeeds it does surface the applied state: credit balance plus the localized "verified and applied" status. If the key is invalid, the user discovers it when they interact with a feature that requires it.
 **Affects:** `Main.Init()`, `SettingsViewModel` constructor, `ApplyPendingCreditAsync`, `FetchCreditAsync` `showError`/`showLatency` params.
 
 ---
@@ -117,7 +117,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-05-06
 **Context:** Auto-validation on text change caused spurious API calls due to WPF LostFocus behavior. The original 5-state `ApiKeyState` enum was only consumed as a binary "valid vs. not valid" distinction — the intermediate states were transient error messages.
-**Decision:** Replace `ApiKeyState` enum with a single `bool IsApiKeyValid` and a transient `bool IsValidatingApiKey` (for button disable). Validation only runs when the user clicks the confirm button (checkmark icon). On text change, `IsApiKeyValid` resets to false silently. Format errors are shown inline via `ApiKeyStatusText`; API errors are shown via snackbar (same as refresh button). The confirm button does not display latency — only the refresh button does.
+**Decision:** Replace `ApiKeyState` enum with a single `bool IsApiKeyValid` and a transient `bool IsValidatingApiKey` (for button disable). Validation only runs when the user clicks the confirm button (checkmark icon). Editing the API Key draft does not clear the applied status by itself; the confirm action clears the old applied balance/status and then revalidates the submitted draft. Format errors are shown inline via `ApiKeyStatusText`; API errors are shown via snackbar (same as refresh button). The confirm button does not display latency — only the refresh button does.
 **Affects:** `SettingsViewModel.ConfirmApiKeyCommand`, `IsApiKeyValid`, `IsValidatingApiKey`, `OnPropertyChanged` ApiKey handler.
 
 ---
@@ -180,7 +180,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-05-06
 **Context:** Showing a red `"..."` while waiting for the credit API response looked like an error and did not explain what was happening. After success, the balance changed, but the success state was not explicit enough.
-**Decision:** Track API Key validation display state separately from the error message. Waiting uses a neutral inline "waiting for response" message, success uses a green checkmark and localized "verified and applied" message, and format/empty errors remain red inline text. Persistent waiting/success text comes from XAML `DynamicResource`; transient error text may still come from `GetTranslation()`.
+**Decision:** Track API Key validation display state separately from the error message. Waiting uses a neutral inline "waiting for response" message, success uses a green checkmark and localized "verified and applied" message, and format/empty errors remain red inline text. Persistent waiting/success text comes from XAML `DynamicResource`; transient error text may still come from `GetTranslation()`. Startup validation success uses the same status so users can confirm the applied key loaded from config.
 **Affects:** `SettingsViewModel.ApiKeyStatusKind`, `ConfirmApiKeyAsync()`, `SettingsView.xaml`, language resource dictionaries.
 
 ---
@@ -191,3 +191,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** Before any search or by-ID submission, both voice selection tabs only show one input row, but their surrounding layout produced slightly different vertical spacing. Switching tabs made the following "Model" section move, which felt unstable.
 **Decision:** Place both tab panels in a shared fixed-minimum-height container so their initial one-row states occupy the same vertical layout space. Search results, result count, errors, and pagination still expand the area only when they have real content.
 **Affects:** `SettingsView.xaml` voice selection tab panels.
+
+---
+
+## DD-022: Draft API Key edits do not clear applied account state
+
+**Date:** 2026-05-07
+**Context:** Users expect the currently applied API Key balance/status to remain visible while they edit a new draft in the input box. Clearing the balance on focus or blur makes the UI look like it lost the applied configuration even though no submit happened.
+**Decision:** API Key draft edits are inert until the user explicitly confirms. The applied balance/status remains visible while editing, and only the submit path clears the old applied state before revalidating the draft. This keeps the visible account info tied to the last applied key instead of the transient input.
+**Affects:** `SettingsViewModel.OnPropertyChanged(ApiKey)`, `ConfirmApiKeyAsync()`, `ApplyPendingCreditAsync()`, `FetchCreditAsync()`.
