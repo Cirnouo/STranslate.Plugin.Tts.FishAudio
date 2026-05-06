@@ -39,6 +39,8 @@
                                Visibility="{Binding UserCredit, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}" />
                     <TextBlock Margin="4,0,0,0" Text="{Binding UserCredit}" VerticalAlignment="Center"
                                Visibility="{Binding UserCredit, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}" />
+                    <TextBlock Text=" $" VerticalAlignment="Center"
+                               Visibility="{Binding UserCredit, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}" />
                 </StackPanel>
             </ui:SettingsCard.Description>
             <ui:SettingsCard.HeaderIcon>
@@ -74,9 +76,54 @@
                     <ui:HyperlinkButton
                         Content="fish.audio"
                         NavigateUri="https://fish.audio/app/api-keys" />
-                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontSize="12"
-                               Foreground="#FFE57373" Text="{Binding ApiKeyStatusText}"
-                               Visibility="{Binding ApiKeyStatusText, Converter={StaticResource StringToVisibilityConverter}}" />
+                    <StackPanel Margin="8,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.None}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE946;" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Success}">
+                                            <Setter Property="Text" Value="&#xE73E;" />
+                                            <Setter Property="Foreground" Value="#FF4CAF50" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Error}">
+                                            <Setter Property="Text" Value="&#xEA39;" />
+                                            <Setter Property="Foreground" Value="#FFE57373" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                    <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Success}">
+                                            <Setter Property="Foreground" Value="#FF4CAF50" />
+                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Applied}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Error}">
+                                            <Setter Property="Foreground" Value="#FFE57373" />
+                                            <Setter Property="Text" Value="{Binding ApiKeyStatusText}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </ui:SettingsCard.Description>
             <ui:SettingsCard.HeaderIcon>
@@ -99,7 +146,11 @@
                     MinWidth="230"
                     plugin:PasswordBoxAssistant.Attach="True"
                     plugin:PasswordBoxAssistant.Password="{Binding ApiKey}"
-                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}" />
+                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}">
+                    <PasswordBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding ConfirmApiKeyCommand}" />
+                    </PasswordBox.InputBindings>
+                </PasswordBox>
             </DockPanel>
         </ui:SettingsCard>
 
@@ -268,164 +319,177 @@
             </StackPanel>
         </Border>
 
-        <!-- 搜索面板 -->
-        <ikw:SimpleStackPanel Spacing="8"
-            Visibility="{Binding IsSearchMode, Converter={StaticResource BtvConverter}}">
-            <DockPanel>
-                <Button DockPanel.Dock="Right" Margin="8,0,0,0"
-                        Command="{Binding SearchVoicesCommand}"
-                        Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search}" />
-                <TextBox
-                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchPlaceholder}"
-                    Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
-            <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas"
-                       Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
-                <Run Text="{Binding SearchResultCount, Mode=OneWay}" />
-                <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_ResultCount}" />
-            </TextBlock>
-            <ItemsControl ItemsSource="{Binding SearchResults}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,2" Padding="8"
-                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                                CornerRadius="6">
-                            <DockPanel>
-                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                    <Grid Width="36" Height="36" Margin="0,0,4,0"
-                                          Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                                        <Ellipse x:Name="SRestBorder" StrokeThickness="1"
-                                                 Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
-                                        <Ellipse x:Name="STrack" StrokeThickness="1.5"
-                                                 Stroke="#1FFFFFFF" Fill="Transparent" Visibility="Collapsed" />
-                                        <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="White" Fill="Transparent"
-                                                 StrokeDashArray="72.26 72.26"
-                                                 StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
-                                                 StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
-                                            <Ellipse.RenderTransform>
-                                                <RotateTransform Angle="-90"/>
-                                            </Ellipse.RenderTransform>
-                                        </Ellipse>
-                                        <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                                Width="36" Height="36"
-                                                Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}">
-                                            <Grid>
-                                                <TextBlock x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" Text="&#xE768;" />
-                                                <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
-                                                        HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-                                            </Grid>
-                                        </Button>
-                                    </Grid>
-                                    <Button MinHeight="28" Padding="8,4" VerticalContentAlignment="Center"
-                                            Command="{Binding DataContext.SelectVoiceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}"
-                                            Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Select}" />
-                                </StackPanel>
-                                <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Center">
-                                    <Ellipse.Fill>
-                                        <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
-                                    </Ellipse.Fill>
-                                </Ellipse>
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
-                                    <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="280" />
-                                    <TextBlock Text="{Binding Description}"
-                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
-                                               TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding AuthorName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
-                                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11">
-                                            <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Popularity}" />
-                                            <Run Text="{Binding TaskCount, Converter={StaticResource TaskCountConverter}, Mode=OneWay}" />
-                                        </TextBlock>
-                                    </StackPanel>
-                                </StackPanel>
-                            </DockPanel>
-                        </Border>
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
-                                <Setter TargetName="SRestBorder" Property="Visibility" Value="Collapsed" />
-                                <Setter TargetName="STrack" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="SArc" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="SIcon" Property="Visibility" Value="Collapsed" />
-                                <Setter TargetName="SStopIcon" Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Grid Visibility="{Binding ShowPagination, Converter={StaticResource BtvConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" HorizontalAlignment="Left" Command="{Binding PrevPageCommand}" Padding="8,4"
-                        Visibility="{Binding ShowPrevPage, Converter={StaticResource BtvConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Prev}" VerticalAlignment="Center" />
-                    </StackPanel>
-                </Button>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
-                    <TextBox x:Name="PageInputBox" Width="40" TextAlignment="Center" FontFamily="Consolas"
-                             FontSize="12" Padding="4,2" VerticalContentAlignment="Center"
-                             Text="{Binding PageInput, UpdateSourceTrigger=PropertyChanged}"
-                             PreviewTextInput="PageInputBox_PreviewTextInput"
-                             LostFocus="PageInputBox_LostFocus">
+        <Grid MinHeight="36">
+            <!-- 搜索面板 -->
+            <ikw:SimpleStackPanel Spacing="8"
+                Visibility="{Binding IsSearchMode, Converter={StaticResource BtvConverter}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Margin="8,0,0,0" Padding="6"
+                            Background="Transparent" BorderThickness="0"
+                            Command="{Binding SearchVoicesCommand}"
+                            ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search}">
+                        <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Search_24_Regular}" FontSize="16" />
+                    </Button>
+                    <TextBox
+                        ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchPlaceholder}"
+                        Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}">
                         <TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding CommitPageInputCommand}" />
+                            <KeyBinding Key="Enter" Command="{Binding SearchVoicesCommand}" />
                         </TextBox.InputBindings>
                     </TextBox>
-                    <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" FontSize="12"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                        <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_PageOf}" />
-                        <Run Text="{Binding SearchTotalPages, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
-                <Button Grid.Column="2" HorizontalAlignment="Right" Command="{Binding NextPageCommand}" Padding="8,4"
-                        Visibility="{Binding ShowNextPage, Converter={StaticResource BtvConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Next}" VerticalAlignment="Center" />
-                        <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0" />
+                </DockPanel>
+                <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas"
+                           Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
+                    <Run Text="{Binding SearchResultCount, Mode=OneWay}" />
+                    <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_ResultCount}" />
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding SearchResults}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,2" Padding="8"
+                                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                    CornerRadius="6">
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                        <Grid Width="36" Height="36" Margin="0,0,4,0"
+                                              Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                                            <Ellipse x:Name="SRestBorder" StrokeThickness="1"
+                                                     Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
+                                            <Ellipse x:Name="STrack" StrokeThickness="1.5"
+                                                     Stroke="#1FFFFFFF" Fill="Transparent" Visibility="Collapsed" />
+                                            <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="White" Fill="Transparent"
+                                                     StrokeDashArray="72.26 72.26"
+                                                     StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                                                     StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform Angle="-90"/>
+                                                </Ellipse.RenderTransform>
+                                            </Ellipse>
+                                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                                    Width="36" Height="36"
+                                                    Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}">
+                                                <Grid>
+                                                    <TextBlock x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" Text="&#xE768;" />
+                                                    <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                                                </Grid>
+                                            </Button>
+                                        </Grid>
+                                        <Button MinHeight="28" Padding="8,4" VerticalContentAlignment="Center"
+                                                Command="{Binding DataContext.SelectVoiceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Select}" />
+                                    </StackPanel>
+                                    <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                                        <TextBlock Text="{Binding Description}"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
+                                                   TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding AuthorName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
+                                            <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11">
+                                                <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Popularity}" />
+                                                <Run Text="{Binding TaskCount, Converter={StaticResource TaskCountConverter}, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
+                                    <Setter TargetName="SRestBorder" Property="Visibility" Value="Collapsed" />
+                                    <Setter TargetName="STrack" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="SArc" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="SIcon" Property="Visibility" Value="Collapsed" />
+                                    <Setter TargetName="SStopIcon" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Grid Visibility="{Binding ShowPagination, Converter={StaticResource BtvConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" HorizontalAlignment="Left" Command="{Binding PrevPageCommand}" Padding="8,4"
+                            Visibility="{Binding ShowPrevPage, Converter={StaticResource BtvConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets" FontSize="10" VerticalAlignment="Center" Margin="0,0,4,0" />
+                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Prev}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+                        <TextBox x:Name="PageInputBox" Width="40" TextAlignment="Center" FontFamily="Consolas"
+                                 FontSize="12" Padding="4,2" VerticalContentAlignment="Center"
+                                 Text="{Binding PageInput, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="PageInputBox_PreviewTextInput"
+                                 LostFocus="PageInputBox_LostFocus">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding CommitPageInputCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_PageOf}" />
+                            <Run Text="{Binding SearchTotalPages, Mode=OneWay}" />
+                        </TextBlock>
                     </StackPanel>
-                </Button>
-            </Grid>
-        </ikw:SimpleStackPanel>
+                    <Button Grid.Column="2" HorizontalAlignment="Right" Command="{Binding NextPageCommand}" Padding="8,4"
+                            Visibility="{Binding ShowNextPage, Converter={StaticResource BtvConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Next}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </ikw:SimpleStackPanel>
 
-        <!-- 通过 ID 面板 -->
-        <ikw:SimpleStackPanel Spacing="8">
-            <ikw:SimpleStackPanel.Style>
-                <Style TargetType="ikw:SimpleStackPanel">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSearchMode}" Value="False">
-                            <Setter Property="Visibility" Value="Visible" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ikw:SimpleStackPanel.Style>
-            <DockPanel>
-                <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
-                        Background="Transparent" BorderThickness="0"
-                        Command="{Binding SubmitVoiceIdCommand}"
-                        ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_SetVoice}">
-                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                </Button>
-                <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
-                        Background="Transparent" BorderThickness="0"
-                        Command="{Binding PasteVoiceIdCommand}"
-                        ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Paste}">
-                    <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                </Button>
-                <TextBox ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder}"
-                         Text="{Binding VoiceIdInput, UpdateSourceTrigger=PropertyChanged}" />
-            </DockPanel>
-            <TextBlock FontSize="12" Foreground="#FFE57373" Text="{Binding VoiceIdError}" TextWrapping="Wrap"
-                       Visibility="{Binding VoiceIdError, Converter={StaticResource StringToVisibilityConverter}}" />
-        </ikw:SimpleStackPanel>
+            <!-- 通过 ID 面板 -->
+            <ikw:SimpleStackPanel Spacing="8">
+                <ikw:SimpleStackPanel.Style>
+                    <Style TargetType="ikw:SimpleStackPanel">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSearchMode}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ikw:SimpleStackPanel.Style>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
+                            Background="Transparent" BorderThickness="0"
+                            Command="{Binding SubmitVoiceIdCommand}"
+                            ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_SetVoice}">
+                        <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                    </Button>
+                    <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
+                            Background="Transparent" BorderThickness="0"
+                            Command="{Binding PasteVoiceIdCommand}"
+                            ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Paste}">
+                        <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                    </Button>
+                    <TextBox ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder}"
+                             Text="{Binding VoiceIdInput, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding SubmitVoiceIdCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                </DockPanel>
+                <TextBlock FontSize="12" Foreground="#FFE57373" Text="{Binding VoiceIdError}" TextWrapping="Wrap"
+                           Visibility="{Binding VoiceIdError, Converter={StaticResource StringToVisibilityConverter}}" />
+            </ikw:SimpleStackPanel>
+        </Grid>
 
         <!-- ════════ 模型 ════════ -->
 

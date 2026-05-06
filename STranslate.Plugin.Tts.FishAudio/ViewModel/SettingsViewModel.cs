@@ -37,6 +37,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string? ApiKeyStatusText { get; set; }
 
+    [ObservableProperty]
+    public partial ApiKeyStatusKind ApiKeyStatusKind { get; set; }
+
     // ── 账户信息 ──
 
     [ObservableProperty]
@@ -246,6 +249,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         if (string.IsNullOrEmpty(key))
         {
             ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Empty");
+            ApiKeyStatusKind = ApiKeyStatusKind.Error;
             IsApiKeyValid = false;
             UserCredit = "";
             _settings.ApiKey = "";
@@ -256,6 +260,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         if (!Settings.IsValidApiKeyFormat(key))
         {
             ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat");
+            ApiKeyStatusKind = ApiKeyStatusKind.Error;
             IsApiKeyValid = false;
             UserCredit = "";
             _settings.ApiKey = "";
@@ -264,16 +269,21 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
 
         IsValidatingApiKey = true;
-        ApiKeyStatusText = "...";
+        ApiKeyStatusText = null;
+        ApiKeyStatusKind = ApiKeyStatusKind.Waiting;
 
         try
         {
             var (result, _) = await FishAudioApi.GetCreditAsync(_context, key, CancellationToken.None);
 
+            if (ApiKey != key)
+                return;
+
             if (result is not null)
             {
                 IsApiKeyValid = true;
                 ApiKeyStatusText = null;
+                ApiKeyStatusKind = ApiKeyStatusKind.Success;
                 ApplyCreditResult(result);
                 _settings.ApiKey = key;
                 _context.SaveSettingStorage<Settings>();
@@ -281,6 +291,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             else
             {
                 IsApiKeyValid = false;
+                ApiKeyStatusKind = ApiKeyStatusKind.None;
                 UserCredit = "";
                 _settings.ApiKey = "";
                 _context.SaveSettingStorage<Settings>();
@@ -289,7 +300,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
+            if (ApiKey != key)
+                return;
+
             IsApiKeyValid = false;
+            ApiKeyStatusKind = ApiKeyStatusKind.None;
             UserCredit = "";
             _settings.ApiKey = "";
             _context.SaveSettingStorage<Settings>();
@@ -776,6 +791,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
             IsApiKeyValid = false;
             ApiKeyStatusText = null;
+            ApiKeyStatusKind = ApiKeyStatusKind.None;
             UserCredit = "";
             return;
         }
@@ -806,6 +822,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();
     }
+}
+
+public enum ApiKeyStatusKind
+{
+    None,
+    Waiting,
+    Success,
+    Error,
 }
 
 public partial class VoiceSearchItem : ObservableObject

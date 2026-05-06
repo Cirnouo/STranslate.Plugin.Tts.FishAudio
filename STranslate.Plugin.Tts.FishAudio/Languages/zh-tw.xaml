@@ -24,7 +24,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">透過 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">搜尋聲音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">搜尋</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">輸入聲音名稱搜尋...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">輸入聲音名稱</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">選擇</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">已選</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">試聽</sys:String>
@@ -77,6 +77,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">請先設定 API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key 格式不正確</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key 不正確</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting">等待回應中</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Applied">已驗證並套用</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文字為空</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">請先輸入聲音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">聲音 ID 格式不正確</sys:String>

@@ -164,3 +164,30 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** STranslate supports runtime language switching. `DynamicResource` bindings in XAML auto-update when the resource dictionary changes, but strings obtained via `_context.GetTranslation()` or `Application.Current.TryFindResource()` in value converters are captured at call time and become stale. This caused two bugs: the "Random Voice" title and the latency mode display names (Quality First / Balanced / Low Latency) did not update when the language changed.
 **Decision:** All user-visible text that persists on screen must use `DynamicResource` in XAML. For conditional text (e.g., "Random Voice" shown only when `CachedVoiceId` is null), use `DataTrigger` + `DynamicResource`. For enum-to-display mappings (e.g., latency mode "normal" → "Quality First"), use `DataTrigger` per value with `DynamicResource` instead of a value converter. Transient text (error messages, snackbar) may use `GetTranslation()` since it's re-triggered on user action.
 **Affects:** `SettingsView.xaml` (voice title, latency ComboBox). Removed `LatencyDisplayConverter.cs`.
+
+---
+
+## DD-019: Enter key commits focused settings inputs
+
+**Date:** 2026-05-06
+**Context:** The settings page uses several input boxes with adjacent confirm buttons. Users expect Enter to execute the same action while focus remains in the input.
+**Decision:** Add Enter `KeyBinding`s to every input with a confirm action: API Key runs `ConfirmApiKeyCommand`, voice search runs `SearchVoicesCommand`, voice ID runs `SubmitVoiceIdCommand`, and page input keeps `CommitPageInputCommand`.
+**Affects:** `SettingsView.xaml` input bindings.
+
+---
+
+## DD-020: API Key validation status is an inline state, not raw text
+
+**Date:** 2026-05-06
+**Context:** Showing a red `"..."` while waiting for the credit API response looked like an error and did not explain what was happening. After success, the balance changed, but the success state was not explicit enough.
+**Decision:** Track API Key validation display state separately from the error message. Waiting uses a neutral inline "waiting for response" message, success uses a green checkmark and localized "verified and applied" message, and format/empty errors remain red inline text. Persistent waiting/success text comes from XAML `DynamicResource`; transient error text may still come from `GetTranslation()`.
+**Affects:** `SettingsViewModel.ApiKeyStatusKind`, `ConfirmApiKeyAsync()`, `SettingsView.xaml`, language resource dictionaries.
+
+---
+
+## DD-021: Voice tab initial height is stabilized
+
+**Date:** 2026-05-06
+**Context:** Before any search or by-ID submission, both voice selection tabs only show one input row, but their surrounding layout produced slightly different vertical spacing. Switching tabs made the following "Model" section move, which felt unstable.
+**Decision:** Place both tab panels in a shared fixed-minimum-height container so their initial one-row states occupy the same vertical layout space. Search results, result count, errors, and pagination still expand the area only when they have real content.
+**Affects:** `SettingsView.xaml` voice selection tab panels.

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+- 所有带确认语义的设置页输入框支持聚焦时按 Enter 执行确认：API Key 确认、声音名称搜索、声音 ID 提交；分页输入保留 Enter 提交
+- API Key 验证新增内联等待/成功状态：等待响应中使用中性提示，验证成功显示"已验证并应用"
+- 新增本地 `.claude/rules/` 项目规则文件（本地配置，不纳入 Git 跟踪）
+
+### Changed
+- 账户余额显示在数值后追加美元符号
+- 声音搜索按钮改为仅显示放大镜图标，并通过悬停提示显示"搜索"
+- 声音名称搜索占位文本改为"输入声音名称"
+- 固定声音选择两个入口的初始高度，避免切换"搜索"/"通过 ID"时下方"模型"分组上下跳动
+
 ## [1.0.2] - 2026-05-06
 
 ### Added

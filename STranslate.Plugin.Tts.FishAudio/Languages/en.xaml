@@ -24,7 +24,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">By ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">Search Voices</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">Search</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Search by voice name...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Enter voice name</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">Select</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">Selected</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">Preview</sys:String>
@@ -77,6 +77,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">Please set API Key first</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">Invalid API Key format</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">Incorrect API Key</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting">Waiting for response</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Applied">Verified and applied</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Text is empty</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">Please enter a Voice ID first</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">Invalid Voice ID format</sys:String>

@@ -24,7 +24,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">ID로 지정</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">보이스 검색</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">검색</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">보이스 이름으로 검색...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">보이스 이름 입력</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">선택</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">선택됨</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">미리듣기</sys:String>
@@ -77,6 +77,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">API Key를 먼저 설정하세요</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key 형식이 올바르지 않습니다</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key가 올바르지 않습니다</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting">응답 대기 중</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Applied">확인되어 적용됨</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">텍스트가 비어 있습니다</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">보이스 ID를 먼저 입력하세요</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">보이스 ID 형식이 올바르지 않습니다</sys:String>

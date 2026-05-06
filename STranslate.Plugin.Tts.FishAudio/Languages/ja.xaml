@@ -24,7 +24,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">ID で指定</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">ボイス検索</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">検索</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">ボイス名で検索...</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">ボイス名を入力</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">選択</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">選択済</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">試聴</sys:String>
@@ -77,6 +77,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">API Key を設定してください</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key の形式が正しくありません</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key が正しくありません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting">応答待機中</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Applied">検証して適用済み</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">テキストが空です</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">ボイス ID を入力してください</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">ボイス ID の形式が正しくありません</sys:String>
