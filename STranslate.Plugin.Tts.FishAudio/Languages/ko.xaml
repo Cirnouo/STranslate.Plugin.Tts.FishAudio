@@ -65,6 +65,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">텍스트 정규화</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">숫자, 단위 기호 등을 읽을 수 있는 텍스트로 자동 변환</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">캐시</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">캐시 사용량:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">캐시 지우기</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">지원</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 공식 웹사이트</sys:String>
 

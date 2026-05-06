@@ -33,10 +33,11 @@
 - **High-quality synthesis** — Powered by Fish Audio S2-Pro / S1 models, supporting 80+ languages
 - **Voice search** — Search, browse, preview and select voices directly in the settings panel with pagination
 - **Voice preview** — Preview buttons with progress ring, mid-playback switching, state synced by voice ID
+- **Cover cache** — Voice cover images are cached in STranslate's plugin cache directory, with usage and cleanup in settings
 - **Manual ID validation** — Enter a voice ID manually and it validates and loads the voice info
 - **Emotion markup** — Control speech emotion via inline text markers (S2-Pro: `[laugh]`, S1: `(happy)`)
 - **Prosody control** — Speed (0.5x–2.0x), volume (±10 dB, 0.1 dB precision), loudness normalization
-- **Generation parameters** — Expressiveness, diversity, latency mode (Quality / Balanced / Low Latency), text normalization
+- **Generation parameters** — Expressiveness, diversity, latency mode (Quality / Balanced / Low Latency), text normalization, context conditioning
 - **Account info** — Real-time credit balance and API latency indicator
 - **Multilingual UI** — Simplified Chinese, Traditional Chinese, English, Japanese, Korean
 
@@ -74,10 +75,13 @@
 | Speed | `1.0` | 0.5–2.0 |
 | Volume | `0 dB` | -10 to +10 dB, 0.1 dB precision |
 | Loudness Normalization | On | Shown only when using S2-Pro model |
+| MP3 Bitrate | `192 kbps` | 64 / 128 / 192 kbps |
 | Expressiveness | `0.7` | 0–1, higher = more varied |
 | Diversity | `0.7` | 0–1 |
 | Latency Mode | Quality | Quality / Balanced / Low Latency |
 | Text Normalization | Off | Auto-convert numbers to words, etc. |
+| Context Conditioning | On | Use previous audio as context for voice consistency |
+| Cover Cache | Auto | Stores `cover_image` as `<voice ID>.jpg` in the plugin cache directory; clear it under "Misc" |
 
 </details>
 
@@ -107,8 +111,8 @@ I can't believe [gasp] you actually did it [laugh]
 # Clean build
 .\build.ps1 -Clean
 
-# Build and run regression tests
-.\build.ps1 -Test
+# Clean build and run regression tests
+.\build.ps1 -Clean -Test
 
 # Release build
 .\build.ps1 -Configuration Release

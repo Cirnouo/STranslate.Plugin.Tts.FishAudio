@@ -65,6 +65,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">テキスト正規化</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">数字・単位記号などを読み上げ可能なテキストに自動変換</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">キャッシュ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">キャッシュ使用量:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">キャッシュをクリア</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">サポート</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 公式サイト</sys:String>
 

@@ -29,7 +29,7 @@
     .\build.ps1 -CleanOnly
     .\build.ps1 -Configuration Debug
     .\build.ps1 -Clean -Configuration Debug
-    .\build.ps1 -Test
+    .\build.ps1 -Clean -Test
 #>
 param(
     [switch]$Clean,

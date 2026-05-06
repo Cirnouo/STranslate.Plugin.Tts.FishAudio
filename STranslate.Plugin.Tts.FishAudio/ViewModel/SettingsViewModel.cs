@@ -14,6 +14,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly IPluginContext _context;
     private readonly Settings _settings;
+    private readonly CoverImageCacheService _coverImageCache;
 
     private const long LatencyGoodMs = 300;
     private const long LatencyFairMs = 800;
@@ -190,6 +191,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string PageInput { get; set; }
 
+    // ── 缓存 ──
+
+    [ObservableProperty]
+    public partial string CoverImageCacheSizeText { get; set; }
+
     // ── 延迟显示 ──
 
     private DispatcherTimer? _latencyHideTimer;
@@ -206,6 +212,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         _context = context;
         _settings = settings;
+        _coverImageCache = new CoverImageCacheService(
+            context.MetaData?.PluginCacheDirectoryPath,
+            DownloadCoverImageAsync);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -228,6 +237,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         PageInput = "1";
         VoiceIdInput = "";
         IsSearchMode = true;
+        CoverImageCacheSizeText = _coverImageCache.GetFormattedCacheSize();
 
         ApplyCachedVoice(settings.CachedVoice);
 
@@ -485,16 +495,20 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             HasSearched = true;
             SearchResultCount = response.Total;
             SearchTotalPages = Math.Max(1, (int)Math.Ceiling(response.Total / (double)SearchPageSize));
-            SearchResults = response.Items.Select(m => new VoiceSearchItem
+            SearchResults = response.Items.Select(m =>
             {
-                Id = m.Id,
-                Title = m.Title,
-                Description = m.Description,
-                AuthorName = m.Author?.Nickname ?? "",
-                CoverUrl = FishAudioApi.BuildCoverUrl(m.CoverImage),
-                TaskCount = m.TaskCount,
-                SampleAudioUrl = m.Samples.FirstOrDefault()?.Audio,
-                CoverImage = m.CoverImage,
+                var item = new VoiceSearchItem
+                {
+                    Id = m.Id,
+                    Title = m.Title,
+                    Description = m.Description,
+                    AuthorName = m.Author?.Nickname ?? "",
+                    TaskCount = m.TaskCount,
+                    SampleAudioUrl = m.Samples.FirstOrDefault()?.Audio,
+                    CoverImage = m.CoverImage,
+                };
+                item.CoverUrl = ResolveCoverImageUrl(item.Id, item.CoverImage, 64, url => item.CoverUrl = url);
+                return item;
             }).ToList();
 
             SyncPreviewStateToResults();
@@ -778,12 +792,62 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         CachedVoiceId = VoiceId;
         CachedVoiceTitle = cached.Title;
         CachedVoiceDescription = cached.Description;
-        CachedVoiceCoverUrl = FishAudioApi.BuildCoverUrl(cached.CoverImage, 128);
+        var cachedVoiceId = CachedVoiceId;
+        CachedVoiceCoverUrl = ResolveCoverImageUrl(cachedVoiceId, cached.CoverImage, 128, url =>
+        {
+            if (CachedVoiceId == cachedVoiceId)
+                CachedVoiceCoverUrl = url;
+        });
         CachedVoiceAuthor = cached.AuthorName;
         CachedVoiceSampleUrl = cached.SampleAudioUrl;
         CachedVoiceTaskCount = cached.TaskCount;
 
         IsDisplayVoicePreviewing = CachedVoiceId == PreviewingVoiceId;
+    }
+
+    // ── 缓存管理 ──
+
+    [RelayCommand]
+    private void ClearCoverImageCache()
+    {
+        _coverImageCache.Clear();
+        RefreshCoverImageCacheSize();
+
+        foreach (var item in SearchResults)
+            item.CoverUrl = FishAudioApi.BuildCoverUrl(item.CoverImage);
+
+        if (!string.IsNullOrEmpty(CachedVoiceId) && _settings.CachedVoice is not null)
+            CachedVoiceCoverUrl = FishAudioApi.BuildCoverUrl(_settings.CachedVoice.CoverImage, 128);
+    }
+
+    private string ResolveCoverImageUrl(string voiceId, string coverImage, int displayWidth, Action<string>? onCacheReady = null)
+    {
+        var result = _coverImageCache.ResolveCoverImageUrl(voiceId, coverImage, displayWidth, localUrl =>
+        {
+            RunOnUiThread(() =>
+            {
+                onCacheReady?.Invoke(localUrl);
+                RefreshCoverImageCacheSize();
+            });
+        });
+        return result.DisplayUrl;
+    }
+
+    private Task<byte[]> DownloadCoverImageAsync(string url, CancellationToken ct) =>
+        _context.HttpService.GetAsBytesAsync(url, ct);
+
+    private void RefreshCoverImageCacheSize()
+    {
+        CoverImageCacheSizeText = _coverImageCache.GetFormattedCacheSize();
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+            action();
+        else
+            dispatcher.BeginInvoke(action);
     }
 
     // ── 属性变更 → 自动保存 ──
@@ -845,7 +909,8 @@ public partial class VoiceSearchItem : ObservableObject
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
     public string AuthorName { get; set; } = "";
-    public string CoverUrl { get; set; } = "";
+    [ObservableProperty]
+    public partial string CoverUrl { get; set; }
     public int TaskCount { get; set; }
     public string? SampleAudioUrl { get; set; }
     public string CoverImage { get; set; } = "";

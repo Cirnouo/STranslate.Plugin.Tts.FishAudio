@@ -54,4 +54,8 @@
         <PackageReference Include="STranslate.Plugin" Version="1.0.8" />
     </ItemGroup>
 
+    <ItemGroup>
+        <InternalsVisibleTo Include="STranslate.Plugin.Tts.FishAudio.Tests" />
+    </ItemGroup>
+
 </Project>

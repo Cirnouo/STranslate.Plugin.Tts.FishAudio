@@ -65,6 +65,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">Text Normalization</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Auto-convert numbers, unit symbols, etc. into readable text</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">Cache</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">Cache usage:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">Clear cache</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">Support</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio website</sys:String>
 

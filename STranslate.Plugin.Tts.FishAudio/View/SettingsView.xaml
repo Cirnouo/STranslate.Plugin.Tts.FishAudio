@@ -640,6 +640,23 @@
         <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold"
                    Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_Misc}" />
 
+        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Cache}">
+            <ui:SettingsCard.Description>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_CacheUsage}" />
+                    <TextBlock Margin="4,0,0,0" Text="{Binding CoverImageCacheSizeText}" />
+                </StackPanel>
+            </ui:SettingsCard.Description>
+            <ui:SettingsCard.HeaderIcon>
+                <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Image_24_Regular}" />
+            </ui:SettingsCard.HeaderIcon>
+            <Button Padding="6" Background="Transparent" BorderThickness="0"
+                    Command="{Binding ClearCoverImageCacheCommand}"
+                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}">
+                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+            </Button>
+        </ui:SettingsCard>
+
         <ui:SettingsCard
             Description="{DynamicResource STranslate_Plugin_Tts_FishAudio_Support_Description}"
             Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Support}">

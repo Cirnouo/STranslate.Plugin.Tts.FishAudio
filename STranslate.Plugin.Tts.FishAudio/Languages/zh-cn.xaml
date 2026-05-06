@@ -73,6 +73,9 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">自动将数字、单位符号等内容转换为可读的文本</sys:String>
 
     <!-- 其他 -->
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">缓存</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">缓存占用:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">清理缓存</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">支持</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 官网</sys:String>
 

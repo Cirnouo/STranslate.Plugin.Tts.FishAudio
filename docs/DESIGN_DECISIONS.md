@@ -209,3 +209,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** The repository already has a small executable regression test project under `tests/`, but the main build script did not expose a single command that ran both the package build and the regression checks in one pass.
 **Decision:** Add a `-Test` switch to `build.ps1`. When supplied, the script still performs the normal build/package/`.spkg` verification flow, then runs the regression test project with the same build configuration. This keeps the default build unchanged while giving contributors one documented command for build plus regression verification.
 **Affects:** `build.ps1`, `README.md`, localized README files, `CLAUDE.md`, `AGENTS.md`, `.claude/rules/completion-workflow.md`.
+
+---
+
+## DD-024: Cover image cache uses the plugin cache directory
+
+**Date:** 2026-05-07
+**Context:** Fish Audio search results return `cover_image` paths from a public CDN. Loading the same voices repeatedly re-fetches the same cover images, while STranslate exposes `PluginCacheDirectoryPath` for files that can be recreated and removed with the plugin cache.
+**Decision:** Cache cover images under `PluginCacheDirectoryPath\cover_images` as `<voiceId>.jpg`. The cache scans existing files into an in-memory voice ID index for fast lookup. On a hit, the UI uses the local file URI; on a miss, it shows the CDN URL immediately and creates the cache in the background. The settings page shows cache size with adaptive units and clears only the `cover_images` cache.
+**Affects:** `CoverImageCacheService`, `SettingsViewModel`, `SettingsView.xaml`, language resources, README files.
