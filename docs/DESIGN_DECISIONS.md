@@ -218,3 +218,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** Fish Audio search results return `cover_image` paths from a public CDN. Loading the same voices repeatedly re-fetches the same cover images, while STranslate exposes `PluginCacheDirectoryPath` for files that can be recreated and removed with the plugin cache.
 **Decision:** Cache cover images under `PluginCacheDirectoryPath\cover_images` as `<voiceId>.jpg`. The cache scans existing files into an in-memory voice ID index for fast lookup. On a hit, the UI uses the local file URI; on a miss, it shows the CDN URL immediately and creates the cache in the background. The settings page shows cache size with adaptive units and clears only the `cover_images` cache.
 **Affects:** `CoverImageCacheService`, `SettingsViewModel`, `SettingsView.xaml`, language resources, README files.
+
+---
+
+## DD-025: Cache cleanup is an explicit text action
+
+**Date:** 2026-05-07
+**Context:** The cache cleanup action was initially shown as a trash icon-only button. In practice, that reduced discoverability because users had to infer that the icon cleared the plugin's cover image cache.
+**Decision:** Show cache cleanup as a normal localized text button using `STranslate_Plugin_Tts_FishAudio_ClearCache` via `DynamicResource`. The command and cache behavior stay unchanged; only the visible affordance changes from icon-only to explicit text.
+**Affects:** `SettingsView.xaml`, settings view regression tests, README files.

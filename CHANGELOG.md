@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 新增本地 `.claude/rules/` 项目规则文件（本地配置，不纳入 Git 跟踪）
 - 新增 API Key 状态流行为测试，覆盖启动验证成功提示和编辑草稿不清空已应用状态
 - 新增声音封面图本地缓存：`cover_image` 以 `<声音 ID>.jpg` 保存到插件缓存目录 `cover_images`
-- 设置页"其他"新增缓存占用显示和"清理缓存"图标按钮
+- 设置页"其他"新增缓存占用显示和"清理缓存"按钮
 - 新增封面缓存行为测试，覆盖命中、未命中创建、清理和大小格式化
 
 ### Changed
@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 启动时已保存 API Key 验证成功后同样显示"已验证并应用"
 - API Key 输入框编辑或失焦不再清空已应用提示和账户余额；只有触发确认提交时才清空旧状态并使用提交内容重新验证
 - 搜索结果和已选声音封面图优先使用本地缓存，未命中时先显示 CDN 图片并在后台创建缓存
+- 清理缓存入口由垃圾桶图标按钮改为显式文本按钮，提高可发现性
 - README 更新为当前设置项和回归测试命令，推荐使用 `.\build.ps1 -Clean -Test`
 
 ## [1.0.2] - 2026-05-06

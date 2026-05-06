@@ -13,8 +13,9 @@ EditingDraftApiKeyDoesNotClearAppliedStatus();
 CoverImageCacheUsesExistingFile();
 await CoverImageCacheCreatesMissedFileAsync();
 CoverImageCacheClearsOnlyCoverImagesAndFormatsSize();
+ClearCacheButtonUsesLocalizedTextContent();
 
-Console.WriteLine("SettingsViewModel and cover image cache tests passed.");
+Console.WriteLine("SettingsViewModel, cover image cache, and settings view tests passed.");
 
 static void StartupValidationShowsAppliedStatus()
 {
@@ -148,9 +149,46 @@ void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
     }
 }
 
+static void ClearCacheButtonUsesLocalizedTextContent()
+{
+    var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "View", "SettingsView.xaml")));
+    const string commandBinding = "Command=\"{Binding ClearCoverImageCacheCommand}\"";
+    var commandIndex = xaml.IndexOf(commandBinding, StringComparison.Ordinal);
+    AssertEqual(true, commandIndex >= 0, "Settings view should bind a clear cover image cache button");
+
+    var buttonStart = xaml.LastIndexOf("<Button", commandIndex, StringComparison.Ordinal);
+    var buttonEnd = xaml.IndexOf("</Button>", commandIndex, StringComparison.Ordinal);
+    AssertEqual(true, buttonStart >= 0 && buttonEnd > commandIndex, "Clear cover image cache command should belong to a button element");
+
+    var buttonXaml = xaml.Substring(buttonStart, buttonEnd - buttonStart);
+    AssertEqual(
+        true,
+        buttonXaml.Contains("Content=\"{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}\"", StringComparison.Ordinal),
+        "Clear cache button should show explicit localized text");
+    AssertEqual(
+        false,
+        buttonXaml.Contains("FontFamily=\"Segoe MDL2 Assets\"", StringComparison.Ordinal),
+        "Clear cache button should not be icon-only");
+}
+
 static IPluginContext CreateContext()
 {
     return DispatchProxy.Create<IPluginContext, ContextProxy>();
+}
+
+static string FindRepoFile(string relativePath)
+{
+    var directory = new DirectoryInfo(AppContext.BaseDirectory);
+    while (directory is not null)
+    {
+        var candidate = Path.Combine(directory.FullName, relativePath);
+        if (File.Exists(candidate))
+            return candidate;
+
+        directory = directory.Parent;
+    }
+
+    throw new FileNotFoundException($"Could not locate repository file: {relativePath}");
 }
 
 static string CreateTempDirectory()

@@ -650,10 +650,10 @@
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Image_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
-            <Button Padding="6" Background="Transparent" BorderThickness="0"
+            <Button Padding="10,4"
                     Command="{Binding ClearCoverImageCacheCommand}"
+                    Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}"
                     ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}">
-                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
             </Button>
         </ui:SettingsCard>
 
