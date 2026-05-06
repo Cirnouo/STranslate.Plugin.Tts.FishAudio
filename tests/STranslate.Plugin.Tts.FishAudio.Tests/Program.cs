@@ -14,7 +14,10 @@ CoverImageCacheUsesExistingFile();
 await CoverImageCacheCreatesMissedFileAsync();
 CoverImageCacheClearsOnlyCoverImagesAndFormatsSize();
 CoverImageCacheSizeScansCoverImagesDirectory();
-ClearCacheButtonUsesLocalizedTextContent();
+await ClearCoverImageCacheCommandTracksBusyStateAsync();
+await ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync();
+await LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync();
+ClearCacheButtonUsesLocalizedTextAndBusySpinner();
 
 Console.WriteLine("SettingsViewModel, cover image cache, and settings view tests passed.");
 
@@ -176,7 +179,86 @@ void CoverImageCacheSizeScansCoverImagesDirectory()
     }
 }
 
-static void ClearCacheButtonUsesLocalizedTextContent()
+async Task ClearCoverImageCacheCommandTracksBusyStateAsync()
+{
+    var clearStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var viewModel = new SettingsViewModel(
+        CreateContext(),
+        new Settings(),
+        null,
+        () =>
+        {
+            clearStarted.SetResult();
+            return releaseClear.Task;
+        },
+        TimeSpan.FromSeconds(5));
+
+    var commandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
+    await clearStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(true, viewModel.IsClearingCoverImageCache, "Clear cache command should enter busy state while cleanup is running");
+    AssertEqual(false, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be disabled while cleanup is running");
+
+    releaseClear.SetResult();
+    await commandTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache command should leave busy state after cleanup completes");
+    AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be enabled after cleanup completes");
+}
+
+async Task ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync()
+{
+    var snackbar = new TestSnackbar();
+    var blockedClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var viewModel = new SettingsViewModel(
+        CreateContext(snackbar),
+        new Settings(),
+        null,
+        () => blockedClear.Task,
+        TimeSpan.FromMilliseconds(30));
+
+    await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache timeout should leave busy state");
+    AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache timeout should re-enable the command");
+    AssertEqual(
+        "STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout",
+        snackbar.LastError,
+        "Clear cache timeout should show a localized error message");
+
+    blockedClear.SetResult();
+    await Task.Delay(30);
+}
+
+async Task LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync()
+{
+    var clearCall = 0;
+    var firstClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var secondClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var viewModel = new SettingsViewModel(
+        CreateContext(),
+        new Settings(),
+        null,
+        () => ++clearCall == 1 ? firstClear.Task : secondClear.Task,
+        TimeSpan.FromMilliseconds(150));
+
+    await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(false, viewModel.IsClearingCoverImageCache, "First clear cache timeout should restore the button");
+
+    var secondCommandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
+    AssertEqual(true, viewModel.IsClearingCoverImageCache, "Second clear cache operation should enter busy state");
+
+    firstClear.SetResult();
+    await Task.Delay(30);
+    AssertEqual(true, viewModel.IsClearingCoverImageCache, "Late first clear task should not unlock the second operation");
+
+    secondClear.SetResult();
+    await secondCommandTask.WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(false, viewModel.IsClearingCoverImageCache, "Second clear cache operation should leave busy state after completion");
+}
+
+static void ClearCacheButtonUsesLocalizedTextAndBusySpinner()
 {
     var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "View", "SettingsView.xaml")));
     const string commandBinding = "Command=\"{Binding ClearCoverImageCacheCommand}\"";
@@ -190,17 +272,29 @@ static void ClearCacheButtonUsesLocalizedTextContent()
     var buttonXaml = xaml.Substring(buttonStart, buttonEnd - buttonStart);
     AssertEqual(
         true,
-        buttonXaml.Contains("Content=\"{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}\"", StringComparison.Ordinal),
+        buttonXaml.Contains("Text=\"{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}\"", StringComparison.Ordinal),
         "Clear cache button should show explicit localized text");
+    AssertEqual(
+        true,
+        buttonXaml.Contains("IsClearingCoverImageCache", StringComparison.Ordinal)
+        && buttonXaml.Contains("<DoubleAnimation", StringComparison.Ordinal)
+        && buttonXaml.Contains("RepeatBehavior=\"Forever\"", StringComparison.Ordinal),
+        "Clear cache button should show a rotating busy indicator while clearing");
+    AssertEqual(
+        false,
+        buttonXaml.Contains("Content=\"{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}\"", StringComparison.Ordinal),
+        "Clear cache button content should be composed so text and busy indicator can be shown together");
     AssertEqual(
         false,
         buttonXaml.Contains("FontFamily=\"Segoe MDL2 Assets\"", StringComparison.Ordinal),
         "Clear cache button should not be icon-only");
 }
 
-static IPluginContext CreateContext()
+static IPluginContext CreateContext(ISnackbar? snackbar = null)
 {
-    return DispatchProxy.Create<IPluginContext, ContextProxy>();
+    var context = DispatchProxy.Create<IPluginContext, ContextProxy>();
+    ((ContextProxy)(object)context).Snackbar = snackbar ?? new TestSnackbar();
+    return context;
 }
 
 static string FindRepoFile(string relativePath)
@@ -239,10 +333,15 @@ static void AssertNotNull(object? value, string message)
 
 public class ContextProxy : DispatchProxy
 {
+    public ISnackbar Snackbar { get; set; } = new TestSnackbar();
+
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
         if (targetMethod is null)
             return null;
+
+        if (targetMethod.Name == "get_Snackbar")
+            return Snackbar;
 
         if (targetMethod.Name == nameof(IPluginContext.GetTranslation))
             return args?[0]?.ToString() ?? "";
@@ -256,5 +355,31 @@ public class ContextProxy : DispatchProxy
             return null;
 
         return type.IsValueType ? Activator.CreateInstance(type) : null;
+    }
+}
+
+public sealed class TestSnackbar : ISnackbar
+{
+    public string? LastError { get; private set; }
+
+    public void Show(string message, Severity severity, int duration, string? actionLabel, Action? action)
+    {
+    }
+
+    public void ShowSuccess(string message, int duration)
+    {
+    }
+
+    public void ShowError(string message, int duration)
+    {
+        LastError = message;
+    }
+
+    public void ShowWarning(string message, int duration)
+    {
+    }
+
+    public void ShowInfo(string message, int duration)
+    {
     }
 }

@@ -236,3 +236,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** Cache cleanup is best-effort. If a `.jpg` file under `cover_images` is temporarily locked or recreated outside the in-memory index, showing the cached byte counter can report `0 B` while files still exist on disk.
 **Decision:** Calculate displayed cache usage by rescanning actual `cover_images/*.jpg` files and rebuilding the in-memory voice ID index on each size query. Cleanup still attempts to delete all files in the cache directory, then refreshes the index from disk so any remaining `.jpg` files keep contributing to the displayed usage.
 **Affects:** `CoverImageCacheService`, cover image cache regression tests, README files.
+
+---
+
+## DD-027: Cache cleanup has a busy state with timeout recovery
+
+**Date:** 2026-05-07
+**Context:** Clearing `cover_images` can take visible time when files are locked or storage is slow. Without a processing state, repeated clicks can queue duplicate cleanup work; with a naive disabled state, a stuck cleanup path could leave the button unusable.
+**Decision:** Run cache cleanup in the background, expose `IsClearingCoverImageCache`, and disable the command while active. The button shows a rotating circular busy indicator. If cleanup does not complete within 10 seconds, restore the button and show a localized retry message; late completion from the old cleanup may refresh cache size but must not unlock a newer cleanup operation.
+**Affects:** `SettingsViewModel`, `SettingsView.xaml`, language resources, settings view regression tests, README files.

@@ -33,7 +33,7 @@
 - **High-quality synthesis** — Powered by Fish Audio S2-Pro / S1 models, supporting 80+ languages
 - **Voice search** — Search, browse, preview and select voices directly in the settings panel with pagination
 - **Voice preview** — Preview buttons with progress ring, mid-playback switching, state synced by voice ID
-- **Cover cache** — Voice cover images are cached in STranslate's plugin cache directory; usage is calculated by scanning actual `.jpg` files in `cover_images`, with an explicit cleanup button in settings
+- **Cover cache** — Voice cover images are cached in STranslate's plugin cache directory; usage is calculated by scanning actual `.jpg` files in `cover_images`; cleanup shows a rotating busy indicator and prevents repeat clicks
 - **Manual ID validation** — Enter a voice ID manually and it validates and loads the voice info
 - **Emotion markup** — Control speech emotion via inline text markers (S2-Pro: `[laugh]`, S1: `(happy)`)
 - **Prosody control** — Speed (0.5x–2.0x), volume (±10 dB, 0.1 dB precision), loudness normalization
@@ -81,7 +81,7 @@
 | Latency Mode | Quality | Quality / Balanced / Low Latency |
 | Text Normalization | Off | Auto-convert numbers to words, etc. |
 | Context Conditioning | On | Use previous audio as context for voice consistency |
-| Cover Cache | Auto | Stores `cover_image` as `<voice ID>.jpg` in the plugin cache directory; usage is calculated from `cover_images/*.jpg`, and can be cleared with the "Clear cache" button under "Misc" |
+| Cover Cache | Auto | Stores `cover_image` as `<voice ID>.jpg` in the plugin cache directory; usage is calculated from `cover_images/*.jpg`, and can be cleared with the "Clear cache" button under "Misc" with a busy indicator while processing |
 
 </details>
 

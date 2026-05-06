@@ -652,8 +652,43 @@
             </ui:SettingsCard.HeaderIcon>
             <Button Padding="10,4"
                     Command="{Binding ClearCoverImageCacheCommand}"
-                    Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}"
                     ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Grid Width="14" Height="14" Margin="0,0,6,0"
+                          RenderTransformOrigin="0.5,0.5"
+                          Visibility="{Binding IsClearingCoverImageCache, Converter={StaticResource BtvConverter}}">
+                        <Grid.RenderTransform>
+                            <RotateTransform />
+                        </Grid.RenderTransform>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsClearingCoverImageCache}" Value="True">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="ClearCacheBusyStoryboard">
+                                                <Storyboard>
+                                                    <DoubleAnimation
+                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                        From="0" To="360" Duration="0:0:0.9"
+                                                        RepeatBehavior="Forever" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="ClearCacheBusyStoryboard" />
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Ellipse Fill="Transparent"
+                                 Stroke="{DynamicResource TextFillColorSecondaryBrush}"
+                                 StrokeDashArray="2 2"
+                                 StrokeDashCap="Round"
+                                 StrokeThickness="2" />
+                    </Grid>
+                    <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearCache}" />
+                </StackPanel>
             </Button>
         </ui:SettingsCard>
 

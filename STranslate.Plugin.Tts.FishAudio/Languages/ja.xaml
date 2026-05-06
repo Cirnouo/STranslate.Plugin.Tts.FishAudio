@@ -68,6 +68,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">キャッシュ</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">キャッシュ使用量:</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">キャッシュをクリア</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">キャッシュのクリアがタイムアウトしました。後でもう一度お試しください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">サポート</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 公式サイト</sys:String>
 

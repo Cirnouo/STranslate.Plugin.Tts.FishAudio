@@ -4,6 +4,7 @@ using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -15,9 +16,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private readonly IPluginContext _context;
     private readonly Settings _settings;
     private readonly CoverImageCacheService _coverImageCache;
+    private readonly Func<Task> _clearCoverImageCacheAsync;
+    private readonly TimeSpan _clearCoverImageCacheTimeout;
 
     private const long LatencyGoodMs = 300;
     private const long LatencyFairMs = 800;
+    private const int ClearCoverImageCacheTimeoutSeconds = 10;
 
     private static readonly SolidColorBrush BrushGood = new(Color.FromRgb(0x4C, 0xAF, 0x50));
     private static readonly SolidColorBrush BrushFair = new(Color.FromRgb(0xFF, 0x98, 0x00));
@@ -185,6 +189,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private MediaPlayer? _previewPlayer;
     private DispatcherTimer? _previewTimer;
     private VoiceSearchItem? _previewingSearchItem;
+    private long _clearCoverImageCacheOperationId;
 
     // ── 分页输入 ──
 
@@ -192,6 +197,10 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial string PageInput { get; set; }
 
     // ── 缓存 ──
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ClearCoverImageCacheCommand))]
+    public partial bool IsClearingCoverImageCache { get; set; }
 
     [ObservableProperty]
     public partial string CoverImageCacheSizeText { get; set; }
@@ -209,12 +218,24 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private const int SearchPageSize = 6;
 
     public SettingsViewModel(IPluginContext context, Settings settings, Task<(WalletCreditResponse?, long)>? pendingCreditTask)
+        : this(context, settings, pendingCreditTask, null, null)
+    {
+    }
+
+    internal SettingsViewModel(
+        IPluginContext context,
+        Settings settings,
+        Task<(WalletCreditResponse?, long)>? pendingCreditTask,
+        Func<Task>? clearCoverImageCacheAsync,
+        TimeSpan? clearCoverImageCacheTimeout)
     {
         _context = context;
         _settings = settings;
         _coverImageCache = new CoverImageCacheService(
             context.MetaData?.PluginCacheDirectoryPath,
             DownloadCoverImageAsync);
+        _clearCoverImageCacheAsync = clearCoverImageCacheAsync ?? (() => Task.Run(_coverImageCache.Clear));
+        _clearCoverImageCacheTimeout = clearCoverImageCacheTimeout ?? TimeSpan.FromSeconds(ClearCoverImageCacheTimeoutSeconds);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -807,10 +828,74 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     // ── 缓存管理 ──
 
-    [RelayCommand]
-    private void ClearCoverImageCache()
+    private bool CanClearCoverImageCache => !IsClearingCoverImageCache;
+
+    [RelayCommand(CanExecute = nameof(CanClearCoverImageCache))]
+    private async Task ClearCoverImageCacheAsync()
     {
-        _coverImageCache.Clear();
+        var operationId = Interlocked.Increment(ref _clearCoverImageCacheOperationId);
+        IsClearingCoverImageCache = true;
+
+        Task clearTask;
+        try
+        {
+            clearTask = _clearCoverImageCacheAsync();
+        }
+        catch (Exception ex)
+        {
+            CompleteCurrentCoverImageCacheClear(operationId);
+            _context.Snackbar.ShowError(ex.Message);
+            return;
+        }
+
+        var completedTask = await Task.WhenAny(clearTask, Task.Delay(_clearCoverImageCacheTimeout));
+        if (!ReferenceEquals(completedTask, clearTask))
+        {
+            if (IsCurrentCoverImageCacheClear(operationId))
+            {
+                RefreshCoverImageCacheSize();
+                IsClearingCoverImageCache = false;
+                _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout"));
+            }
+
+            _ = clearTask.ContinueWith(task =>
+            {
+                _ = task.Exception;
+                RunOnUiThread(RefreshCoverImageCacheSize);
+            }, TaskScheduler.Default);
+            return;
+        }
+
+        try
+        {
+            await clearTask;
+        }
+        catch (Exception ex)
+        {
+            if (IsCurrentCoverImageCacheClear(operationId))
+                _context.Snackbar.ShowError(ex.Message);
+        }
+        finally
+        {
+            if (IsCurrentCoverImageCacheClear(operationId))
+                CompleteCurrentCoverImageCacheClear(operationId);
+            else
+                RefreshCoverImageCacheSize();
+        }
+    }
+
+    private bool IsCurrentCoverImageCacheClear(long operationId) =>
+        Volatile.Read(ref _clearCoverImageCacheOperationId) == operationId;
+
+    private void CompleteCurrentCoverImageCacheClear(long operationId)
+    {
+        RefreshCoverImageCacheDisplay();
+        if (IsCurrentCoverImageCacheClear(operationId))
+            IsClearingCoverImageCache = false;
+    }
+
+    private void RefreshCoverImageCacheDisplay()
+    {
         RefreshCoverImageCacheSize();
 
         foreach (var item in SearchResults)
