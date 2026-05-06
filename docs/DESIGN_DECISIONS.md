@@ -227,3 +227,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** The cache cleanup action was initially shown as a trash icon-only button. In practice, that reduced discoverability because users had to infer that the icon cleared the plugin's cover image cache.
 **Decision:** Show cache cleanup as a normal localized text button using `STranslate_Plugin_Tts_FishAudio_ClearCache` via `DynamicResource`. The command and cache behavior stay unchanged; only the visible affordance changes from icon-only to explicit text.
 **Affects:** `SettingsView.xaml`, settings view regression tests, README files.
+
+---
+
+## DD-026: Cover image cache size is measured from disk
+
+**Date:** 2026-05-07
+**Context:** Cache cleanup is best-effort. If a `.jpg` file under `cover_images` is temporarily locked or recreated outside the in-memory index, showing the cached byte counter can report `0 B` while files still exist on disk.
+**Decision:** Calculate displayed cache usage by rescanning actual `cover_images/*.jpg` files and rebuilding the in-memory voice ID index on each size query. Cleanup still attempts to delete all files in the cache directory, then refreshes the index from disk so any remaining `.jpg` files keep contributing to the displayed usage.
+**Affects:** `CoverImageCacheService`, cover image cache regression tests, README files.

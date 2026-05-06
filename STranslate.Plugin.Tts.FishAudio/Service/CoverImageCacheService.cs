@@ -50,7 +50,10 @@ internal sealed class CoverImageCacheService
     public long GetCacheSizeBytes()
     {
         lock (_gate)
+        {
+            RebuildIndexLocked();
             return _cachedSizeBytes;
+        }
     }
 
     public string GetFormattedCacheSize() => FormatBytes(GetCacheSizeBytes());
@@ -75,6 +78,9 @@ internal sealed class CoverImageCacheService
         {
             TryDeleteFile(file);
         }
+
+        lock (_gate)
+            RebuildIndexLocked();
     }
 
     public static string FormatBytes(long bytes)
@@ -256,14 +262,14 @@ internal sealed class CoverImageCacheService
         _cachedVoiceIds.Clear();
         _cachedSizeBytes = 0;
 
-        foreach (var file in Directory.EnumerateFiles(_cacheDirectory, "*.jpg", SearchOption.TopDirectoryOnly))
+        foreach (var file in EnumerateCoverImageFiles())
         {
             var voiceId = Path.GetFileNameWithoutExtension(file);
             if (string.IsNullOrWhiteSpace(voiceId))
                 continue;
 
-            if (_cachedVoiceIds.Add(voiceId))
-                _cachedSizeBytes += new FileInfo(file).Length;
+            if (_cachedVoiceIds.Add(voiceId) && TryGetFileLength(file, out var length))
+                _cachedSizeBytes += length;
         }
     }
 
@@ -273,12 +279,42 @@ internal sealed class CoverImageCacheService
             return 0;
 
         long total = 0;
-        foreach (var file in Directory.EnumerateFiles(_cacheDirectory, "*.jpg", SearchOption.TopDirectoryOnly))
+        foreach (var file in EnumerateCoverImageFiles())
         {
-            total += new FileInfo(file).Length;
+            if (TryGetFileLength(file, out var length))
+                total += length;
         }
 
         return total;
+    }
+
+    private IEnumerable<string> EnumerateCoverImageFiles()
+    {
+        if (_cacheDirectory is null || !Directory.Exists(_cacheDirectory))
+            return [];
+
+        try
+        {
+            return Directory.GetFiles(_cacheDirectory, "*.jpg", SearchOption.TopDirectoryOnly);
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static bool TryGetFileLength(string path, out long length)
+    {
+        try
+        {
+            length = new FileInfo(path).Length;
+            return true;
+        }
+        catch
+        {
+            length = 0;
+            return false;
+        }
     }
 
     private static void TryDeleteFile(string path)

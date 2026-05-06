@@ -13,6 +13,7 @@ EditingDraftApiKeyDoesNotClearAppliedStatus();
 CoverImageCacheUsesExistingFile();
 await CoverImageCacheCreatesMissedFileAsync();
 CoverImageCacheClearsOnlyCoverImagesAndFormatsSize();
+CoverImageCacheSizeScansCoverImagesDirectory();
 ClearCacheButtonUsesLocalizedTextContent();
 
 Console.WriteLine("SettingsViewModel, cover image cache, and settings view tests passed.");
@@ -142,6 +143,32 @@ void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
         AssertEqual("1.5 KB", CoverImageCacheService.FormatBytes(1536), "Size formatter should keep one decimal when needed");
         AssertEqual("1 MB", CoverImageCacheService.FormatBytes(1024 * 1024), "Size formatter should use MB");
         AssertEqual("1 TB", CoverImageCacheService.FormatBytes(1024L * 1024 * 1024 * 1024), "Size formatter should use TB");
+    }
+    finally
+    {
+        Directory.Delete(root, recursive: true);
+    }
+}
+
+void CoverImageCacheSizeScansCoverImagesDirectory()
+{
+    var root = CreateTempDirectory();
+    try
+    {
+        const string voiceId = "44444444444444444444444444444444";
+        var cacheDir = Path.Combine(root, CoverImageCacheService.DirectoryName);
+        Directory.CreateDirectory(cacheDir);
+
+        var cache = new CoverImageCacheService(root, (_, _) => Task.FromResult(new byte[] { 9 }));
+        AssertEqual("0 B", cache.GetFormattedCacheSize(), "Empty cover image cache should report zero bytes");
+
+        var cachedFile = Path.Combine(cacheDir, $"{voiceId}.jpg");
+        File.WriteAllBytes(cachedFile, new byte[] { 1, 2, 3, 4, 5 });
+
+        AssertEqual("5 B", cache.GetFormattedCacheSize(), "Cache size should scan cover_images for files created outside the in-memory index");
+
+        File.Delete(cachedFile);
+        AssertEqual("0 B", cache.GetFormattedCacheSize(), "Cache size should scan cover_images after files are removed outside the in-memory index");
     }
     finally
     {
