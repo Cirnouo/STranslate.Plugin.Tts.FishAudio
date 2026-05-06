@@ -1,17 +1,15 @@
-name: Public Plugin
+name: Release
 
 permissions:
   contents: write
 
 on:
-  release:
-    types: [published]
   push:
     tags:
-      - "*"
+      - "v*"
 
 jobs:
-  build:
+  release:
     runs-on: windows-latest
 
     steps:
@@ -23,20 +21,47 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-      - name: Build
+      - name: Build and test
+        shell: pwsh
+        run: .\build.ps1 -Clean -Configuration Release -Test
+
+      - name: Extract release notes
         env:
-          REPO_NAME: ${{ github.event.repository.name }}
+          TAG_NAME: ${{ github.ref_name }}
         shell: pwsh
         run: |
-          Write-Host "Repo name from github.event.repository.name: $env:REPO_NAME"
-          dotnet build ".\$env:REPO_NAME\$env:REPO_NAME.csproj" --configuration Release --no-incremental --force
+          $version = $env:TAG_NAME.TrimStart('v')
+          $escapedVersion = [regex]::Escape($version)
+          $lines = Get-Content CHANGELOG.md
+
+          $start = -1
+          for ($i = 0; $i -lt $lines.Count; $i++) {
+              if ($lines[$i] -match "^## \[$escapedVersion\](?:\s|-|$)") {
+                  $start = $i
+                  break
+              }
+          }
+
+          if ($start -lt 0) {
+              throw "No CHANGELOG.md section found for tag '$env:TAG_NAME'."
+          }
+
+          $end = $lines.Count
+          for ($i = $start + 1; $i -lt $lines.Count; $i++) {
+              if ($lines[$i] -match '^## \[') {
+                  $end = $i
+                  break
+              }
+          }
+
+          $lines[$start..($end - 1)] | Set-Content -Path release-notes.md -Encoding utf8
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           tag_name: ${{ github.ref_name }}
-          body_path: CHANGELOG.md
+          name: Release ${{ github.ref_name }}
+          body_path: release-notes.md
           draft: false
           files: |
-            ./.artifacts/plugins/*.spkg
+            ./STranslate.Plugin.Tts.FishAudio.spkg

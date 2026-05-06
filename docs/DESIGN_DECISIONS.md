@@ -245,3 +245,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** Clearing `cover_images` can take visible time when files are locked or storage is slow. Without a processing state, repeated clicks can queue duplicate cleanup work; with a naive disabled state, a stuck cleanup path could leave the button unusable.
 **Decision:** Run cache cleanup in the background, expose `IsClearingCoverImageCache`, and disable the command while active. The button shows a rotating circular busy indicator. If cleanup does not complete within 10 seconds, restore the button and show a localized retry message; late completion from the old cleanup may refresh cache size but must not unlock a newer cleanup operation.
 **Affects:** `SettingsViewModel`, `SettingsView.xaml`, language resources, settings view regression tests, README files.
+
+---
+
+## DD-028: GitHub Actions publishes tagged releases from the matching changelog section
+
+**Date:** 2026-05-07
+**Context:** The repository needs a repeatable release path that builds and tests the Windows package, then publishes a GitHub Release with notes limited to the version being shipped.
+**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Clean -Configuration Release -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, and publish the root `.spkg` with `softprops/action-gh-release`.
+**Affects:** `.github/workflows/dotnet.yml`, `CHANGELOG.md`, `CLAUDE.md`, `AGENTS.md`.

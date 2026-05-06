@@ -3,7 +3,7 @@
   "Name": "Fish Audio TTS",
   "Description": "Fish Audio 语音合成插件，支持声音搜索与试听、S2-Pro/S1 模型、韵律控制和丰富的生成参数",
   "Author": "pwpy",
-  "Version": "1.0.2",
+  "Version": "1.0.3",
   "Website": "https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/",
   "ExecuteFileName": "STranslate.Plugin.Tts.FishAudio.dll",
   "IconPath": "icon.png"

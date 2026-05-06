@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-05-07
+
 ### Added
+- GitHub Actions 标签发布工作流：推送 `v*` tag 时自动执行 Release 构建、回归测试、提取对应版本的 Changelog 片段，并发布 GitHub Release
 - 所有带确认语义的设置页输入框支持聚焦时按 Enter 执行确认：API Key 确认、声音名称搜索、声音 ID 提交；分页输入保留 Enter 提交
 - API Key 验证新增内联等待/成功状态：等待响应中使用中性提示，验证成功显示"已验证并应用"
 - `build.ps1` 新增 `-Test` 选项，可在构建和打包后顺序执行回归测试
@@ -19,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 新增清理缓存命令状态测试，覆盖忙碌禁用、超时恢复和旧任务晚完成保护
 
 ### Changed
+- 版本号更新为 1.0.3，配套发布流程切换为 GitHub Actions 自动发布
+- Release notes 改为只使用 `CHANGELOG.md` 中对应版本区段，而不是整个文件
 - 账户余额显示在数值后追加美元符号
 - 声音搜索按钮改为仅显示放大镜图标，并通过悬停提示显示"搜索"
 - 声音名称搜索占位文本改为"输入声音名称"
