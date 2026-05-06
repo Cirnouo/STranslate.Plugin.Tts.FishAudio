@@ -18,7 +18,9 @@ target/
 .artifacts/
 *.spkg
 
+.claude/
 CLAUDE.md
 AGENTS.md
+
 .sisyphus
 .scratch/
