@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- GitHub Release 标题改为直接使用 tag 名称，与既有发布标题保持一致
+
 ## [1.0.3] - 2026-05-07
 
 ### Added

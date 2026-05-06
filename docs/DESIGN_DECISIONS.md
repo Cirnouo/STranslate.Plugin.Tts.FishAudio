@@ -252,5 +252,5 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-05-07
 **Context:** The repository needs a repeatable release path that builds and tests the Windows package, then publishes a GitHub Release with notes limited to the version being shipped.
-**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Clean -Configuration Release -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, and publish the root `.spkg` with `softprops/action-gh-release`.
+**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Clean -Configuration Release -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, publish the root `.spkg` with `softprops/action-gh-release`, and use the tag name itself as the GitHub Release title.
 **Affects:** `.github/workflows/dotnet.yml`, `CHANGELOG.md`, `CLAUDE.md`, `AGENTS.md`.
