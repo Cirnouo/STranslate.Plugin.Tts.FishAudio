@@ -107,6 +107,9 @@ Fish Audio 通过文本内联标记控制情绪，无需额外 API 参数：
 # 清理后构建
 .\build.ps1 -Clean
 
+# 构建并运行回归测试
+.\build.ps1 -Test
+
 # Release 构建
 .\build.ps1 -Configuration Release
 ```

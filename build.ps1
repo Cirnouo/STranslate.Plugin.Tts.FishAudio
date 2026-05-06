@@ -20,16 +20,21 @@
 .PARAMETER Configuration
     Build configuration. Default: Debug.
 
+.PARAMETER Test
+    Run the regression test project after building and verifying the package.
+
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -Clean
     .\build.ps1 -CleanOnly
     .\build.ps1 -Configuration Debug
     .\build.ps1 -Clean -Configuration Debug
+    .\build.ps1 -Test
 #>
 param(
     [switch]$Clean,
     [switch]$CleanOnly,
+    [switch]$Test,
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Debug'
 )
@@ -42,9 +47,17 @@ $RepoRoot    = $PSScriptRoot
 $ProjectName = 'STranslate.Plugin.Tts.FishAudio'
 $ProjectDir  = Join-Path $RepoRoot $ProjectName
 $CsprojPath  = Join-Path $ProjectDir "$ProjectName.csproj"
+$TestProjectName = 'STranslate.Plugin.Tts.FishAudio.Tests'
+$TestProjectDir  = Join-Path (Join-Path $RepoRoot 'tests') $TestProjectName
+$TestCsprojPath  = Join-Path $TestProjectDir "$TestProjectName.csproj"
 
 if (-not (Test-Path $CsprojPath)) {
     Write-Error "Project file not found: $CsprojPath"
+    exit 1
+}
+
+if ($Test -and -not (Test-Path $TestCsprojPath)) {
+    Write-Error "Test project file not found: $TestCsprojPath"
     exit 1
 }
 
@@ -67,6 +80,13 @@ if ($Clean -or $CleanOnly) {
         (Join-Path $ProjectDir 'obj'),
         (Join-Path $ProjectDir 'bin')
     )
+
+    if ($Test) {
+        $dirsToClean += @(
+            (Join-Path $TestProjectDir 'obj'),
+            (Join-Path $TestProjectDir 'bin')
+        )
+    }
 
     $resolvedOutput = Get-ResolvedOutputPath
     if ($resolvedOutput) {
@@ -169,4 +189,16 @@ try {
 }
 finally {
     $zip.Dispose()
+}
+
+if ($Test) {
+    Write-Host ''
+    Write-Host "[test] dotnet run --project $TestCsprojPath -c $Configuration" -ForegroundColor Cyan
+    dotnet run --project $TestCsprojPath -c $Configuration
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Tests failed with exit code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+
+    Write-Host '[test] Tests passed.' -ForegroundColor Green
 }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ### Added
 - 所有带确认语义的设置页输入框支持聚焦时按 Enter 执行确认：API Key 确认、声音名称搜索、声音 ID 提交；分页输入保留 Enter 提交
 - API Key 验证新增内联等待/成功状态：等待响应中使用中性提示，验证成功显示"已验证并应用"
+- `build.ps1` 新增 `-Test` 选项，可在构建和打包后顺序执行回归测试
 - 新增本地 `.claude/rules/` 项目规则文件（本地配置，不纳入 Git 跟踪）
 - 新增 API Key 状态流行为测试，覆盖启动验证成功提示和编辑草稿不清空已应用状态
 

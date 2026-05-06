@@ -107,6 +107,9 @@ Fish Audio はテキスト内のインラインマーカーで感情を制御し
 # クリーンビルド
 .\build.ps1 -Clean
 
+# ビルドして回帰テストを実行
+.\build.ps1 -Test
+
 # Release ビルド
 .\build.ps1 -Configuration Release
 ```

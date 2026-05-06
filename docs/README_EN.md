@@ -107,6 +107,9 @@ I can't believe [gasp] you actually did it [laugh]
 # Clean build
 .\build.ps1 -Clean
 
+# Build and run regression tests
+.\build.ps1 -Test
+
 # Release build
 .\build.ps1 -Configuration Release
 ```

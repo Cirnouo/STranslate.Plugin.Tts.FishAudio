@@ -200,3 +200,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** Users expect the currently applied API Key balance/status to remain visible while they edit a new draft in the input box. Clearing the balance on focus or blur makes the UI look like it lost the applied configuration even though no submit happened.
 **Decision:** API Key draft edits are inert until the user explicitly confirms. The applied balance/status remains visible while editing, and only the submit path clears the old applied state before revalidating the draft. This keeps the visible account info tied to the last applied key instead of the transient input.
 **Affects:** `SettingsViewModel.OnPropertyChanged(ApiKey)`, `ConfirmApiKeyAsync()`, `ApplyPendingCreditAsync()`, `FetchCreditAsync()`.
+
+---
+
+## DD-023: Build script includes an optional regression test step
+
+**Date:** 2026-05-07
+**Context:** The repository already has a small executable regression test project under `tests/`, but the main build script did not expose a single command that ran both the package build and the regression checks in one pass.
+**Decision:** Add a `-Test` switch to `build.ps1`. When supplied, the script still performs the normal build/package/`.spkg` verification flow, then runs the regression test project with the same build configuration. This keeps the default build unchanged while giving contributors one documented command for build plus regression verification.
+**Affects:** `build.ps1`, `README.md`, localized README files, `CLAUDE.md`, `AGENTS.md`, `.claude/rules/completion-workflow.md`.

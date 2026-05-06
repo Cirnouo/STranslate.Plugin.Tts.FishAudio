@@ -107,6 +107,9 @@ Fish Audio 透過文字內聯標記控制情緒，無需額外 API 參數：
 # 清理後建置
 .\build.ps1 -Clean
 
+# 建置並執行回歸測試
+.\build.ps1 -Test
+
 # Release 建置
 .\build.ps1 -Configuration Release
 ```
