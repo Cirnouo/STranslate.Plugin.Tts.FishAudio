@@ -30,35 +30,35 @@
 
 ## Feature Overview
 
-- **High-quality synthesis**: Supports Fish Audio S2-Pro / S1 synthesis models and 80+ languages.
-- **Voice selection**: Search by name or enter a voice ID directly; supports preview, selection, clearing, and paginated browsing.
-- **Synthesis controls**: Supports speed, volume, loudness normalization, MP3 bitrate, expressiveness, diversity, latency mode, text normalization, and context conditioning.
-- **Emotion markup**: Add Fish Audio emotion markers in text, such as `[laugh]` for S2-Pro or `(happy)` for S1.
-- **Multilingual UI**: Simplified Chinese, Traditional Chinese, English, Japanese, Korean.
+- **High-quality synthesis**: Supports Fish Audio S2-Pro / S1 synthesis models and 80+ languages
+- **Voice selection**: Search by name or enter a voice ID directly; supports preview, selection, clearing, and paginated browsing
+- **Synthesis controls**: Supports speed, volume, loudness normalization, MP3 bitrate, expressiveness, diversity, latency mode, text normalization, and context conditioning
+- **Emotion markup**: Add Fish Audio emotion markers in text, such as `[laugh]` for S2-Pro or `(happy)` for S1
+- **Localization**: Simplified Chinese, Traditional Chinese, English, Japanese, Korean
 
 ## Quick Start
 
 ### Installation
 
-Installing from the STranslate plugin marketplace is recommended.
+Installing from the STranslate plugin marketplace is recommended
 
 **STranslate Plugin Marketplace**
 
-1. Open STranslate.
-2. Go to **Settings -> Plugins -> Marketplace**.
-3. Search for or find **Fish Audio TTS**, then download and install it.
+1. Open STranslate
+2. Go to **Settings -> Plugins -> Marketplace**
+3. Search for or find **Fish Audio TTS**, then download and install it
 
 **Manual install**
 
-1. Open the [Releases](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/releases) page.
-2. Download the latest `STranslate.Plugin.Tts.FishAudio.spkg`.
-3. In STranslate, go to **Settings -> Plugins -> Install**.
-4. Select the downloaded `.spkg` file.
+1. Open the [Releases](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/releases) page
+2. Download the latest `STranslate.Plugin.Tts.FishAudio.spkg`
+3. In STranslate, go to **Settings -> Plugins -> Install**
+4. Select the downloaded `.spkg` file
 
 ### Get an API Key
 
-1. Sign in to [Fish Audio API Keys](https://fish.audio/app/api-keys).
-2. Create or copy an API Key.
+1. Sign in to [Fish Audio API Keys](https://fish.audio/app/api-keys)
+2. Create or copy an API Key
 
 <!-- Screenshot: images/fish-audio-api-keys.png
      Content: Fish Audio API Keys page, highlighting where to create or copy an API Key. Hide any real API Key. -->
@@ -66,13 +66,13 @@ Installing from the STranslate plugin marketplace is recommended.
   <img src="images/fish-audio-api-keys.png" alt="Fish Audio API Keys page" width="700" />
 </div>
 
-3. Paste it into the plugin settings **API Key** input.
-4. Click the confirm button, or press `Enter` while the input is focused.
-5. When **Verified and applied** appears and the account balance is shown, the current API Key is being used by the plugin.
+3. Paste it into the plugin settings **API Key** input
+4. Click the confirm button, or press `Enter` while the input is focused
+5. When **Verified and applied** appears and the account balance is shown, the current API Key is being used by the plugin
 
 ### Buy API Credits
 
-Fish Audio TTS consumes Fish Audio API credits. You can purchase or top up credits at [Console > Developer > Billing > Balance > Purchase Credits](https://fish.audio/app/developers/billing/).
+Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Console > Developer > Billing > Balance > Purchase Credits](https://fish.audio/app/developers/billing/)
 
 <!-- Screenshot: images/fish-audio-billing.png
      Content: Fish Audio Billing/Balance/Purchase Credits entry, highlighting where to buy or top up credits. -->
@@ -81,30 +81,30 @@ Fish Audio TTS consumes Fish Audio API credits. You can purchase or top up credi
 </div>
 
 > [!TIP]
-> Register with a `.edu` email and complete student verification to receive 5 USD in credits. Entry: [Fish Audio Students](https://fish.audio/students/).
+> Register with a `.edu` email and complete student verification to receive 5 USD in credits. Entry: [Fish Audio Students](https://fish.audio/students/)
 
 ### Set a Voice
 
-The voice determines the timbre used for the final reading. The plugin offers **Search** and **By ID**.
+The voice determines the timbre used for the final reading. The plugin offers **Search** and **By ID**
 
 > [!NOTE]
-> The plugin can be used without setting a voice. In that case it does not send `reference_id` to Fish Audio, and Fish Audio uses a random voice. Random voices still consume API credits.
+> The plugin can be used without setting a voice. In that case it does not send `reference_id` to Fish Audio, and Fish Audio uses a random voice. Random voices still consume API credits
 
 **Search by Name**
 
-1. Switch to the **Search** tab in the voice section.
-2. Enter a voice name in the input.
-3. Click the search icon, or press `Enter` while the input is focused.
-4. Preview voices in the results, then click **Select** on the one you want.
-5. If there are many results, use the pagination control to switch pages.
+1. Switch to the **Search** tab in the voice section
+2. Enter a voice name in the input
+3. Click the search icon, or press `Enter` while the input is focused
+4. Preview voices in the results, then click **Select** on the one you want
+5. If there are many results, use the pagination control to switch pages
 
 **By Voice ID**
 
-1. Open the target voice detail page on Fish Audio.
-2. Copy the voice ID from the expanded menu.
-3. Return to the plugin settings page and switch to the **By ID** tab.
-4. Paste the voice ID, then click the confirm button or press `Enter` while the input is focused.
-5. The plugin validates the ID and loads the voice information.
+1. Open the target voice detail page on Fish Audio
+2. Copy the voice ID from the expanded menu
+3. Return to the plugin settings page and switch to the **By ID** tab
+4. Paste the voice ID, then click the confirm button or press `Enter` while the input is focused
+5. The plugin validates the ID and loads the voice information
 
 <!-- Screenshot: images/fish-audio-voice-id.png
      Content: Fish Audio voice detail page, highlighting where to copy the voice ID. Do not expose account information. -->
@@ -136,7 +136,7 @@ The voice determines the timbre used for the final reading. The plugin offers **
 
 ## Emotion Markup
 
-Fish Audio controls emotion through inline markers in the text, with no extra API parameters required.
+Fish Audio controls emotion through inline markers in the text, with no extra API parameters required
 
 **S2-Pro** (recommended) uses square brackets and natural-language descriptions. It can appear anywhere in the text:
 
@@ -150,30 +150,30 @@ I can't believe [gasp] you actually did it [laugh]
 
 ```text
 (happy) The weather is great today!
-(sad)(whispering) I miss you.
+(sad)(whispering) I miss you
 ```
 
 ## FAQ
 
 **Q: Does it charge if I don't set a voice?**
 
-A: Yes. When no voice is set, Fish Audio generates audio with a random voice and still consumes API credits.
+A: Yes. When no voice is set, Fish Audio generates audio with a random voice and still consumes API credits
 
 **Q: Does preview playback charge credits?**
 
-A: No. Preview playback uses the voice's public audio and does not call the TTS API, so it also works without a verified API Key.
+A: No. Preview playback uses the voice's public audio and does not call the TTS API, so it also works without a verified API Key
 
 **Q: Why doesn't the balance change immediately after playback?**
 
-A: Fish Audio's balance deduction may be delayed. Refreshing the balance immediately after playback may briefly show the old balance.
+A: Fish Audio's balance deduction may be delayed. Refreshing the balance immediately after playback may briefly show the old balance
 
 **Q: Do I need to configure an API Key before voice search?**
 
-A: Voice search, voice lookup by ID, and preview playback can all be used without a verified API Key. Real synthesis still requires a valid API Key and available balance.
+A: Voice search, voice lookup by ID, and preview playback can all be used without a verified API Key. Real synthesis still requires a valid API Key and available balance
 
 **Q: Will clearing the cache affect the selected voice?**
 
-A: No. Clearing the cache only removes voice cover image cache files. The voice ID and selected voice information remain intact, and the cover is reloaded the next time it is shown.
+A: No. Clearing the cache only removes voice cover image cache files. The voice ID and selected voice information remain intact, and the cover is reloaded the next time it is shown
 
 ## Build
 
@@ -191,7 +191,7 @@ A: No. Clearing the cache only removes voice cover image cache files. The voice 
 .\build.ps1 -Configuration Release
 ```
 
-Build output is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root.
+Build output is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root
 
 <details>
 <summary><b>Environment Requirements</b></summary>

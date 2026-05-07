@@ -35,7 +35,7 @@
 - **声音选择**: 可通过名称搜索声音，也可直接输入声音 ID；支持试听、选择、清空和分页浏览
 - **合成控制**: 支持语速、音量、响度归一化、MP3 比特率、表现力、多样性、延迟模式、文本规范化和上下文关联
 - **情绪标记**: 可在文本中加入 Fish Audio 情绪标记，例如 S2-Pro 的 `[laugh]` 或 S1 的 `(happy)`
-- **多语言 UI**: 简体中文、繁體中文、English、日本語、한국어
+- **本地化**: 简体中文、繁體中文、English、日本語、한국어
 
 ## 快速开始
 
@@ -73,7 +73,7 @@
 
 ### 购买 API 余额
 
-Fish Audio TTS 会消耗 Fish Audio API 余额。可以在 [控制台 > 开发者 > 账单 > 余额 > 购买积分](https://fish.audio/app/developers/billing/) 购买或充值
+Fish Audio TTS 会消耗 Fish Audio API 余额。可以在 [控制台 > 开发者 > 账单 > 余额 > 购买积分](https://fish.audio/app/developers/billing/) 购买
 
 <!-- 截图: docs/images/fish-audio-billing.png
      内容: Fish Audio Billing/Balance/Purchase Credits 入口，突出余额购买或充值位置。 -->
