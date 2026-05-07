@@ -254,3 +254,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** The repository needs a repeatable release path that builds and tests the Windows package, then publishes a GitHub Release with notes limited to the version being shipped.
 **Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Clean -Configuration Release -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, publish the root `.spkg` with `softprops/action-gh-release`, and use the tag name itself as the GitHub Release title.
 **Affects:** `.github/workflows/dotnet.yml`, `CHANGELOG.md`, `CLAUDE.md`, `AGENTS.md`.
+
+---
+
+## DD-029: README documentation follows the user setup workflow
+
+**Date:** 2026-05-07
+**Context:** The previous README files were concise but did not guide new users through installation, API Key setup, credit purchase, voice selection, and per-setting behavior in the order they encounter the plugin.
+**Decision:** Structure all user-facing README files around Quick Start, Configuration, Emotion Markup, FAQ, and Build sections. The Simplified Chinese README is the source structure, and the four localized README files mirror it. All README files share the same screenshots stored under `docs/images`; root README uses `docs/images/...`, while localized README files under `docs/` use `images/...`.
+**Affects:** `README.md`, `docs/README_*.md`, `docs/images`.

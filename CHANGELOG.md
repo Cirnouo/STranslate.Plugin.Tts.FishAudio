@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - GitHub Release 标题改为直接使用 tag 名称，与既有发布标题保持一致
+- README 重构为更细致的快速开始、配置说明和常见问题，并同步更新 4 个翻译版本
 
 ## [1.0.3] - 2026-05-07
 
