@@ -15,7 +15,6 @@
     <img alt="Downloads" src="https://img.shields.io/github/downloads/Cirnouo/STranslate.Plugin.Tts.FishAudio/total?style=flat-square" />
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
-    <a href="https://deepwiki.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
   </p>
 
   <p>
