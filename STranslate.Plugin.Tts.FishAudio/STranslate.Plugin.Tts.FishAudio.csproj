@@ -45,13 +45,14 @@
         <Content Include="icon.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Resource Include="s2-pro-free-promo.webp" />
         <Content Include="plugin.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="STranslate.Plugin" Version="1.0.8" />
+        <PackageReference Include="STranslate.Plugin" Version="1.0.12" />
     </ItemGroup>
 
     <ItemGroup>

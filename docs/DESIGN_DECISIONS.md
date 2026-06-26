@@ -7,6 +7,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-001: Silent credit refresh on startup
 
+**Status:** Superseded by DD-030 for current API Key behavior.
 **Date:** 2026-04-27
 **Context:** When the plugin initializes, it validates the saved API Key by calling `GetCreditAsync`. Showing error UI during startup would surprise users who haven't interacted with the plugin yet.
 **Decision:** The startup credit check does not show error snackbars or latency text, but when it succeeds it does surface the applied state: credit balance plus the localized "verified and applied" status. If the key is invalid, the user discovers it when they interact with a feature that requires it.
@@ -25,6 +26,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-003: API Key persistence — confirm-button-only
 
+**Status:** Superseded by DD-030.
 **Date:** 2026-05-06
 **Context:** If an incorrect API Key is persisted, the plugin will attempt to use it on next launch and fail silently. Users might not realize their key is bad.
 **Decision:** API Key is persisted exclusively through the confirm button click. On success → write key to config and save. On any failure (empty, bad format, API rejection) → write empty string to config and save. `Dispose` does not touch `_settings.ApiKey`. If the user edits the key but never clicks confirm, the previously persisted value (from the last successful confirm, or empty) is retained.
@@ -36,16 +38,16 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-05-06
 **Context:** Fish Audio's model list (`GET /model`) and model detail (`GET /model/{id}`) endpoints do not require a valid API Key. Users should be able to browse and preview voices even before entering their key.
-**Decision:** When `IsApiKeyValid` is false, pass `"dummy"` as the Authorization bearer token for search and get-model calls. When `IsApiKeyValid` is true, pass the user's real key (for potentially better rate limits). Remove all API Key gates from search and by-ID flows.
+**Decision:** Pass `"dummy"` as the Authorization bearer token for search and get-model calls. These endpoints do not require a valid API Key, and this avoids coupling browsing behavior to TTS/credit preflight state.
 **Affects:** `SettingsViewModel.EffectiveApiKeyForSearch`, `ExecuteSearchAsync()`, `SubmitVoiceIdAsync()`.
 
 ---
 
-## DD-005: Auto-save on property change for all settings except API Key
+## DD-005: Auto-save on property change
 
-**Date:** 2026-04-27 (extended 2026-05-06)
-**Context:** Users expect slider and toggle changes to persist immediately without a "Save" button. However, API Key is special — it goes through a validation lifecycle and should only be saved when valid (see DD-003).
-**Decision:** `OnPropertyChanged` writes every settings property to `_settings` and calls `SaveSettingStorage` immediately — except for `ApiKey`, which triggers validation instead.
+**Date:** 2026-04-27 (extended 2026-06-26)
+**Context:** Users expect slider, toggle, and text setting changes to persist immediately without a "Save" button. API Key no longer has a separate confirm/apply lifecycle (see DD-030).
+**Decision:** `OnPropertyChanged` writes settings properties, including `ApiKey`, to `_settings` and calls `SaveSettingStorage` immediately.
 **Affects:** `SettingsViewModel.OnPropertyChanged()`.
 
 ---
@@ -106,6 +108,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-012: API Key commit on validation success
 
+**Status:** Superseded by DD-030.
 **Date:** 2026-05-06
 **Context:** `OnPropertyChanged` no longer auto-saves `ApiKey` to `_settings` (see DD-005). But `Main.PlayAudioAsync` checks `Settings.ApiKey` (the `_settings` object) to guard TTS calls. Without committing the key on validation, `_settings.ApiKey` remains empty/stale.
 **Decision:** `ConfirmApiKeyAsync` is the sole writer of `_settings.ApiKey`. On valid result → write key and save. On invalid result → write empty and save. `Dispose` does not touch `_settings.ApiKey` (see DD-003).
@@ -115,6 +118,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-013: API Key validation via explicit confirm button, simplified state
 
+**Status:** Superseded by DD-030.
 **Date:** 2026-05-06
 **Context:** Auto-validation on text change caused spurious API calls due to WPF LostFocus behavior. The original 5-state `ApiKeyState` enum was only consumed as a binary "valid vs. not valid" distinction — the intermediate states were transient error messages.
 **Decision:** Replace `ApiKeyState` enum with a single `bool IsApiKeyValid` and a transient `bool IsValidatingApiKey` (for button disable). Validation only runs when the user clicks the confirm button (checkmark icon). Editing the API Key draft does not clear the applied status by itself; the confirm action clears the old applied balance/status and then revalidates the submitted draft. Format errors are shown inline via `ApiKeyStatusText`; API errors are shown via snackbar (same as refresh button). The confirm button does not display latency — only the refresh button does.
@@ -169,15 +173,16 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-019: Enter key commits focused settings inputs
 
-**Date:** 2026-05-06
+**Date:** 2026-05-06 (extended 2026-06-26)
 **Context:** The settings page uses several input boxes with adjacent confirm buttons. Users expect Enter to execute the same action while focus remains in the input.
-**Decision:** Add Enter `KeyBinding`s to every input with a confirm action: API Key runs `ConfirmApiKeyCommand`, voice search runs `SearchVoicesCommand`, voice ID runs `SubmitVoiceIdCommand`, and page input keeps `CommitPageInputCommand`.
+**Decision:** Add Enter `KeyBinding`s to inputs that still have explicit actions: voice search runs `SearchVoicesCommand`, voice ID runs `SubmitVoiceIdCommand`, and page input keeps `CommitPageInputCommand`. API Key no longer has a confirm/apply command, so Enter does not trigger validation there.
 **Affects:** `SettingsView.xaml` input bindings.
 
 ---
 
 ## DD-020: API Key validation status is an inline state, not raw text
 
+**Status:** Superseded by DD-030.
 **Date:** 2026-05-06
 **Context:** Showing a red `"..."` while waiting for the credit API response looked like an error and did not explain what was happening. After success, the balance changed, but the success state was not explicit enough.
 **Decision:** Track API Key validation display state separately from the error message. Waiting uses a neutral inline "waiting for response" message, success uses a green checkmark and localized "verified and applied" message, and format/empty errors remain red inline text. Persistent waiting/success text comes from XAML `DynamicResource`; transient error text may still come from `GetTranslation()`. Startup validation success uses the same status so users can confirm the applied key loaded from config.
@@ -196,6 +201,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-022: Draft API Key edits do not clear applied account state
 
+**Status:** Superseded by DD-030.
 **Date:** 2026-05-07
 **Context:** Users expect the currently applied API Key balance/status to remain visible while they edit a new draft in the input box. Clearing the balance on focus or blur makes the UI look like it lost the applied configuration even though no submit happened.
 **Decision:** API Key draft edits are inert until the user explicitly confirms. The applied balance/status remains visible while editing, and only the submit path clears the old applied state before revalidating the draft. This keeps the visible account info tied to the last applied key instead of the transient input.
@@ -263,3 +269,31 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** The previous README files were concise but did not guide new users through installation, API Key setup, credit purchase, voice selection, and per-setting behavior in the order they encounter the plugin.
 **Decision:** Structure all user-facing README files around Quick Start, Configuration, Emotion Markup, FAQ, and Build sections. The Simplified Chinese README is the source structure, and the four localized README files mirror it. All README files share the same screenshots stored under `docs/images`; root README uses `docs/images/...`, while localized README files under `docs/` use `images/...`.
 **Affects:** `README.md`, `docs/README_*.md`, `docs/images`.
+
+---
+
+## DD-030: API Key saves immediately with request-time preflight
+
+**Date:** 2026-06-26
+**Context:** The explicit API Key confirmation flow added latency and persistent validation state that users had to understand before TTS would work. The current requirement is to roll that behavior back while still avoiding obvious failed requests and preserving clear failure messages.
+**Decision:** API Key input changes write to settings immediately and are saved like other settings. Startup does not validate credit and does not set any applied/verified UI state. TTS, manual credit refresh, and silent post-TTS credit refresh all use the same preflight: local network availability, API Key empty check, and strict 32-lowercase-hex format check. Only when preflight passes does the plugin call Fish Audio. Request timeout failures show a localized timeout message for user-triggered actions; silent refresh failures only log. TTS and credit refresh lock the API Key input while requests are active, using a counter so overlapping operations cannot unlock early. Voice search and by-ID lookup continue to use the `"dummy"` token because those endpoints do not require a valid API Key.
+**Residual Risk:** API Keys remain stored in the existing plaintext settings storage for this batch. Encrypting or migrating stored credentials is accepted as a future hardening task, not part of this behavior fix.
+**Affects:** `FishAudioRuntime`, `Main.Init()`, `Main.PlayAudioAsync()`, `SettingsViewModel.OnPropertyChanged()`, `SettingsViewModel.RefreshCreditAsync()`, `SettingsView.xaml`, language resources.
+
+---
+
+## DD-031: Temporary s2.1-pro-free model policy and startup normalization
+
+**Date:** 2026-06-26
+**Context:** Fish Audio introduced `s2.1-pro-free` as a temporary free API model alongside `s2.1-pro`. The free model must disappear automatically after the promotional period, and old local settings can contain stale or out-of-range values after upgrades.
+**Decision:** Centralize synthesis model policy in `FishAudioRuntime`. Before `2026-07-24T00:00:00Z`, available models are `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, and `s1`, with `s2.1-pro-free` as the default. At and after the cutoff, hide `s2.1-pro-free` and use `s2.1-pro` as the default. Startup first normalizes settings using local UTC, then runs a bounded online UTC check through TimeAPI.io; if that fails, local UTC remains authoritative for that launch. Startup normalization repairs structured values with clear defaults, including model, latency, MP3 bitrate, and numeric ranges, but does not clear API Key or Voice ID text. `normalize_loudness` is sent only for `s2.1-pro-free`, `s2.1-pro`, and `s2-pro`; for `s1`, the setting remains visible but disabled and the request omits the parameter. The promo card uses the local `s2-pro-free-promo.webp` resource with a fixed 1024:540 placeholder so loading does not shift the settings layout. Clicking the card selects the free model and scrolls to the synthesis model card without dismissing the promo; only the close button persists dismissal. Startup also refreshes selected voice metadata with the dummy token when `VoiceId` is present and valid, preserving cached voice data on failure.
+**Affects:** `FishAudioRuntime`, `Main.Init()`, `FishAudioApi.PostTtsAsync()`, `Settings`, `SettingsViewModel`, `SettingsView.xaml`, language resources, README files.
+
+---
+
+## DD-032: Context conditioning copy clarifies request-local scope
+
+**Date:** 2026-06-26
+**Context:** The previous user-facing description said context conditioning used "previous audio" or "previous chunks", which could be read as previously generated, separate audio files instead of chunks inside the current synthesis request.
+**Decision:** Keep the `condition_on_previous_chunks` behavior unchanged, but update UI and README copy to explicitly say it uses only earlier chunks from the same synthesis audio and does not reference previously generated audio. API endpoint docs use the same request-local wording.
+**Affects:** language resources, `README.md`, localized README files, `docs/api-tts.md`.

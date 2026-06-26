@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace STranslate.Plugin.Tts.FishAudio.View;
 
@@ -45,5 +47,36 @@ public partial class SettingsView : UserControl
     {
         if (DataContext is ViewModel.SettingsViewModel vm && vm.CommitPageInputCommand.CanExecute(null))
             vm.CommitPageInputCommand.Execute(null);
+    }
+
+    private void S21ProFreePromoCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && HasInteractiveAncestor(source))
+            return;
+
+        if (DataContext is not ViewModel.SettingsViewModel vm || !vm.UseS21ProFreePromoCommand.CanExecute(null))
+            return;
+
+        vm.UseS21ProFreePromoCommand.Execute(null);
+        SynthesisModelCard.BringIntoView();
+        FlashSynthesisModelCard();
+    }
+
+    private void FlashSynthesisModelCard()
+    {
+        var originalBrush = SynthesisModelCard.Background as SolidColorBrush;
+        var flashBrush = new SolidColorBrush(Color.FromArgb(0x45, 0x4C, 0xAF, 0x50));
+        SynthesisModelCard.Background = flashBrush;
+
+        var animation = new ColorAnimation
+        {
+            From = flashBrush.Color,
+            To = originalBrush?.Color ?? Colors.Transparent,
+            Duration = TimeSpan.FromMilliseconds(900),
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+        };
+
+        animation.Completed += (_, _) => SynthesisModelCard.Background = originalBrush;
+        flashBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
     }
 }

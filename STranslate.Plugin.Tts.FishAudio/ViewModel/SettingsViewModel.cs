@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
@@ -33,17 +32,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial string ApiKey { get; set; }
 
     [ObservableProperty]
-    public partial bool IsApiKeyValid { get; set; }
+    [NotifyCanExecuteChangedFor(nameof(PasteApiKeyCommand))]
+    [NotifyPropertyChangedFor(nameof(IsApiKeyInputEnabled))]
+    public partial bool IsApiKeyInputLocked { get; set; }
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmApiKeyCommand))]
-    public partial bool IsValidatingApiKey { get; set; }
-
-    [ObservableProperty]
-    public partial string? ApiKeyStatusText { get; set; }
-
-    [ObservableProperty]
-    public partial ApiKeyStatusKind ApiKeyStatusKind { get; set; }
+    public bool IsApiKeyInputEnabled => !IsApiKeyInputLocked;
 
     // ── 账户信息 ──
 
@@ -66,8 +59,18 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial string VoiceId { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowNormalizeLoudness))]
+    [NotifyPropertyChangedFor(nameof(IsNormalizeLoudnessEnabled))]
     public partial string SelectedModel { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowS21ProFreePromo))]
+    public partial bool IsS21ProFreeAvailable { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowS21ProFreePromo))]
+    public partial bool IsS21ProFreePromoDismissed { get; set; }
+
+    public bool ShowS21ProFreePromo => IsS21ProFreeAvailable && !IsS21ProFreePromoDismissed;
 
     // ── 已选声音展示 ──
 
@@ -103,7 +106,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool NormalizeLoudness { get; set; }
 
-    public bool ShowNormalizeLoudness => SelectedModel == "s2-pro";
+    public bool IsNormalizeLoudnessEnabled => FishAudioRuntime.SupportsNormalizeLoudness(SelectedModel);
 
     // ── 音频输出 ──
 
@@ -190,6 +193,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private DispatcherTimer? _previewTimer;
     private VoiceSearchItem? _previewingSearchItem;
     private long _clearCoverImageCacheOperationId;
+    private int _apiKeyOperationLockCount;
 
     // ── 分页输入 ──
 
@@ -211,14 +215,18 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     // ── 静态选项 ──
 
-    public static IReadOnlyList<string> Models { get; } = ["s2-pro", "s1"];
-    public static IReadOnlyList<string> Latencies { get; } = ["normal", "balanced", "low"];
-    public static IReadOnlyList<int> Mp3Bitrates { get; } = [64, 128, 192];
+    public IReadOnlyList<string> Models { get; private set; }
+    public static IReadOnlyList<string> Latencies { get; } = FishAudioRuntime.Latencies;
+    public static IReadOnlyList<int> Mp3Bitrates { get; } = FishAudioRuntime.Mp3Bitrates;
 
     private const int SearchPageSize = 6;
 
-    public SettingsViewModel(IPluginContext context, Settings settings, Task<(WalletCreditResponse?, long)>? pendingCreditTask)
-        : this(context, settings, pendingCreditTask, null, null)
+    public SettingsViewModel(
+        IPluginContext context,
+        Settings settings,
+        Task<(WalletCreditResponse?, long)>? pendingCreditTask,
+        DateTimeOffset? nowUtc = null)
+        : this(context, settings, pendingCreditTask, null, null, nowUtc)
     {
     }
 
@@ -227,10 +235,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Settings settings,
         Task<(WalletCreditResponse?, long)>? pendingCreditTask,
         Func<Task>? clearCoverImageCacheAsync,
-        TimeSpan? clearCoverImageCacheTimeout)
+        TimeSpan? clearCoverImageCacheTimeout,
+        DateTimeOffset? nowUtc = null)
     {
         _context = context;
         _settings = settings;
+        var modelPolicyTime = nowUtc ?? FishAudioRuntime.LocalUtcNow();
+        Models = FishAudioRuntime.GetAvailableModels(modelPolicyTime);
+        IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(modelPolicyTime);
         _coverImageCache = new CoverImageCacheService(
             context.MetaData?.PluginCacheDirectoryPath,
             DownloadCoverImageAsync);
@@ -240,6 +252,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
         SelectedModel = settings.SelectedModel;
+        IsS21ProFreePromoDismissed = settings.IsS21ProFreePromoDismissed;
         Speed = settings.Speed;
         Volume = settings.Volume;
         NormalizeLoudness = settings.NormalizeLoudness;
@@ -263,97 +276,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         ApplyCachedVoice(settings.CachedVoice);
 
         PropertyChanged += OnPropertyChanged;
-
-        if (pendingCreditTask is not null && Settings.IsValidApiKeyFormat(ApiKey))
-            _ = ApplyPendingCreditAsync(pendingCreditTask);
     }
 
-    // ── API Key 验证 ──
+    // ── API Key ──
 
-    private bool CanConfirmApiKey => !IsValidatingApiKey;
+    private string EffectiveApiKeyForSearch => "dummy";
 
-    [RelayCommand(CanExecute = nameof(CanConfirmApiKey))]
-    private async Task ConfirmApiKeyAsync()
-    {
-        var key = ApiKey;
-        ClearAppliedApiKeyState();
+    private bool CanPasteApiKey => !IsApiKeyInputLocked;
 
-        if (string.IsNullOrEmpty(key))
-        {
-            ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Empty");
-            ApiKeyStatusKind = ApiKeyStatusKind.Error;
-            _settings.ApiKey = "";
-            _context.SaveSettingStorage<Settings>();
-            return;
-        }
-
-        if (!Settings.IsValidApiKeyFormat(key))
-        {
-            ApiKeyStatusText = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat");
-            ApiKeyStatusKind = ApiKeyStatusKind.Error;
-            _settings.ApiKey = "";
-            _context.SaveSettingStorage<Settings>();
-            return;
-        }
-
-        IsValidatingApiKey = true;
-        ApiKeyStatusText = null;
-        ApiKeyStatusKind = ApiKeyStatusKind.Waiting;
-
-        try
-        {
-            var (result, _) = await FishAudioApi.GetCreditAsync(_context, key, CancellationToken.None);
-
-            if (ApiKey != key)
-            {
-                IsApiKeyValid = false;
-                ApiKeyStatusKind = ApiKeyStatusKind.None;
-                UserCredit = "";
-                return;
-            }
-
-            if (result is not null)
-            {
-                IsApiKeyValid = true;
-                ApiKeyStatusText = null;
-                ApiKeyStatusKind = ApiKeyStatusKind.Success;
-                ApplyCreditResult(result);
-                _settings.ApiKey = key;
-                _context.SaveSettingStorage<Settings>();
-            }
-            else
-            {
-                ApiKeyStatusKind = ApiKeyStatusKind.None;
-                _settings.ApiKey = "";
-                _context.SaveSettingStorage<Settings>();
-                _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid"));
-            }
-        }
-        catch (Exception ex)
-        {
-            if (ApiKey != key)
-            {
-                IsApiKeyValid = false;
-                ApiKeyStatusKind = ApiKeyStatusKind.None;
-                UserCredit = "";
-                return;
-            }
-
-            ApiKeyStatusKind = ApiKeyStatusKind.None;
-            _settings.ApiKey = "";
-            _context.SaveSettingStorage<Settings>();
-            _context.Snackbar.ShowError(ex.Message);
-        }
-        finally
-        {
-            IsValidatingApiKey = false;
-        }
-    }
-
-    private string EffectiveAppliedApiKey => IsApiKeyValid ? _settings.ApiKey : "";
-    private string EffectiveApiKeyForSearch => IsApiKeyValid ? _settings.ApiKey : "dummy";
-
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanPasteApiKey))]
     private void PasteApiKey()
     {
         var text = Clipboard.GetText();
@@ -376,42 +307,24 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanRefreshCredit))]
     private async Task RefreshCreditAsync()
     {
-        if (!IsApiKeyValid)
-        {
-            _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ApiKey_Empty"));
+        if (!FishAudioRuntime.TryPreflightApiKey(_context, _settings.ApiKey, "Credit refresh", showError: true, out var apiKey))
             return;
-        }
-        await FetchCreditAsync(showError: true, showLatency: true);
+
+        await FetchCreditAsync(apiKey, showError: true, showLatency: true);
     }
 
     internal async Task RefreshCreditSilentlyAsync()
     {
-        if (!IsApiKeyValid) return;
-        await FetchCreditAsync(showError: false, showLatency: false);
+        if (!FishAudioRuntime.TryPreflightApiKey(_context, _settings.ApiKey, "Credit refresh", showError: false, out var apiKey))
+            return;
+
+        await FetchCreditAsync(apiKey, showError: false, showLatency: false);
     }
 
-    private async Task ApplyPendingCreditAsync(Task<(WalletCreditResponse?, long)> task)
-    {
-        try
-        {
-            var (result, _) = await task;
-            if (result is not null)
-            {
-                IsApiKeyValid = true;
-                ApiKeyStatusText = null;
-                ApiKeyStatusKind = ApiKeyStatusKind.Success;
-                ApplyCreditResult(result);
-            }
-        }
-        catch
-        {
-            // Startup credit check is silent for failures; success still updates visible account state.
-        }
-    }
-
-    private async Task FetchCreditAsync(bool showError, bool showLatency)
+    private async Task FetchCreditAsync(string apiKey, bool showError, bool showLatency)
     {
         IsLoadingCredit = true;
+        BeginApiKeyOperation();
         if (showLatency)
         {
             LatencyText = "";
@@ -420,7 +333,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
         try
         {
-            var (result, ms) = await FishAudioApi.GetCreditAsync(_context, EffectiveAppliedApiKey, CancellationToken.None);
+            var (result, ms) = await FishAudioApi.GetCreditAsync(_context, apiKey, CancellationToken.None);
             ApplyCreditResult(result);
 
             if (showLatency)
@@ -437,8 +350,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
+            FishAudioRuntime.LogRequestFailure(_context, "Credit refresh", ex);
             if (showError)
-                _context.Snackbar.ShowError(ex.Message);
+                _context.Snackbar.ShowError(FishAudioRuntime.GetUserFacingError(_context, ex));
             if (showLatency)
             {
                 LatencyText = "";
@@ -448,6 +362,23 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         finally
         {
             IsLoadingCredit = false;
+            EndApiKeyOperation();
+        }
+    }
+
+    internal void BeginApiKeyOperation()
+    {
+        if (Interlocked.Increment(ref _apiKeyOperationLockCount) == 1)
+            IsApiKeyInputLocked = true;
+    }
+
+    internal void EndApiKeyOperation()
+    {
+        var count = Interlocked.Decrement(ref _apiKeyOperationLockCount);
+        if (count <= 0)
+        {
+            Interlocked.Exchange(ref _apiKeyOperationLockCount, 0);
+            IsApiKeyInputLocked = false;
         }
     }
 
@@ -473,6 +404,54 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     // ── 选择模式切换 ──
 
+    internal void ApplyAvailableModels(DateTimeOffset nowUtc)
+    {
+        Models = FishAudioRuntime.GetAvailableModels(nowUtc);
+        OnPropertyChanged(nameof(Models));
+        IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(nowUtc);
+
+        if (!Models.Contains(SelectedModel, StringComparer.Ordinal))
+            SelectedModel = FishAudioRuntime.GetDefaultModel(nowUtc);
+    }
+
+    internal static CachedVoiceInfo CreateCachedVoiceInfo(ModelEntity model) => new()
+    {
+        Title = model.Title,
+        Description = model.Description,
+        CoverImage = model.CoverImage,
+        AuthorName = model.Author?.Nickname ?? "",
+        TaskCount = model.TaskCount,
+        SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
+    };
+
+    internal void ApplyRefreshedCachedVoice(CachedVoiceInfo cached)
+    {
+        RunOnUiThread(() =>
+        {
+            _settings.CachedVoice = cached;
+            ApplyCachedVoice(cached);
+        });
+    }
+
+    // ── 限时推广 ──
+
+    [RelayCommand]
+    private void DismissS21ProFreePromo()
+    {
+        IsS21ProFreePromoDismissed = true;
+        _settings.IsS21ProFreePromoDismissed = true;
+        _context.SaveSettingStorage<Settings>();
+    }
+
+    [RelayCommand]
+    private void UseS21ProFreePromo()
+    {
+        if (!IsS21ProFreeAvailable)
+            return;
+
+        SelectedModel = FishAudioRuntime.S21ProFreeModel;
+    }
+
     [RelayCommand]
     private void SwitchToSearch()
     {
@@ -492,27 +471,32 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanSearchVoices))]
     private async Task SearchVoicesAsync()
     {
-        SearchPage = 1;
-        PageInput = "1";
-        await ExecuteSearchAsync();
+        await ExecuteSearchAsync(1, resetOnEmptyResponse: true);
     }
 
-    private async Task ExecuteSearchAsync()
+    private async Task ExecuteSearchAsync(int requestedPage, bool resetOnEmptyResponse = false)
     {
         IsSearching = true;
         try
         {
             var response = await FishAudioApi.SearchModelsAsync(
-                _context, EffectiveApiKeyForSearch, SearchQuery, SearchPageSize, SearchPage, CancellationToken.None);
+                _context, EffectiveApiKeyForSearch, SearchQuery, SearchPageSize, requestedPage, CancellationToken.None);
 
             if (response is null)
             {
-                SearchResults = [];
-                SearchTotalPages = 1;
-                SearchResultCount = 0;
+                if (resetOnEmptyResponse)
+                {
+                    SearchPage = 1;
+                    PageInput = "1";
+                    SearchResults = [];
+                    SearchTotalPages = 1;
+                    SearchResultCount = 0;
+                }
                 return;
             }
 
+            SearchPage = requestedPage;
+            PageInput = requestedPage.ToString();
             HasSearched = true;
             SearchResultCount = response.Total;
             SearchTotalPages = Math.Max(1, (int)Math.Ceiling(response.Total / (double)SearchPageSize));
@@ -548,22 +532,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private async Task NextPageAsync()
     {
         if (SearchPage < SearchTotalPages)
-        {
-            SearchPage++;
-            PageInput = SearchPage.ToString();
-            await ExecuteSearchAsync();
-        }
+            await ExecuteSearchAsync(SearchPage + 1);
     }
 
     [RelayCommand]
     private async Task PrevPageAsync()
     {
         if (SearchPage > 1)
-        {
-            SearchPage--;
-            PageInput = SearchPage.ToString();
-            await ExecuteSearchAsync();
-        }
+            await ExecuteSearchAsync(SearchPage - 1);
     }
 
     [RelayCommand]
@@ -571,8 +547,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (int.TryParse(PageInput, out var n) && n >= 1 && n <= SearchTotalPages && n != SearchPage)
         {
-            SearchPage = n;
-            await ExecuteSearchAsync();
+            await ExecuteSearchAsync(n);
         }
         else
         {
@@ -639,15 +614,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             VoiceId = trimmed;
             _settings.VoiceId = VoiceId;
 
-            var cached = new CachedVoiceInfo
-            {
-                Title = model.Title,
-                Description = model.Description,
-                CoverImage = model.CoverImage,
-                AuthorName = model.Author?.Nickname ?? "",
-                TaskCount = model.TaskCount,
-                SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
-            };
+            var cached = CreateCachedVoiceInfo(model);
             _settings.CachedVoice = cached;
             _context.SaveSettingStorage<Settings>();
 
@@ -941,6 +908,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (e.PropertyName == nameof(ApiKey))
         {
+            _settings.ApiKey = ApiKey;
+            _context.SaveSettingStorage<Settings>();
             return;
         }
 
@@ -957,6 +926,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             case nameof(Normalize):                _settings.Normalize = Normalize; break;
             case nameof(Mp3Bitrate):               _settings.Mp3Bitrate = Mp3Bitrate; break;
             case nameof(ConditionOnPreviousChunks): _settings.ConditionOnPreviousChunks = ConditionOnPreviousChunks; break;
+            case nameof(IsS21ProFreePromoDismissed): _settings.IsS21ProFreePromoDismissed = IsS21ProFreePromoDismissed; break;
             default: return;
         }
 
@@ -970,22 +940,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();
     }
-
-    private void ClearAppliedApiKeyState()
-    {
-        IsApiKeyValid = false;
-        ApiKeyStatusText = null;
-        ApiKeyStatusKind = ApiKeyStatusKind.None;
-        UserCredit = "";
-    }
-}
-
-public enum ApiKeyStatusKind
-{
-    None,
-    Waiting,
-    Success,
-    Error,
 }
 
 public partial class VoiceSearchItem : ObservableObject

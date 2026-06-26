@@ -7,10 +7,21 @@ internal static class FishAudioApi
 {
     private const string ApiBase = "https://api.fish.audio";
     private const string CdnBase = "https://public-platform.r2.fish.audio/";
+    private static readonly TimeSpan TtsTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan CreditTimeout = TimeSpan.FromSeconds(15);
 
     public static async Task<byte[]> PostTtsAsync(
         IPluginContext context, Settings settings, string text, CancellationToken ct)
     {
+        var prosody = new Dictionary<string, object>
+        {
+            ["speed"] = settings.Speed,
+            ["volume"] = settings.Volume,
+        };
+
+        if (FishAudioRuntime.SupportsNormalizeLoudness(settings.SelectedModel))
+            prosody["normalize_loudness"] = settings.NormalizeLoudness;
+
         var body = new Dictionary<string, object>
         {
             ["text"] = text,
@@ -21,12 +32,7 @@ internal static class FishAudioApi
             ["normalize"] = settings.Normalize,
             ["latency"] = settings.Latency,
             ["condition_on_previous_chunks"] = settings.ConditionOnPreviousChunks,
-            ["prosody"] = new Dictionary<string, object>
-            {
-                ["speed"] = settings.Speed,
-                ["volume"] = settings.Volume,
-                ["normalize_loudness"] = settings.NormalizeLoudness,
-            },
+            ["prosody"] = prosody,
         };
 
         if (!string.IsNullOrWhiteSpace(settings.VoiceId))
@@ -34,6 +40,7 @@ internal static class FishAudioApi
 
         var option = new Options
         {
+            Timeout = TtsTimeout,
             Headers = new Dictionary<string, string>
             {
                 ["Authorization"] = $"Bearer {settings.ApiKey}",
@@ -50,6 +57,7 @@ internal static class FishAudioApi
     {
         var option = new Options
         {
+            Timeout = CreditTimeout,
             Headers = new Dictionary<string, string>
             {
                 ["Authorization"] = $"Bearer {apiKey}",
