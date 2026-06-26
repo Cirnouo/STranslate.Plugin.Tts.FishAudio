@@ -24,6 +24,36 @@
 
     <ikw:SimpleStackPanel Spacing="12">
 
+        <Border
+            Visibility="{Binding ShowS21ProFreePromo, Converter={StaticResource BtvConverter}}"
+            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            ClipToBounds="True"
+            Cursor="Hand"
+            MouseLeftButtonUp="S21ProFreePromoCard_MouseLeftButtonUp">
+            <Grid>
+                <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
+                    <Image
+                        Width="1024"
+                        Height="540"
+                        Source="/STranslate.Plugin.Tts.FishAudio;component/s2-pro-free-promo.webp"
+                        Stretch="Fill" />
+                </Viewbox>
+                <Button
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="6"
+                    Padding="6"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    Command="{Binding DismissS21ProFreePromoCommand}"
+                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Promo_Close}">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="10" Text="&#xE711;" />
+                </Button>
+            </Grid>
+        </Border>
+
         <!-- ════════ 账户 ════════ -->
 
         <TextBlock
@@ -52,8 +82,18 @@
                     Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Refresh}" />
                 <StackPanel Orientation="Horizontal" Margin="8,0,0,0"
                             Visibility="{Binding LatencyText, Converter={StaticResource StringToVisibilityConverter}}">
-                    <TextBlock Text="&#xEC05;" FontFamily="Segoe MDL2 Assets" FontSize="11"
-                               VerticalAlignment="Center" Foreground="{Binding LatencyBrush}" Margin="0,0,4,0" />
+                    <Grid x:Name="LatencyBars" Width="14" Height="12" Margin="0,0,4,0"
+                          VerticalAlignment="Center">
+                        <Rectangle Width="3" Height="5" RadiusX="1" RadiusY="1"
+                                   HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                   Fill="{Binding LatencyBrush}" />
+                        <Rectangle Width="3" Height="8" RadiusX="1" RadiusY="1"
+                                   HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                   Fill="{Binding LatencyBrush}" />
+                        <Rectangle Width="3" Height="11" RadiusX="1" RadiusY="1"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                   Fill="{Binding LatencyBrush}" />
+                    </Grid>
                     <TextBlock VerticalAlignment="Center" FontSize="12"
                                Foreground="{Binding LatencyBrush}" Text="{Binding LatencyText}" />
                 </StackPanel>
@@ -72,59 +112,9 @@
 
         <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey}">
             <ui:SettingsCard.Description>
-                <StackPanel Orientation="Horizontal">
-                    <ui:HyperlinkButton
-                        Content="fish.audio"
-                        NavigateUri="https://fish.audio/app/api-keys" />
-                    <StackPanel Margin="8,0,0,0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.None}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="&#xE946;" />
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Success}">
-                                            <Setter Property="Text" Value="&#xE73E;" />
-                                            <Setter Property="Foreground" Value="#FF4CAF50" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Error}">
-                                            <Setter Property="Text" Value="&#xEA39;" />
-                                            <Setter Property="Foreground" Value="#FFE57373" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <TextBlock VerticalAlignment="Center" FontSize="12">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Success}">
-                                            <Setter Property="Foreground" Value="#FF4CAF50" />
-                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Applied}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding ApiKeyStatusKind}" Value="{x:Static vm:ApiKeyStatusKind.Error}">
-                                            <Setter Property="Foreground" Value="#FFE57373" />
-                                            <Setter Property="Text" Value="{Binding ApiKeyStatusText}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                </StackPanel>
+                <ui:HyperlinkButton
+                    Content="fish.audio"
+                    NavigateUri="https://fish.audio/app/api-keys" />
             </ui:SettingsCard.Description>
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Key_24_Regular}" />
@@ -132,25 +122,16 @@
             <DockPanel>
                 <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
                         Background="Transparent" BorderThickness="0"
-                        Command="{Binding ConfirmApiKeyCommand}"
-                        ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Confirm}">
-                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
-                </Button>
-                <Button DockPanel.Dock="Right" Margin="4,0,0,0" Padding="6"
-                        Background="Transparent" BorderThickness="0"
                         Command="{Binding PasteApiKeyCommand}"
                         ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Paste}">
                     <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                 </Button>
                 <PasswordBox
+                    IsEnabled="{Binding IsApiKeyInputEnabled}"
                     MinWidth="230"
                     plugin:PasswordBoxAssistant.Attach="True"
                     plugin:PasswordBoxAssistant.Password="{Binding ApiKey}"
-                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}">
-                    <PasswordBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding ConfirmApiKeyCommand}" />
-                    </PasswordBox.InputBindings>
-                </PasswordBox>
+                    ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}" />
             </DockPanel>
         </ui:SettingsCard>
 
@@ -496,9 +477,20 @@
         <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold"
                    Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_Model}" />
 
-        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Engine}">
+        <ui:SettingsCard x:Name="SynthesisModelCard" Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Engine}">
             <ui:SettingsCard.Description>
-                <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Engine_Description}" />
+                <TextBlock>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsS21ProFreeAvailable}" Value="True">
+                                    <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Engine_Description_Free}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </ui:SettingsCard.Description>
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.BrainCircuit_24_Regular}" />
@@ -544,7 +536,7 @@
         </ui:SettingsCard>
 
         <ui:SettingsCard
-            Visibility="{Binding ShowNormalizeLoudness, Converter={StaticResource BtvConverter}}"
+            IsEnabled="{Binding IsNormalizeLoudnessEnabled}"
             Description="{DynamicResource STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description}"
             Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_NormalizeLoudness}">
             <ui:SettingsCard.HeaderIcon>

@@ -43,12 +43,15 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">合成模型</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">推薦 S2-Pro，支援 80+ 種語言和情緒標記</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free 限時免費至 2026-07-24，支援 80+ 種語言和情緒標記</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">推薦 s2.1-pro，支援 80+ 種語言和情緒標記</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">關閉推廣</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">語速</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量偏移 (dB)，正值增大、負值減小</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">響度歸一化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">僅 S2-Pro 模型支援</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">僅 s2-pro 及以上模型支援</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">輸出格式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 位元率 (kbps)</sys:String>
@@ -73,7 +76,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 官網</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">上下文關聯</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">使用前序音訊作為上下文以保持聲音一致性</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">僅關聯同一次合成音訊的前序片段，不會使用先前產生的其他音訊</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">貼上</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">確認</sys:String>
@@ -81,8 +84,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">請先設定 API Key</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API Key 格式不正確</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key 不正確</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Waiting">等待回應中</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Applied">已驗證並套用</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Network_Unavailable">目前未連線，請檢查網路後重試</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">請求逾時，請稍後重試</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文字為空</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">請先輸入聲音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">聲音 ID 格式不正確</sys:String>

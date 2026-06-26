@@ -12,9 +12,9 @@ POST https://api.fish.audio/v1/tts
 |:--|:--|:--:|
 | `Authorization` | `Bearer <API_KEY>` | 是 |
 | `Content-Type` | `application/json` | 是 |
-| `model` | `s2-pro` 或 `s1` | 是 |
+| `model` | `s2.1-pro-free` / `s2.1-pro` / `s2-pro` / `s1` | 是 |
 
-> `model` 是自定义 HTTP header，不在请求体中。推荐使用 `s2-pro`。
+> `model` 是自定义 HTTP header，不在请求体中。`s2.1-pro-free` 在 `2026-07-24T00:00:00Z` 前可用；之后推荐使用 `s2.1-pro`。
 
 ## 请求体 (JSON)
 
@@ -38,7 +38,7 @@ POST https://api.fish.audio/v1/tts
 |:--|:--|:--:|:--:|:--|
 | `prosody.speed` | number | `1.0` | 0.5 ~ 2.0 | 语速倍率 |
 | `prosody.volume` | number | `0` | — | 音量调整 (dB)，正值加大、负值减小 |
-| `prosody.normalize_loudness` | bool | `true` | — | 响度归一化（仅 S2-Pro） |
+| `prosody.normalize_loudness` | bool | `true` | — | 响度归一化（`s2.1-pro-free` / `s2.1-pro` / `s2-pro` 支持，`s1` 不支持） |
 
 ### 音频输出
 
@@ -61,7 +61,7 @@ POST https://api.fish.audio/v1/tts
 | `max_new_tokens` | int | `1024` | — | 每分块最大音频 token 数 |
 | `repetition_penalty` | number | `1.2` | — | 重复惩罚，>1.0 减少重复 |
 | `min_chunk_length` | int | `50` | 0 ~ 100 | 最小分块字符数 |
-| `condition_on_previous_chunks` | bool | `true` | — | 利用前文音频保持一致性 |
+| `condition_on_previous_chunks` | bool | `true` | — | 仅利用同一次合成中的前序音频片段保持一致性 |
 | `early_stop_threshold` | number | `1.0` | 0 ~ 1 | 批处理早停阈值 |
 
 ### 完整请求示例
@@ -165,7 +165,9 @@ Fish Audio 不通过 API 字段控制情绪，而是通过**文本内联标记**
 
 | 模型 | 情绪语法 | 多说话人 | 语言数 | 说明 |
 |:--|:--|:--:|:--:|:--|
-| `s2-pro` | `[自然语言]` | 支持 | 80+ | 推荐，最新 |
+| `s2.1-pro-free` | `[自然语言]` | 支持 | 80+ | 限时免费，`2026-07-24T00:00:00Z` 前可用 |
+| `s2.1-pro` | `[自然语言]` | 支持 | 80+ | 推荐，免费期结束后的默认模型 |
+| `s2-pro` | `[自然语言]` | 支持 | 80+ | 兼容的 S2 Pro 模型 |
 | `s1` | `(固定标签)` | 不支持 | 13 | 旧款 |
 
 ## 插件实现要点
