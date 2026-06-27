@@ -26,6 +26,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private static readonly SolidColorBrush BrushFair = new(Color.FromRgb(0xFF, 0x98, 0x00));
     private static readonly SolidColorBrush BrushPoor = new(Color.FromRgb(0xF4, 0x43, 0x36));
 
+    internal static Action<Action>? UiThreadInvokerOverride { get; set; }
+
     // ── API ──
 
     [ObservableProperty]
@@ -196,6 +198,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private long _searchOperationId;
     private long _voiceIdOperationId;
     private int _apiKeyOperationLockCount;
+    private bool _isDisposed;
+    private bool _suppressSettingsSave;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private CancellationTokenSource? _voiceIdCancellationTokenSource;
 
@@ -410,12 +414,28 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     internal void ApplyAvailableModels(DateTimeOffset nowUtc)
     {
-        Models = FishAudioRuntime.GetAvailableModels(nowUtc);
-        OnPropertyChanged(nameof(Models));
-        IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(nowUtc);
+        RunOnUiThread(() =>
+        {
+            if (_isDisposed)
+                return;
 
-        if (!Models.Contains(SelectedModel, StringComparer.Ordinal))
-            SelectedModel = FishAudioRuntime.GetDefaultModel(nowUtc);
+            Models = FishAudioRuntime.GetAvailableModels(nowUtc);
+            OnPropertyChanged(nameof(Models));
+            IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(nowUtc);
+
+            if (!Models.Contains(SelectedModel, StringComparer.Ordinal))
+            {
+                _suppressSettingsSave = true;
+                try
+                {
+                    SelectedModel = FishAudioRuntime.GetDefaultModel(nowUtc);
+                }
+                finally
+                {
+                    _suppressSettingsSave = false;
+                }
+            }
+        });
     }
 
     internal static CachedVoiceInfo CreateCachedVoiceInfo(ModelEntity model) => new()
@@ -432,6 +452,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         RunOnUiThread(() =>
         {
+            if (_isDisposed)
+                return;
+
             _settings.CachedVoice = cached;
             ApplyCachedVoice(cached);
         });
@@ -959,6 +982,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private static void RunOnUiThread(Action action)
     {
+        if (UiThreadInvokerOverride is not null)
+        {
+            UiThreadInvokerOverride(action);
+            return;
+        }
+
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess())
             action();
@@ -994,11 +1023,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             default: return;
         }
 
-        _context.SaveSettingStorage<Settings>();
+        if (!_suppressSettingsSave)
+            _context.SaveSettingStorage<Settings>();
     }
 
     public void Dispose()
     {
+        _isDisposed = true;
         PropertyChanged -= OnPropertyChanged;
         _searchCancellationTokenSource?.Cancel();
         _voiceIdCancellationTokenSource?.Cancel();

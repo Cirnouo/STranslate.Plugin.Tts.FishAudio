@@ -11,6 +11,7 @@ public class Main : ITtsPlugin
 {
     private Control? _settingUi;
     private SettingsViewModel? _viewModel;
+    private CancellationTokenSource? _startupRefreshCancellationTokenSource;
     private Settings Settings { get; set; } = null!;
     private IPluginContext Context { get; set; } = null!;
     internal Task PendingStartupTask { get; private set; } = Task.CompletedTask;
@@ -29,6 +30,7 @@ public class Main : ITtsPlugin
 
     internal void Init(IPluginContext context, DateTimeOffset nowUtc)
     {
+        CancelStartupRefresh();
         Context = context;
         Settings = context.LoadSettingStorage<Settings>();
         var shouldSave = false;
@@ -45,10 +47,15 @@ public class Main : ITtsPlugin
         if (shouldSave)
             context.SaveSettingStorage<Settings>();
 
-        PendingStartupTask = RunStartupRefreshAsync(CancellationToken.None);
+        _startupRefreshCancellationTokenSource = new CancellationTokenSource();
+        PendingStartupTask = RunStartupRefreshAsync(context, Settings, _viewModel, _startupRefreshCancellationTokenSource.Token);
     }
 
-    public void Dispose() => _viewModel?.Dispose();
+    public void Dispose()
+    {
+        CancelStartupRefresh();
+        _viewModel?.Dispose();
+    }
 
     public async Task PlayAudioAsync(string text, CancellationToken cancellationToken = default)
     {
@@ -100,50 +107,74 @@ public class Main : ITtsPlugin
         return null;
     }
 
-    private async Task RunStartupRefreshAsync(CancellationToken cancellationToken)
+    private async Task RunStartupRefreshAsync(
+        IPluginContext context,
+        Settings settings,
+        SettingsViewModel? viewModel,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var onlineUtc = await FishAudioRuntime.TryGetOnlineUtcNowAsync(Context, cancellationToken);
-            if (onlineUtc is not null && FishAudioRuntime.NormalizeSelectedModel(Settings, onlineUtc.Value))
+            var onlineUtc = await FishAudioRuntime.TryGetOnlineUtcNowAsync(context, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (onlineUtc is not null && FishAudioRuntime.NormalizeSelectedModel(settings, onlineUtc.Value))
             {
-                Context.SaveSettingStorage<Settings>();
-                _viewModel?.ApplyAvailableModels(onlineUtc.Value);
+                context.SaveSettingStorage<Settings>();
+                viewModel?.ApplyAvailableModels(onlineUtc.Value);
             }
 
-            await RefreshSelectedVoiceMetadataOnStartupAsync(cancellationToken);
+            await RefreshSelectedVoiceMetadataOnStartupAsync(context, settings, viewModel, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            Context.Logger?.LogWarning(ex, "Fish Audio startup refresh failed");
+            context.Logger?.LogWarning(ex, "Fish Audio startup refresh failed");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
     }
 
-    private async Task RefreshSelectedVoiceMetadataOnStartupAsync(CancellationToken cancellationToken)
+    private async Task RefreshSelectedVoiceMetadataOnStartupAsync(
+        IPluginContext context,
+        Settings settings,
+        SettingsViewModel? viewModel,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(Settings.VoiceId) || !Settings.IsValidVoiceIdFormat(Settings.VoiceId))
+        if (string.IsNullOrWhiteSpace(settings.VoiceId) || !Settings.IsValidVoiceIdFormat(settings.VoiceId))
             return;
 
         if (!FishAudioRuntime.IsNetworkAvailable())
         {
-            Context.Logger?.LogWarning("Startup voice refresh skipped: Network unavailable");
+            context.Logger?.LogWarning("Startup voice refresh skipped: Network unavailable");
             return;
         }
 
         try
         {
-            var model = await FishAudioApi.GetModelAsync(Context, "dummy", Settings.VoiceId, cancellationToken);
+            var model = await FishAudioApi.GetModelAsync(context, "dummy", settings.VoiceId, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             if (model is null)
                 return;
 
             var cached = SettingsViewModel.CreateCachedVoiceInfo(model);
-            Settings.CachedVoice = cached;
-            Context.SaveSettingStorage<Settings>();
-            _viewModel?.ApplyRefreshedCachedVoice(cached);
+            settings.CachedVoice = cached;
+            context.SaveSettingStorage<Settings>();
+            viewModel?.ApplyRefreshedCachedVoice(cached);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            Context.Logger?.LogWarning(ex, "Startup voice refresh failed");
+            context.Logger?.LogWarning(ex, "Startup voice refresh failed");
         }
+    }
+
+    private void CancelStartupRefresh()
+    {
+        var cts = _startupRefreshCancellationTokenSource;
+        if (cts is null)
+            return;
+
+        _startupRefreshCancellationTokenSource = null;
+        cts.Cancel();
+        _ = PendingStartupTask.ContinueWith(_ => cts.Dispose(), TaskScheduler.Default);
     }
 }

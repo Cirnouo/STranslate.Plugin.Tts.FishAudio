@@ -17,6 +17,10 @@ MainInitDoesNotValidateCredit();
 ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport();
 MainInitNormalizesStructuredSettingsWithoutClearingKeys();
 await StartupRefreshSelectedVoiceMetadataAsync();
+await StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync();
+await StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync();
+await ReinitializedStartupRefreshCannotMutateNewSettingsAsync();
+ApplyAvailableModelsUsesUiThreadInvoker();
 await PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync();
 await PlayAudioPreflightStopsBeforeRequestForEmptyAndMalformedKeysAsync();
 await PlayAudioWithFormattedKeyPostsAndPlaysWithoutRuntimeValidationAsync();
@@ -209,6 +213,148 @@ static async Task StartupRefreshSelectedVoiceMetadataAsync()
 
     AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
     AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
+}
+
+static async Task StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings
+    {
+        VoiceId = "fedcba9876543210fedcba9876543210",
+        CachedVoice = new CachedVoiceInfo { Title = "Keep" },
+    };
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var requestCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    http.GetAsyncHandler = (_, _, ct) =>
+    {
+        requestStarted.SetResult();
+        ct.Register(() => requestCanceled.TrySetResult());
+        return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+        {
+            if (task.IsCanceled)
+                throw new OperationCanceledException(ct);
+            return "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
+        }, CancellationToken.None);
+    };
+    var logger = new TestLogger();
+    var context = CreateContext(settings: settings, httpService: httpService, logger: logger);
+    var proxy = (ContextProxy)(object)context;
+    var plugin = new Main();
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    plugin.Dispose();
+
+    await requestCanceled.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Keep", settings.CachedVoice?.Title, "Canceled startup refresh should preserve cached voice");
+    AssertEqual(0, proxy.SaveCount, "Canceled startup refresh should not save settings");
+    AssertEqual(false, logger.Contains("startup refresh failed"), "Canceled startup refresh should not log a failure warning");
+}
+
+static async Task StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings
+    {
+        VoiceId = "fedcba9876543210fedcba9876543210",
+        CachedVoice = new CachedVoiceInfo { Title = "Keep" },
+    };
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    var plugin = new Main();
+    var disposeBeforeModelResponse = true;
+    var logger = new TestLogger();
+    var context = CreateContext(settings: settings, httpService: httpService, logger: logger);
+    var proxy = (ContextProxy)(object)context;
+
+    http.GetAsyncHandler = (_, _, _) =>
+    {
+        if (disposeBeforeModelResponse)
+        {
+            disposeBeforeModelResponse = false;
+            return Task.FromResult("{\"dateTime\":\"2026-06-27T00:00:00Z\"}");
+        }
+
+        plugin.Dispose();
+        return Task.FromResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Should Not Apply\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+    };
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Keep", settings.CachedVoice?.Title, "Startup cancellation after model response should skip cached voice side effects");
+    AssertEqual(0, proxy.SaveCount, "Startup cancellation after model response should not save settings");
+    AssertEqual(false, logger.Contains("startup refresh failed"), "Startup cancellation after model response should not log failure");
+}
+
+static async Task ReinitializedStartupRefreshCannotMutateNewSettingsAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var oldSettings = new Settings
+    {
+        VoiceId = "11111111111111111111111111111111",
+        CachedVoice = new CachedVoiceInfo { Title = "Old Keep" },
+    };
+    var newSettings = new Settings
+    {
+        VoiceId = "",
+        CachedVoice = new CachedVoiceInfo { Title = "New Keep" },
+    };
+    var oldRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (_, _, _) => oldRelease.Task;
+    var oldContext = CreateContext(settings: oldSettings, httpService: oldHttpService);
+    var oldProxy = (ContextProxy)(object)oldContext;
+
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetResponseJson = "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
+    var newContext = CreateContext(settings: newSettings, httpService: newHttpService);
+    var newProxy = (ContextProxy)(object)newContext;
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    oldRelease.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Old Should Not Leak\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Old Keep", oldSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate old settings after reinitialization");
+    AssertEqual("New Keep", newSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate new settings after reinitialization");
+    AssertEqual(0, oldProxy.SaveCount, "Canceled old startup refresh should not save old context after reinitialization");
+    AssertEqual(0, newProxy.SaveCount, "Canceled old startup refresh should not save new context after reinitialization");
+}
+
+static void ApplyAvailableModelsUsesUiThreadInvoker()
+{
+    var invoked = false;
+    var previous = SettingsViewModel.UiThreadInvokerOverride;
+    SettingsViewModel.UiThreadInvokerOverride = action =>
+    {
+        invoked = true;
+        action();
+    };
+
+    try
+    {
+        var settings = new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel };
+        var context = CreateContext(settings: settings);
+        var proxy = (ContextProxy)(object)context;
+        var viewModel = new SettingsViewModel(context, settings, null, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+
+        viewModel.ApplyAvailableModels(FishAudioRuntime.FreeModelCutoffUtc);
+
+        AssertEqual(true, invoked, "ApplyAvailableModels should marshal binding updates through the UI invoker");
+        AssertEqual(FishAudioRuntime.S21ProModel, viewModel.SelectedModel, "ApplyAvailableModels should still normalize unavailable selected models");
+        AssertEqual(0, proxy.SaveCount, "ApplyAvailableModels should not trigger an extra settings save while syncing startup state");
+    }
+    finally
+    {
+        SettingsViewModel.UiThreadInvokerOverride = previous;
+    }
 }
 
 static async Task PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync()
