@@ -306,3 +306,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** WPF slider drag tooltips rounded numeric values to integers while the adjacent setting values displayed decimals. The context-conditioning copy also emphasized request-local scope but no longer explained that the feature helps preserve voice consistency.
 **Decision:** Set each numeric slider's `AutoToolTipPrecision` to the same decimal precision used by its adjacent value label. Keep context-conditioning behavior unchanged, but update UI and README copy to say it uses earlier chunks from the same synthesis to maintain voice consistency and does not reference previously generated audio. Localized READMEs mirror the current Simplified Chinese README structure and use the same visible control names as the plugin resources.
 **Affects:** `SettingsView.xaml`, language resources, README files, regression tests.
+
+---
+
+## DD-034: SettingsViewModel delegates preview playback and cover cache display
+
+**Date:** 2026-06-27
+**Context:** `SettingsViewModel` had accumulated WPF preview playback, cover image cache display, cache cleanup timeout handling, request orchestration, settings persistence, and binding state. That made review fixes risky because unrelated behavior lived in one large class, while XAML bindings and command names must remain stable for the settings view.
+**Decision:** Keep `SettingsViewModel` as the binding surface and settings coordinator, but move preview playback into `PreviewPlaybackController` and cover image cache display/cleanup orchestration into `CoverImageCacheDisplayManager`. The preview controller owns `MediaPlayer`, timer lifecycle, preview URL validation, and progress callbacks. The cover cache display manager wraps `CoverImageCacheService`, cache size formatting, clear timeout recovery, and late-completion refresh callbacks. Existing XAML property and command names remain unchanged. The obsolete `pendingCreditTask` constructor parameter is removed from all call sites.
+**Affects:** `SettingsViewModel`, `PreviewPlaybackController`, `CoverImageCacheDisplayManager`, settings view regression tests.

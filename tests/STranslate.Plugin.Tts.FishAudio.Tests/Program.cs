@@ -12,6 +12,7 @@ const string DraftKey = "abcdef0123456789abcdef0123456789";
 
 PackageReferenceUsesSdk1012();
 ApiKeyValidationStateWasRemoved();
+SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities();
 ApiKeyEditingPersistsImmediately();
 MainInitDoesNotValidateCredit();
 ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport();
@@ -77,12 +78,41 @@ static void ApiKeyValidationStateWasRemoved()
         "Runtime API Key validation state should be removed");
 }
 
+static void SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities()
+{
+    var constructors = typeof(SettingsViewModel).GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+    AssertEqual(
+        true,
+        constructors.Any(c =>
+        {
+            var parameters = c.GetParameters();
+            return parameters.Length is 2 or 3
+                && parameters[0].ParameterType == typeof(IPluginContext)
+                && parameters[1].ParameterType == typeof(Settings)
+                && (parameters.Length == 2 || parameters[2].ParameterType == typeof(DateTimeOffset?));
+        }),
+        "SettingsViewModel should expose a public constructor without the obsolete pending credit task parameter");
+    AssertEqual(
+        false,
+        constructors.SelectMany(c => c.GetParameters()).Any(p =>
+            p.Name == "pendingCreditTask" || p.ParameterType == typeof(Task<(WalletCreditResponse?, long)>)),
+        "SettingsViewModel public constructors should not expose the unused pendingCreditTask parameter");
+
+    var viewModelAssembly = typeof(SettingsViewModel).Assembly;
+    AssertNotNull(
+        viewModelAssembly.GetType("STranslate.Plugin.Tts.FishAudio.ViewModel.PreviewPlaybackController"),
+        "Preview playback should be split into an internal controller boundary");
+    AssertNotNull(
+        viewModelAssembly.GetType("STranslate.Plugin.Tts.FishAudio.ViewModel.CoverImageCacheDisplayManager"),
+        "Cover image cache display and cleanup should be split into an internal manager boundary");
+}
+
 static void ApiKeyEditingPersistsImmediately()
 {
     var settings = new Settings { ApiKey = AppliedKey };
     var context = CreateContext(settings: settings);
     var proxy = (ContextProxy)(object)context;
-    var viewModel = new SettingsViewModel(context, settings, null);
+    var viewModel = new SettingsViewModel(context, settings);
 
     viewModel.ApiKey = DraftKey;
 
@@ -348,7 +378,7 @@ static void ApplyAvailableModelsUsesUiThreadInvoker()
         var settings = new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel };
         var context = CreateContext(settings: settings);
         var proxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(context, settings, null, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+        var viewModel = new SettingsViewModel(context, settings, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
 
         viewModel.ApplyAvailableModels(FishAudioRuntime.FreeModelCutoffUtc);
 
@@ -474,8 +504,7 @@ static async Task ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsync()
     var settings = new Settings { ApiKey = AppliedKey };
     var viewModel = new SettingsViewModel(
         CreateContext(snackbar, settings, httpService, logger: logger),
-        settings,
-        null);
+        settings);
 
     await viewModel.RefreshCreditCommand.ExecuteAsync(null);
     AssertEqual(
@@ -514,7 +543,7 @@ static async Task ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync()
     var settings = new Settings { ApiKey = AppliedKey };
     var (httpService, http) = TestHttpServiceProxy.Create();
     http.GetResponseJson = "{\"credit\":\"7.89\"}";
-    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings, null);
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
 
     await viewModel.RefreshCreditCommand.ExecuteAsync(null);
 
@@ -534,8 +563,7 @@ static async Task ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync()
     http.GetException = new TimeoutException("request timed out");
     var viewModel = new SettingsViewModel(
         CreateContext(snackbar, settings, httpService, logger: logger),
-        settings,
-        null);
+        settings);
 
     await viewModel.RefreshCreditCommand.ExecuteAsync(null);
 
@@ -557,8 +585,7 @@ static async Task SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync()
     var (httpService, http) = TestHttpServiceProxy.Create();
     var viewModel = new SettingsViewModel(
         CreateContext(snackbar, settings, httpService, logger: logger),
-        settings,
-        null);
+        settings);
 
     await viewModel.RefreshCreditSilentlyAsync();
 
@@ -579,7 +606,7 @@ static async Task SearchAndByIdUseDummyTokenAsync()
     var settings = new Settings { ApiKey = AppliedKey };
     var (httpService, http) = TestHttpServiceProxy.Create();
     http.GetResponseJson = "{\"total\":0,\"items\":[]}";
-    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings, null)
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
     {
         SearchQuery = "voice",
     };
@@ -604,7 +631,7 @@ static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync(
     var (httpService, http) = TestHttpServiceProxy.Create();
     var snackbar = new TestSnackbar();
     var context = CreateContext(snackbar, settings, httpService);
-    var viewModel = new SettingsViewModel(context, settings, null)
+    var viewModel = new SettingsViewModel(context, settings)
     {
         SearchQuery = "voice",
     };
@@ -653,7 +680,7 @@ static async Task VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync()
 {
     var settings = new Settings();
     var (httpService, http) = TestHttpServiceProxy.Create();
-    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings, null);
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
     var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var releaseSecond = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
     var calls = 0;
@@ -712,7 +739,7 @@ static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()
     var settings = new Settings();
     var (httpService, http) = TestHttpServiceProxy.Create();
     http.GetResponseJson = "{\"total\":12,\"items\":[{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Page 1\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}";
-    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings, null);
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
 
     await viewModel.SearchVoicesCommand.ExecuteAsync(null);
 
@@ -826,7 +853,7 @@ static void PreviewAudioRejectsInvalidDisplayVoiceUrlWithoutStartingPlayback()
             SampleAudioUrl = "file:///C:/Windows/win.ini",
         },
     };
-    var viewModel = new SettingsViewModel(CreateContext(settings: settings, logger: logger), settings, null);
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, logger: logger), settings);
 
     viewModel.ToggleDisplayPreviewCommand.Execute(null);
 
@@ -841,7 +868,7 @@ static void PromoStatePersistsDismissalAndUse()
     var settings = new Settings();
     var context = CreateContext(settings: settings);
     var proxy = (ContextProxy)(object)context;
-    var viewModel = new SettingsViewModel(context, settings, null, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = new SettingsViewModel(context, settings, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
 
     AssertEqual(true, viewModel.ShowS21ProFreePromo, "Promo should be visible before cutoff when not dismissed");
 
@@ -852,7 +879,7 @@ static void PromoStatePersistsDismissalAndUse()
     settings = new Settings { SelectedModel = FishAudioRuntime.S1Model };
     context = CreateContext(settings: settings);
     proxy = (ContextProxy)(object)context;
-    viewModel = new SettingsViewModel(context, settings, null, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    viewModel = new SettingsViewModel(context, settings, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
 
     viewModel.UseS21ProFreePromoCommand.Execute(null);
     AssertEqual(FishAudioRuntime.S21ProFreeModel, settings.SelectedModel, "Using promo should select free model");
@@ -861,11 +888,11 @@ static void PromoStatePersistsDismissalAndUse()
     AssertEqual(1, proxy.SaveCount, "Using promo should save the selected model once");
 
     settings = new Settings();
-    viewModel = new SettingsViewModel(CreateContext(settings: settings), settings, null, nowUtc: FishAudioRuntime.FreeModelCutoffUtc);
+    viewModel = new SettingsViewModel(CreateContext(settings: settings), settings, nowUtc: FishAudioRuntime.FreeModelCutoffUtc);
     AssertEqual(false, viewModel.ShowS21ProFreePromo, "Promo should be hidden at and after cutoff");
 
     settings = new Settings { SelectedModel = FishAudioRuntime.S1Model };
-    viewModel = new SettingsViewModel(CreateContext(settings: settings), settings, null, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    viewModel = new SettingsViewModel(CreateContext(settings: settings), settings, nowUtc: FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
     AssertEqual(false, viewModel.IsNormalizeLoudnessEnabled, "Normalize loudness should remain visible but disabled for s1");
     viewModel.SelectedModel = FishAudioRuntime.S2ProModel;
     AssertEqual(true, viewModel.IsNormalizeLoudnessEnabled, "Normalize loudness should be enabled for s2-pro and newer models");
@@ -1162,8 +1189,7 @@ async Task CoverImageCacheDownloadsThroughBoundedStreamAsync()
         http.GetStreamResponse = oversizedStream;
         var viewModel = new SettingsViewModel(
             CreateContext(settings: settings, httpService: httpService, pluginCacheDirectoryPath: root),
-            settings,
-            null);
+            settings);
 
         AssertEqual(
             "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/streamed",
@@ -1311,7 +1337,6 @@ async Task ClearCoverImageCacheCommandTracksBusyStateAsync()
     var viewModel = new SettingsViewModel(
         CreateContext(),
         new Settings(),
-        null,
         () =>
         {
             clearStarted.SetResult();
@@ -1339,7 +1364,6 @@ async Task ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync()
     var viewModel = new SettingsViewModel(
         CreateContext(snackbar),
         new Settings(),
-        null,
         () => blockedClear.Task,
         TimeSpan.FromMilliseconds(30));
 
@@ -1364,7 +1388,6 @@ async Task LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync()
     var viewModel = new SettingsViewModel(
         CreateContext(),
         new Settings(),
-        null,
         () => ++clearCall == 1 ? firstClear.Task : secondClear.Task,
         TimeSpan.FromMilliseconds(150));
 

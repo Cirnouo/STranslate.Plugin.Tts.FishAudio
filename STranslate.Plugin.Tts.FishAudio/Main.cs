@@ -18,7 +18,7 @@ public class Main : ITtsPlugin
 
     public Control GetSettingUI()
     {
-        _viewModel ??= new SettingsViewModel(Context, Settings, null);
+        _viewModel ??= new SettingsViewModel(Context, Settings);
         _settingUi ??= new SettingsView { DataContext = _viewModel };
         return _settingUi;
     }

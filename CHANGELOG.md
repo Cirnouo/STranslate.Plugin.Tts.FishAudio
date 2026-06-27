@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- `SettingsViewModel` 拆出试听播放和封面缓存显示/清理两个内部边界，保持现有 XAML 绑定属性与命令名称不变
+- 移除 `SettingsViewModel` 构造函数中未使用的 `pendingCreditTask` 参数
+
 ## [1.0.5] - 2026-06-27
 
 ### Changed

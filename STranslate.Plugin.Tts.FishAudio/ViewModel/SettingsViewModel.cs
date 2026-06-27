@@ -16,9 +16,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly IPluginContext _context;
     private readonly Settings _settings;
-    private readonly CoverImageCacheService _coverImageCache;
-    private readonly Func<Task> _clearCoverImageCacheAsync;
-    private readonly TimeSpan _clearCoverImageCacheTimeout;
+    private readonly PreviewPlaybackController _previewPlayback;
+    private readonly CoverImageCacheDisplayManager _coverImageCacheDisplay;
 
     private const long LatencyGoodMs = 300;
     private const long LatencyFairMs = 800;
@@ -194,10 +193,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool IsDisplayVoicePreviewing { get; set; }
 
-    private MediaPlayer? _previewPlayer;
-    private DispatcherTimer? _previewTimer;
     private VoiceSearchItem? _previewingSearchItem;
-    private long _clearCoverImageCacheOperationId;
     private long _searchOperationId;
     private long _voiceIdOperationId;
     private int _apiKeyOperationLockCount;
@@ -235,16 +231,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public SettingsViewModel(
         IPluginContext context,
         Settings settings,
-        Task<(WalletCreditResponse?, long)>? pendingCreditTask,
         DateTimeOffset? nowUtc = null)
-        : this(context, settings, pendingCreditTask, null, null, nowUtc)
+        : this(context, settings, null, null, nowUtc)
     {
     }
 
     internal SettingsViewModel(
         IPluginContext context,
         Settings settings,
-        Task<(WalletCreditResponse?, long)>? pendingCreditTask,
         Func<Task>? clearCoverImageCacheAsync,
         TimeSpan? clearCoverImageCacheTimeout,
         DateTimeOffset? nowUtc = null)
@@ -254,11 +248,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         var modelPolicyTime = nowUtc ?? FishAudioRuntime.LocalUtcNow();
         Models = FishAudioRuntime.GetAvailableModels(modelPolicyTime);
         IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(modelPolicyTime);
-        _coverImageCache = new CoverImageCacheService(
-            context.MetaData?.PluginCacheDirectoryPath,
-            DownloadCoverImageAsync);
-        _clearCoverImageCacheAsync = clearCoverImageCacheAsync ?? (() => Task.Run(_coverImageCache.Clear));
-        _clearCoverImageCacheTimeout = clearCoverImageCacheTimeout ?? TimeSpan.FromSeconds(ClearCoverImageCacheTimeoutSeconds);
+        _previewPlayback = new PreviewPlaybackController(context.Logger, ApplyPreviewPlaybackState);
+        _coverImageCacheDisplay = new CoverImageCacheDisplayManager(
+            context,
+            DownloadCoverImageAsync,
+            clearCoverImageCacheAsync,
+            clearCoverImageCacheTimeout ?? TimeSpan.FromSeconds(ClearCoverImageCacheTimeoutSeconds),
+            RunOnUiThread);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -282,7 +278,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         PageInput = "1";
         VoiceIdInput = "";
         IsSearchMode = true;
-        CoverImageCacheSizeText = _coverImageCache.GetFormattedCacheSize();
+        CoverImageCacheSizeText = _coverImageCacheDisplay.GetFormattedCacheSize();
 
         ApplyCachedVoice(settings.CachedVoice);
 
@@ -703,74 +699,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void TogglePreview(string voiceId, string audioUrl)
     {
-        if (PreviewingVoiceId == voiceId)
-            StopPreview();
-        else
-            StartPreview(voiceId, audioUrl);
+        _previewPlayback.Toggle(voiceId, audioUrl);
     }
 
-    private void StartPreview(string voiceId, string audioUrl)
+    private void ApplyPreviewPlaybackState(string? voiceId, double progress)
     {
-        StopPreview();
-
-        if (!PreviewAudioUrlValidator.TryCreateAllowedUri(audioUrl, out var previewUri))
-        {
-            _context.Logger?.LogWarning("Rejected preview audio URL for voice {VoiceId}: host or scheme is not allowed", voiceId);
-            return;
-        }
-
         PreviewingVoiceId = voiceId;
-        PreviewProgress = 0;
+        PreviewProgress = progress;
         UpdatePreviewState();
-
-        _previewPlayer = new MediaPlayer { Volume = 1.0 };
-        _previewPlayer.MediaOpened += OnMediaOpened;
-        _previewPlayer.MediaEnded += OnMediaEnded;
-        _previewPlayer.MediaFailed += OnMediaFailed;
-        _previewPlayer.Open(previewUri);
-        _previewPlayer.Play();
-    }
-
-    private void StopPreview()
-    {
-        _previewTimer?.Stop();
-        _previewTimer = null;
-
-        if (_previewPlayer is not null)
-        {
-            _previewPlayer.MediaOpened -= OnMediaOpened;
-            _previewPlayer.MediaEnded -= OnMediaEnded;
-            _previewPlayer.MediaFailed -= OnMediaFailed;
-            _previewPlayer.Stop();
-            _previewPlayer.Close();
-            _previewPlayer = null;
-        }
-
-        PreviewingVoiceId = null;
-        PreviewProgress = 0;
-        UpdatePreviewState();
-    }
-
-    private void OnMediaOpened(object? sender, EventArgs e)
-    {
-        _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
-        _previewTimer.Tick += OnPreviewTick;
-        _previewTimer.Start();
-    }
-
-    private void OnMediaEnded(object? sender, EventArgs e) => StopPreview();
-    private void OnMediaFailed(object? sender, ExceptionEventArgs e) => StopPreview();
-
-    private void OnPreviewTick(object? sender, EventArgs e)
-    {
-        if (_previewPlayer?.NaturalDuration.HasTimeSpan != true) return;
-
-        var duration = _previewPlayer.NaturalDuration.TimeSpan.TotalMilliseconds;
-        var position = _previewPlayer.Position.TotalMilliseconds;
-        PreviewProgress = duration > 0 ? Math.Min(1.0, position / duration) : 0;
-
-        if (_previewingSearchItem is not null)
-            _previewingSearchItem.PreviewProgress = PreviewProgress;
     }
 
     private void UpdatePreviewState()
@@ -858,59 +794,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanClearCoverImageCache))]
     private async Task ClearCoverImageCacheAsync()
     {
-        var operationId = Interlocked.Increment(ref _clearCoverImageCacheOperationId);
-        IsClearingCoverImageCache = true;
-
-        Task clearTask;
-        try
-        {
-            clearTask = _clearCoverImageCacheAsync();
-        }
-        catch (Exception ex)
-        {
-            CompleteCurrentCoverImageCacheClear(operationId);
-            _context.Snackbar.ShowError(ex.Message);
-            return;
-        }
-
-        var completedTask = await Task.WhenAny(clearTask, Task.Delay(_clearCoverImageCacheTimeout));
-        if (!ReferenceEquals(completedTask, clearTask))
-        {
-            if (IsCurrentCoverImageCacheClear(operationId))
-            {
-                RefreshCoverImageCacheSize();
-                IsClearingCoverImageCache = false;
-                _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout"));
-            }
-
-            _ = clearTask.ContinueWith(task =>
-            {
-                _ = task.Exception;
-                RunOnUiThread(RefreshCoverImageCacheSize);
-            }, TaskScheduler.Default);
-            return;
-        }
-
-        try
-        {
-            await clearTask;
-        }
-        catch (Exception ex)
-        {
-            if (IsCurrentCoverImageCacheClear(operationId))
-                _context.Snackbar.ShowError(ex.Message);
-        }
-        finally
-        {
-            if (IsCurrentCoverImageCacheClear(operationId))
-                CompleteCurrentCoverImageCacheClear(operationId);
-            else
-                RefreshCoverImageCacheSize();
-        }
+        await _coverImageCacheDisplay.ClearAsync(
+            value => IsClearingCoverImageCache = value,
+            RefreshCoverImageCacheDisplay,
+            RefreshCoverImageCacheSize);
     }
-
-    private bool IsCurrentCoverImageCacheClear(long operationId) =>
-        Volatile.Read(ref _clearCoverImageCacheOperationId) == operationId;
 
     private long BeginSearchOperation(out CancellationTokenSource cts)
     {
@@ -950,13 +838,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             _voiceIdCancellationTokenSource = null;
     }
 
-    private void CompleteCurrentCoverImageCacheClear(long operationId)
-    {
-        RefreshCoverImageCacheDisplay();
-        if (IsCurrentCoverImageCacheClear(operationId))
-            IsClearingCoverImageCache = false;
-    }
-
     private void RefreshCoverImageCacheDisplay()
     {
         RefreshCoverImageCacheSize();
@@ -970,15 +851,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private string ResolveCoverImageUrl(string voiceId, string coverImage, int displayWidth, Action<string>? onCacheReady = null)
     {
-        var result = _coverImageCache.ResolveCoverImageUrl(voiceId, coverImage, displayWidth, localUrl =>
-        {
-            RunOnUiThread(() =>
-            {
-                onCacheReady?.Invoke(localUrl);
-                RefreshCoverImageCacheSize();
-            });
-        });
-        return result.DisplayUrl;
+        return _coverImageCacheDisplay.ResolveCoverImageUrl(
+            voiceId,
+            coverImage,
+            displayWidth,
+            onCacheReady,
+            RefreshCoverImageCacheSize);
     }
 
     private Task<Stream> DownloadCoverImageAsync(string url, CancellationToken ct) =>
@@ -986,7 +864,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void RefreshCoverImageCacheSize()
     {
-        CoverImageCacheSizeText = _coverImageCache.GetFormattedCacheSize();
+        CoverImageCacheSizeText = _coverImageCacheDisplay.GetFormattedCacheSize();
     }
 
     private static void RunOnUiThread(Action action)
@@ -1042,7 +920,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         PropertyChanged -= OnPropertyChanged;
         _searchCancellationTokenSource?.Cancel();
         _voiceIdCancellationTokenSource?.Cancel();
-        StopPreview();
+        _previewPlayback.Dispose();
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();
     }
