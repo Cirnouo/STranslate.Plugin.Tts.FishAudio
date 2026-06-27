@@ -33,6 +33,7 @@ await SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync();
 await SearchAndByIdUseDummyTokenAsync();
 await VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
+await VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
 await SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync();
 await PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync();
 PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts();
@@ -732,6 +733,65 @@ static async Task VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync()
     await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
 
     AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing the view model should cancel by-ID lookup and restore busy state");
+}
+
+static async Task VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync()
+{
+    var settings = new Settings();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+    {
+        SearchQuery = "late",
+    };
+    var searchStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseSearch = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    http.GetAsyncHandler = (_, _, _) =>
+    {
+        searchStarted.SetResult();
+        return releaseSearch.Task;
+    };
+
+    var searchTask = viewModel.SearchVoicesCommand.ExecuteAsync(null);
+    await searchStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.Dispose();
+    releaseSearch.SetResult("{\"total\":1,\"items\":[{\"_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"title\":\"Late Search\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}");
+    await searchTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModel.IsSearching, "Disposing during search should restore search busy state");
+    AssertEqual(false, viewModel.HasSearched, "Search completion after dispose should not mark search as completed");
+    AssertEqual(0, viewModel.SearchResults.Count, "Search completion after dispose should not apply stale results");
+
+    const string originalVoiceId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    settings = new Settings
+    {
+        VoiceId = originalVoiceId,
+        CachedVoice = new CachedVoiceInfo { Title = "Existing Voice" },
+    };
+    (httpService, http) = TestHttpServiceProxy.Create();
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var proxy = (ContextProxy)(object)context;
+    viewModel = new SettingsViewModel(context, settings)
+    {
+        VoiceIdInput = "cccccccccccccccccccccccccccccccc",
+    };
+    var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseById = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    http.GetAsyncHandler = (_, _, _) =>
+    {
+        byIdStarted.SetResult();
+        return releaseById.Task;
+    };
+
+    var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    await byIdStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.Dispose();
+    releaseById.SetResult("{\"_id\":\"cccccccccccccccccccccccccccccccc\",\"title\":\"Late Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+    await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
+    AssertEqual(originalVoiceId, settings.VoiceId, "By-ID completion after dispose should not update saved voice ID");
+    AssertEqual("Existing Voice", settings.CachedVoice?.Title, "By-ID completion after dispose should not update cached voice");
+    AssertEqual(1, proxy.SaveCount, "By-ID completion after dispose should not save stale lookup results");
 }
 
 static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()

@@ -315,3 +315,14 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** `SettingsViewModel` had accumulated WPF preview playback, cover image cache display, cache cleanup timeout handling, request orchestration, settings persistence, and binding state. That made review fixes risky because unrelated behavior lived in one large class, while XAML bindings and command names must remain stable for the settings view.
 **Decision:** Keep `SettingsViewModel` as the binding surface and settings coordinator, but move preview playback into `PreviewPlaybackController` and cover image cache display/cleanup orchestration into `CoverImageCacheDisplayManager`. The preview controller owns `MediaPlayer`, timer lifecycle, preview URL validation, and progress callbacks. The cover cache display manager wraps `CoverImageCacheService`, cache size formatting, clear timeout recovery, and late-completion refresh callbacks. Existing XAML property and command names remain unchanged. The obsolete `pendingCreditTask` constructor parameter is removed from all call sites.
 **Affects:** `SettingsViewModel`, `PreviewPlaybackController`, `CoverImageCacheDisplayManager`, settings view regression tests.
+
+---
+
+## DD-035: Voice lookup and media cache hardening
+
+**Date:** 2026-06-27
+**Context:** Code review found several paths where external requests could run too long, complete after their owning UI was disposed, or accept media URLs/responses too broadly. Fish Audio model detail returns HTTP 404 for missing voices, but other lookup failures need to remain distinguishable for users and diagnostics.
+**Decision:** Voice search, by-ID lookup, and startup selected-voice refresh use 15 second request timeouts. `GetModelAsync` maps only HTTP 404 to the localized voice-not-found state; timeout, network, and JSON/null response failures remain request failures. Search/by-ID requests are cancellable, and new requests or ViewModel disposal cancel and invalidate older operations so late successful completions cannot mutate UI or saved settings. Startup refresh owns a cancellation token that is canceled on plugin disposal, and cancellation is quiet.
+
+Preview playback validates sample audio URLs before opening `MediaPlayer`, allowing only HTTPS `platform.r2.fish.audio` and `*.r2.cloudflarestorage.com` URLs. Cover image cache downloads use a 10 second timeout, stream through a 256 KiB + 1 byte read bound, cache only non-empty JPEG/PNG/GIF/WebP-looking responses of at most 256 KiB, and leave the UI on the remote CDN URL when a response is empty, canceled, timed out, oversized, or non-image.
+**Affects:** `FishAudioApi`, `Main`, `SettingsViewModel`, `PreviewAudioUrlValidator`, `PreviewPlaybackController`, `CoverImageCacheService`, `CoverImageCacheDisplayManager`, regression tests.

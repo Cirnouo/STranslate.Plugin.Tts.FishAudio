@@ -6,9 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Security
+- 试听音频 URL 仅允许 Fish Audio/R2 HTTPS 地址，拒绝本地路径、HTTP、localhost 和非预期 host
+- 封面缓存下载改为 10 秒超时、有界流式读取，单张图片最多缓存 256 KiB，且只落盘有效图片响应
+
 ### Changed
 - `SettingsViewModel` 拆出试听播放和封面缓存显示/清理两个内部边界，保持现有 XAML 绑定属性与命令名称不变
 - 移除 `SettingsViewModel` 构造函数中未使用的 `pendingCreditTask` 参数
+
+### Fixed
+- 声音搜索、按 ID 查询和启动已选声音刷新统一使用 15 秒超时，并在 Dispose 或新请求开始时取消/忽略旧请求
+- `GetModelAsync` 只将 HTTP 404 映射为声音未找到，超时、网络错误和空 JSON 响应继续作为请求失败暴露
+- 启动后台刷新在插件释放后取消，避免更新已释放的 ViewModel 或保存过期的声音缓存
+- Dispose 后即使 HTTP 层忽略取消，迟到的声音搜索或按 ID 查询结果也不会回写 UI/设置
 
 ## [1.0.5] - 2026-06-27
 

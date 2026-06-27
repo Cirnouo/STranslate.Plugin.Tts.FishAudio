@@ -811,7 +811,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     }
 
     private bool IsCurrentSearchOperation(long operationId) =>
-        Volatile.Read(ref _searchOperationId) == operationId;
+        !_isDisposed && Volatile.Read(ref _searchOperationId) == operationId;
 
     private void CompleteSearchOperation(CancellationTokenSource cts)
     {
@@ -830,7 +830,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     }
 
     private bool IsCurrentVoiceIdOperation(long operationId) =>
-        Volatile.Read(ref _voiceIdOperationId) == operationId;
+        !_isDisposed && Volatile.Read(ref _voiceIdOperationId) == operationId;
 
     private void CompleteVoiceIdOperation(CancellationTokenSource cts)
     {
@@ -918,8 +918,16 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         _isDisposed = true;
         PropertyChanged -= OnPropertyChanged;
-        _searchCancellationTokenSource?.Cancel();
-        _voiceIdCancellationTokenSource?.Cancel();
+        Interlocked.Increment(ref _searchOperationId);
+        Interlocked.Increment(ref _voiceIdOperationId);
+        IsSearching = false;
+        IsSubmittingVoiceId = false;
+        var searchCancellation = _searchCancellationTokenSource;
+        var voiceIdCancellation = _voiceIdCancellationTokenSource;
+        _searchCancellationTokenSource = null;
+        _voiceIdCancellationTokenSource = null;
+        searchCancellation?.Cancel();
+        voiceIdCancellation?.Cancel();
         _previewPlayback.Dispose();
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();
