@@ -34,6 +34,8 @@ await VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 await SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync();
 await PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync();
+PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts();
+PreviewAudioRejectsInvalidDisplayVoiceUrlWithoutStartingPlayback();
 PromoStatePersistsDismissalAndUse();
 SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars();
 SettingsViewIncludesS21PromoAndDynamicModelDescriptions();
@@ -791,6 +793,46 @@ static async Task PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync()
     AssertEqual(-2.5, prosody["volume"], "s1 TTS request should still include volume");
 }
 
+static void PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts()
+{
+    AssertPreviewAudioUrlAllowed("https://platform.r2.fish.audio/audio/sample.mp3");
+    AssertPreviewAudioUrlAllowed("https://bucket.r2.cloudflarestorage.com/audio/sample.mp3");
+    AssertPreviewAudioUrlAllowed("https://nested.bucket.r2.cloudflarestorage.com/audio/sample.mp3");
+
+    AssertPreviewAudioUrlRejected("file:///C:/Windows/win.ini");
+    AssertPreviewAudioUrlRejected(@"\\localhost\share\sample.mp3");
+    AssertPreviewAudioUrlRejected(@"C:\Windows\win.ini");
+    AssertPreviewAudioUrlRejected("http://platform.r2.fish.audio/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("https://localhost/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("https://127.0.0.1/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("https://[::1]/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("https://public-platform.r2.fish.audio/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("https://evil.example/audio/sample.mp3");
+    AssertPreviewAudioUrlRejected("not a url");
+}
+
+static void PreviewAudioRejectsInvalidDisplayVoiceUrlWithoutStartingPlayback()
+{
+    var logger = new TestLogger();
+    var settings = new Settings
+    {
+        VoiceId = "0123456789abcdef0123456789abcdef",
+        CachedVoice = new CachedVoiceInfo
+        {
+            Title = "Unsafe Preview",
+            SampleAudioUrl = "file:///C:/Windows/win.ini",
+        },
+    };
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, logger: logger), settings, null);
+
+    viewModel.ToggleDisplayPreviewCommand.Execute(null);
+
+    AssertEqual(null, viewModel.PreviewingVoiceId, "Invalid preview URL should leave preview state stopped");
+    AssertEqual(false, viewModel.IsDisplayVoicePreviewing, "Invalid display preview URL should not mark the selected voice as previewing");
+    AssertEqual(0.0, viewModel.PreviewProgress, "Invalid display preview URL should not start preview progress");
+    AssertEqual(true, logger.Contains(LogLevel.Warning, "Rejected preview audio URL"), "Invalid preview URL should be logged as a recoverable warning");
+}
+
 static void PromoStatePersistsDismissalAndUse()
 {
     var settings = new Settings();
@@ -1351,6 +1393,18 @@ static Dictionary<string, string> AssertHeaders(Options? options, string message
         return headers;
 
     throw new InvalidOperationException(message);
+}
+
+static void AssertPreviewAudioUrlAllowed(string url)
+{
+    AssertEqual(true, PreviewAudioUrlValidator.TryCreateAllowedUri(url, out var uri), $"{url} should be allowed as a preview audio URL");
+    AssertEqual(url, uri?.AbsoluteUri, $"{url} should preserve the validated preview URI");
+}
+
+static void AssertPreviewAudioUrlRejected(string url)
+{
+    AssertEqual(false, PreviewAudioUrlValidator.TryCreateAllowedUri(url, out var uri), $"{url} should be rejected as a preview audio URL");
+    AssertEqual(null, uri, $"{url} should not return a URI when rejected");
 }
 
 public class ContextProxy : DispatchProxy

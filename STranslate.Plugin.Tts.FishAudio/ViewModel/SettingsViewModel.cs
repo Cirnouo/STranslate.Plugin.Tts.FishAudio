@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using System.ComponentModel;
@@ -710,6 +711,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         StopPreview();
 
+        if (!PreviewAudioUrlValidator.TryCreateAllowedUri(audioUrl, out var previewUri))
+        {
+            _context.Logger?.LogWarning("Rejected preview audio URL for voice {VoiceId}: host or scheme is not allowed", voiceId);
+            return;
+        }
+
         PreviewingVoiceId = voiceId;
         PreviewProgress = 0;
         UpdatePreviewState();
@@ -718,7 +725,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _previewPlayer.MediaOpened += OnMediaOpened;
         _previewPlayer.MediaEnded += OnMediaEnded;
         _previewPlayer.MediaFailed += OnMediaFailed;
-        _previewPlayer.Open(new Uri(audioUrl));
+        _previewPlayer.Open(previewUri);
         _previewPlayer.Play();
     }
 
