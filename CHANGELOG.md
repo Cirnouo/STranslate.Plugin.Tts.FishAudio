@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-06-27
+
 ### Changed
 - 滑动条拖动气泡改为使用与右侧数值相同的小数精度
 - 上下文关联说明补回“保持声音一致性”的用途，同时继续明确仅使用同一次合成音频的前序片段
