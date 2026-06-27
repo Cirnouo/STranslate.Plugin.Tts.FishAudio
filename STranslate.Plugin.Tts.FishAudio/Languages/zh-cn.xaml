@@ -85,7 +85,7 @@
 
     <!-- 生成参数 (续) -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">上下文关联</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">仅关联同一次合成音频的前序片段，不会使用之前生成的其他音频</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">使用同一次合成音频的前序片段保持声音一致性，不会使用之前生成的其他音频</sys:String>
 
     <!-- 操作 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">粘贴</sys:String>

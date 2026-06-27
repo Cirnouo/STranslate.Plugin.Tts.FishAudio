@@ -76,7 +76,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 公式サイト</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">コンテキスト連携</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">同じ合成音声内の前のチャンクのみを参照し、以前に生成した別の音声は参照しません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">貼り付け</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">確認</sys:String>

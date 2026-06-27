@@ -77,13 +77,10 @@
 
 ### 2.3 購買 API 餘額
 
-<div align="center">
-  <img src="images/s2-pro-free-promo.webp" alt="S2.1 Pro 模型限時免費" width="450" />
-</div>
+> [!TIP]
+> S2.1 Pro 模型限時免費至 `2026-07-24`，在外掛內選用模型 `s2.1-pro-free` 進行呼叫。詳情入口：[Fish Audio S2.1 Pro：面向開發者的免費文字轉語音 API](https://fish.audio/blog/s2-1-pro-free-api/)
 
-S2.1 Pro 模型限時免費至 `2026-07-24`，在外掛內選用模型 `s2.1-pro-free` 進行呼叫。詳情入口：[Fish Audio S2.1 Pro：面向開發者的免費文字轉語音 API](https://fish.audio/blog/s2-1-pro-free-api/)
-
-Fish Audio TTS 會消耗 Fish Audio API 餘額。可以在 [控制台 > 開發者 > 帳單 > 餘額 > 購買積分](https://fish.audio/app/developers/billing/) 頁面中購買
+Fish Audio TTS 會消耗 Fish Audio API 餘額。可以在 [開發者 > 控制台](https://fish.audio/app/developers/billing/) 頁面中購買
 
 <!-- 截圖: images/fish-audio-billing.png
      內容: Fish Audio Billing/Balance/Purchase Credits 入口，突出餘額購買或儲值位置。 -->
@@ -104,9 +101,6 @@ Fish Audio 的聲音社群收錄了創作者公開分享的聲音。你可以在
 ### 2.5 設定聲音
 
 外掛提供 **透過名稱搜尋聲音** 和 **透過 ID 直接設定** 兩種設定方式
-
-> [!NOTE]
-> 不設定聲音時預設會使用隨機聲音；隨機聲音同樣會消耗 API 餘額
 
 #### 2.5.1 透過名稱搜尋聲音
 
@@ -150,7 +144,7 @@ Fish Audio 的聲音社群收錄了創作者公開分享的聲音。你可以在
 | 多樣性 | `0.7` | 範圍 `0` 到 `1`。 |
 | 延遲模式 | 品質優先 | 品質優先 / 平衡 / 低延遲。 |
 | 文字規範化 | 關閉 | 將數字、單位符號等轉換為更適合朗讀的文字。 |
-| 上下文關聯 | 開啟 | 僅使用同一次合成音訊的前序片段作為上下文，不會關聯先前產生的其他音訊。 |
+| 上下文關聯 | 開啟 | 使用同一次合成音訊的前序片段保持聲音一致性，不會使用先前產生的其他音訊。 |
 
 </details>
 

@@ -77,13 +77,10 @@ Paste it into the plugin settings **API Key** input
 
 ### 2.3 Buy API Credits
 
-<div align="center">
-  <img src="images/s2-pro-free-promo.webp" alt="S2.1 Pro model limited-time free offer" width="450" />
-</div>
+> [!TIP]
+> The S2.1 Pro model is free for a limited time until `2026-07-24`. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
 
-The S2.1 Pro model is free for a limited time until `2026-07-24`. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
-
-Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Console > Developer > Billing > Balance > Purchase Credits](https://fish.audio/app/developers/billing/)
+Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Developer > Console](https://fish.audio/app/developers/billing/)
 
 <!-- Screenshot: images/fish-audio-billing.png
      Content: Fish Audio Billing/Balance/Purchase Credits entry, highlighting where to buy or top up credits. -->
@@ -104,9 +101,6 @@ The Fish Audio voice community contains public voices shared by creators. You ca
 ### 2.5 Set a Voice
 
 The plugin offers **Search by Name** and **Set Directly by ID**
-
-> [!NOTE]
-> When no voice is set, the default behavior is to use a random voice. Random voices still consume API credits
 
 #### 2.5.1 Search by Name
 
@@ -150,7 +144,7 @@ Return to the plugin's **By ID** tab, paste the ID, then click the confirm butto
 | Diversity | `0.7` | Range `0` to `1`. |
 | Latency mode | Quality first | Quality first / Balanced / Low latency. |
 | Text normalization | Off | Converts numbers, unit symbols, and similar content into text that is easier to read aloud. |
-| Context conditioning | On | Uses earlier chunks from the same synthesis as context; it does not reference previously generated audio. |
+| Context conditioning | On | Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio. |
 
 </details>
 

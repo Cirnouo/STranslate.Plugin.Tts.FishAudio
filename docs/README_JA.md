@@ -77,13 +77,10 @@ STranslate のプラグインマーケットからインストールする方法
 
 ### 2.3 API クレジットを購入
 
-<div align="center">
-  <img src="images/s2-pro-free-promo.webp" alt="S2.1 Pro モデル期間限定無料" width="450" />
-</div>
+> [!TIP]
+> S2.1 Pro モデルは `2026-07-24` まで期間限定で無料です。プラグイン内で `s2.1-pro-free` を選択して使用します。詳細: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
 
-S2.1 Pro モデルは `2026-07-24` まで期間限定で無料です。プラグイン内で `s2.1-pro-free` を選択して使用します。詳細: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
-
-Fish Audio TTS は Fish Audio API クレジットを消費します。[コンソール > 開発者 > 請求 > 残高 > クレジットを購入](https://fish.audio/app/developers/billing/) で購入できます
+Fish Audio TTS は Fish Audio API クレジットを消費します。[開発者 > コンソール](https://fish.audio/app/developers/billing/) で購入できます
 
 <!-- スクリーンショット: images/fish-audio-billing.png
      内容: Fish Audio Billing/Balance/Purchase Credits の入口。クレジット購入またはチャージ位置を強調してください。 -->
@@ -104,9 +101,6 @@ Fish Audio のボイスコミュニティには、クリエイターが公開し
 ### 2.5 ボイスを設定
 
 プラグインには **名前でボイスを検索** と **ID で直接設定** の 2 つの設定方法があります
-
-> [!NOTE]
-> ボイスを設定しない場合、デフォルトではランダムボイスが使用されます。ランダムボイスでも API クレジットは消費されます
 
 #### 2.5.1 名前でボイスを検索
 
@@ -150,7 +144,7 @@ Fish Audio のボイスコミュニティには、クリエイターが公開し
 | 多様性 | `0.7` | 範囲は `0` から `1`。 |
 | レイテンシモード | 品質優先 | 品質優先 / バランス / 低レイテンシ。 |
 | テキスト正規化 | オフ | 数字、単位記号などを読み上げに適したテキストへ自動変換します。 |
-| コンテキスト連携 | オン | 同じ合成音声内の前のチャンクだけをコンテキストとして参照し、以前に生成した別の音声は参照しません。 |
+| コンテキスト連携 | オン | 同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません。 |
 
 </details>
 

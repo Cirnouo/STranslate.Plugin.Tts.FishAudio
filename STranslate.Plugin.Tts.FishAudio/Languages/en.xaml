@@ -76,7 +76,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio website</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">Context Conditioning</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Uses earlier chunks from the same synthesis only; it does not reference previously generated audio</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">Paste</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">Confirm</sys:String>

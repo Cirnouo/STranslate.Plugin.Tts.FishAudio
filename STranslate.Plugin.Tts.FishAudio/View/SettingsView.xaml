@@ -520,7 +520,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.TopSpeed_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="2.0" Minimum="0.5" TickFrequency="0.05" Value="{Binding Speed}" />
+                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="2.0" Minimum="0.5" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding Speed}" />
                 <TextBlock MinWidth="36" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding Speed, StringFormat='{}{0:F2}'}" />
             </StackPanel>
         </ui:SettingsCard>
@@ -530,7 +530,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Speaker2_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="10" Minimum="-10" TickFrequency="0.1" Value="{Binding Volume}" />
+                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="10" Minimum="-10" TickFrequency="0.1" AutoToolTipPrecision="1" Value="{Binding Volume}" />
                 <TextBlock MinWidth="48" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding Volume, StringFormat='{}{0:F1} dB'}" />
             </StackPanel>
         </ui:SettingsCard>
@@ -558,7 +558,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Sparkle_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.05" Value="{Binding Temperature}" />
+                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding Temperature}" />
                 <TextBlock MinWidth="36" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding Temperature, StringFormat='{}{0:F2}'}" />
             </StackPanel>
         </ui:SettingsCard>
@@ -571,7 +571,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Diversity_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.05" Value="{Binding TopP}" />
+                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding TopP}" />
                 <TextBlock MinWidth="36" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding TopP, StringFormat='{}{0:F2}'}" />
             </StackPanel>
         </ui:SettingsCard>

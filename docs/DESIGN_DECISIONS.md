@@ -297,3 +297,12 @@ Each entry records a behavior, its motivation, and which code it affects.
 **Context:** The previous user-facing description said context conditioning used "previous audio" or "previous chunks", which could be read as previously generated, separate audio files instead of chunks inside the current synthesis request.
 **Decision:** Keep the `condition_on_previous_chunks` behavior unchanged, but update UI and README copy to explicitly say it uses only earlier chunks from the same synthesis audio and does not reference previously generated audio. API endpoint docs use the same request-local wording.
 **Affects:** language resources, `README.md`, localized README files, `docs/api-tts.md`.
+
+---
+
+## DD-033: Slider tooltips and context copy match visible settings intent
+
+**Date:** 2026-06-27
+**Context:** WPF slider drag tooltips rounded numeric values to integers while the adjacent setting values displayed decimals. The context-conditioning copy also emphasized request-local scope but no longer explained that the feature helps preserve voice consistency.
+**Decision:** Set each numeric slider's `AutoToolTipPrecision` to the same decimal precision used by its adjacent value label. Keep context-conditioning behavior unchanged, but update UI and README copy to say it uses earlier chunks from the same synthesis to maintain voice consistency and does not reference previously generated audio. Localized READMEs mirror the current Simplified Chinese README structure and use the same visible control names as the plugin resources.
+**Affects:** `SettingsView.xaml`, language resources, README files, regression tests.

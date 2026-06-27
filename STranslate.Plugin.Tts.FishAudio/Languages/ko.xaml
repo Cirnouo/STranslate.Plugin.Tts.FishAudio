@@ -76,7 +76,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 공식 웹사이트</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">컨텍스트 연동</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">같은 합성 오디오 안의 앞선 조각만 참조하며, 이전에 생성한 다른 오디오는 참조하지 않습니다</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">붙여넣기</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">확인</sys:String>

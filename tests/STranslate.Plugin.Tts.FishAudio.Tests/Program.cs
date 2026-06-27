@@ -31,6 +31,9 @@ PromoStatePersistsDismissalAndUse();
 SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars();
 SettingsViewIncludesS21PromoAndDynamicModelDescriptions();
 LanguageResourcesMatchApiKeyRollback();
+SettingsViewSliderTooltipsMatchDisplayedPrecision();
+LanguageResourcesDescribeContextConditioningConsistency();
+TranslatedReadmesMatchCurrentSourceAndControlNames();
 CoverImageCacheUsesExistingFile();
 await CoverImageCacheCreatesMissedFileAsync();
 CoverImageCacheClearsOnlyCoverImagesAndFormatsSize();
@@ -635,6 +638,66 @@ static void LanguageResourcesMatchApiKeyRollback()
     }
 }
 
+static void SettingsViewSliderTooltipsMatchDisplayedPrecision()
+{
+    var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "View", "SettingsView.xaml")));
+
+    AssertSliderTooltipPrecision(xaml, "Speed", "2");
+    AssertSliderTooltipPrecision(xaml, "Volume", "1");
+    AssertSliderTooltipPrecision(xaml, "Temperature", "2");
+    AssertSliderTooltipPrecision(xaml, "TopP", "2");
+}
+
+static void LanguageResourcesDescribeContextConditioningConsistency()
+{
+    var expectedDescriptions = new Dictionary<string, string>
+    {
+        ["zh-cn"] = "使用同一次合成音频的前序片段保持声音一致性，不会使用之前生成的其他音频",
+        ["zh-tw"] = "使用同一次合成音訊的前序片段保持聲音一致性，不會使用先前產生的其他音訊",
+        ["en"] = "Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio",
+        ["ja"] = "同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません",
+        ["ko"] = "같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다",
+    };
+
+    foreach (var (locale, expectedDescription) in expectedDescriptions)
+    {
+        var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
+            "STranslate.Plugin.Tts.FishAudio",
+            "Languages",
+            $"{locale}.xaml")));
+
+        AssertEqual(
+            true,
+            xaml.Contains(expectedDescription, StringComparison.Ordinal),
+            $"{locale} should describe context conditioning as same-synthesis voice consistency");
+    }
+}
+
+static void TranslatedReadmesMatchCurrentSourceAndControlNames()
+{
+    var expectedContextRows = new Dictionary<string, string>
+    {
+        ["README_EN.md"] = "| Context conditioning | On | Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio. |",
+        ["README_TW.md"] = "| 上下文關聯 | 開啟 | 使用同一次合成音訊的前序片段保持聲音一致性，不會使用先前產生的其他音訊。 |",
+        ["README_JA.md"] = "| コンテキスト連携 | オン | 同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません。 |",
+        ["README_KO.md"] = "| 컨텍스트 연동 | 켜짐 | 같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다. |",
+    };
+
+    foreach (var (fileName, expectedContextRow) in expectedContextRows)
+    {
+        var readme = File.ReadAllText(FindRepoFile(Path.Combine("docs", fileName)));
+
+        AssertEqual(false, readme.Contains("s2-pro-free-promo.webp", StringComparison.Ordinal), $"{fileName} should not reference the removed README promo image");
+        AssertEqual(true, readme.Contains("> [!TIP]", StringComparison.Ordinal), $"{fileName} should use the source README tip callout");
+        AssertEqual(false, readme.Contains("[!NOTE]", StringComparison.Ordinal), $"{fileName} should remove the random voice note from section 2.5");
+        AssertEqual(true, readme.Contains(expectedContextRow, StringComparison.Ordinal), $"{fileName} should match the updated context conditioning row");
+    }
+
+    var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "README_KO.md")));
+    AssertEqual(true, koreanReadme.Contains("컨텍스트 연동", StringComparison.Ordinal), "Korean README should use the localized control name for context conditioning");
+    AssertEqual(false, koreanReadme.Contains("컨텍스트 연결", StringComparison.Ordinal), "Korean README should not use a different context conditioning label");
+}
+
 static Settings CreateTtsSettings(string selectedModel) => new()
 {
     ApiKey = AppliedKey,
@@ -959,6 +1022,22 @@ static int CountOccurrences(string text, string value)
     }
 
     return count;
+}
+
+static void AssertSliderTooltipPrecision(string xaml, string bindingName, string expectedPrecision)
+{
+    var bindingIndex = xaml.IndexOf($"Value=\"{{Binding {bindingName}}}\"", StringComparison.Ordinal);
+    AssertEqual(true, bindingIndex >= 0, $"{bindingName} slider should bind to {bindingName}");
+
+    var sliderStart = xaml.LastIndexOf("<Slider", bindingIndex, StringComparison.Ordinal);
+    var sliderEnd = xaml.IndexOf("/>", bindingIndex, StringComparison.Ordinal);
+    AssertEqual(true, sliderStart >= 0 && sliderEnd > bindingIndex, $"{bindingName} binding should be inside a Slider element");
+
+    var sliderXaml = xaml.Substring(sliderStart, sliderEnd - sliderStart);
+    AssertEqual(
+        true,
+        sliderXaml.Contains($"AutoToolTipPrecision=\"{expectedPrecision}\"", StringComparison.Ordinal),
+        $"{bindingName} slider tooltip should show {expectedPrecision} decimal places");
 }
 
 static NetworkAvailabilityOverride OverrideNetworkAvailability(bool available)
