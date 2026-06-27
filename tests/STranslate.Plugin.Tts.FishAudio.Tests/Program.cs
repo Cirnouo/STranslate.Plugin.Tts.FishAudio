@@ -45,6 +45,9 @@ LanguageResourcesDescribeContextConditioningConsistency();
 TranslatedReadmesMatchCurrentSourceAndControlNames();
 CoverImageCacheUsesExistingFile();
 await CoverImageCacheCreatesMissedFileAsync();
+await CoverImageCacheRejectsInvalidDownloadsAsync();
+await CoverImageCacheCancelsSlowDownloadAfterTimeoutAsync();
+await CoverImageCacheDownloadsThroughBoundedStreamAsync();
 CoverImageCacheClearsOnlyCoverImagesAndFormatsSize();
 CoverImageCacheSizeScansCoverImagesDirectory();
 await ClearCoverImageCacheCommandTracksBusyStateAsync();
@@ -1029,7 +1032,7 @@ void CoverImageCacheUsesExistingFile()
         var cache = new CoverImageCacheService(root, (_, _) =>
         {
             downloadCalled = true;
-            return Task.FromResult(new byte[] { 9 });
+            return Task.FromResult<Stream>(new MemoryStream(new byte[] { 9 }));
         });
 
         var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/existing", 128);
@@ -1051,13 +1054,13 @@ async Task CoverImageCacheCreatesMissedFileAsync()
     {
         const string voiceId = "22222222222222222222222222222222";
         const string coverImage = "coverimage/missed";
-        var bytes = new byte[] { 10, 20, 30, 40 };
+        var bytes = MinimalJpegBytes();
         var downloadCount = 0;
         string? callbackUrl = null;
         var cache = new CoverImageCacheService(root, (_, _) =>
         {
             downloadCount++;
-            return Task.FromResult(bytes);
+            return Task.FromResult<Stream>(new MemoryStream(bytes));
         });
 
         var result = cache.ResolveCoverImageUrl(voiceId, coverImage, 128, url => callbackUrl = url);
@@ -1086,6 +1089,114 @@ async Task CoverImageCacheCreatesMissedFileAsync()
     }
 }
 
+async Task CoverImageCacheRejectsInvalidDownloadsAsync()
+{
+    await AssertRejectedCoverDownloadAsync(
+        "55555555555555555555555555555555",
+        (_, _) => Task.FromResult<Stream>(new MemoryStream(Array.Empty<byte>())),
+        "Empty cover image response should not be cached");
+    await AssertRejectedCoverDownloadAsync(
+        "66666666666666666666666666666666",
+        (_, _) => Task.FromResult<Stream>(new MemoryStream(NonImageBytes())),
+        "Non-image cover response should not be cached");
+    await AssertRejectedCoverDownloadAsync(
+        "77777777777777777777777777777777",
+        (_, _) => Task.FromResult<Stream>(new MemoryStream(OversizedImageBytes())),
+        "Oversized cover image response should not be cached");
+    await AssertRejectedCoverDownloadAsync(
+        "88888888888888888888888888888888",
+        (_, ct) => Task.FromCanceled<Stream>(ct.IsCancellationRequested ? ct : new CancellationToken(true)),
+        "Canceled cover image download should not be cached");
+}
+
+async Task CoverImageCacheCancelsSlowDownloadAfterTimeoutAsync()
+{
+    var root = CreateTempDirectory();
+    try
+    {
+        const string voiceId = "99999999999999999999999999999999";
+        var downloadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var downloadCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        string? callbackUrl = null;
+        var cache = new CoverImageCacheService(root, (_, ct) =>
+        {
+            downloadStarted.SetResult();
+            ct.Register(() => downloadCanceled.TrySetResult());
+            return Task.Delay(Timeout.InfiniteTimeSpan, ct).ContinueWith<Stream>(task =>
+            {
+                if (task.IsCanceled)
+                    throw new OperationCanceledException(ct);
+
+                return new MemoryStream(MinimalJpegBytes());
+            }, CancellationToken.None);
+        });
+
+        var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/slow", 128, url => callbackUrl = url);
+
+        await downloadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await downloadCanceled.Task.WaitAsync(TimeSpan.FromSeconds(12));
+        await result.CacheTask!.WaitAsync(TimeSpan.FromSeconds(2));
+
+        var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{voiceId}.jpg");
+        AssertEqual(false, File.Exists(cachedFile), "Timed-out cover image download should not write a cache file");
+        AssertEqual(null, callbackUrl, "Timed-out cover image download should keep the UI on the remote URL fallback");
+    }
+    finally
+    {
+        Directory.Delete(root, recursive: true);
+    }
+}
+
+async Task CoverImageCacheDownloadsThroughBoundedStreamAsync()
+{
+    var root = CreateTempDirectory();
+    try
+    {
+        var settings = new Settings
+        {
+            VoiceId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            CachedVoice = new CachedVoiceInfo { Title = "Streamed", CoverImage = "coverimage/streamed" },
+        };
+        var oversizedStream = new LimitGuardStream((256 * 1024) + 32, CoverImageCacheService.MaxCachedImageBytes + 1);
+        var (httpService, http) = TestHttpServiceProxy.Create();
+        http.GetStreamResponse = oversizedStream;
+        var viewModel = new SettingsViewModel(
+            CreateContext(settings: settings, httpService: httpService, pluginCacheDirectoryPath: root),
+            settings,
+            null);
+
+        AssertEqual(
+            "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/streamed",
+            viewModel.CachedVoiceCoverUrl,
+            "Missing selected voice cover cache should use remote fallback immediately");
+
+        await http.GetStreamReturned.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await oversizedStream.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{settings.VoiceId}.jpg");
+        AssertEqual(1, http.GetAsStreamCallCount, "Cover image cache should download through GetAsStreamAsync");
+        AssertEqual(0, http.GetAsBytesCallCount, "Cover image cache should not buffer downloads through GetAsBytesAsync");
+        AssertEqual(TimeSpan.FromSeconds(10), http.LastGetStreamOptions?.Timeout, "Cover image stream request should set a 10 second timeout");
+        AssertEqual(false, File.Exists(cachedFile), "Oversized streamed cover image should not write a cache file");
+        AssertEqual(
+            CoverImageCacheService.MaxCachedImageBytes + 1,
+            oversizedStream.TotalBytesRead,
+            "Oversized streamed cover image should stop reading after the cache limit plus one byte");
+        AssertEqual(
+            true,
+            oversizedStream.ReadCallCount < 20,
+            "Oversized streamed cover image should not read the full response");
+        AssertEqual(
+            "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/streamed",
+            viewModel.CachedVoiceCoverUrl,
+            "Rejected streamed cover image should keep remote fallback URL");
+    }
+    finally
+    {
+        Directory.Delete(root, recursive: true);
+    }
+}
+
 void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
 {
     var root = CreateTempDirectory();
@@ -1098,7 +1209,7 @@ void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
         var unrelated = Path.Combine(root, "keep.txt");
         File.WriteAllText(unrelated, "keep");
 
-        var cache = new CoverImageCacheService(root, (_, _) => Task.FromResult(new byte[] { 9 }));
+        var cache = new CoverImageCacheService(root, (_, _) => Task.FromResult<Stream>(new MemoryStream(new byte[] { 9 })));
 
         AssertEqual("3 B", cache.GetFormattedCacheSize(), "Cache size should count cover image files");
         cache.Clear();
@@ -1117,6 +1228,56 @@ void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
     }
 }
 
+async Task AssertRejectedCoverDownloadAsync(
+    string voiceId,
+    Func<string, CancellationToken, Task<Stream>> download,
+    string message)
+{
+    var root = CreateTempDirectory();
+    try
+    {
+        string? callbackUrl = null;
+        var cache = new CoverImageCacheService(root, download);
+        var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/rejected", 128, url => callbackUrl = url);
+        var expectedRemoteUrl = "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/rejected";
+
+        AssertEqual(expectedRemoteUrl, result.DisplayUrl, $"{message}: missing cache should return the remote URL fallback immediately");
+        AssertNotNull(result.CacheTask, $"{message}: missing cache should start a background download");
+
+        await result.CacheTask!.WaitAsync(TimeSpan.FromSeconds(2));
+
+        var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{voiceId}.jpg");
+        AssertEqual(false, File.Exists(cachedFile), $"{message}: invalid download should not write <id>.jpg");
+        AssertEqual(null, callbackUrl, $"{message}: invalid download should not notify the UI with a local URL");
+        AssertEqual("0 B", cache.GetFormattedCacheSize(), $"{message}: invalid download should not increase cache size");
+    }
+    finally
+    {
+        Directory.Delete(root, recursive: true);
+    }
+}
+
+static byte[] MinimalJpegBytes() =>
+[
+    0xFF, 0xD8, 0xFF, 0xE0,
+    0x00, 0x10,
+    0x4A, 0x46, 0x49, 0x46, 0x00,
+    0x01, 0x01, 0x01,
+    0x00, 0x60, 0x00, 0x60,
+    0x00, 0x00,
+    0xFF, 0xD9,
+];
+
+static byte[] NonImageBytes() => System.Text.Encoding.UTF8.GetBytes("not an image");
+
+static byte[] OversizedImageBytes()
+{
+    var bytes = new byte[(256 * 1024) + 1];
+    var jpeg = MinimalJpegBytes();
+    Array.Copy(jpeg, bytes, jpeg.Length);
+    return bytes;
+}
+
 void CoverImageCacheSizeScansCoverImagesDirectory()
 {
     var root = CreateTempDirectory();
@@ -1126,7 +1287,7 @@ void CoverImageCacheSizeScansCoverImagesDirectory()
         var cacheDir = Path.Combine(root, CoverImageCacheService.DirectoryName);
         Directory.CreateDirectory(cacheDir);
 
-        var cache = new CoverImageCacheService(root, (_, _) => Task.FromResult(new byte[] { 9 }));
+        var cache = new CoverImageCacheService(root, (_, _) => Task.FromResult<Stream>(new MemoryStream(new byte[] { 9 })));
         AssertEqual("0 B", cache.GetFormattedCacheSize(), "Empty cover image cache should report zero bytes");
 
         var cachedFile = Path.Combine(cacheDir, $"{voiceId}.jpg");
@@ -1259,7 +1420,8 @@ static IPluginContext CreateContext(
     Settings? settings = null,
     IHttpService? httpService = null,
     IAudioPlayer? audioPlayer = null,
-    ILogger? logger = null)
+    ILogger? logger = null,
+    string? pluginCacheDirectoryPath = null)
 {
     var context = DispatchProxy.Create<IPluginContext, ContextProxy>();
     var proxy = (ContextProxy)(object)context;
@@ -1268,7 +1430,17 @@ static IPluginContext CreateContext(
     proxy.HttpService = httpService;
     proxy.AudioPlayer = audioPlayer;
     proxy.Logger = logger ?? new TestLogger();
+    if (pluginCacheDirectoryPath is not null)
+        proxy.MetaData = CreatePluginMetaData(pluginCacheDirectoryPath);
     return context;
+}
+
+static object CreatePluginMetaData(string pluginCacheDirectoryPath)
+{
+    var metadataType = typeof(IPluginContext).GetProperty("MetaData")!.PropertyType;
+    var metadata = Activator.CreateInstance(metadataType)!;
+    metadataType.GetProperty("PluginCacheDirectoryPath")!.SetValue(metadata, pluginCacheDirectoryPath);
+    return metadata;
 }
 
 static string FindRepoFile(string relativePath)
@@ -1409,6 +1581,7 @@ static void AssertPreviewAudioUrlRejected(string url)
 
 public class ContextProxy : DispatchProxy
 {
+    public object? MetaData { get; set; }
     public ISnackbar Snackbar { get; set; } = new TestSnackbar();
     public Settings Settings { get; set; } = new();
     public IHttpService? HttpService { get; set; }
@@ -1423,6 +1596,9 @@ public class ContextProxy : DispatchProxy
 
         if (targetMethod.Name == "get_Snackbar")
             return Snackbar;
+
+        if (targetMethod.Name == "get_MetaData")
+            return MetaData;
 
         if (targetMethod.Name == "get_HttpService")
             return HttpService;
@@ -1478,15 +1654,20 @@ public class TestHttpServiceProxy : DispatchProxy
 {
     public int GetCallCount { get; private set; }
     public int GetAsBytesCallCount { get; private set; }
+    public int GetAsStreamCallCount { get; private set; }
     public int PostAsBytesCallCount { get; private set; }
     public string GetResponseJson { get; set; } = "{\"credit\":\"1.00\"}";
     public byte[] GetBytesResponse { get; set; } = new byte[] { 9 };
+    public Stream GetStreamResponse { get; set; } = new MemoryStream(new byte[] { 9 });
     public byte[] PostBytes { get; set; } = new byte[] { 1 };
     public Exception? GetException { get; set; }
     public Exception? PostException { get; set; }
     public Func<string, Options?, CancellationToken, Task<string>>? GetAsyncHandler { get; set; }
+    public TaskCompletionSource GetStreamReturned { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public string? LastGetUrl { get; private set; }
     public Options? LastGetOptions { get; private set; }
+    public string? LastGetStreamUrl { get; private set; }
+    public Options? LastGetStreamOptions { get; private set; }
     public string? LastPostUrl { get; private set; }
     public object? LastPostBody { get; private set; }
     public Options? LastPostOptions { get; private set; }
@@ -1523,6 +1704,17 @@ public class TestHttpServiceProxy : DispatchProxy
         {
             GetAsBytesCallCount++;
             return Task.FromResult(GetBytesResponse);
+        }
+
+        if (targetMethod.Name == nameof(IHttpService.GetAsStreamAsync)
+            && targetMethod.ReturnType == typeof(Task<Stream>))
+        {
+            GetAsStreamCallCount++;
+            var hasClientName = args?.Length == 4;
+            LastGetStreamUrl = GetStringArgument(args, hasClientName ? 1 : 0);
+            LastGetStreamOptions = GetOptionsArgument(args);
+            GetStreamReturned.SetResult();
+            return Task.FromResult(GetStreamResponse);
         }
 
         if (targetMethod.Name == nameof(IHttpService.PostAsBytesAsync)
@@ -1595,6 +1787,98 @@ public sealed class TestAudioPlayer : IAudioPlayer
 
     public void Dispose()
     {
+    }
+}
+
+public sealed class LimitGuardStream : Stream
+{
+    private readonly long _length;
+    private readonly long _maxAllowedReadBytes;
+    private long _position;
+
+    public LimitGuardStream(long length, long maxAllowedReadBytes)
+    {
+        _length = length;
+        _maxAllowedReadBytes = maxAllowedReadBytes;
+    }
+
+    public long TotalBytesRead { get; private set; }
+    public int ReadCallCount { get; private set; }
+    public TaskCompletionSource Disposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public override bool CanRead => true;
+    public override bool CanSeek => false;
+    public override bool CanWrite => false;
+    public override long Length => _length;
+
+    public override long Position
+    {
+        get => _position;
+        set => throw new NotSupportedException();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) =>
+        Read(buffer.AsSpan(offset, count));
+
+    public override int Read(Span<byte> buffer)
+    {
+        if (_position >= _length)
+            return 0;
+
+        var remainingBeforeLimit = _maxAllowedReadBytes - TotalBytesRead;
+        if (remainingBeforeLimit <= 0)
+            throw new InvalidOperationException("Stream was read past the configured cache limit.");
+
+        var count = (int)Math.Min(buffer.Length, Math.Min(_length - _position, remainingBeforeLimit));
+        FillImageLikeBytes(buffer[..count], _position);
+        _position += count;
+        TotalBytesRead += count;
+        ReadCallCount++;
+        return count;
+    }
+
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(Read(buffer.Span));
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        Disposed.TrySetResult();
+        base.Dispose(disposing);
+    }
+
+    public override ValueTask DisposeAsync()
+    {
+        Disposed.TrySetResult();
+        return base.DisposeAsync();
+    }
+
+    public override void Flush()
+    {
+    }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+    private static void FillImageLikeBytes(Span<byte> buffer, long absoluteOffset)
+    {
+        for (var i = 0; i < buffer.Length; i++)
+        {
+            var sourceIndex = absoluteOffset + i;
+            buffer[i] = sourceIndex switch
+            {
+                0 => 0xFF,
+                1 => 0xD8,
+                2 => 0xFF,
+                3 => 0xE0,
+                _ => 0x20,
+            };
+        }
     }
 }
 

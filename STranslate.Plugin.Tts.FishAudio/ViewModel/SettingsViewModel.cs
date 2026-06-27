@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
@@ -22,6 +23,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private const long LatencyGoodMs = 300;
     private const long LatencyFairMs = 800;
     private const int ClearCoverImageCacheTimeoutSeconds = 10;
+    private static readonly TimeSpan CoverImageDownloadTimeout = TimeSpan.FromSeconds(10);
 
     private static readonly SolidColorBrush BrushGood = new(Color.FromRgb(0x4C, 0xAF, 0x50));
     private static readonly SolidColorBrush BrushFair = new(Color.FromRgb(0xFF, 0x98, 0x00));
@@ -979,8 +981,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         return result.DisplayUrl;
     }
 
-    private Task<byte[]> DownloadCoverImageAsync(string url, CancellationToken ct) =>
-        _context.HttpService.GetAsBytesAsync(url, ct);
+    private Task<Stream> DownloadCoverImageAsync(string url, CancellationToken ct) =>
+        _context.HttpService.GetAsStreamAsync(url, new Options { Timeout = CoverImageDownloadTimeout }, ct);
 
     private void RefreshCoverImageCacheSize()
     {

@@ -7,13 +7,15 @@ namespace STranslate.Plugin.Tts.FishAudio.Service;
 internal sealed class CoverImageCacheService
 {
     internal const string DirectoryName = "cover_images";
+    internal const int MaxCachedImageBytes = 256 * 1024;
 
     private const int CacheDownloadWidth = 128;
+    private static readonly TimeSpan CacheDownloadTimeout = TimeSpan.FromSeconds(10);
 
     private static readonly string[] SizeUnits = ["B", "KB", "MB", "GB", "TB", "PB"];
 
     private readonly string? _cacheDirectory;
-    private readonly Func<string, CancellationToken, Task<byte[]>> _downloadBytesAsync;
+    private readonly Func<string, CancellationToken, Task<Stream>> _openStreamAsync;
     private readonly object _gate = new();
     private readonly HashSet<string> _cachedVoiceIds = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, PendingDownload> _pendingDownloads = new(StringComparer.OrdinalIgnoreCase);
@@ -21,9 +23,9 @@ internal sealed class CoverImageCacheService
     private long _cachedSizeBytes;
     private long _generation;
 
-    public CoverImageCacheService(string? pluginCacheDirectoryPath, Func<string, CancellationToken, Task<byte[]>> downloadBytesAsync)
+    public CoverImageCacheService(string? pluginCacheDirectoryPath, Func<string, CancellationToken, Task<Stream>> openStreamAsync)
     {
-        _downloadBytesAsync = downloadBytesAsync ?? throw new ArgumentNullException(nameof(downloadBytesAsync));
+        _openStreamAsync = openStreamAsync ?? throw new ArgumentNullException(nameof(openStreamAsync));
 
         if (string.IsNullOrWhiteSpace(pluginCacheDirectoryPath))
             return;
@@ -174,8 +176,10 @@ internal sealed class CoverImageCacheService
 
         try
         {
-            var bytes = await _downloadBytesAsync(downloadUrl, CancellationToken.None).ConfigureAwait(false);
-            if (bytes.Length == 0)
+            using var cts = new CancellationTokenSource(CacheDownloadTimeout);
+            await using var stream = await _openStreamAsync(downloadUrl, cts.Token).ConfigureAwait(false);
+            var bytes = await ReadBoundedAsync(stream, MaxCachedImageBytes + 1, cts.Token).ConfigureAwait(false);
+            if (!IsCacheableImage(bytes))
                 return;
 
             lock (_gate)
@@ -233,6 +237,72 @@ internal sealed class CoverImageCacheService
                     _pendingDownloads.Remove(voiceId);
             }
         }
+    }
+
+    private static async Task<byte[]> ReadBoundedAsync(Stream stream, int maxBytes, CancellationToken ct)
+    {
+        using var buffer = new MemoryStream(Math.Min(maxBytes, 16 * 1024));
+        var chunk = new byte[Math.Min(16 * 1024, maxBytes)];
+
+        while (buffer.Length < maxBytes)
+        {
+            var remaining = maxBytes - (int)buffer.Length;
+            var read = await stream.ReadAsync(chunk.AsMemory(0, Math.Min(chunk.Length, remaining)), ct).ConfigureAwait(false);
+            if (read == 0)
+                break;
+
+            buffer.Write(chunk, 0, read);
+        }
+
+        return buffer.ToArray();
+    }
+
+    private static bool IsCacheableImage(byte[] bytes) =>
+        bytes.Length is > 0 and <= MaxCachedImageBytes && HasImageSignature(bytes);
+
+    private static bool HasImageSignature(byte[] bytes)
+    {
+        if (bytes.Length >= 3
+            && bytes[0] == 0xFF
+            && bytes[1] == 0xD8
+            && bytes[2] == 0xFF)
+        {
+            return true;
+        }
+
+        if (bytes.Length >= 8
+            && bytes[0] == 0x89
+            && bytes[1] == 0x50
+            && bytes[2] == 0x4E
+            && bytes[3] == 0x47
+            && bytes[4] == 0x0D
+            && bytes[5] == 0x0A
+            && bytes[6] == 0x1A
+            && bytes[7] == 0x0A)
+        {
+            return true;
+        }
+
+        if (bytes.Length >= 6
+            && bytes[0] == 0x47
+            && bytes[1] == 0x49
+            && bytes[2] == 0x46
+            && bytes[3] == 0x38
+            && (bytes[4] == 0x37 || bytes[4] == 0x39)
+            && bytes[5] == 0x61)
+        {
+            return true;
+        }
+
+        return bytes.Length >= 12
+            && bytes[0] == 0x52
+            && bytes[1] == 0x49
+            && bytes[2] == 0x46
+            && bytes[3] == 0x46
+            && bytes[8] == 0x57
+            && bytes[9] == 0x45
+            && bytes[10] == 0x42
+            && bytes[11] == 0x50;
     }
 
     private void InvokeCallbacks(PendingDownload pending, string localUrl)
