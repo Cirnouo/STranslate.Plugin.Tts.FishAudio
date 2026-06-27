@@ -4,6 +4,7 @@ using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Reflection;
 
 const string AppliedKey = "0123456789abcdef0123456789abcdef";
@@ -25,6 +26,8 @@ await ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync();
 await ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync();
 await SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync();
 await SearchAndByIdUseDummyTokenAsync();
+await VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
+await VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 await SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync();
 await PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync();
 PromoStatePersistsDismissalAndUse();
@@ -442,6 +445,115 @@ static async Task SearchAndByIdUseDummyTokenAsync()
 
     headers = AssertHeaders(http.LastGetOptions, "Voice by-ID lookup should send Authorization headers");
     AssertEqual("Bearer dummy", headers["Authorization"], "Voice by-ID lookup should use the dummy token by default");
+}
+
+static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync()
+{
+    var settings = new Settings();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    var snackbar = new TestSnackbar();
+    var context = CreateContext(snackbar, settings, httpService);
+    var viewModel = new SettingsViewModel(context, settings, null)
+    {
+        SearchQuery = "voice",
+    };
+
+    http.GetResponseJson = "{\"total\":0,\"items\":[]}";
+    await viewModel.SearchVoicesCommand.ExecuteAsync(null);
+    AssertEqual(TimeSpan.FromSeconds(15), http.LastGetOptions?.Timeout, "Voice search should set a 15 second timeout");
+
+    http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
+    viewModel.VoiceIdInput = "fedcba9876543210fedcba9876543210";
+    await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    AssertEqual(TimeSpan.FromSeconds(15), http.LastGetOptions?.Timeout, "Voice by-ID lookup should set a 15 second timeout");
+
+    http.GetException = new HttpRequestException("Response status code does not indicate success: 404 (Not Found).", null, HttpStatusCode.NotFound);
+    viewModel.VoiceIdInput = "00000000000000000000000000000000";
+    await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    AssertEqual(
+        "STranslate_Plugin_Tts_FishAudio_Voice_NotFound",
+        viewModel.VoiceIdError,
+        "Only HTTP 404 should be shown as voice not found");
+
+    http.GetException = new TimeoutException("lookup timed out");
+    viewModel.VoiceIdInput = "11111111111111111111111111111111";
+    await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    AssertEqual(
+        "STranslate_Plugin_Tts_FishAudio_Request_Timeout",
+        viewModel.VoiceIdError,
+        "Voice by-ID timeout should show the localized timeout error instead of not found");
+
+    http.GetException = new InvalidOperationException("server unavailable");
+    viewModel.VoiceIdInput = "22222222222222222222222222222222";
+    await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    AssertEqual("server unavailable", viewModel.VoiceIdError, "Non-404 lookup failures should preserve failure details");
+
+    http.GetException = null;
+    http.GetResponseJson = "null";
+    viewModel.VoiceIdInput = "44444444444444444444444444444444";
+    await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    AssertEqual(
+        "Fish Audio model lookup returned an empty response.",
+        viewModel.VoiceIdError,
+        "Successful non-404 lookup responses that deserialize to null should be treated as response errors");
+}
+
+static async Task VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync()
+{
+    var settings = new Settings();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings, null);
+    var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseSecond = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var calls = 0;
+
+    http.GetAsyncHandler = (_, _, ct) =>
+    {
+        calls++;
+        if (calls == 1)
+        {
+            firstStarted.SetResult();
+            return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+            {
+                if (task.IsCanceled)
+                    throw new OperationCanceledException(ct);
+                return "{\"total\":0,\"items\":[]}";
+            }, CancellationToken.None);
+        }
+
+        return releaseSecond.Task;
+    };
+
+    var firstSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
+    await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    var secondSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
+    releaseSecond.SetResult("{\"total\":0,\"items\":[]}");
+
+    await secondSearch.WaitAsync(TimeSpan.FromSeconds(2));
+    await firstSearch.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(2, calls, "A new voice search should start even when a previous search is still pending");
+    AssertEqual(false, viewModel.IsSearching, "Search busy state should recover after replacing a pending search");
+
+    var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    http.GetAsyncHandler = (_, _, ct) =>
+    {
+        byIdStarted.SetResult();
+        return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+        {
+            if (task.IsCanceled)
+                throw new OperationCanceledException(ct);
+            return "{\"_id\":\"33333333333333333333333333333333\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
+        }, CancellationToken.None);
+    };
+
+    viewModel.VoiceIdInput = "33333333333333333333333333333333";
+    var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+    await byIdStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.Dispose();
+    await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing the view model should cancel by-ID lookup and restore busy state");
 }
 
 static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()

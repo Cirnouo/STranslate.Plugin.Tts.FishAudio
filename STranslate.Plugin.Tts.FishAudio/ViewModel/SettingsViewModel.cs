@@ -193,7 +193,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private DispatcherTimer? _previewTimer;
     private VoiceSearchItem? _previewingSearchItem;
     private long _clearCoverImageCacheOperationId;
+    private long _searchOperationId;
+    private long _voiceIdOperationId;
     private int _apiKeyOperationLockCount;
+    private CancellationTokenSource? _searchCancellationTokenSource;
+    private CancellationTokenSource? _voiceIdCancellationTokenSource;
 
     // ── 分页输入 ──
 
@@ -466,9 +470,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     // ── 声音搜索命令 ──
 
-    private bool CanSearchVoices => !IsSearching;
+    private bool CanSearchVoices => true;
 
-    [RelayCommand(CanExecute = nameof(CanSearchVoices))]
+    [RelayCommand(CanExecute = nameof(CanSearchVoices), AllowConcurrentExecutions = true)]
     private async Task SearchVoicesAsync()
     {
         await ExecuteSearchAsync(1, resetOnEmptyResponse: true);
@@ -476,11 +480,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private async Task ExecuteSearchAsync(int requestedPage, bool resetOnEmptyResponse = false)
     {
+        var operationId = BeginSearchOperation(out var cts);
         IsSearching = true;
         try
         {
             var response = await FishAudioApi.SearchModelsAsync(
-                _context, EffectiveApiKeyForSearch, SearchQuery, SearchPageSize, requestedPage, CancellationToken.None);
+                _context, EffectiveApiKeyForSearch, SearchQuery, SearchPageSize, requestedPage, cts.Token);
+
+            if (!IsCurrentSearchOperation(operationId))
+                return;
 
             if (response is null)
             {
@@ -518,13 +526,20 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
             SyncPreviewStateToResults();
         }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+        }
         catch (Exception ex)
         {
-            _context.Snackbar.ShowError(ex.Message);
+            if (IsCurrentSearchOperation(operationId))
+                _context.Snackbar.ShowError(FishAudioRuntime.GetUserFacingError(_context, ex));
         }
         finally
         {
-            IsSearching = false;
+            if (IsCurrentSearchOperation(operationId))
+                IsSearching = false;
+            CompleteSearchOperation(cts);
+            cts.Dispose();
         }
     }
 
@@ -580,9 +595,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     // ── 通过 ID 选择 ──
 
-    private bool CanSubmitVoiceId => !IsSubmittingVoiceId;
+    private bool CanSubmitVoiceId => true;
 
-    [RelayCommand(CanExecute = nameof(CanSubmitVoiceId))]
+    [RelayCommand(CanExecute = nameof(CanSubmitVoiceId), AllowConcurrentExecutions = true)]
     private async Task SubmitVoiceIdAsync()
     {
         var trimmed = VoiceIdInput.Trim();
@@ -598,12 +613,16 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             return;
         }
 
+        var operationId = BeginVoiceIdOperation(out var cts);
         IsSubmittingVoiceId = true;
         VoiceIdError = null;
 
         try
         {
-            var model = await FishAudioApi.GetModelAsync(_context, EffectiveApiKeyForSearch, trimmed, CancellationToken.None);
+            var model = await FishAudioApi.GetModelAsync(_context, EffectiveApiKeyForSearch, trimmed, cts.Token);
+
+            if (!IsCurrentVoiceIdOperation(operationId))
+                return;
 
             if (model is null)
             {
@@ -621,13 +640,20 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             ApplyCachedVoice(cached);
             VoiceIdError = null;
         }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+        }
         catch (Exception ex)
         {
-            VoiceIdError = ex.Message;
+            if (IsCurrentVoiceIdOperation(operationId))
+                VoiceIdError = FishAudioRuntime.GetUserFacingError(_context, ex);
         }
         finally
         {
-            IsSubmittingVoiceId = false;
+            if (IsCurrentVoiceIdOperation(operationId))
+                IsSubmittingVoiceId = false;
+            CompleteVoiceIdOperation(cts);
+            cts.Dispose();
         }
     }
 
@@ -854,6 +880,44 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private bool IsCurrentCoverImageCacheClear(long operationId) =>
         Volatile.Read(ref _clearCoverImageCacheOperationId) == operationId;
 
+    private long BeginSearchOperation(out CancellationTokenSource cts)
+    {
+        var previous = _searchCancellationTokenSource;
+        cts = new CancellationTokenSource();
+        var operationId = Interlocked.Increment(ref _searchOperationId);
+        _searchCancellationTokenSource = cts;
+        previous?.Cancel();
+        return operationId;
+    }
+
+    private bool IsCurrentSearchOperation(long operationId) =>
+        Volatile.Read(ref _searchOperationId) == operationId;
+
+    private void CompleteSearchOperation(CancellationTokenSource cts)
+    {
+        if (ReferenceEquals(_searchCancellationTokenSource, cts))
+            _searchCancellationTokenSource = null;
+    }
+
+    private long BeginVoiceIdOperation(out CancellationTokenSource cts)
+    {
+        var previous = _voiceIdCancellationTokenSource;
+        cts = new CancellationTokenSource();
+        var operationId = Interlocked.Increment(ref _voiceIdOperationId);
+        _voiceIdCancellationTokenSource = cts;
+        previous?.Cancel();
+        return operationId;
+    }
+
+    private bool IsCurrentVoiceIdOperation(long operationId) =>
+        Volatile.Read(ref _voiceIdOperationId) == operationId;
+
+    private void CompleteVoiceIdOperation(CancellationTokenSource cts)
+    {
+        if (ReferenceEquals(_voiceIdCancellationTokenSource, cts))
+            _voiceIdCancellationTokenSource = null;
+    }
+
     private void CompleteCurrentCoverImageCacheClear(long operationId)
     {
         RefreshCoverImageCacheDisplay();
@@ -936,6 +1000,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         PropertyChanged -= OnPropertyChanged;
+        _searchCancellationTokenSource?.Cancel();
+        _voiceIdCancellationTokenSource?.Cancel();
         StopPreview();
         _latencyHideTimer?.Stop();
         _context.SaveSettingStorage<Settings>();

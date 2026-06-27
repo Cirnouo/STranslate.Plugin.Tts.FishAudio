@@ -1,4 +1,6 @@
 using STranslate.Plugin.Tts.FishAudio.Model;
+using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace STranslate.Plugin.Tts.FishAudio.Service;
@@ -9,6 +11,7 @@ internal static class FishAudioApi
     private const string CdnBase = "https://public-platform.r2.fish.audio/";
     private static readonly TimeSpan TtsTimeout = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan CreditTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan ModelLookupTimeout = TimeSpan.FromSeconds(15);
 
     public static async Task<byte[]> PostTtsAsync(
         IPluginContext context, Settings settings, string text, CancellationToken ct)
@@ -77,6 +80,7 @@ internal static class FishAudioApi
     {
         var option = new Options
         {
+            Timeout = ModelLookupTimeout,
             Headers = new Dictionary<string, string>
             {
                 ["Authorization"] = $"Bearer {apiKey}",
@@ -96,6 +100,7 @@ internal static class FishAudioApi
     {
         var option = new Options
         {
+            Timeout = ModelLookupTimeout,
             Headers = new Dictionary<string, string>
             {
                 ["Authorization"] = $"Bearer {apiKey}",
@@ -105,9 +110,10 @@ internal static class FishAudioApi
         try
         {
             var json = await context.HttpService.GetAsync($"{ApiBase}/model/{modelId}", option, ct);
-            return JsonSerializer.Deserialize<ModelEntity>(json);
+            return JsonSerializer.Deserialize<ModelEntity>(json)
+                ?? throw new InvalidOperationException("Fish Audio model lookup returned an empty response.");
         }
-        catch
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
