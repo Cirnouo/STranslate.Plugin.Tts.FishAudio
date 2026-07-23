@@ -36,11 +36,15 @@ internal static class RepositoryContractSuite
         AssertEqual(true, previousReleaseIndex > releaseIndex, "Changelog should place 1.1.0 before 1.0.5");
         var unreleasedContent = changelog[unreleasedIndex..releaseIndex];
         AssertEqual(
-            false,
-            unreleasedContent.Contains("\n-", StringComparison.Ordinal),
-            "Unreleased should not retain changes included in the not-yet-published 1.1.0 release");
+            true,
+            unreleasedContent.Contains("精简 README 构建说明和免费期提示", StringComparison.Ordinal),
+            "Post-release README cleanup should remain under Unreleased");
 
         var releaseContent = changelog[releaseIndex..previousReleaseIndex];
+        AssertEqual(
+            false,
+            releaseContent.Contains("精简 README 构建说明和免费期提示", StringComparison.Ordinal),
+            "Post-release README cleanup should not be added retroactively to 1.1.0");
         foreach (var expectedChange in new[]
                  {
                      "SchemaVersion=1",
@@ -182,6 +186,23 @@ internal static class RepositoryContractSuite
                 false,
                 readme.Contains("-Configuration", StringComparison.Ordinal),
                 $"{relativePath} should not document the removed -Configuration parameter");
+            AssertEqual(
+                false,
+                readme.Contains(".artifacts", StringComparison.Ordinal),
+                $"{relativePath} should not describe internal build-cleanup directories");
+        }
+
+        foreach (var relativePath in new[]
+                 {
+                     "README.md",
+                     Path.Combine("docs", "README_TW.md"),
+                 })
+        {
+            var readme = File.ReadAllText(FindRepoFile(relativePath));
+            AssertEqual(
+                false,
+                readme.Contains("（UTC 全日可用）", StringComparison.Ordinal),
+                $"{relativePath} should omit the verbose UTC all-day note from the free-model tip");
         }
     }
 

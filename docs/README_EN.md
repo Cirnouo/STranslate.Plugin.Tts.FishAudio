@@ -78,7 +78,7 @@ Paste it into the plugin settings **API Key** input
 ### 2.3 Buy API Credits
 
 > [!TIP]
-> The S2.1 Pro model is free for a limited time through `2026-08-31` UTC. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
+> The S2.1 Pro model is free for a limited time through `2026-08-31`. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
 
 Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Developer > Console](https://fish.audio/app/developers/billing/)
 
@@ -235,7 +235,7 @@ A: No. Clearing the cache only removes voice cover image cache files. The voice 
 
 Build output is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root
 
-Debug is the default when `-Release` is omitted; `-Release` is the only build-configuration switch. Standard builds first clean repository `bin`, `obj`, and `.artifacts`; plugin-project `bin`, `obj`, and `.artifacts`; and test-project `obj` and `bin`. `-Clean` defers the same cleanup until after the build and optional regression tests, runs it even on failure, and does not delete an already-produced repository-root `.spkg`. `-CleanOnly` cleans without building.
+Debug is the default when `-Release` is omitted. `-CleanOnly` cleans without building.
 
 <details>
 <summary><b>Environment Requirements</b></summary>

@@ -419,3 +419,12 @@ The rejected alternatives were a full rewrite and adding interfaces for every si
 **Context:** Contributors normally need only the default Debug build or the complete Release verification workflow. Exposing the general `-Configuration Debug|Release` parameter made routine commands longer and allowed an unnecessary explicit Debug form, while release documentation and automation could drift between argument orderings.
 **Decision:** Remove `-Configuration` and expose one `-Release` switch. Omitting it always selects Debug; supplying it selects Release and relies on the SDK's automatic Release packaging. Because that SDK recursively packages the complete `OutputPath`, isolate Release output under `.artifacts\Release` so a post-build `-Clean` workflow cannot package stale `.artifacts\Debug` content. Mark `.\build.ps1 -Release -Clean -Test` as the single recommended release command in all README variants, local contributor instructions, and GitHub Actions. Keep `[Unreleased]` as the empty next-development heading and consolidate every not-yet-published net change into the dated v1.1.0 changelog section before tagging.
 **Affects:** `build.ps1`, plugin project file, `.github/workflows/dotnet.yml`, build and repository contract tests, README files, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`.
+
+---
+
+## DD-044: README build guidance stays task-oriented
+
+**Date:** 2026-07-24
+**Context:** The README build section repeated the implementation-level cleanup directory list and failure-path behavior already maintained in contributor documentation and tests. The free-model tip also repeated the detailed UTC boundary stated in the model table.
+**Decision:** Keep README build guidance focused on runnable commands, the default Debug selection, `-CleanOnly`, and the repository-root package location; omit the internal cleanup-directory and failure-path explanation. Keep the free-model tip concise by stating the calendar date without the parenthetical UTC all-day note, while the detailed model table remains the source for exact UTC availability boundaries. Apply the same information hierarchy to all translated README files.
+**Affects:** README files, changelog.
