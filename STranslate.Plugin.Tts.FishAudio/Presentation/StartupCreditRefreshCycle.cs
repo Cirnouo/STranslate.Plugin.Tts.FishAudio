@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
-using STranslate.Plugin.Tts.FishAudio.Service;
 
-namespace STranslate.Plugin.Tts.FishAudio;
+namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
 internal sealed class StartupCreditRefreshCycle
 {
@@ -40,7 +40,7 @@ internal sealed class StartupCreditRefreshCycle
         if (cancellationToken.IsCancellationRequested)
             return null;
 
-        if (!FishAudioRuntime.TryPreflightApiKey(
+        if (!FishAudioRequestPolicy.TryPreflightApiKey(
                 context,
                 apiKeySnapshot,
                 "Startup credit refresh",

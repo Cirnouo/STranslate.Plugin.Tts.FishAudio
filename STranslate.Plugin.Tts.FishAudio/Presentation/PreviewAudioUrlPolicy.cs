@@ -1,8 +1,8 @@
 using System.Globalization;
 
-namespace STranslate.Plugin.Tts.FishAudio;
+namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
-internal static class PreviewAudioUrlValidator
+internal static class PreviewAudioUrlPolicy
 {
     private const string PlatformHost = "platform.r2.fish.audio";
     private const string CloudflareStorageSuffix = ".r2.cloudflarestorage.com";

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using STranslate.Plugin.Tts.FishAudio.Runtime;
 
 namespace STranslate.Plugin.Tts.FishAudio.Configuration;
 
@@ -18,7 +19,7 @@ public sealed class Settings
     public int SchemaVersion { get; internal set; } = SettingsSchema.Current;
     public string ApiKey { get; set; } = "";
     public string VoiceId { get; set; } = "";
-    public string SelectedModel { get; set; } = FishAudioRuntime.GetDefaultModel(FishAudioRuntime.LocalUtcNow());
+    public string SelectedModel { get; set; } = FishAudioModelPolicy.GetDefaultModel(FishAudioClock.LocalUtcNow());
     public double Speed { get; set; } = DefaultSpeed;
     public double Volume { get; set; }
     public bool NormalizeLoudness { get; set; } = DefaultNormalizeLoudness;

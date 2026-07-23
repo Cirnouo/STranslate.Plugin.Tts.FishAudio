@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Changed
+- 按 Configuration、FishAudio、Lifecycle、Caching、Runtime 和 Presentation 重组内部职责；`SettingsViewModel` 保留现有 XAML facade、公共绑定和命令，129 个回归场景继续按原顺序运行
+
 ## [1.1.0] - 2026-07-23
 
 ### Security
@@ -14,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - 设置页账户余额行改为始终可见，未加载时显示本地化“点击刷新”占位；插件启动时会静默预取余额，请求期间锁定 API Key，失败仅安全记录日志且不显示延迟
-- s2.1-pro-free 限时免费期从 2026-07-24 延长至 2026-07-31（UTC 全日可用）；2026-08-01T00:00:00Z 起自动隐藏免费模型并默认 s2.1-pro
+- s2.1-pro-free 限时免费期从 2026-07-24 延长至 2026-08-31（UTC 全日可用）；2026-09-01T00:00:00Z 起自动隐藏免费模型并默认 s2.1-pro
 - 设置存储新增 `SchemaVersion=1` 和插件自有 JSON 迁移/规范化，兼容全部 v1.0.x 配置并按字段保留有效值；受支持版本会清理旧字段、未知字段和重复普通字段，重复版本号或未来版本则进入只读保护以保留宿主文件
 - 启动配置规范化新增数值步进对齐：速度、温度和 Top P 按 0.05，音量按 0.1 使用中点远离零规则吸附到最近刻度
 - 已选声音与搜索结果试听会解析签名 URL 的 `X-Amz-Date`/`X-Amz-Expires`，未进入到期前 30 秒刷新窗口时直接播放；即将过期时使用 `dummy` token 和 15 秒超时刷新详情，已选声音保存完整缓存，搜索结果原位更新试听链接及卡片元信息

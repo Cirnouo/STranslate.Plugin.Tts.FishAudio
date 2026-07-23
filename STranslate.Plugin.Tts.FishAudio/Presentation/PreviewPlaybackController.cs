@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace STranslate.Plugin.Tts.FishAudio.ViewModel;
+namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
 internal interface IPreviewAudioPlayer : IDisposable
 {
@@ -77,7 +77,7 @@ internal sealed class PreviewPlaybackController : IDisposable
     {
         Stop();
 
-        if (!PreviewAudioUrlValidator.TryCreateAllowedUri(audioUrl, out var previewUri))
+        if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(audioUrl, out var previewUri))
         {
             _logger?.LogWarning("Rejected preview audio URL for voice {VoiceId}: host or scheme is not allowed", voiceId);
             return;

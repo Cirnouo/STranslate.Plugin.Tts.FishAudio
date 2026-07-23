@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.FishAudio;
 
-namespace STranslate.Plugin.Tts.FishAudio.Service;
+namespace STranslate.Plugin.Tts.FishAudio.Caching;
 
 internal sealed class CoverImageCacheService
 {

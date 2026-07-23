@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 
-namespace STranslate.Plugin.Tts.FishAudio.Service;
+namespace STranslate.Plugin.Tts.FishAudio.FishAudio;
 
 internal static class FishAudioApi
 {
@@ -23,7 +23,7 @@ internal static class FishAudioApi
             ["volume"] = settings.Volume,
         };
 
-        if (FishAudioRuntime.SupportsNormalizeLoudness(settings.SelectedModel))
+        if (FishAudioModelPolicy.SupportsNormalizeLoudness(settings.SelectedModel))
             prosody["normalize_loudness"] = settings.NormalizeLoudness;
 
         var body = new Dictionary<string, object>

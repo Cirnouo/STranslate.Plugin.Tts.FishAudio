@@ -1,6 +1,6 @@
 using System.Runtime.ExceptionServices;
 
-namespace STranslate.Plugin.Tts.FishAudio;
+namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
 internal sealed class OperationActivityCounter
 {

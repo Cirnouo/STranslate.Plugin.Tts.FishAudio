@@ -1,8 +1,8 @@
-using STranslate.Plugin.Tts.FishAudio.Service;
+using STranslate.Plugin.Tts.FishAudio.Caching;
 using System.IO;
 using System.Threading;
 
-namespace STranslate.Plugin.Tts.FishAudio.ViewModel;
+namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
 internal sealed class CoverImageCacheDisplayManager
 {

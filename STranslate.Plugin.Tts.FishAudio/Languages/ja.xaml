@@ -44,7 +44,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">合成モデル</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">S2-Pro を推奨、80+ 言語と感情マーカーに対応</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free は 2026-07-31 UTC 終了時まで期間限定で無料、80+ 言語と感情タグに対応</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free は 2026-08-31 UTC 終了時まで期間限定で無料、80+ 言語と感情タグに対応</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">s2.1-pro を推奨、80+ 言語と感情タグに対応</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">プロモーションを閉じる</sys:String>
 

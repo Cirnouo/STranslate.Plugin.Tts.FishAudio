@@ -44,7 +44,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">합성 모델</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">S2-Pro 권장, 80+ 언어 및 감정 마크업 지원</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free는 2026-07-31 UTC 종료 시점까지 한시적으로 무료이며 80+ 언어와 감정 태그를 지원합니다</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free는 2026-08-31 UTC 종료 시점까지 한시적으로 무료이며 80+ 언어와 감정 태그를 지원합니다</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">s2.1-pro 권장, 80+ 언어와 감정 태그 지원</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">프로모션 닫기</sys:String>
 

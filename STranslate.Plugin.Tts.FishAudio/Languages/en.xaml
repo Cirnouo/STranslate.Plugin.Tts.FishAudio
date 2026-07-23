@@ -44,7 +44,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">Synthesis Model</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">S2-Pro recommended, 80+ languages with emotion markup</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free is free for a limited time through 2026-07-31 UTC, with 80+ languages and emotion tags</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free is free for a limited time through 2026-08-31 UTC, with 80+ languages and emotion tags</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">s2.1-pro recommended, with 80+ languages and emotion tags</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">Close promo</sys:String>
 
