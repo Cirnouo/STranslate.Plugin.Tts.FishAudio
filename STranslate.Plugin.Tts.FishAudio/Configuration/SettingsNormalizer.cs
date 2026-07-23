@@ -35,12 +35,15 @@ public static class SettingsNormalizer
 
     public static bool NormalizeSelectedModel(Settings settings, DateTimeOffset nowUtc)
     {
-        if (FishAudioRuntime.GetAvailableModels(nowUtc).Contains(settings.SelectedModel, StringComparer.Ordinal))
+        if (!NeedsSelectedModelNormalization(settings, nowUtc))
             return false;
 
         settings.SelectedModel = FishAudioRuntime.GetDefaultModel(nowUtc);
         return true;
     }
+
+    internal static bool NeedsSelectedModelNormalization(Settings settings, DateTimeOffset nowUtc) =>
+        !FishAudioRuntime.GetAvailableModels(nowUtc).Contains(settings.SelectedModel, StringComparer.Ordinal);
 
     private static bool NormalizeRangeAndStep(
         double value,

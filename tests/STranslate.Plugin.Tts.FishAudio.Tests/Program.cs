@@ -30,16 +30,57 @@ CurrentSettingsRoundTrip();
 ProductionUsesSettingsStoreForContextStorage();
 ApiKeyValidationStateWasRemoved();
 SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities();
+OperationActivityCounterLinearizesStateTransitions();
+OperationActivityCounterPublishesOutsideGateAcrossThreads();
+OperationActivityCounterRecoveryFailureLeavesPublisherReusable();
+OperationActivityCounterPublishesPendingStateBeforeRethrowingPublicationFailure();
+await OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync();
+ApiKeyOperationCounterHandlesPropertyChangingReentrancy();
+await ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync();
 ApiKeyEditingPersistsImmediately();
-MainInitDoesNotValidateCredit();
+await StartupCreditRefreshPreflightSkipsRequestAsync();
+await StartupCreditRefreshRequestsOncePerInitializationAsync();
+await CompletedStartupCreditRefreshAppliesWhenSettingsViewModelIsCreatedAsync();
+await PendingStartupCreditRefreshLocksSettingsUntilCompletionAsync();
+await FailedStartupCreditRefreshKeepsPlaceholderWithoutSnackbarAsync();
+await NullStartupCreditKeepsNotLoadedStateAsync();
+await StartupCreditRefreshIgnoresResultAfterApiKeyChangesAsync();
+await ReinitializedStartupCreditRefreshIgnoresOldCycleAsync();
+await ReinitializedStartupCreditRefreshRemainsActiveDuringReloadAsync();
+await ReinitializedSettingsViewUsesNewContextAndSettingsAsync();
+await ReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync();
+await StartupSettingsSaveWinsBeforeFailedReplacementTransitionAsync();
+FailedSameInstanceNormalizationRestoresOldStateAndBackingStore();
+await SettingsViewModelCreationWaitsForReplacementCommitAsync();
+SameSettingsInstanceSeparatesOldAndNewViewModelWriteLeases();
+await FailedReinitializationRestoresOldViewModelWriteLeaseAsync();
+DisposeRetiresSettingsWriteLease();
+await OvertakenInitializationSkipsSettingsLoadAsync();
+await ReinitializationWaitsForInFlightViewModelSaveAsync();
+await DisposedSettingsViewModelIgnoresStartupCreditResultAsync();
 ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport();
 FreeModelDeadlineDocumentationIsConsistent();
 MainInitNormalizesStructuredSettingsWithoutClearingKeys();
 await StartupRefreshSelectedVoiceMetadataAsync();
+await StartupVoiceUiApplyRechecksExpectedVoiceIdAsync();
+await DelayedStartupVoiceRefreshDoesNotRestoreClearedVoiceAsync();
+await DelayedStartupVoiceRefreshDoesNotOverwriteNewSelectionAsync();
+await ConcurrentPaidModelSelectionStillPublishesPostCutoffPolicyAsync();
+await StartupModelSaveFailureRollsBackRuntimeAndStorageAsync();
+await StartupVoiceSaveFailureRollsBackRuntimeAndStorageAsync();
+await PublishedReplacementInvalidatesOldStartupCreditImmediatelyAsync();
+await StartupModelNormalizationInvalidatesSpeculativeSettingsViewModelAsync();
+await CommittedStartupSettingsInvalidatesPostReservationViewModelCandidateAsync();
+await StartupVoiceRefreshInvalidatesSpeculativeSettingsViewModelAsync();
+await StartupSettingsSaveSkipsAfterNewInitializationRequestAsync();
+await InitializationLoadWaitsForAuthorizedStartupSettingsSaveAsync();
+await FailedReinitializationRestoresStartupSettingsSaveAuthorizationAsync();
 await StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync();
 await StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync();
 await ReinitializedStartupRefreshCannotMutateNewSettingsAsync();
 ApplyAvailableModelsUsesUiThreadInvoker();
+await PlayAudioUsesOldInitializationWhileReinitLoadIsBlockedAsync();
+await PlayAudioUsesInitializationSnapshotAcrossReinitAsync();
 await PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync();
 await PlayAudioPreflightStopsBeforeRequestForEmptyAndMalformedKeysAsync();
 await PlayAudioWithFormattedKeyPostsAndPlaysWithoutRuntimeValidationAsync();
@@ -73,6 +114,7 @@ await DisplayPreviewVoiceSwitchIgnoresLateRefreshAsync();
 await DisplayPreviewDisposeCancelsAndIgnoresLateRefreshAsync();
 PromoStatePersistsDismissalAndUse();
 SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars();
+SettingsViewShowsPersistentCreditPlaceholder();
 SettingsViewIncludesS21PromoAndDynamicModelDescriptions();
 LanguageResourcesMatchApiKeyRollback();
 PreviewFailureLanguageResourcesAreComplete();
@@ -565,16 +607,1052 @@ static void ApiKeyEditingPersistsImmediately()
     AssertEqual(1, proxy.SaveCount, "Editing API Key should immediately save settings");
 }
 
-static void MainInitDoesNotValidateCredit()
+static async Task StartupCreditRefreshPreflightSkipsRequestAsync()
 {
     using var network = OverrideNetworkAvailability(false);
+    foreach (var apiKey in new[] { AppliedKey, "", "ABC", AppliedKey.ToUpperInvariant() })
+    {
+        network.Set(apiKey != AppliedKey);
+        var settings = new Settings { ApiKey = apiKey };
+        var (httpService, http) = TestHttpServiceProxy.Create();
+        var logger = new TestLogger();
+        var plugin = new Main();
+
+        plugin.Init(CreateContext(settings: settings, httpService: httpService, logger: logger));
+        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+        AssertEqual(
+            0,
+            http.GetUrls.Count(url => url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)),
+            $"Startup credit refresh should skip the endpoint for API Key '{apiKey}'");
+        AssertEqual(
+            true,
+            logger.Contains(LogLevel.Warning, "Startup credit refresh"),
+            "Skipped startup credit refresh should be logged safely");
+        if (!string.IsNullOrEmpty(apiKey))
+            AssertEqual(false, logger.Contains(apiKey), "Startup credit refresh logs should not contain the API Key");
+    }
+}
+
+static void OperationActivityCounterLinearizesStateTransitions()
+{
+    var sharedGate = new object();
+    var counter = new OperationActivityCounter(sharedGate);
+
+    AssertEqual(false, counter.IsActive, "A new operation counter should be inactive");
+    AssertEqual(true, counter.Begin(), "The first Begin should report an inactive-to-active transition");
+    AssertEqual(false, counter.Begin(), "Overlapping Begin should not report another active transition");
+    AssertEqual(false, counter.End(), "A non-final End should not report an active-to-inactive transition");
+    AssertEqual(true, counter.IsActive, "The counter should stay active until the final operation ends");
+    AssertEqual(true, counter.End(), "The final End should report an active-to-inactive transition");
+    AssertEqual(false, counter.IsActive, "The counter should become inactive after the final End");
+    AssertEqual(false, counter.End(), "Extra End calls should be ignored without making the count negative");
+
+    counter.Begin();
+    var delayedEndTransition = counter.End();
+    var newerBeginTransition = counter.Begin();
+
+    AssertEqual(true, delayedEndTransition, "The old End should observe its own transition to inactive");
+    AssertEqual(true, newerBeginTransition, "A newer Begin should transition the counter back to active");
+    AssertEqual(true, counter.IsActive, "A delayed old notification must observe the newer active state");
+    counter.End();
+}
+
+static void OperationActivityCounterPublishesOutsideGateAcrossThreads()
+{
+    var sharedGate = new object();
+    var observableState = false;
+    OperationActivityCounter? counter = null;
+    Thread[]? workers = null;
+    using var workersReady = new CountdownEvent(2);
+    using var workersCompleted = new CountdownEvent(2);
+    var workersStartedInsideCallback = false;
+    var workersCompletedInsideCallback = false;
+    counter = new OperationActivityCounter(sharedGate, value =>
+    {
+        observableState = value;
+        if (value || workers is not null)
+            return;
+
+        workers = Enumerable.Range(0, 2)
+            .Select(_ => new Thread(() =>
+            {
+                workersReady.Signal();
+                try
+                {
+                    counter!.Begin();
+                }
+                finally
+                {
+                    workersCompleted.Signal();
+                }
+            })
+            {
+                IsBackground = true,
+            })
+            .ToArray();
+
+        foreach (var worker in workers)
+            worker.Start();
+
+        workersStartedInsideCallback = workersReady.Wait(TimeSpan.FromSeconds(2));
+        workersCompletedInsideCallback = workersStartedInsideCallback
+            && workersCompleted.Wait(TimeSpan.FromSeconds(1));
+    });
+
+    counter.Begin();
+    counter.End();
+
+    AssertEqual(true, workersCompleted.Wait(TimeSpan.FromSeconds(2)), "Cross-thread operations should finish after the setter callback returns");
+    foreach (var worker in workers!)
+        worker.Join();
+
+    AssertEqual(true, workersStartedInsideCallback, "Both worker operations should start while the setter callback is active");
+    AssertEqual(true, workersCompletedInsideCallback, "The setter callback should not hold the operation gate while waiting for worker operations");
+    AssertEqual(true, counter.IsActive, "Concurrent Begin operations should leave the counter active");
+    AssertEqual(true, observableState, "Published state should converge to the active count after cross-thread reentrancy");
+
+    counter.End();
+    AssertEqual(true, counter.IsActive, "The first worker End should leave the other operation active");
+    AssertEqual(true, observableState, "Observable state should remain active until the final worker End");
+    counter.End();
+    AssertEqual(false, counter.IsActive, "The final worker End should make the counter inactive");
+    AssertEqual(false, observableState, "Observable state should converge to inactive after the final worker End");
+    AssertEqual(false, counter.End(), "An extra End should remain safe after cross-thread publication");
+}
+
+static void OperationActivityCounterPublishesPendingStateBeforeRethrowingPublicationFailure()
+{
+    var sharedGate = new object();
+    var observableState = false;
+    var activePublicationCount = 0;
+    var expectedException = new InvalidOperationException("Expected one-shot observable publication failure.");
+    var throwOnInactivePublication = true;
+    var reentrantWorkerCompletedInsideCallback = false;
+    Thread? reentrantWorker = null;
+    using var reentrantWorkerCompleted = new ManualResetEventSlim();
+    OperationActivityCounter? counter = null;
+    counter = new OperationActivityCounter(sharedGate, value =>
+    {
+        observableState = value;
+        if (value)
+        {
+            activePublicationCount++;
+            return;
+        }
+
+        if (!throwOnInactivePublication)
+            return;
+
+        throwOnInactivePublication = false;
+        reentrantWorker = new Thread(() =>
+        {
+            try
+            {
+                counter!.Begin();
+            }
+            finally
+            {
+                reentrantWorkerCompleted.Set();
+            }
+        })
+        {
+            IsBackground = true,
+        };
+        reentrantWorker.Start();
+        reentrantWorkerCompletedInsideCallback = reentrantWorkerCompleted.Wait(TimeSpan.FromSeconds(2));
+        throw expectedException;
+    });
+
+    counter.Begin();
+    Exception? caughtException = null;
+    try
+    {
+        counter.End();
+    }
+    catch (Exception ex)
+    {
+        caughtException = ex;
+    }
+
+    reentrantWorker?.Join();
+    AssertEqual(true, reentrantWorkerCompletedInsideCallback, "The reentrant Begin should complete before the failing setter callback returns");
+    AssertEqual(expectedException, caughtException, "End should propagate the original observable publication exception");
+    AssertEqual(2, activePublicationCount, "The pending active state should be published before the original exception is rethrown");
+    AssertEqual(true, counter.IsActive, "The reentrant Begin should leave the counter active after exception recovery");
+    AssertEqual(true, observableState, "Observable state should converge to the pending active count before End rethrows");
+
+    AssertEqual(false, counter.Begin(), "A later overlapping Begin should remain usable after exception recovery");
+    AssertEqual(false, counter.End(), "The overlapping operation should end without clearing the remaining active operation");
+    AssertEqual(true, counter.End(), "The remaining operation should end normally after exception recovery");
+    AssertEqual(false, observableState, "A later final End should publish inactive normally after exception recovery");
+    AssertEqual(true, counter.Begin(), "A new operation should still publish active after exception recovery");
+    AssertEqual(true, observableState, "A new operation should update observable state after exception recovery");
+    AssertEqual(true, counter.End(), "The new operation should end normally after exception recovery");
+    AssertEqual(false, observableState, "Observable state should finish inactive after the follow-up operation");
+}
+
+static void OperationActivityCounterRecoveryFailureLeavesPublisherReusable()
+{
+    var sharedGate = new object();
+    var observableState = false;
+    var activePublicationCount = 0;
+    var initialException = new InvalidOperationException("Expected initial observable publication failure.");
+    var recoveryException = new InvalidOperationException("Expected recovery observable publication failure.");
+    var throwOnInactivePublication = true;
+    var throwOnRecoveryPublication = false;
+    Thread? reentrantWorker = null;
+    using var reentrantWorkerCompleted = new ManualResetEventSlim();
+    OperationActivityCounter? counter = null;
+    counter = new OperationActivityCounter(sharedGate, value =>
+    {
+        observableState = value;
+        if (value)
+        {
+            activePublicationCount++;
+            if (throwOnRecoveryPublication)
+            {
+                throwOnRecoveryPublication = false;
+                throw recoveryException;
+            }
+
+            return;
+        }
+
+        if (!throwOnInactivePublication)
+            return;
+
+        throwOnInactivePublication = false;
+        reentrantWorker = new Thread(() =>
+        {
+            try
+            {
+                counter!.Begin();
+            }
+            finally
+            {
+                reentrantWorkerCompleted.Set();
+            }
+        })
+        {
+            IsBackground = true,
+        };
+        reentrantWorker.Start();
+        if (!reentrantWorkerCompleted.Wait(TimeSpan.FromSeconds(2)))
+            throw new TimeoutException("The reentrant Begin did not complete inside the setter callback.");
+
+        throwOnRecoveryPublication = true;
+        throw initialException;
+    });
+
+    counter.Begin();
+    Exception? caughtException = null;
+    try
+    {
+        counter.End();
+    }
+    catch (Exception ex)
+    {
+        caughtException = ex;
+    }
+
+    reentrantWorker?.Join();
+    AssertEqual(typeof(AggregateException), caughtException?.GetType(), "A failed recovery publication should report both publication exceptions");
+    var aggregateException = (AggregateException)caughtException!;
+    AssertEqual(2, aggregateException.InnerExceptions.Count, "Recovery failure should retain both observable publication exceptions");
+    AssertEqual(initialException, aggregateException.InnerExceptions[0], "Recovery failure should retain the original publication exception first");
+    AssertEqual(recoveryException, aggregateException.InnerExceptions[1], "Recovery failure should retain the recovery publication exception second");
+    AssertEqual(true, counter.IsActive, "The reentrant Begin should remain counted after both publication attempts fail");
+    AssertEqual(true, observableState, "The failed recovery setter should still expose the state it assigned before throwing");
+
+    AssertEqual(false, counter.Begin(), "A later overlapping Begin should reclaim publisher ownership after recovery failure");
+    AssertEqual(3, activePublicationCount, "The next operation should republish the still-pending active version exactly once");
+    AssertEqual(false, counter.End(), "The recovery Begin should end without clearing the remaining active operation");
+    AssertEqual(true, counter.End(), "The original reentrant operation should end normally after publisher recovery");
+    AssertEqual(false, observableState, "Observable state should converge to inactive after publisher recovery");
+}
+
+static void ApiKeyOperationCounterHandlesPropertyChangingReentrancy()
+{
+    var viewModel = new SettingsViewModel(CreateContext(), new Settings());
+    viewModel.BeginApiKeyOperation();
+    var injectedNewOperation = false;
+    viewModel.PropertyChanging += (_, args) =>
+    {
+        if (!injectedNewOperation && args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+        {
+            injectedNewOperation = true;
+            viewModel.BeginApiKeyOperation();
+        }
+    };
+
+    viewModel.EndApiKeyOperation();
+
+    AssertEqual(true, injectedNewOperation, "The test should inject Begin while the old End is changing the observable lock state");
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "A reentrant newer Begin should not be overwritten by the old End state assignment");
+
+    viewModel.EndApiKeyOperation();
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "The reentrant operation should unlock when its own End completes");
+}
+
+static async Task ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync()
+{
+    var viewModel = new SettingsViewModel(CreateContext(), new Settings());
+    viewModel.BeginApiKeyOperation();
+    var injectedNewOperation = false;
+    viewModel.PropertyChanged += (_, args) =>
+    {
+        if (!injectedNewOperation && args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+        {
+            injectedNewOperation = true;
+            viewModel.BeginApiKeyOperation();
+        }
+    };
+
+    await Task.Run(viewModel.EndApiKeyOperation).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(true, injectedNewOperation, "The test should inject Begin after the old End changes the observable lock state");
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "PropertyChanged reentrancy should restore the active API Key lock without deadlocking");
+
+    viewModel.EndApiKeyOperation();
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "The PropertyChanged reentrant operation should unlock after its own End completes");
+}
+
+static async Task StartupCreditRefreshRequestsOncePerInitializationAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
     var settings = new Settings { ApiKey = AppliedKey };
     var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"12.34\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var context = CreateContext(settings: settings, httpService: httpService);
     var plugin = new Main();
 
-    plugin.Init(CreateContext(settings: settings, httpService: httpService));
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
 
-    AssertEqual(0, http.GetCallCount, "Main.Init should not call the credit endpoint");
+    AssertEqual(
+        1,
+        http.GetUrls.Count(url => url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)),
+        "A valid API Key should request credit once during initialization");
+    AssertEqual(TimeSpan.FromSeconds(15), http.GetOptionsByUrl.Single(pair => pair.Url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)).Options?.Timeout, "Startup credit refresh should reuse the 15 second credit timeout");
+    var headers = AssertHeaders(
+        http.GetOptionsByUrl.Single(pair => pair.Url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)).Options,
+        "Startup credit refresh should send Authorization headers");
+    AssertEqual($"Bearer {AppliedKey}", headers["Authorization"], "Startup credit refresh should use the API Key snapshot");
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(
+        2,
+        http.GetUrls.Count(url => url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)),
+        "Each initialization cycle should request credit exactly once");
+}
+
+static async Task CompletedStartupCreditRefreshAppliesWhenSettingsViewModelIsCreatedAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"23.45\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+
+    AssertEqual("23.45", viewModel.UserCredit, "A completed startup credit result should be visible when settings first opens");
+    AssertEqual("", viewModel.LatencyText, "Startup credit refresh should not display latency");
+    AssertEqual(false, viewModel.IsLoadingCredit, "A completed startup credit result should not leave the refresh state busy");
+}
+
+static async Task PendingStartupCreditRefreshLocksSettingsUntilCompletionAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var creditStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+    {
+        if (url.Contains("/wallet/self/api-credit", StringComparison.Ordinal))
+        {
+            creditStarted.TrySetResult();
+            return releaseCredit.Task;
+        }
+
+        return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    };
+    var plugin = new Main();
+
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await creditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(false, plugin.PendingStartupTask.IsCompleted, "Main.Init should return without waiting for startup credit refresh");
+
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    AssertEqual(true, viewModel.IsLoadingCredit, "Pending startup credit refresh should mark credit loading");
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "Pending startup credit refresh should lock API Key input");
+    AssertEqual(false, viewModel.IsApiKeyInputEnabled, "Pending startup credit refresh should disable API Key input");
+    AssertEqual(false, viewModel.PasteApiKeyCommand.CanExecute(null), "Pending startup credit refresh should disable API Key paste");
+    AssertEqual(false, viewModel.RefreshCreditCommand.CanExecute(null), "Pending startup credit refresh should disable manual credit refresh");
+
+    releaseCredit.SetResult("{\"credit\":\"34.56\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit attachment to complete");
+
+    AssertEqual("34.56", viewModel.UserCredit, "Pending startup credit success should update the balance");
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "Startup credit completion should release the API Key lock");
+    AssertEqual(true, viewModel.RefreshCreditCommand.CanExecute(null), "Startup credit completion should re-enable manual refresh");
+    AssertEqual("", viewModel.LatencyText, "Startup credit completion should not display latency");
+}
+
+static async Task OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var startupCreditStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseStartupCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var manualCreditStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseManualCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var creditRequestCount = 0;
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+    {
+        if (!url.Contains("/wallet/self/api-credit", StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        return Interlocked.Increment(ref creditRequestCount) switch
+        {
+            1 => StartRequest(startupCreditStarted, releaseStartupCredit),
+            2 => StartRequest(manualCreditStarted, releaseManualCredit),
+            _ => Task.FromException<string>(new InvalidOperationException("Unexpected credit request.")),
+        };
+    };
+    var plugin = new Main();
+
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await startupCreditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    viewModel.BeginApiKeyOperation();
+
+    releaseStartupCredit.SetResult("{\"credit\":\"45.67\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit overlap to complete");
+
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "Startup completion should not unlock the overlapping TTS operation");
+
+    var manualRefreshTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
+    await manualCreditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(true, viewModel.IsLoadingCredit, "Manual refresh should become the active credit operation");
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual refresh should keep the API Key locked while TTS is active");
+
+    viewModel.EndApiKeyOperation();
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "TTS completion should not unlock the overlapping manual refresh");
+
+    var reentrantTtsStarted = false;
+    viewModel.PropertyChanging += (_, args) =>
+    {
+        if (!reentrantTtsStarted && args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+        {
+            reentrantTtsStarted = true;
+            viewModel.BeginApiKeyOperation();
+        }
+    };
+
+    releaseManualCredit.SetResult("{\"credit\":\"56.78\"}");
+    await manualRefreshTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(true, reentrantTtsStarted, "Manual completion should deterministically start the final reentrant TTS operation");
+    AssertEqual(false, viewModel.IsLoadingCredit, "Manual completion should clear credit loading after startup has completed");
+    AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual completion should not overwrite the final TTS lock");
+
+    viewModel.EndApiKeyOperation();
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "The API Key should unlock only after the final TTS operation completes");
+
+    static Task<string> StartRequest(TaskCompletionSource started, TaskCompletionSource<string> release)
+    {
+        started.TrySetResult();
+        return release.Task;
+    }
+}
+
+static async Task FailedStartupCreditRefreshKeepsPlaceholderWithoutSnackbarAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var snackbar = new TestSnackbar();
+    var logger = new TestLogger();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? Task.FromException<string>(new TimeoutException($"request failed for {AppliedKey}"))
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+
+    plugin.Init(
+        CreateContext(snackbar, settings, httpService, logger: logger),
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+
+    AssertEqual("", viewModel.UserCredit, "Failed startup credit refresh should keep the not-loaded placeholder state");
+    AssertEqual("", viewModel.LatencyText, "Failed startup credit refresh should not display latency");
+    AssertEqual(null, snackbar.LastError, "Failed startup credit refresh should not show a snackbar");
+    AssertEqual(true, logger.Contains(LogLevel.Error, "Startup credit refresh failed"), "Failed startup credit refresh should be logged");
+    AssertEqual(false, logger.Contains(AppliedKey), "Startup credit failure logs should not contain the API Key");
+}
+
+static async Task NullStartupCreditKeepsNotLoadedStateAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":null}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+
+    AssertEqual("", viewModel.UserCredit, "A null startup credit value should keep the not-loaded placeholder state");
+}
+
+static async Task StartupCreditRefreshIgnoresResultAfterApiKeyChangesAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var releaseCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+
+    viewModel.ApiKey = DraftKey;
+    releaseCredit.SetResult("{\"credit\":\"45.67\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "changed-key startup credit attachment to complete");
+
+    AssertEqual("", viewModel.UserCredit, "Startup credit result should be ignored after the API Key changes");
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "Ignored startup credit result should still release the API Key lock");
+}
+
+static async Task ReinitializedStartupCreditRefreshIgnoresOldCycleAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var releaseOldCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseOldCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+    plugin.Init(CreateContext(settings: settings, httpService: oldHttpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"56.78\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    plugin.Init(CreateContext(settings: settings, httpService: newHttpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    AssertEqual(false, ReferenceEquals(oldViewModel, newViewModel), "Reinitialization should replace the old settings ViewModel");
+    AssertEqual("56.78", newViewModel.UserCredit, "The current initialization cycle should apply its credit result");
+
+    releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit attachment to release its lock");
+
+    AssertEqual("56.78", newViewModel.UserCredit, "An old initialization cycle should not overwrite current credit");
+    AssertEqual(false, oldViewModel.IsApiKeyInputLocked, "The old initialization cycle should release its counted lock");
+    AssertEqual(false, newViewModel.IsApiKeyInputLocked, "The current initialization cycle should release its counted lock");
+}
+
+static async Task PublishedReplacementInvalidatesOldStartupCreditImmediatelyAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var releaseOldCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var replacementPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releasePublicationWindow = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseOldCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main(
+        (context, settings, settingsWriteLease, startupCreditRefreshCycle) =>
+            new SettingsViewModel(
+                context,
+                settings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                startupCreditRefreshCycle: startupCreditRefreshCycle,
+                settingsWriteLease: settingsWriteLease),
+        initializationPublished: generation =>
+        {
+            if (generation != 2)
+                return;
+
+            replacementPublished.TrySetResult();
+            releasePublicationWindow.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+    plugin.Init(
+        CreateContext(settings: new Settings { ApiKey = AppliedKey }, httpService: oldHttpService),
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+
+    var releaseNewCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseNewCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(
+            CreateContext(settings: new Settings { ApiKey = DraftKey }, httpService: newHttpService),
+            FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    await replacementPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit observer to finish inside the publication window");
+    var oldCreditDuringPublicationWindow = oldViewModel.UserCredit;
+
+    releasePublicationWindow.SetResult();
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var replacementInitCompletedWithCreditPending = !plugin.PendingStartupTask.IsCompleted;
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseNewCredit.SetResult("{\"credit\":\"12.34\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !newViewModel.IsLoadingCredit, "replacement startup credit observer to finish");
+
+    AssertEqual("", oldCreditDuringPublicationWindow, "Publishing a replacement state should immediately invalidate the old startup credit result");
+    AssertEqual(true, replacementInitCompletedWithCreditPending, "Replacement initialization should not wait for its startup credit request");
+    AssertEqual("12.34", newViewModel.UserCredit, "The replacement startup credit result should remain active");
+}
+
+static async Task ReinitializedStartupCreditRefreshRemainsActiveDuringReloadAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var releaseOldCredit = new TaskCompletionSource<string>();
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseOldCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var plugin = new Main();
+    plugin.Init(CreateContext(settings: settings, httpService: oldHttpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? Task.FromException<string>(new TimeoutException("new startup credit failed"))
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var newContext = CreateContext(settings: settings, httpService: newHttpService);
+    ((ContextProxy)(object)newContext).OnLoad = () => releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
+
+    plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit lock to release during reload");
+
+    AssertEqual("99.99", oldViewModel.UserCredit, "The old initialization should remain active until the replacement settings finish loading");
+    AssertEqual("", newViewModel.UserCredit, "The old credit result should not flow into the replacement initialization");
+}
+
+static Task ReinitializedSettingsViewUsesNewContextAndSettingsAsync() =>
+    RunOnStaThreadAsync(() =>
+{
+    using var network = OverrideNetworkAvailability(true);
+    var oldSettings = new Settings { ApiKey = AppliedKey };
+    var releaseOldCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) =>
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? releaseOldCredit.Task
+            : Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var oldContext = CreateContext(settings: oldSettings, httpService: oldHttpService);
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var settingsView = plugin.GetSettingUI();
+    var oldViewModel = (SettingsViewModel)settingsView.DataContext;
+
+    var newSettings = new Settings { ApiKey = DraftKey };
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"78.90\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var newContext = CreateContext(settings: newSettings, httpService: newHttpService);
+    var newContextProxy = (ContextProxy)(object)newContext;
+
+    plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    var reusedSettingsView = plugin.GetSettingUI();
+
+    AssertEqual(true, ReferenceEquals(settingsView, reusedSettingsView), "Reinitialization should reuse the existing SettingsView control");
+    AssertEqual(false, ReferenceEquals(oldViewModel, newViewModel), "Reinitialization should replace the ViewModel that owns readonly context and settings dependencies");
+    AssertEqual(true, ReferenceEquals(newViewModel, reusedSettingsView.DataContext), "The cached SettingsView should bind the replacement ViewModel");
+    AssertEqual(DraftKey, newViewModel.ApiKey, "The replacement ViewModel should load the second Settings object");
+    AssertEqual("78.90", newViewModel.UserCredit, "The replacement ViewModel should display the second initialization balance");
+
+    releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
+    oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+    AssertEqual("78.90", newViewModel.UserCredit, "The first initialization result should not overwrite the replacement ViewModel");
+
+    const string editedNewKey = "ffffffffffffffffffffffffffffffff";
+    newViewModel.ApiKey = editedNewKey;
+    AssertEqual(editedNewKey, newSettings.ApiKey, "Replacement ViewModel edits should update the second Settings object");
+    AssertEqual(AppliedKey, oldSettings.ApiKey, "Replacement ViewModel edits should not mutate the first Settings object");
+    AssertEqual(1, newContextProxy.SaveCount, "Replacement ViewModel edits should save through the second Context");
+});
+
+static async Task ReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        ApiKey = AppliedKey,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+    });
+    var oldContext = CreateContext();
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    oldContextProxy.LoadSettings = backingStore.Load;
+    oldContextProxy.SaveSettings = backingStore.Save;
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    _ = plugin.GetOrCreateSettingsViewModel();
+
+    backingStore.Replace(new Settings
+    {
+        ApiKey = DraftKey,
+        SelectedModel = FishAudioRuntime.S1Model,
+    });
+    var newContext = CreateContext();
+    var newContextProxy = (ContextProxy)(object)newContext;
+    newContextProxy.LoadSettings = backingStore.Load;
+    newContextProxy.SaveSettings = backingStore.Save;
+
+    plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    var finalSnapshot = backingStore.Load();
+
+    AssertEqual(DraftKey, newViewModel.ApiKey, "The replacement ViewModel should use the latest shared backing-store settings");
+    AssertEqual(DraftKey, finalSnapshot.ApiKey, "Retiring the old ViewModel should not overwrite the replacement backing-store snapshot");
+    AssertEqual(0, oldContextProxy.SaveCount, "Retiring an already auto-saved ViewModel should not issue a redundant host save");
+}
+
+static void SameSettingsInstanceSeparatesOldAndNewViewModelWriteLeases()
+{
+    var settings = new Settings { ApiKey = AppliedKey };
+    var context = CreateContext(settings: settings);
+    var contextProxy = (ContextProxy)(object)context;
+    var firstSettings = SettingsStore.Load(
+        context,
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1),
+        out var firstWriteLease);
+    var oldViewModel = new SettingsViewModel(
+        context,
+        firstSettings,
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        settingsWriteLease: firstWriteLease);
+
+    SettingsStore.Retire(firstSettings, firstWriteLease);
+    var secondSettings = SettingsStore.Load(
+        context,
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1),
+        out var secondWriteLease);
+    var newViewModel = new SettingsViewModel(
+        context,
+        secondSettings,
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        settingsWriteLease: secondWriteLease);
+
+    oldViewModel.ApiKey = "ffffffffffffffffffffffffffffffff";
+    AssertEqual(0, contextProxy.SaveCount, "An old ViewModel lease should not save after the same Settings instance receives a new lease");
+    AssertEqual(AppliedKey, settings.ApiKey, "An old ViewModel lease should not mutate a Settings instance now owned by the replacement lease");
+
+    newViewModel.ApiKey = DraftKey;
+    AssertEqual(1, contextProxy.SaveCount, "The replacement ViewModel lease should save the reused Settings instance");
+    AssertEqual(DraftKey, settings.ApiKey, "The current ViewModel should retain write ownership of a reused Settings instance");
+}
+
+static void FailedSameInstanceNormalizationRestoresOldStateAndBackingStore()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var settings = new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel };
+    var backingStore = new SharedSettingsBackingStore(settings);
+    var context = CreateContext(settings: settings);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.SaveSettings = backingStore.Save;
+    var factoryCallCount = 0;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        factoryCallCount++;
+        if (factoryCallCount == 2)
+            throw new InvalidOperationException("failed normalized replacement factory");
+
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+    var factoryFailed = false;
+    try
+    {
+        plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc);
+    }
+    catch (InvalidOperationException ex) when (ex.Message == "failed normalized replacement factory")
+    {
+        factoryFailed = true;
+    }
+
+    AssertEqual(true, factoryFailed, "The normalized replacement factory failure should remain observable");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, settings.SelectedModel, "Failed replacement normalization should not mutate the host-owned old Settings instance");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, oldViewModel.SelectedModel, "Failed replacement normalization should preserve the old ViewModel model");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, backingStore.Load().SelectedModel, "Failed replacement normalization should not canonical-save over the backing store");
+    AssertEqual(0, contextProxy.SaveCount, "Failed replacement normalization should not reach the host save boundary");
+}
+
+static async Task SettingsViewModelCreationWaitsForReplacementCommitAsync()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var plugin = new Main();
+    plugin.Init(
+        CreateContext(settings: new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel }),
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+
+    var replacementCommitStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseReplacementCommit = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var replacementContext = CreateContext(settings: new Settings
+    {
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    });
+    var replacementContextProxy = (ContextProxy)(object)replacementContext;
+    replacementContextProxy.OnSave = () =>
+    {
+        replacementCommitStarted.TrySetResult();
+        releaseReplacementCommit.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+    };
+
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(replacementContext, FishAudioRuntime.FreeModelCutoffUtc));
+    await replacementCommitStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
+    var viewModelPublishedBeforeCommit = ReferenceEquals(
+        await Task.WhenAny(viewModelTask, Task.Delay(TimeSpan.FromMilliseconds(500))),
+        viewModelTask);
+
+    releaseReplacementCommit.SetResult();
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, viewModelPublishedBeforeCommit, "Settings ViewModel publication should wait for an in-flight replacement commit");
+    AssertEqual(FishAudioRuntime.S21ProModel, viewModel.SelectedModel, "The waiting settings ViewModel request should bind the committed replacement state");
+    AssertEqual(1, replacementContextProxy.SaveCount, "Replacement normalization should canonical-save exactly once");
+}
+
+static async Task FailedReinitializationRestoresOldViewModelWriteLeaseAsync()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var backingStore = new SharedSettingsBackingStore(new Settings { ApiKey = AppliedKey });
+    var oldContext = CreateContext();
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    oldContextProxy.LoadSettings = backingStore.Load;
+    oldContextProxy.SaveSettings = backingStore.Save;
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+    var failedLoadContext = CreateContext();
+    ((ContextProxy)(object)failedLoadContext).LoadSettings = () =>
+        throw new InvalidOperationException("blocked replacement load");
+
+    var loadFailed = false;
+    try
+    {
+        plugin.Init(failedLoadContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    }
+    catch (InvalidOperationException ex) when (ex.Message == "blocked replacement load")
+    {
+        loadFailed = true;
+    }
+
+    AssertEqual(true, loadFailed, "The replacement load failure should remain observable");
+    oldViewModel.ApiKey = DraftKey;
+    AssertEqual(1, oldContextProxy.SaveCount, "A failed replacement Load should restore the old ViewModel write lease");
+    AssertEqual(DraftKey, backingStore.Load().ApiKey, "The restored old lease should persist edits after a failed replacement Load");
+
+    var factoryCallCount = 0;
+    var factoryContext = CreateContext(settings: new Settings { ApiKey = AppliedKey });
+    var factoryContextProxy = (ContextProxy)(object)factoryContext;
+    var factoryPlugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        factoryCallCount++;
+        if (factoryCallCount == 2)
+            throw new InvalidOperationException("blocked replacement factory");
+
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+    factoryPlugin.Init(factoryContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var factoryOldViewModel = factoryPlugin.GetOrCreateSettingsViewModel();
+
+    var factoryFailed = false;
+    try
+    {
+        factoryPlugin.Init(CreateContext(settings: new Settings { ApiKey = DraftKey }), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    }
+    catch (InvalidOperationException ex) when (ex.Message == "blocked replacement factory")
+    {
+        factoryFailed = true;
+    }
+
+    AssertEqual(true, factoryFailed, "The replacement ViewModel factory failure should remain observable");
+    factoryOldViewModel.ApiKey = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    AssertEqual(1, factoryContextProxy.SaveCount, "A failed replacement ViewModel construction should restore the old write lease");
+}
+
+static void DisposeRetiresSettingsWriteLease()
+{
+    using var network = OverrideNetworkAvailability(false);
+    Settings? runtimeSettings = null;
+    var plugin = new Main((context, settings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = settings;
+        return new SettingsViewModel(
+            context,
+            settings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+    plugin.Init(
+        CreateContext(settings: new Settings { ApiKey = AppliedKey }),
+        FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    _ = plugin.GetOrCreateSettingsViewModel();
+
+    AssertEqual(true, runtimeSettings?.ActiveWriteLease != 0, "Initialization should grant the detached runtime Settings a write lease");
+    plugin.Dispose();
+    AssertEqual(0L, runtimeSettings?.ActiveWriteLease, "Dispose should retire the detached runtime Settings write lease");
+}
+
+static async Task ReinitializationWaitsForInFlightViewModelSaveAsync()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var backingStore = new SharedSettingsBackingStore(new Settings { ApiKey = AppliedKey });
+    var oldSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseOldSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var oldContext = CreateContext();
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    oldContextProxy.LoadSettings = backingStore.Load;
+    oldContextProxy.SaveSettings = settings =>
+    {
+        oldSaveStarted.TrySetResult();
+        releaseOldSave.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        backingStore.Save(settings);
+    };
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+    var oldEditTask = Task.Run(() => oldViewModel.ApiKey = DraftKey);
+    await oldSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var replacementLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var newContext = CreateContext();
+    var newContextProxy = (ContextProxy)(object)newContext;
+    newContextProxy.LoadSettings = () =>
+    {
+        replacementLoadStarted.TrySetResult();
+        return backingStore.Load();
+    };
+    newContextProxy.SaveSettings = backingStore.Save;
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    var loadStartedBeforeOldSaveCompleted = ReferenceEquals(
+        await Task.WhenAny(replacementLoadStarted.Task, Task.Delay(TimeSpan.FromMilliseconds(500))),
+        replacementLoadStarted.Task);
+
+    releaseOldSave.SetResult();
+    await oldEditTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+
+    AssertEqual(false, loadStartedBeforeOldSaveCompleted, "Replacement Load should wait for an in-flight old ViewModel save to finish");
+    AssertEqual(DraftKey, newViewModel.ApiKey, "Replacement Load should observe the completed old ViewModel save");
+    AssertEqual(DraftKey, backingStore.Load().ApiKey, "The serialized old save and replacement Load should leave backing storage consistent");
+}
+
+static async Task DisposedSettingsViewModelIgnoresStartupCreditResultAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { ApiKey = AppliedKey };
+    var releaseCredit = new TaskCompletionSource<string>();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, cancellationToken) =>
+    {
+        if (!url.Contains("/wallet/self/api-credit", StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        cancellationToken.Register(() => releaseCredit.SetResult("{\"credit\":\"67.89\"}"));
+        return releaseCredit.Task;
+    };
+    var plugin = new Main();
+    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+
+    plugin.Dispose();
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "disposed startup credit attachment to complete");
+
+    AssertEqual("", viewModel.UserCredit, "Disposed settings ViewModel should ignore startup credit results");
+    AssertEqual(false, viewModel.IsApiKeyInputLocked, "Disposed startup credit attachment should still release its counted lock");
 }
 
 static void ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport()
@@ -750,6 +1828,834 @@ static async Task StartupRefreshSelectedVoiceMetadataAsync()
 
     AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
     AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
+}
+
+static async Task StartupVoiceUiApplyRechecksExpectedVoiceIdAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string requestedVoiceId = "fedcba9876543210fedcba9876543210";
+    const string replacementVoiceId = "0123456789abcdef0123456789abcdef";
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        VoiceId = requestedVoiceId,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        CachedVoice = new CachedVoiceInfo { Title = "Voice A (old)" },
+    });
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseResponse = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var startupVoiceSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var queuedUiApply = new TaskCompletionSource<Action>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+    {
+        if (string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        requestStarted.TrySetResult();
+        return releaseResponse.Task;
+    };
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    contextProxy.SaveSettings = backingStore.Save;
+    contextProxy.OnSave = () => startupVoiceSaved.TrySetResult();
+    Settings? runtimeSettings = null;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = viewModelSettings;
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    SettingsViewModel.UiThreadInvokerOverride = action => queuedUiApply.TrySetResult(action);
+    try
+    {
+        releaseResponse.SetResult($$"""
+            {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"fresh response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
+            """);
+        await startupVoiceSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var applyStartupVoiceToUi = await queuedUiApply.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        viewModel.SelectVoiceCommand.Execute(new VoiceSearchItem
+        {
+            Id = replacementVoiceId,
+            Title = "Voice B",
+            Description = "Replacement voice",
+            SampleAudioUrl = "https://audio.example/voice-b.mp3",
+        });
+        applyStartupVoiceToUi();
+        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+    finally
+    {
+        SettingsViewModel.UiThreadInvokerOverride = null;
+    }
+
+    var persistedSettings = backingStore.Load();
+    AssertEqual(2, contextProxy.SaveCount, "The final startup UI apply should not issue another save after the user selects another voice");
+    AssertEqual(replacementVoiceId, runtimeSettings?.VoiceId, "The final startup UI apply should preserve the runtime replacement Voice ID");
+    AssertEqual("Voice B", runtimeSettings?.CachedVoice?.Title, "The final startup UI apply should preserve runtime replacement metadata");
+    AssertEqual(replacementVoiceId, persistedSettings.VoiceId, "The final startup UI apply should preserve the persisted replacement Voice ID");
+    AssertEqual("Voice B", persistedSettings.CachedVoice?.Title, "The final startup UI apply should preserve persisted replacement metadata");
+    AssertEqual(replacementVoiceId, viewModel.VoiceId, "The final startup UI apply should preserve the visible replacement Voice ID");
+    AssertEqual("Voice B", viewModel.CachedVoiceTitle, "The final startup UI apply should preserve visible replacement metadata");
+}
+
+static async Task DelayedStartupVoiceRefreshDoesNotOverwriteNewSelectionAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string requestedVoiceId = "fedcba9876543210fedcba9876543210";
+    const string replacementVoiceId = "0123456789abcdef0123456789abcdef";
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        VoiceId = requestedVoiceId,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        CachedVoice = new CachedVoiceInfo { Title = "Voice A (old)" },
+    });
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseResponse = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+    {
+        if (string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        requestStarted.TrySetResult();
+        return releaseResponse.Task;
+    };
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    contextProxy.SaveSettings = backingStore.Save;
+    Settings? runtimeSettings = null;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = viewModelSettings;
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.SelectVoiceCommand.Execute(new VoiceSearchItem
+    {
+        Id = replacementVoiceId,
+        Title = "Voice B",
+        Description = "Replacement voice",
+        SampleAudioUrl = "https://audio.example/voice-b.mp3",
+    });
+
+    releaseResponse.SetResult($$"""
+        {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"stale response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
+        """);
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var persistedSettings = backingStore.Load();
+
+    AssertEqual(1, contextProxy.SaveCount, "A delayed startup response should not save after the user selects another voice");
+    AssertEqual(replacementVoiceId, runtimeSettings?.VoiceId, "A delayed startup response should preserve the runtime replacement Voice ID");
+    AssertEqual("Voice B", runtimeSettings?.CachedVoice?.Title, "A delayed startup response should preserve runtime replacement metadata");
+    AssertEqual(replacementVoiceId, contextProxy.Settings.VoiceId, "A delayed startup response should preserve the host-owned replacement Voice ID");
+    AssertEqual("Voice B", contextProxy.Settings.CachedVoice?.Title, "A delayed startup response should preserve host-owned replacement metadata");
+    AssertEqual(replacementVoiceId, persistedSettings.VoiceId, "A delayed startup response should preserve the persisted replacement Voice ID");
+    AssertEqual("Voice B", persistedSettings.CachedVoice?.Title, "A delayed startup response should preserve persisted replacement metadata");
+    AssertEqual(replacementVoiceId, viewModel.VoiceId, "A delayed startup response should preserve the visible replacement Voice ID");
+    AssertEqual("Voice B", viewModel.CachedVoiceTitle, "A delayed startup response should preserve visible replacement metadata");
+}
+
+static async Task DelayedStartupVoiceRefreshDoesNotRestoreClearedVoiceAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string requestedVoiceId = "fedcba9876543210fedcba9876543210";
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        VoiceId = requestedVoiceId,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        CachedVoice = new CachedVoiceInfo { Title = "Voice A (old)" },
+    });
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseResponse = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+    {
+        if (string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        requestStarted.TrySetResult();
+        return releaseResponse.Task;
+    };
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    contextProxy.SaveSettings = backingStore.Save;
+    Settings? runtimeSettings = null;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = viewModelSettings;
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.ClearVoiceCommand.Execute(null);
+
+    releaseResponse.SetResult($$"""
+        {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"stale response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
+        """);
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var persistedSettings = backingStore.Load();
+
+    AssertEqual(1, contextProxy.SaveCount, "A delayed startup response should not save after the user clears the selected voice");
+    AssertEqual("", runtimeSettings?.VoiceId, "A delayed startup response should preserve the cleared runtime Voice ID");
+    AssertEqual(null, runtimeSettings?.CachedVoice, "A delayed startup response should preserve cleared runtime metadata");
+    AssertEqual("", contextProxy.Settings.VoiceId, "A delayed startup response should preserve the cleared host-owned Voice ID");
+    AssertEqual(null, contextProxy.Settings.CachedVoice, "A delayed startup response should preserve cleared host-owned metadata");
+    AssertEqual("", persistedSettings.VoiceId, "A delayed startup response should preserve the cleared persisted Voice ID");
+    AssertEqual(null, persistedSettings.CachedVoice, "A delayed startup response should preserve cleared persisted metadata");
+    AssertEqual("", viewModel.VoiceId, "A delayed startup response should preserve the visible cleared Voice ID");
+    AssertEqual(null, viewModel.CachedVoiceTitle, "A delayed startup response should preserve cleared visible metadata");
+}
+
+static async Task ConcurrentPaidModelSelectionStillPublishesPostCutoffPolicyAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    });
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var revisionPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseRevision = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, _) => releaseOnlineUtc.Task;
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    contextProxy.SaveSettings = backingStore.Save;
+    Settings? runtimeSettings = null;
+    var plugin = new Main(
+        (viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+        {
+            runtimeSettings = viewModelSettings;
+            return new SettingsViewModel(
+                viewModelContext,
+                viewModelSettings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                startupCreditRefreshCycle: startupCreditRefreshCycle,
+                settingsWriteLease: settingsWriteLease);
+        },
+        startupSettingsRevisionPublished: () =>
+        {
+            revisionPublished.TrySetResult();
+            releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    viewModel.SelectedModel = FishAudioRuntime.S2ProModel;
+    AssertEqual(1, contextProxy.SaveCount, "Selecting a paid model while startup is reserved should save the user choice once");
+    releaseRevision.SetResult();
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(FishAudioRuntime.S2ProModel, runtimeSettings?.SelectedModel, "Post-cutoff policy publication should preserve the concurrent runtime paid-model choice");
+    AssertEqual(FishAudioRuntime.S2ProModel, viewModel.SelectedModel, "Post-cutoff policy publication should preserve the visible paid-model choice");
+    AssertEqual(FishAudioRuntime.S2ProModel, contextProxy.Settings.SelectedModel, "Post-cutoff policy publication should preserve the host-owned paid-model choice");
+    AssertEqual(FishAudioRuntime.S2ProModel, backingStore.Load().SelectedModel, "Post-cutoff policy publication should preserve the persisted paid-model choice");
+    AssertEqual(false, viewModel.Models.Contains(FishAudioRuntime.S21ProFreeModel, StringComparer.Ordinal), "Post-cutoff policy publication should remove the free model from the available list");
+    AssertEqual(false, viewModel.IsS21ProFreeAvailable, "Post-cutoff policy publication should mark the free-model promo unavailable");
+    AssertEqual(false, viewModel.ShowS21ProFreePromo, "Post-cutoff policy publication should hide the free-model promo");
+    AssertEqual(2, contextProxy.SaveCount, "Post-cutoff policy publication should complete its accepted settings transaction after the user save");
+
+    viewModel.UseS21ProFreePromoCommand.Execute(null);
+
+    AssertEqual(FishAudioRuntime.S2ProModel, runtimeSettings?.SelectedModel, "An unavailable promo should not replace the runtime paid-model choice");
+    AssertEqual(FishAudioRuntime.S2ProModel, viewModel.SelectedModel, "An unavailable promo should not replace the visible paid-model choice");
+    AssertEqual(FishAudioRuntime.S2ProModel, backingStore.Load().SelectedModel, "An unavailable promo should not replace the persisted paid-model choice");
+    AssertEqual(2, contextProxy.SaveCount, "An unavailable promo should not issue another settings save");
+}
+
+static async Task StartupModelSaveFailureRollsBackRuntimeAndStorageAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    });
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, _) => releaseOnlineUtc.Task;
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    var failStartupSave = true;
+    contextProxy.SaveSettings = settings =>
+    {
+        if (failStartupSave)
+        {
+            failStartupSave = false;
+            throw new InvalidOperationException("expected startup model save failure");
+        }
+
+        backingStore.Save(settings);
+    };
+    Settings? runtimeSettings = null;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = viewModelSettings;
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, runtimeSettings?.SelectedModel, "A failed startup model save should roll back the runtime Settings model");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, viewModel.SelectedModel, "A failed startup model save should leave the existing ViewModel model unchanged");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, contextProxy.Settings.SelectedModel, "A failed startup model save should roll back the host-owned Settings object");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, backingStore.Load().SelectedModel, "A failed startup model save should preserve backing storage");
+
+    viewModel.ApiKey = DraftKey;
+    var savedSnapshot = backingStore.Load();
+    AssertEqual(2, contextProxy.SaveCount, "A later ViewModel edit should still save after startup model rollback");
+    AssertEqual(DraftKey, savedSnapshot.ApiKey, "A later ViewModel edit should persist normally after startup model rollback");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, savedSnapshot.SelectedModel, "A later save should not resurrect the rolled-back startup model");
+}
+
+static async Task StartupVoiceSaveFailureRollsBackRuntimeAndStorageAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        VoiceId = voiceId,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        CachedVoice = new CachedVoiceInfo { Title = "Old Voice" },
+    });
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+        string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal)
+            ? releaseOnlineUtc.Task
+            : Task.FromResult($$"""
+                {"_id":"{{voiceId}}","title":"Fresh Voice","description":"","cover_image":"","samples":[],"task_count":0}
+                """);
+    var context = CreateContext(httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.LoadSettings = backingStore.Load;
+    var failStartupSave = true;
+    contextProxy.SaveSettings = settings =>
+    {
+        if (failStartupSave)
+        {
+            failStartupSave = false;
+            throw new InvalidOperationException("expected startup voice save failure");
+        }
+
+        backingStore.Save(settings);
+    };
+    Settings? runtimeSettings = null;
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+    {
+        runtimeSettings = viewModelSettings;
+        return new SettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease);
+    });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Old Voice", runtimeSettings?.CachedVoice?.Title, "A failed startup voice save should roll back runtime cached metadata");
+    AssertEqual("Old Voice", viewModel.CachedVoiceTitle, "A failed startup voice save should leave the existing ViewModel metadata unchanged");
+    AssertEqual("Old Voice", contextProxy.Settings.CachedVoice?.Title, "A failed startup voice save should roll back the host-owned cached metadata");
+    AssertEqual("Old Voice", backingStore.Load().CachedVoice?.Title, "A failed startup voice save should preserve cached metadata in backing storage");
+
+    viewModel.ApiKey = DraftKey;
+    var savedSnapshot = backingStore.Load();
+    AssertEqual(2, contextProxy.SaveCount, "A later ViewModel edit should still save after startup voice rollback");
+    AssertEqual(DraftKey, savedSnapshot.ApiKey, "A later ViewModel edit should persist after startup voice rollback");
+    AssertEqual("Old Voice", savedSnapshot.CachedVoice?.Title, "A later save should not resurrect rolled-back startup voice metadata");
+}
+
+static async Task StartupModelNormalizationInvalidatesSpeculativeSettingsViewModelAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings
+    {
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    };
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var constructionSnapshotCaptured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseConstruction = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var startupModelSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, _) => releaseOnlineUtc.Task;
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.OnSave = () => startupModelSaved.TrySetResult();
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+        new BlockingSettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            settingsWriteLease,
+            startupCreditRefreshCycle,
+            constructionSnapshotCaptured,
+            releaseConstruction));
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
+    await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await startupModelSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    releaseConstruction.SetResult();
+
+    var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(FishAudioRuntime.S21ProModel, settings.SelectedModel, "Startup online time should normalize the current Settings model");
+    AssertEqual(FishAudioRuntime.S21ProModel, viewModel.SelectedModel, "A ViewModel constructed across startup normalization should retry with the current model");
+    AssertEqual(1, contextProxy.SaveCount, "Disposing a stale model-snapshot candidate should not repeat the startup settings save");
+}
+
+static async Task CommittedStartupSettingsInvalidatesPostReservationViewModelCandidateAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings
+    {
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    };
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var revisionPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseRevision = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var constructionSnapshotCaptured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseConstruction = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var startupModelSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, _) => releaseOnlineUtc.Task;
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.OnSave = () => startupModelSaved.TrySetResult();
+    var plugin = new Main(
+        (viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+            new BlockingSettingsViewModel(
+                viewModelContext,
+                viewModelSettings,
+                settingsWriteLease,
+                startupCreditRefreshCycle,
+                constructionSnapshotCaptured,
+                releaseConstruction),
+        startupSettingsRevisionPublished: () =>
+        {
+            revisionPublished.TrySetResult();
+            releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
+    await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    releaseRevision.SetResult();
+    await startupModelSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    releaseConstruction.SetResult();
+
+    var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(FishAudioRuntime.S21ProModel, settings.SelectedModel, "The committed startup transaction should update host settings");
+    AssertEqual(FishAudioRuntime.S21ProModel, viewModel.SelectedModel, "A ViewModel candidate captured after revision reservation should retry after runtime commit");
+    AssertEqual(1, contextProxy.SaveCount, "Invalidating the post-reservation candidate should not repeat the startup settings save");
+}
+
+static async Task StartupVoiceRefreshInvalidatesSpeculativeSettingsViewModelAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings
+    {
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        VoiceId = "fedcba9876543210fedcba9876543210",
+        CachedVoice = new CachedVoiceInfo { Title = "Old Voice" },
+    };
+    var releaseOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var constructionSnapshotCaptured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseConstruction = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var startupVoiceSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (url, _, _) =>
+        string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal)
+            ? releaseOnlineUtc.Task
+            : Task.FromResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Fresh Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    contextProxy.OnSave = () => startupVoiceSaved.TrySetResult();
+    var plugin = new Main((viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+        new BlockingSettingsViewModel(
+            viewModelContext,
+            viewModelSettings,
+            settingsWriteLease,
+            startupCreditRefreshCycle,
+            constructionSnapshotCaptured,
+            releaseConstruction));
+
+    plugin.Init(context, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
+    await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    await startupVoiceSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    releaseConstruction.SetResult();
+
+    var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update the current Settings cache");
+    AssertEqual("Fresh Voice", viewModel.CachedVoiceTitle, "A ViewModel constructed across startup voice refresh should retry with current cached metadata");
+    AssertEqual(1, contextProxy.SaveCount, "Disposing a stale cached-voice candidate should not repeat the startup settings save");
+}
+
+static async Task StartupSettingsSaveSkipsAfterNewInitializationRequestAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        ApiKey = AppliedKey,
+        SelectedModel = FishAudioRuntime.S21ProFreeModel,
+    });
+    var releaseOldOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var revisionPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseRevision = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var oldSaveCompleted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (_, _, _) => releaseOldOnlineUtc.Task;
+    var oldContext = CreateContext(httpService: oldHttpService);
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    oldContextProxy.LoadSettings = backingStore.Load;
+    oldContextProxy.SaveSettings = settings =>
+    {
+        backingStore.Save(settings);
+        oldSaveCompleted.TrySetResult();
+    };
+    var plugin = new Main(
+        (_, _, _, _) => throw new InvalidOperationException("This test should not construct a settings ViewModel."),
+        startupSettingsRevisionPublished: () =>
+        {
+            revisionPublished.TrySetResult();
+            releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    backingStore.Replace(new Settings
+    {
+        ApiKey = DraftKey,
+        SelectedModel = FishAudioRuntime.S1Model,
+    });
+    var newLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseNewLoad = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (_, _, _) => Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    var newContext = CreateContext(httpService: newHttpService);
+    var newContextProxy = (ContextProxy)(object)newContext;
+    newContextProxy.LoadSettings = () =>
+    {
+        var snapshot = backingStore.Load();
+        newLoadStarted.TrySetResult();
+        releaseNewLoad.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        return snapshot;
+    };
+    newContextProxy.SaveSettings = backingStore.Save;
+
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    await newLoadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseRevision.SetResult();
+    var staleSaveCompletedBeforeLoad = ReferenceEquals(
+        await Task.WhenAny(oldSaveCompleted.Task, Task.Delay(TimeSpan.FromMilliseconds(500))),
+        oldSaveCompleted.Task);
+    releaseNewLoad.SetResult();
+
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var finalSnapshot = backingStore.Load();
+
+    AssertEqual(false, staleSaveCompletedBeforeLoad, "A startup settings save should wait while the replacement initialization is loading");
+    AssertEqual(0, oldContextProxy.SaveCount, "A newer initialization request should invalidate the old startup settings save");
+    AssertEqual(DraftKey, finalSnapshot.ApiKey, "An invalidated old startup save should not overwrite the replacement backing-store snapshot");
+}
+
+static async Task InitializationLoadWaitsForAuthorizedStartupSettingsSaveAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    var backingStore = new SharedSettingsBackingStore(new Settings
+    {
+        VoiceId = voiceId,
+        SelectedModel = FishAudioRuntime.S2ProModel,
+        CachedVoice = new CachedVoiceInfo { Title = "Old Voice" },
+    });
+    var releaseOldOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var oldSaveStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseOldSave = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) =>
+        string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal)
+            ? releaseOldOnlineUtc.Task
+            : Task.FromResult($$"""
+                {"_id":"{{voiceId}}","title":"Fresh Voice","description":"","cover_image":"","samples":[],"task_count":0}
+                """);
+    var oldContext = CreateContext(httpService: oldHttpService);
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    oldContextProxy.LoadSettings = backingStore.Load;
+    oldContextProxy.SaveSettings = settings =>
+    {
+        oldSaveStarted.TrySetResult();
+        releaseOldSave.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        backingStore.Save(settings);
+    };
+    var plugin = new Main();
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    await oldSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var newLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) =>
+        string.Equals(url, FishAudioRuntime.TimeApiUrl, StringComparison.Ordinal)
+            ? Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}")
+            : Task.FromResult($$"""
+                {"_id":"{{voiceId}}","title":"Fresh Voice","description":"","cover_image":"","samples":[],"task_count":0}
+                """);
+    var newContext = CreateContext(httpService: newHttpService);
+    var newContextProxy = (ContextProxy)(object)newContext;
+    newContextProxy.LoadSettings = () =>
+    {
+        var snapshot = backingStore.Load();
+        newLoadStarted.TrySetResult();
+        return snapshot;
+    };
+    newContextProxy.SaveSettings = backingStore.Save;
+
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    await WaitUntilAsync(() => plugin.InitializationGeneration >= 2, "replacement initialization request to publish its generation");
+    var loadStartedBeforeSaveCompleted = ReferenceEquals(
+        await Task.WhenAny(newLoadStarted.Task, Task.Delay(TimeSpan.FromMilliseconds(500))),
+        newLoadStarted.Task);
+
+    releaseOldSave.SetResult();
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(false, loadStartedBeforeSaveCompleted, "A replacement load should wait for an already-authorized startup settings save");
+    AssertEqual("Fresh Voice", newContextProxy.Settings.CachedVoice?.Title, "The replacement load should observe the completed startup settings save");
+}
+
+static async Task OvertakenInitializationSkipsSettingsLoadAsync()
+{
+    using var network = OverrideNetworkAvailability(false);
+    var staleGenerationDeclared = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseStaleGeneration = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var plugin = new Main(
+        (_, _, _, _) => throw new InvalidOperationException("This test should not construct a settings ViewModel."),
+        initializationGenerationDeclared: generation =>
+        {
+            if (generation != 2)
+                return;
+
+            staleGenerationDeclared.TrySetResult();
+            releaseStaleGeneration.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+    plugin.Init(CreateContext(settings: new Settings { ApiKey = AppliedKey }), FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+
+    var staleContext = CreateContext(settings: new Settings
+    {
+        ApiKey = "ffffffffffffffffffffffffffffffff",
+        SelectedModel = "obsolete-model",
+    });
+    var staleContextProxy = (ContextProxy)(object)staleContext;
+    var staleInitializationTask = Task.Run(() =>
+        plugin.Init(staleContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    await staleGenerationDeclared.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var currentSettings = new Settings { ApiKey = DraftKey };
+    var currentContext = CreateContext(settings: currentSettings);
+    plugin.Init(currentContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    releaseStaleGeneration.SetResult();
+    await staleInitializationTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(0, staleContextProxy.LoadCount, "An overtaken initialization should not call SettingsStore.Load");
+    AssertEqual(0, staleContextProxy.SaveCount, "An overtaken initialization should not canonical-save stale settings");
+    AssertEqual(DraftKey, ((ContextProxy)(object)currentContext).Settings.ApiKey, "The newest initialization should remain current");
+}
+
+static async Task FailedReinitializationRestoresStartupSettingsSaveAuthorizationAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel };
+    var releaseOldOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var revisionPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseRevision = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (_, _, _) => releaseOldOnlineUtc.Task;
+    var oldContext = CreateContext(settings: settings, httpService: oldHttpService);
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    var plugin = new Main(
+        (viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+            new SettingsViewModel(
+                viewModelContext,
+                viewModelSettings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                startupCreditRefreshCycle: startupCreditRefreshCycle,
+                settingsWriteLease: settingsWriteLease),
+        startupSettingsRevisionPublished: () =>
+        {
+            revisionPublished.TrySetResult();
+            releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var failedContext = CreateContext();
+    ((ContextProxy)(object)failedContext).LoadSettings = () =>
+        throw new InvalidOperationException("failed replacement load");
+    var loadFailed = false;
+    try
+    {
+        plugin.Init(failedContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    }
+    catch (InvalidOperationException ex) when (ex.Message == "failed replacement load")
+    {
+        loadFailed = true;
+    }
+
+    releaseRevision.SetResult();
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(true, loadFailed, "The replacement Load failure should remain observable");
+    AssertEqual(1, oldContextProxy.SaveCount, "A failed replacement should restore an already-revised startup settings save");
+    AssertEqual(FishAudioRuntime.S21ProModel, oldViewModel.SelectedModel, "A failed replacement should let the old ViewModel apply its authorized startup revision");
+}
+
+static async Task StartupSettingsSaveWinsBeforeFailedReplacementTransitionAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var settings = new Settings { SelectedModel = FishAudioRuntime.S21ProFreeModel };
+    var releaseOldOnlineUtc = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var revisionPublished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseRevision = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var replacementGenerationDeclared = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseReplacementGeneration = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (_, _, _) => releaseOldOnlineUtc.Task;
+    var oldContext = CreateContext(settings: settings, httpService: oldHttpService);
+    var oldContextProxy = (ContextProxy)(object)oldContext;
+    var plugin = new Main(
+        (viewModelContext, viewModelSettings, settingsWriteLease, startupCreditRefreshCycle) =>
+            new SettingsViewModel(
+                viewModelContext,
+                viewModelSettings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                startupCreditRefreshCycle: startupCreditRefreshCycle,
+                settingsWriteLease: settingsWriteLease),
+        startupSettingsRevisionPublished: () =>
+        {
+            revisionPublished.TrySetResult();
+            releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        },
+        initializationGenerationDeclared: generation =>
+        {
+            if (generation != 2)
+                return;
+
+            replacementGenerationDeclared.TrySetResult();
+            releaseReplacementGeneration.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        });
+
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var oldStartupTask = plugin.PendingStartupTask;
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-08-01T00:00:00Z\"}");
+    await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var failedContext = CreateContext();
+    ((ContextProxy)(object)failedContext).LoadSettings = () =>
+        throw new InvalidOperationException("failed replacement transition");
+    var replacementFailed = false;
+    var replacementTask = Task.Run(() =>
+    {
+        try
+        {
+            plugin.Init(failedContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+        }
+        catch (InvalidOperationException ex) when (ex.Message == "failed replacement transition")
+        {
+            replacementFailed = true;
+        }
+    });
+    await replacementGenerationDeclared.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseRevision.SetResult();
+    await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(1, oldContextProxy.SaveCount, "Startup settings Save should complete when it wins the transition gate before replacement Load");
+    AssertEqual(FishAudioRuntime.S21ProModel, oldViewModel.SelectedModel, "The winning startup Save should apply its model revision to the old ViewModel");
+
+    releaseReplacementGeneration.SetResult();
+    await replacementTask.WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(true, replacementFailed, "The later replacement Load failure should remain observable");
 }
 
 static async Task StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync()
@@ -1292,7 +3198,7 @@ static async Task VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync()
     AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
     AssertEqual(originalVoiceId, settings.VoiceId, "By-ID completion after dispose should not update saved voice ID");
     AssertEqual("Existing Voice", settings.CachedVoice?.Title, "By-ID completion after dispose should not update cached voice");
-    AssertEqual(1, proxy.SaveCount, "By-ID completion after dispose should not save stale lookup results");
+    AssertEqual(0, proxy.SaveCount, "Dispose and late by-ID completion should not issue redundant or stale saves");
 }
 
 static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()
@@ -1400,6 +3306,169 @@ static void PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts()
     AssertPreviewAudioUrlRejected("https://public-platform.r2.fish.audio/audio/sample.mp3");
     AssertPreviewAudioUrlRejected("https://evil.example/audio/sample.mp3");
     AssertPreviewAudioUrlRejected("not a url");
+}
+
+static async Task PlayAudioUsesOldInitializationWhileReinitLoadIsBlockedAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var oldSettings = CreateTtsSettings(FishAudioRuntime.S2ProModel);
+    var oldAudio = new TestAudioPlayer();
+    var releaseTts = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var ttsRequestStarted = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"1.00\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    oldHttp.PostAsBytesAsyncHandler = (_, _, _, _) =>
+    {
+        ttsRequestStarted.TrySetResult("old");
+        return releaseTts.Task;
+    };
+    var oldContext = CreateContext(
+        settings: oldSettings,
+        httpService: oldHttpService,
+        audioPlayer: oldAudio);
+    var plugin = new Main();
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var oldViewModel = plugin.GetOrCreateSettingsViewModel();
+
+    var newSettings = CreateTtsSettings(FishAudioRuntime.S1Model);
+    newSettings.ApiKey = DraftKey;
+    var newAudio = new TestAudioPlayer();
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"2.00\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    newHttp.PostAsBytesAsyncHandler = (_, _, _, _) =>
+    {
+        ttsRequestStarted.TrySetResult("new");
+        return releaseTts.Task;
+    };
+    var secondLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseSecondLoad = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var newContext = CreateContext(
+        settings: newSettings,
+        httpService: newHttpService,
+        audioPlayer: newAudio);
+    ((ContextProxy)(object)newContext).OnLoad = () =>
+    {
+        secondLoadStarted.TrySetResult();
+        releaseSecondLoad.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+    };
+
+    var reinitializeTask = Task.Run(() =>
+        plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1)));
+    await secondLoadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var ttsTask = plugin.PlayAudioAsync("load-window snapshot");
+    var requestInitialization = await ttsRequestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    var oldViewModelLockedDuringTts = oldViewModel.IsApiKeyInputLocked;
+
+    releaseSecondLoad.TrySetResult();
+    await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+    var newStartupTask = plugin.PendingStartupTask;
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    releaseTts.TrySetResult(new byte[] { 7, 8, 9 });
+    await ttsTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await newStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("old", requestInitialization, "TTS started during settings load should use the complete old initialization");
+    AssertEqual(1, oldHttp.PostAsBytesCallCount, "Load-window TTS should post through the old Context");
+    AssertEqual(0, newHttp.PostAsBytesCallCount, "Load-window TTS should not combine the new Context with old Settings");
+    var headers = AssertHeaders(oldHttp.LastPostOptions, "Load-window TTS should retain old request headers");
+    AssertEqual($"Bearer {AppliedKey}", headers["Authorization"], "Load-window TTS should use the old API Key with the old Context");
+    AssertEqual(FishAudioRuntime.S2ProModel, headers["model"], "Load-window TTS should use the old synthesis model with the old Context");
+    AssertEqual(true, oldViewModelLockedDuringTts, "Load-window TTS should lock its old settings ViewModel");
+    AssertEqual(false, oldViewModel.IsApiKeyInputLocked, "Load-window TTS completion should release its old ViewModel lock");
+    AssertEqual(false, ReferenceEquals(oldViewModel, newViewModel), "The completed reinitialization should still replace the settings ViewModel");
+    AssertEqual(1, oldAudio.PlayBytesCallCount, "Load-window TTS should play through the old AudioPlayer");
+    AssertEqual(0, newAudio.PlayBytesCallCount, "Load-window TTS should not play through the new AudioPlayer");
+}
+
+static async Task PlayAudioUsesInitializationSnapshotAcrossReinitAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    var oldSettings = CreateTtsSettings("s2-pro");
+    var oldLogger = new TestLogger();
+    var oldAudio = new TestAudioPlayer();
+    var oldTtsStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseOldTts = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+    oldHttp.GetAsyncHandler = (url, _, _) => Task.FromResult(
+        url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)
+            ? "{\"credit\":\"1.00\"}"
+            : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+    oldHttp.PostAsBytesAsyncHandler = (_, _, _, _) =>
+    {
+        oldTtsStarted.TrySetResult();
+        return releaseOldTts.Task;
+    };
+    var oldContext = CreateContext(
+        settings: oldSettings,
+        httpService: oldHttpService,
+        audioPlayer: oldAudio,
+        logger: oldLogger);
+    var plugin = new Main();
+    plugin.Init(oldContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    plugin.GetOrCreateSettingsViewModel();
+
+    var oldTtsTask = plugin.PlayAudioAsync("snapshot test");
+    await oldTtsStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    var newSettings = CreateTtsSettings("s2-pro");
+    newSettings.ApiKey = DraftKey;
+    var newLogger = new TestLogger();
+    var newAudio = new TestAudioPlayer();
+    var newCreditStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseNewStartupCredit = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var newCreditRequestCount = 0;
+    var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+    newHttp.GetAsyncHandler = (url, _, _) =>
+    {
+        if (!url.Contains("/wallet/self/api-credit", StringComparison.Ordinal))
+            return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+
+        newCreditRequestCount++;
+        if (newCreditRequestCount == 1)
+        {
+            newCreditStarted.TrySetResult();
+            return releaseNewStartupCredit.Task;
+        }
+
+        return Task.FromResult("{\"credit\":\"999.00\"}");
+    };
+    var newContext = CreateContext(
+        settings: newSettings,
+        httpService: newHttpService,
+        audioPlayer: newAudio,
+        logger: newLogger);
+
+    plugin.Init(newContext, FishAudioRuntime.FreeModelCutoffUtc.AddDays(-1));
+    var newStartupTask = plugin.PendingStartupTask;
+    var newViewModel = plugin.GetOrCreateSettingsViewModel();
+    await newCreditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    AssertEqual(true, newViewModel.IsApiKeyInputLocked, "The second initialization startup credit should lock its new ViewModel");
+
+    releaseOldTts.SetResult(new byte[] { 4, 5, 6 });
+    await oldTtsTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(1, oldAudio.PlayBytesCallCount, "An old TTS operation should keep using its original audio player after reinitialization");
+    AssertEqual(0, newAudio.PlayBytesCallCount, "An old TTS operation should not play through the new Context");
+    AssertEqual(true, newViewModel.IsApiKeyInputLocked, "Old TTS completion should not decrement the new ViewModel API Key lock");
+    AssertEqual(1, newCreditRequestCount, "Old TTS completion should not start a silent credit refresh on the new initialization");
+    AssertEqual(1, oldHttp.GetUrls.Count(url => url.Contains("/wallet/self/api-credit", StringComparison.Ordinal)), "A disposed old ViewModel should ignore post-TTS silent refresh");
+    AssertEqual(false, oldLogger.Contains(AppliedKey), "Old TTS logs should not contain the old API Key");
+    AssertEqual(false, newLogger.Contains(DraftKey), "New startup logs should not contain the new API Key");
+
+    releaseNewStartupCredit.SetResult("{\"credit\":\"2.00\"}");
+    await newStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+    await WaitUntilAsync(() => !newViewModel.IsApiKeyInputLocked, "new startup credit lock to release");
+
+    AssertEqual(false, newViewModel.IsApiKeyInputLocked, "Only the new startup credit completion should unlock the new ViewModel");
 }
 
 static void PreviewAudioRejectsInvalidSearchUrlWithoutStartingPlayback()
@@ -2737,6 +4806,64 @@ static void AssertEqual<T>(T expected, T actual, string message)
         throw new InvalidOperationException($"{message}. Expected: {expected}; Actual: {actual}");
 }
 
+static void SettingsViewShowsPersistentCreditPlaceholder()
+{
+    var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "View", "SettingsView.xaml")));
+    const string placeholderKey = "STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded";
+
+    AssertEqual(
+        true,
+        xaml.Contains($"Text=\"{{DynamicResource {placeholderKey}}}\"", StringComparison.Ordinal),
+        "The not-loaded credit state should use a persistent DynamicResource");
+    AssertEqual(true, xaml.Contains("Binding=\"{Binding UserCredit}\" Value=\"\"", StringComparison.Ordinal), "The not-loaded placeholder should be driven by empty UserCredit state");
+    AssertEqual(true, xaml.Contains("Text=\"{Binding UserCredit}\"", StringComparison.Ordinal), "Loaded credit should keep displaying the balance binding");
+    AssertEqual(true, xaml.Contains("Text=\" $\"", StringComparison.Ordinal), "Loaded credit should keep displaying the dollar symbol");
+
+    foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+    {
+        var localeXaml = File.ReadAllText(FindRepoFile(Path.Combine(
+            "STranslate.Plugin.Tts.FishAudio",
+            "Languages",
+            $"{locale}.xaml")));
+        var match = Regex.Match(
+            localeXaml,
+            $"<sys:String\\s+x:Key=\"{placeholderKey}\">(?<value>[^<]+)</sys:String>",
+            RegexOptions.CultureInvariant);
+        AssertEqual(true, match.Success, $"{locale}.xaml should define {placeholderKey}");
+        AssertEqual(false, string.IsNullOrWhiteSpace(match.Groups["value"].Value), $"{locale}.xaml should provide a complete credit placeholder");
+    }
+}
+
+static async Task WaitUntilAsync(Func<bool> predicate, string description)
+{
+    var deadline = DateTime.UtcNow.AddSeconds(2);
+    while (!predicate() && DateTime.UtcNow < deadline)
+        await Task.Delay(10);
+
+    if (!predicate())
+        throw new InvalidOperationException($"Timed out waiting for {description}.");
+}
+
+static async Task RunOnStaThreadAsync(Action action)
+{
+    var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var thread = new Thread(() =>
+    {
+        try
+        {
+            action();
+            completion.SetResult();
+        }
+        catch (Exception ex)
+        {
+            completion.SetException(ex);
+        }
+    });
+    thread.SetApartmentState(ApartmentState.STA);
+    thread.Start();
+    await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+}
+
 static void AssertNotNull(object? value, string message)
 {
     if (value is null)
@@ -2792,7 +4919,11 @@ public class ContextProxy : DispatchProxy
     public IAudioPlayer? AudioPlayer { get; set; }
     public ILogger Logger { get; set; } = new TestLogger();
     public int SaveCount { get; private set; }
+    public int LoadCount { get; private set; }
     public Action? OnSave { get; set; }
+    public Action? OnLoad { get; set; }
+    public Func<Settings>? LoadSettings { get; set; }
+    public Action<Settings>? SaveSettings { get; set; }
 
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
@@ -2821,6 +4952,10 @@ public class ContextProxy : DispatchProxy
             && targetMethod.IsGenericMethod
             && targetMethod.GetGenericArguments()[0] == typeof(Settings))
         {
+            LoadCount++;
+            OnLoad?.Invoke();
+            if (LoadSettings is not null)
+                Settings = LoadSettings();
             return Settings;
         }
 
@@ -2828,6 +4963,7 @@ public class ContextProxy : DispatchProxy
         {
             SaveCount++;
             OnSave?.Invoke();
+            SaveSettings?.Invoke(Settings);
             return null;
         }
 
@@ -2856,12 +4992,71 @@ public class ContextProxy : DispatchProxy
     }
 }
 
+internal sealed class SharedSettingsBackingStore
+{
+    private readonly object _gate = new();
+    private Settings _settings;
+
+    public SharedSettingsBackingStore(Settings settings)
+    {
+        _settings = Clone(settings);
+    }
+
+    public Settings Load()
+    {
+        lock (_gate)
+            return Clone(_settings);
+    }
+
+    public void Replace(Settings settings)
+    {
+        lock (_gate)
+            _settings = Clone(settings);
+    }
+
+    public void Save(Settings settings)
+    {
+        lock (_gate)
+            _settings = Clone(settings);
+    }
+
+    private static Settings Clone(Settings settings) => new()
+    {
+        ApiKey = settings.ApiKey,
+        VoiceId = settings.VoiceId,
+        SelectedModel = settings.SelectedModel,
+        Speed = settings.Speed,
+        Volume = settings.Volume,
+        NormalizeLoudness = settings.NormalizeLoudness,
+        Temperature = settings.Temperature,
+        TopP = settings.TopP,
+        Latency = settings.Latency,
+        Normalize = settings.Normalize,
+        Mp3Bitrate = settings.Mp3Bitrate,
+        ConditionOnPreviousChunks = settings.ConditionOnPreviousChunks,
+        CachedVoice = settings.CachedVoice is null
+            ? null
+            : new CachedVoiceInfo
+            {
+                Title = settings.CachedVoice.Title,
+                Description = settings.CachedVoice.Description,
+                CoverImage = settings.CachedVoice.CoverImage,
+                AuthorName = settings.CachedVoice.AuthorName,
+                TaskCount = settings.CachedVoice.TaskCount,
+                SampleAudioUrl = settings.CachedVoice.SampleAudioUrl,
+            },
+        IsS21ProFreePromoDismissed = settings.IsS21ProFreePromoDismissed,
+    };
+}
+
 public class TestHttpServiceProxy : DispatchProxy
 {
     public int GetCallCount { get; private set; }
     public int GetAsBytesCallCount { get; private set; }
     public int GetAsStreamCallCount { get; private set; }
     public int PostAsBytesCallCount { get; private set; }
+    public List<string> GetUrls { get; } = [];
+    public List<(string Url, Options? Options)> GetOptionsByUrl { get; } = [];
     public string GetResponseJson { get; set; } = "{\"credit\":\"1.00\"}";
     public byte[] GetBytesResponse { get; set; } = new byte[] { 9 };
     public Stream GetStreamResponse { get; set; } = new MemoryStream(new byte[] { 9 });
@@ -2869,6 +5064,7 @@ public class TestHttpServiceProxy : DispatchProxy
     public Exception? GetException { get; set; }
     public Exception? PostException { get; set; }
     public Func<string, Options?, CancellationToken, Task<string>>? GetAsyncHandler { get; set; }
+    public Func<string, object?, Options?, CancellationToken, Task<byte[]>>? PostAsBytesAsyncHandler { get; set; }
     public TaskCompletionSource GetStreamReturned { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public string? LastGetUrl { get; private set; }
     public Options? LastGetOptions { get; private set; }
@@ -2894,7 +5090,9 @@ public class TestHttpServiceProxy : DispatchProxy
         {
             GetCallCount++;
             LastGetUrl = GetStringArgument(args, args?.Length == 4 ? 1 : 0);
+            GetUrls.Add(LastGetUrl ?? "");
             LastGetOptions = GetOptionsArgument(args);
+            GetOptionsByUrl.Add((LastGetUrl ?? "", LastGetOptions));
             var ct = GetCancellationTokenArgument(args);
 
             if (GetAsyncHandler is not null)
@@ -2931,6 +5129,15 @@ public class TestHttpServiceProxy : DispatchProxy
             LastPostUrl = GetStringArgument(args, hasClientName ? 1 : 0);
             LastPostBody = args?[hasClientName ? 2 : 1];
             LastPostOptions = args?[hasClientName ? 3 : 2] as Options;
+            if (PostAsBytesAsyncHandler is not null)
+            {
+                return PostAsBytesAsyncHandler(
+                    LastPostUrl ?? "",
+                    LastPostBody,
+                    LastPostOptions,
+                    GetCancellationTokenArgument(args));
+            }
+
             return PostException is not null
                 ? Task.FromException<byte[]>(PostException)
                 : Task.FromResult(PostBytes);
@@ -3023,6 +5230,29 @@ public sealed class TestPreviewAudioPlayer : IPreviewAudioPlayer
     public void RaiseEnded() => Ended?.Invoke(this, EventArgs.Empty);
 
     public void RaiseFailed(Exception? exception = null) => Failed?.Invoke(exception);
+}
+
+internal sealed class BlockingSettingsViewModel : SettingsViewModel
+{
+    public BlockingSettingsViewModel(
+        IPluginContext context,
+        Settings settings,
+        SettingsWriteLease settingsWriteLease,
+        StartupCreditRefreshCycle startupCreditRefreshCycle,
+        TaskCompletionSource constructionSnapshotCaptured,
+        TaskCompletionSource releaseConstruction)
+        : base(
+            context,
+            settings,
+            clearCoverImageCacheAsync: null,
+            clearCoverImageCacheTimeout: null,
+            previewAudioPlayerFactory: null,
+            startupCreditRefreshCycle: startupCreditRefreshCycle,
+            settingsWriteLease: settingsWriteLease)
+    {
+        constructionSnapshotCaptured.TrySetResult();
+        releaseConstruction.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+    }
 }
 
 public sealed class LimitGuardStream : Stream

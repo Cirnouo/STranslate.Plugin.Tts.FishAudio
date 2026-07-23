@@ -65,6 +65,18 @@
         <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_AccountInfo}">
             <ui:SettingsCard.Description>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded}" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding UserCredit}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Credit}" VerticalAlignment="Center"
                                Visibility="{Binding UserCredit, Converter={StaticResource StringToVisibilityConverter}, FallbackValue=Collapsed}" />
                     <TextBlock Margin="4,0,0,0" Text="{Binding UserCredit}" VerticalAlignment="Center"

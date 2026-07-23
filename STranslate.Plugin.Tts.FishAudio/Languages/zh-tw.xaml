@@ -13,6 +13,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">帳戶資訊</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">餘額:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">餘額：點擊重新整理</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">重新整理</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API 位址</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>

@@ -13,6 +13,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">계정 정보</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">잔액:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">잔액: 새로 고침을 클릭하세요</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">새로고침</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API 주소</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>

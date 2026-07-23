@@ -13,6 +13,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">Account Info</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">Credit:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">Credit: Click refresh</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">Refresh</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API URL</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>

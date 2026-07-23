@@ -13,6 +13,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">アカウント情報</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">残高:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">残高：更新をクリック</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">更新</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API アドレス</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>

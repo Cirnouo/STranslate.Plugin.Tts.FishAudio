@@ -15,6 +15,7 @@
     <!-- 账户 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">账户信息</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">余额:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">余额：点击刷新</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">刷新</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API 地址</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API Key</sys:String>

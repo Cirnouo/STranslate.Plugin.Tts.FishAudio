@@ -34,4 +34,5 @@ public sealed class Settings
     internal bool IsReadOnly { get; set; }
     internal bool NeedsCanonicalSave { get; set; }
     internal string ReadOnlyReason { get; set; } = "";
+    internal long ActiveWriteLease { get; set; }
 }

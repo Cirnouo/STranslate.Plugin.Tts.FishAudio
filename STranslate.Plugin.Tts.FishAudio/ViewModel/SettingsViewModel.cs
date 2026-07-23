@@ -17,6 +17,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly IPluginContext _context;
     private readonly Settings _settings;
+    private readonly SettingsWriteLease? _settingsWriteLease;
     private readonly PreviewPlaybackController _previewPlayback;
     private readonly CoverImageCacheDisplayManager _coverImageCacheDisplay;
 
@@ -199,12 +200,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private long _searchOperationId;
     private long _voiceIdOperationId;
     private long _displayPreviewOperationId;
-    private int _apiKeyOperationLockCount;
+    private readonly object _operationStateGate = new();
+    private readonly OperationActivityCounter _apiKeyOperationState;
+    private readonly OperationActivityCounter _creditOperationState;
     private bool _isDisposed;
     private bool _suppressSettingsSave;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private CancellationTokenSource? _voiceIdCancellationTokenSource;
     private CancellationTokenSource? _displayPreviewCancellationTokenSource;
+    private StartupCreditRefreshCycle? _startupCreditRefreshCycle;
 
     // ── 分页输入 ──
 
@@ -246,10 +250,19 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Func<Task>? clearCoverImageCacheAsync,
         TimeSpan? clearCoverImageCacheTimeout,
         DateTimeOffset? nowUtc = null,
-        Func<IPreviewAudioPlayer>? previewAudioPlayerFactory = null)
+        Func<IPreviewAudioPlayer>? previewAudioPlayerFactory = null,
+        StartupCreditRefreshCycle? startupCreditRefreshCycle = null,
+        SettingsWriteLease? settingsWriteLease = null)
     {
         _context = context;
         _settings = settings;
+        _settingsWriteLease = settingsWriteLease;
+        _apiKeyOperationState = new OperationActivityCounter(
+            _operationStateGate,
+            value => IsApiKeyInputLocked = value);
+        _creditOperationState = new OperationActivityCounter(
+            _operationStateGate,
+            value => IsLoadingCredit = value);
         var modelPolicyTime = nowUtc ?? FishAudioRuntime.LocalUtcNow();
         Models = FishAudioRuntime.GetAvailableModels(modelPolicyTime);
         IsS21ProFreeAvailable = FishAudioRuntime.IsS21ProFreeAvailable(modelPolicyTime);
@@ -292,6 +305,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         ApplyCachedVoice(settings.CachedVoice);
 
         PropertyChanged += OnPropertyChanged;
+        if (startupCreditRefreshCycle is not null)
+            AttachStartupCreditRefresh(startupCreditRefreshCycle);
     }
 
     // ── API Key ──
@@ -331,6 +346,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     internal async Task RefreshCreditSilentlyAsync()
     {
+        if (_isDisposed)
+            return;
+
         if (!FishAudioRuntime.TryPreflightApiKey(_context, _settings.ApiKey, "Credit refresh", showError: false, out var apiKey))
             return;
 
@@ -339,7 +357,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private async Task FetchCreditAsync(string apiKey, bool showError, bool showLatency)
     {
-        IsLoadingCredit = true;
+        BeginCreditOperation();
         BeginApiKeyOperation();
         if (showLatency)
         {
@@ -377,25 +395,29 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            IsLoadingCredit = false;
+            EndCreditOperation();
             EndApiKeyOperation();
         }
     }
 
+    private void BeginCreditOperation()
+    {
+        _creditOperationState.Begin();
+    }
+
+    private void EndCreditOperation()
+    {
+        _creditOperationState.End();
+    }
+
     internal void BeginApiKeyOperation()
     {
-        if (Interlocked.Increment(ref _apiKeyOperationLockCount) == 1)
-            IsApiKeyInputLocked = true;
+        _apiKeyOperationState.Begin();
     }
 
     internal void EndApiKeyOperation()
     {
-        var count = Interlocked.Decrement(ref _apiKeyOperationLockCount);
-        if (count <= 0)
-        {
-            Interlocked.Exchange(ref _apiKeyOperationLockCount, 0);
-            IsApiKeyInputLocked = false;
-        }
+        _apiKeyOperationState.End();
     }
 
     private void StartLatencyHideTimer()
@@ -414,8 +436,58 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void ApplyCreditResult(WalletCreditResponse? result)
     {
-        if (result is null) return;
+        if (result is null || string.IsNullOrWhiteSpace(result.Credit))
+            return;
+
         UserCredit = result.Credit;
+    }
+
+    internal void AttachStartupCreditRefresh(StartupCreditRefreshCycle startupCreditRefreshCycle)
+    {
+        _startupCreditRefreshCycle = startupCreditRefreshCycle;
+        if (startupCreditRefreshCycle.Completion.IsCompletedSuccessfully)
+        {
+            ApplyStartupCreditResult(
+                startupCreditRefreshCycle,
+                startupCreditRefreshCycle.Completion.GetAwaiter().GetResult());
+            return;
+        }
+
+        BeginCreditOperation();
+        BeginApiKeyOperation();
+        _ = ObserveStartupCreditRefreshAsync(startupCreditRefreshCycle);
+    }
+
+    private async Task ObserveStartupCreditRefreshAsync(StartupCreditRefreshCycle startupCreditRefreshCycle)
+    {
+        try
+        {
+            var result = await startupCreditRefreshCycle.Completion;
+            RunOnUiThread(() => ApplyStartupCreditResult(startupCreditRefreshCycle, result));
+        }
+        finally
+        {
+            RunOnUiThread(() =>
+            {
+                EndCreditOperation();
+                EndApiKeyOperation();
+            });
+        }
+    }
+
+    private void ApplyStartupCreditResult(
+        StartupCreditRefreshCycle startupCreditRefreshCycle,
+        WalletCreditResponse? result)
+    {
+        if (!startupCreditRefreshCycle.IsActive
+            || _isDisposed
+            || !ReferenceEquals(_startupCreditRefreshCycle, startupCreditRefreshCycle)
+            || !string.Equals(_settings.ApiKey, startupCreditRefreshCycle.ApiKeySnapshot, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        ApplyCreditResult(result);
     }
 
     // ── 选择模式切换 ──
@@ -456,14 +528,17 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
-    internal void ApplyRefreshedCachedVoice(CachedVoiceInfo cached)
+    internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached)
     {
         RunOnUiThread(() =>
         {
-            if (_isDisposed)
+            if (_isDisposed
+                || !string.Equals(VoiceId, expectedVoiceId, StringComparison.Ordinal)
+                || !string.Equals(_settings.VoiceId, expectedVoiceId, StringComparison.Ordinal))
+            {
                 return;
+            }
 
-            _settings.CachedVoice = cached;
             ApplyCachedVoice(cached);
         });
     }
@@ -474,8 +549,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private void DismissS21ProFreePromo()
     {
         IsS21ProFreePromoDismissed = true;
-        _settings.IsS21ProFreePromoDismissed = true;
-        SettingsStore.Save(_context, _settings);
     }
 
     [RelayCommand]
@@ -606,8 +679,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (item is null) return;
 
-        VoiceId = item.Id;
-        _settings.VoiceId = VoiceId;
+        SetVoiceIdWithoutSaving(item.Id);
 
         var cached = new CachedVoiceInfo
         {
@@ -618,8 +690,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             TaskCount = item.TaskCount,
             SampleAudioUrl = item.SampleAudioUrl,
         };
-        _settings.CachedVoice = cached;
-        SettingsStore.Save(_context, _settings);
+        if (!UpdateSettingsAndSave(settings =>
+            {
+                settings.VoiceId = VoiceId;
+                settings.CachedVoice = cached;
+            }))
+        {
+            return;
+        }
 
         ApplyCachedVoice(cached);
     }
@@ -661,12 +739,17 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            VoiceId = trimmed;
-            _settings.VoiceId = VoiceId;
+            SetVoiceIdWithoutSaving(trimmed);
 
             var cached = CreateCachedVoiceInfo(model);
-            _settings.CachedVoice = cached;
-            SettingsStore.Save(_context, _settings);
+            if (!UpdateSettingsAndSave(settings =>
+                {
+                    settings.VoiceId = VoiceId;
+                    settings.CachedVoice = cached;
+                }))
+            {
+                return;
+            }
 
             ApplyCachedVoice(cached);
             VoiceIdError = null;
@@ -746,8 +829,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             }
 
             var cached = CreateCachedVoiceInfo(model);
-            _settings.CachedVoice = cached;
-            SettingsStore.Save(_context, _settings);
+            if (!UpdateSettingsAndSave(settings => settings.CachedVoice = cached))
+                return;
+
             ApplyCachedVoice(cached);
 
             if (!PreviewAudioUrlValidator.TryCreateAllowedUri(cached.SampleAudioUrl, out _))
@@ -865,10 +949,16 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ClearVoice()
     {
-        VoiceId = "";
-        _settings.VoiceId = "";
-        _settings.CachedVoice = null;
-        SettingsStore.Save(_context, _settings);
+        SetVoiceIdWithoutSaving("");
+        if (!UpdateSettingsAndSave(settings =>
+            {
+                settings.VoiceId = "";
+                settings.CachedVoice = null;
+            }))
+        {
+            return;
+        }
+
         ApplyCachedVoice(null);
     }
 
@@ -1069,45 +1159,76 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ApiKey))
-        {
-            _settings.ApiKey = ApiKey;
-            SettingsStore.Save(_context, _settings);
-            return;
-        }
-
+        Action<Settings> updateSettings;
         switch (e.PropertyName)
         {
+            case nameof(ApiKey):
+                updateSettings = settings => settings.ApiKey = ApiKey;
+                break;
             case nameof(VoiceId):
-                _settings.VoiceId = VoiceId;
                 CancelDisplayPreviewOperation();
                 if (_previewPlayback.PreviewingVoiceId is not null
                     && !string.Equals(_previewPlayback.PreviewingVoiceId, VoiceId, StringComparison.Ordinal))
                 {
                     _previewPlayback.Stop();
                 }
+                updateSettings = settings => settings.VoiceId = VoiceId;
                 break;
-            case nameof(SelectedModel):            _settings.SelectedModel = SelectedModel; break;
-            case nameof(Speed):                    _settings.Speed = Speed; break;
-            case nameof(Volume):                   _settings.Volume = Volume; break;
-            case nameof(NormalizeLoudness):         _settings.NormalizeLoudness = NormalizeLoudness; break;
-            case nameof(Temperature):              _settings.Temperature = Temperature; break;
-            case nameof(TopP):                     _settings.TopP = TopP; break;
-            case nameof(SelectedLatency):          _settings.Latency = SelectedLatency; break;
-            case nameof(Normalize):                _settings.Normalize = Normalize; break;
-            case nameof(Mp3Bitrate):               _settings.Mp3Bitrate = Mp3Bitrate; break;
-            case nameof(ConditionOnPreviousChunks): _settings.ConditionOnPreviousChunks = ConditionOnPreviousChunks; break;
-            case nameof(IsS21ProFreePromoDismissed): _settings.IsS21ProFreePromoDismissed = IsS21ProFreePromoDismissed; break;
+            case nameof(SelectedModel): updateSettings = settings => settings.SelectedModel = SelectedModel; break;
+            case nameof(Speed): updateSettings = settings => settings.Speed = Speed; break;
+            case nameof(Volume): updateSettings = settings => settings.Volume = Volume; break;
+            case nameof(NormalizeLoudness): updateSettings = settings => settings.NormalizeLoudness = NormalizeLoudness; break;
+            case nameof(Temperature): updateSettings = settings => settings.Temperature = Temperature; break;
+            case nameof(TopP): updateSettings = settings => settings.TopP = TopP; break;
+            case nameof(SelectedLatency): updateSettings = settings => settings.Latency = SelectedLatency; break;
+            case nameof(Normalize): updateSettings = settings => settings.Normalize = Normalize; break;
+            case nameof(Mp3Bitrate): updateSettings = settings => settings.Mp3Bitrate = Mp3Bitrate; break;
+            case nameof(ConditionOnPreviousChunks): updateSettings = settings => settings.ConditionOnPreviousChunks = ConditionOnPreviousChunks; break;
+            case nameof(IsS21ProFreePromoDismissed): updateSettings = settings => settings.IsS21ProFreePromoDismissed = IsS21ProFreePromoDismissed; break;
             default: return;
         }
 
         if (!_suppressSettingsSave)
-            SettingsStore.Save(_context, _settings);
+            UpdateSettingsAndSave(updateSettings);
+    }
+
+    private bool UpdateSettingsAndSave(Action<Settings> update)
+    {
+        if (_settingsWriteLease is { } writeLease)
+        {
+            return SettingsStore.TryUpdateAndSave(
+                _context,
+                _settings,
+                writeLease,
+                candidate =>
+                {
+                    update(candidate);
+                    return true;
+                });
+        }
+
+        update(_settings);
+        SettingsStore.Save(_context, _settings);
+        return true;
+    }
+
+    private void SetVoiceIdWithoutSaving(string voiceId)
+    {
+        _suppressSettingsSave = true;
+        try
+        {
+            VoiceId = voiceId;
+        }
+        finally
+        {
+            _suppressSettingsSave = false;
+        }
     }
 
     public void Dispose()
     {
         _isDisposed = true;
+        _startupCreditRefreshCycle = null;
         PropertyChanged -= OnPropertyChanged;
         Interlocked.Increment(ref _searchOperationId);
         Interlocked.Increment(ref _voiceIdOperationId);
@@ -1122,7 +1243,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         voiceIdCancellation?.Cancel();
         _previewPlayback.Dispose();
         _latencyHideTimer?.Stop();
-        SettingsStore.Save(_context, _settings);
     }
 }
 
