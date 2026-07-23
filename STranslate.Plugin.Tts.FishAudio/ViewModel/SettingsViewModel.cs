@@ -208,6 +208,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _searchCancellationTokenSource;
     private CancellationTokenSource? _voiceIdCancellationTokenSource;
     private CancellationTokenSource? _displayPreviewCancellationTokenSource;
+    private PreviewRefreshTarget? _displayPreviewOperationTarget;
     private StartupCreditRefreshCycle? _startupCreditRefreshCycle;
 
     // ── 分页输入 ──
@@ -528,6 +529,18 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
+    internal static bool TryApplyRefreshedCachedVoice(
+        Settings settings,
+        string expectedVoiceId,
+        CachedVoiceInfo cached)
+    {
+        if (!string.Equals(settings.VoiceId, expectedVoiceId, StringComparison.Ordinal))
+            return false;
+
+        settings.CachedVoice = cached;
+        return true;
+    }
+
     internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached)
     {
         RunOnUiThread(() =>
@@ -788,7 +801,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (!TryBeginDisplayPreviewOperation(out var operationId, out var cts, out var cancellationToken))
+        if (!PreviewAudioUrlValidator.RequiresRefresh(oldAudioUrl, FishAudioRuntime.LocalUtcNow()))
+        {
+            CancelDisplayPreviewOperation();
+            StartDisplayPreview(voiceId, oldAudioUrl);
+            return;
+        }
+
+        var target = new PreviewRefreshTarget(voiceId, null);
+        if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var cancellationToken))
             return;
 
         try
@@ -796,7 +817,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             if (!CanStartPreview("Selected voice preview"))
                 return;
 
-            if (!IsCurrentDisplayPreviewOperation(operationId, voiceId))
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
                 return;
 
             ModelEntity? model;
@@ -810,26 +831,33 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             }
             catch (Exception ex)
             {
-                if (!IsCurrentDisplayPreviewOperation(operationId, voiceId))
+                if (!IsCurrentDisplayPreviewOperation(operationId, target))
                     return;
 
                 _context.Logger?.LogWarning(ex, "Selected voice preview refresh failed for voice {VoiceId}", voiceId);
-                StartDisplayPreview(voiceId, oldAudioUrl);
+                ShowPreviewRefreshFailed();
                 return;
             }
 
-            if (!IsCurrentDisplayPreviewOperation(operationId, voiceId))
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
                 return;
 
             if (model is null)
             {
                 _context.Logger?.LogWarning("Selected voice preview refresh returned no voice for {VoiceId}", voiceId);
-                StartDisplayPreview(voiceId, oldAudioUrl);
+                ShowPreviewRefreshFailed();
                 return;
             }
 
             var cached = CreateCachedVoiceInfo(model);
-            if (!UpdateSettingsAndSave(settings => settings.CachedVoice = cached))
+            if (!UpdateSettingsAndSave(settings =>
+                IsCurrentDisplayPreviewOperation(operationId, target)
+                && TryApplyRefreshedCachedVoice(settings, voiceId, cached)))
+            {
+                return;
+            }
+
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
                 return;
 
             ApplyCachedVoice(cached);
@@ -840,7 +868,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            if (IsCurrentDisplayPreviewOperation(operationId, voiceId))
+            if (PreviewAudioUrlValidator.RequiresRefresh(cached.SampleAudioUrl, FishAudioRuntime.LocalUtcNow()))
+            {
+                ShowPreviewRefreshFailed();
+                return;
+            }
+
+            if (IsCurrentDisplayPreviewOperation(operationId, target))
                 StartDisplayPreview(voiceId, cached.SampleAudioUrl!);
         }
         finally
@@ -849,24 +883,113 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
     }
 
-    [RelayCommand]
-    private void ToggleSearchItemPreview(VoiceSearchItem? item)
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task ToggleSearchItemPreviewAsync(VoiceSearchItem? item)
     {
         if (item is null || string.IsNullOrEmpty(item.SampleAudioUrl))
             return;
 
-        CancelDisplayPreviewOperation();
-
         if (_previewPlayback.PreviewingVoiceId == item.Id)
         {
+            CancelDisplayPreviewOperation();
             _previewPlayback.Stop();
             return;
         }
 
-        if (!CanStartPreview("Search result preview"))
+        var oldAudioUrl = item.SampleAudioUrl;
+        if (!PreviewAudioUrlValidator.RequiresRefresh(oldAudioUrl, FishAudioRuntime.LocalUtcNow()))
+        {
+            CancelDisplayPreviewOperation();
+            if (CanStartPreview("Search result preview"))
+                TogglePreview(item.Id, oldAudioUrl);
+            return;
+        }
+
+        var target = new PreviewRefreshTarget(item.Id, item);
+        if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var cancellationToken))
             return;
 
-        TogglePreview(item.Id, item.SampleAudioUrl);
+        try
+        {
+            if (!CanStartPreview("Search result preview"))
+                return;
+
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
+                return;
+
+            ModelEntity? model;
+            try
+            {
+                model = await FishAudioApi.GetModelAsync(_context, EffectiveApiKeyForSearch, item.Id, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                if (!IsCurrentDisplayPreviewOperation(operationId, target))
+                    return;
+
+                _context.Logger?.LogWarning(ex, "Search result preview refresh failed for voice {VoiceId}", item.Id);
+                ShowPreviewRefreshFailed();
+                return;
+            }
+
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
+                return;
+
+            if (model is null)
+            {
+                _context.Logger?.LogWarning("Search result preview refresh returned no voice for {VoiceId}", item.Id);
+                ShowPreviewRefreshFailed();
+                return;
+            }
+
+            ApplyRefreshedSearchItem(item, model);
+
+            if (!PreviewAudioUrlValidator.TryCreateAllowedUri(item.SampleAudioUrl, out _))
+            {
+                _context.Snackbar.ShowError(_context.GetTranslation(FishAudioRuntime.PreviewUnavailableKey));
+                return;
+            }
+
+            if (PreviewAudioUrlValidator.RequiresRefresh(item.SampleAudioUrl, FishAudioRuntime.LocalUtcNow()))
+            {
+                ShowPreviewRefreshFailed();
+                return;
+            }
+
+            if (IsCurrentDisplayPreviewOperation(operationId, target)
+                && CanStartPreview("Search result preview playback"))
+            {
+                TogglePreview(item.Id, item.SampleAudioUrl!);
+            }
+        }
+        finally
+        {
+            CompleteDisplayPreviewOperation(cts);
+        }
+    }
+
+    private void ApplyRefreshedSearchItem(VoiceSearchItem item, ModelEntity model)
+    {
+        item.Title = model.Title;
+        item.Description = model.Description;
+        item.AuthorName = model.Author?.Nickname ?? "";
+        item.TaskCount = model.TaskCount;
+        item.SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio;
+        item.CoverImage = model.CoverImage;
+        var coverImage = item.CoverImage;
+        item.CoverUrl = ResolveCoverImageUrl(item.Id, coverImage, 64, url =>
+        {
+            if (!_isDisposed
+                && SearchResults.Contains(item)
+                && string.Equals(item.CoverImage, coverImage, StringComparison.Ordinal))
+            {
+                item.CoverUrl = url;
+            }
+        });
     }
 
     private bool CanStartPreview(string operation)
@@ -877,6 +1000,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _context.Logger?.LogWarning("{Operation} preflight failed: Network unavailable", operation);
         _context.Snackbar.ShowError(_context.GetTranslation(FishAudioRuntime.NetworkUnavailableKey));
         return false;
+    }
+
+    private void ShowPreviewRefreshFailed()
+    {
+        var key = FishAudioRuntime.IsNetworkAvailable()
+            ? FishAudioRuntime.PreviewRefreshFailedKey
+            : FishAudioRuntime.NetworkUnavailableKey;
+        _context.Snackbar.ShowError(_context.GetTranslation(key));
     }
 
     private void StartDisplayPreview(string voiceId, string audioUrl)
@@ -1044,6 +1175,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     }
 
     private bool TryBeginDisplayPreviewOperation(
+        PreviewRefreshTarget target,
         out long operationId,
         out CancellationTokenSource cts,
         out CancellationToken cancellationToken)
@@ -1052,26 +1184,42 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         {
             if (_displayPreviewCancellationTokenSource is not null)
             {
+                var cancelOnly = _displayPreviewOperationTarget == target;
                 operationId = ++_displayPreviewOperationId;
                 cts = null!;
                 cancellationToken = default;
                 CancelCurrentDisplayPreviewOperationLocked();
-                return false;
+                if (cancelOnly)
+                    return false;
             }
 
             operationId = ++_displayPreviewOperationId;
             cts = new CancellationTokenSource();
             cancellationToken = cts.Token;
             _displayPreviewCancellationTokenSource = cts;
+            _displayPreviewOperationTarget = target;
             return true;
         }
     }
 
-    private bool IsCurrentDisplayPreviewOperation(long operationId, string voiceId) =>
-        !_isDisposed
-        && Volatile.Read(ref _displayPreviewOperationId) == operationId
-        && string.Equals(VoiceId, voiceId, StringComparison.Ordinal)
-        && string.Equals(_settings.VoiceId, voiceId, StringComparison.Ordinal);
+    private bool IsCurrentDisplayPreviewOperation(long operationId, PreviewRefreshTarget target)
+    {
+        lock (_displayPreviewOperationGate)
+        {
+            if (_isDisposed
+                || _displayPreviewOperationId != operationId
+                || _displayPreviewOperationTarget != target)
+            {
+                return false;
+            }
+        }
+
+        return target.SearchItem is null
+            ? string.Equals(VoiceId, target.VoiceId, StringComparison.Ordinal)
+                && string.Equals(_settings.VoiceId, target.VoiceId, StringComparison.Ordinal)
+            : string.Equals(target.SearchItem.Id, target.VoiceId, StringComparison.Ordinal)
+                && SearchResults.Contains(target.SearchItem);
+    }
 
     private void CompleteDisplayPreviewOperation(CancellationTokenSource cts)
     {
@@ -1081,6 +1229,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 return;
 
             _displayPreviewCancellationTokenSource = null;
+            _displayPreviewOperationTarget = null;
             cts.Dispose();
         }
     }
@@ -1098,6 +1247,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         var cancellation = _displayPreviewCancellationTokenSource;
         _displayPreviewCancellationTokenSource = null;
+        _displayPreviewOperationTarget = null;
         if (cancellation is null)
             return;
 
@@ -1192,7 +1342,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             UpdateSettingsAndSave(updateSettings);
     }
 
-    private bool UpdateSettingsAndSave(Action<Settings> update)
+    private bool UpdateSettingsAndSave(Action<Settings> update) =>
+        UpdateSettingsAndSave(candidate =>
+        {
+            update(candidate);
+            return true;
+        });
+
+    private bool UpdateSettingsAndSave(Func<Settings, bool> update)
     {
         if (_settingsWriteLease is { } writeLease)
         {
@@ -1200,14 +1357,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 _context,
                 _settings,
                 writeLease,
-                candidate =>
-                {
-                    update(candidate);
-                    return true;
-                });
+                update);
         }
 
-        update(_settings);
+        if (!update(_settings))
+            return false;
+
         SettingsStore.Save(_context, _settings);
         return true;
     }
@@ -1224,6 +1379,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             _suppressSettingsSave = false;
         }
     }
+
+    private readonly record struct PreviewRefreshTarget(string VoiceId, VoiceSearchItem? SearchItem);
 
     public void Dispose()
     {
@@ -1249,14 +1406,20 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 public partial class VoiceSearchItem : ObservableObject
 {
     public string Id { get; set; } = "";
-    public string Title { get; set; } = "";
-    public string Description { get; set; } = "";
-    public string AuthorName { get; set; } = "";
+    [ObservableProperty]
+    public partial string Title { get; set; }
+    [ObservableProperty]
+    public partial string Description { get; set; }
+    [ObservableProperty]
+    public partial string AuthorName { get; set; }
     [ObservableProperty]
     public partial string CoverUrl { get; set; }
-    public int TaskCount { get; set; }
-    public string? SampleAudioUrl { get; set; }
-    public string CoverImage { get; set; } = "";
+    [ObservableProperty]
+    public partial int TaskCount { get; set; }
+    [ObservableProperty]
+    public partial string? SampleAudioUrl { get; set; }
+    [ObservableProperty]
+    public partial string CoverImage { get; set; }
 
     [ObservableProperty]
     public partial bool IsBeingPreviewed { get; set; }

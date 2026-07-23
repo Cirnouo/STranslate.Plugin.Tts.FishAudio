@@ -66,8 +66,8 @@ https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coveri
 
 | 来源 | URL 类型 | 是否可缓存 |
 |:--|:--|:--:|
-| 列表接口 `samples[].audio` | 公开 CDN 链接 `https://platform.r2.fish.audio/task/xxx.mp3` | 长期可缓存 |
-| 详情接口 `samples[].audio` | 签名 R2 URL（含 `X-Amz-Expires=3600`） | 约 1h 过期 |
+| 列表接口 `samples[].audio` | 公开 CDN 或签名 R2 URL | 未签名可复用；签名链接按参数到期 |
+| 详情接口 `samples[].audio` | 签名 R2 URL（通常含 `X-Amz-Expires=3600`） | 按 `X-Amz-Date + X-Amz-Expires` 到期 |
 | TTS 响应 | 直接二进制流 | 不适用 |
 
 ## TTS 模型

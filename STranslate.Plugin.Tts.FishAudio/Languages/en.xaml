@@ -89,6 +89,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">Request timed out. Please try again later.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">No preview audio is available.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">Failed to load preview audio. Please try again later.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed">Failed to refresh the preview audio link. Please try again later.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Text is empty</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">Please enter a Voice ID first</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">Invalid Voice ID format</sys:String>

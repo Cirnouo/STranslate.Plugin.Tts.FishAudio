@@ -19,6 +19,7 @@ internal static class FishAudioRuntime
     internal const string RequestTimeoutKey = "STranslate_Plugin_Tts_FishAudio_Request_Timeout";
     internal const string PreviewUnavailableKey = "STranslate_Plugin_Tts_FishAudio_Preview_Unavailable";
     internal const string PreviewPlaybackFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed";
+    internal const string PreviewRefreshFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed";
     internal const string TimeApiUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
     private static readonly TimeSpan TimeApiTimeout = TimeSpan.FromSeconds(3);
 

@@ -100,6 +100,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">请求超时，请稍后重试</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">暂无可用试听音频</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">试听音频加载失败，请稍后重试</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed">试听链接刷新失败，请稍后重试</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文本为空</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">请先输入声音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">声音 ID 格式不正确</sys:String>

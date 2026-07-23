@@ -106,8 +106,7 @@ GET https://api.fish.audio/model
 | `task_id` | string | 任务 ID |
 | `audio` | string | 音频 URL（**完整 URL**，可直接播放） |
 
-> 列表接口中 `samples[].audio` 返回的是公开 CDN 短链接（如 `https://platform.r2.fish.audio/task/xxx.mp3`），
-> 而详情接口 `/model/{id}` 返回的是带签名的 R2 URL（含 `X-Amz-Signature`，有效期约 1 小时）。
+> 列表接口中的 `samples[].audio` 可能是公开 CDN 链接，也可能是带 `X-Amz-Date`、`X-Amz-Expires` 和 `X-Amz-Signature` 的 R2 签名 URL。客户端应根据参数计算有效期，而不是假定列表链接可永久播放。
 
 ### AuthorEntity 字段说明
 
@@ -176,5 +175,5 @@ GET /model?self=true&page_size=10
 
 1. **模型搜索**：用户在设置面板中搜索和浏览公共语音模型
 2. **模型选择**：展示模型封面、名称、作者、标签，用户选中后填入 `reference_id`
-3. **试听**：通过 `samples[].audio` URL 直接播放模型样本
+3. **试听**：未签名或仍有效的 `samples[].audio` 可直接播放；签名链接即将到期时通过详情接口刷新
 4. **本地缓存**：缓存模型列表和图片，减少重复请求

@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 const string AppliedKey = "0123456789abcdef0123456789abcdef";
 const string DraftKey = "abcdef0123456789abcdef0123456789";
 
+Release110MetadataIsComplete();
 PackageReferenceUsesSdk1012();
 NewSettingsSerializeCurrentSchemaFirst();
 Version100SettingsMigrate();
@@ -96,16 +97,25 @@ await VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
 await SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync();
 await PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync();
 PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts();
+PreviewAudioUrlExpirationRefreshesAtThirtySecondWindow();
+PreviewAudioUrlExpirationTreatsMalformedSignaturesAsExpiring();
+SelectedPreviewCacheUpdateRejectsChangedVoice();
 PreviewAudioRejectsInvalidSearchUrlWithoutStartingPlayback();
+await DisplayPreviewValidUrlSkipsDetailRefreshAsync();
 await DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync();
 await DisplayPreviewOfflinePreflightStopsBeforeRefreshAsync();
 await DisplayPreviewRechecksNetworkBeforePlaybackAsync();
 SearchPreviewOfflinePreflightStopsBeforePlayback();
 SearchPreviewUsesListUrlWithoutDetailRefresh();
+await SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync();
+await SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync();
+await SearchPreviewRemovedResultIgnoresLateRefreshAsync();
+await SearchPreviewSecondClickCancelsPendingRefreshAsync();
 SearchPreviewSecondClickStopsWithoutNetwork();
-await DisplayPreviewRefreshFailureSilentlyFallsBackAsync();
-await DisplayPreviewNotFoundSilentlyFallsBackAsync();
+await DisplayPreviewExpiredRefreshFailureShowsErrorAsync();
+await DisplayPreviewNotFoundShowsRefreshErrorAsync();
 await DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync();
+await DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync();
 await DisplayPreviewSecondClickStopsWithoutNetworkAsync();
 await DisplayPreviewSecondClickCancelsPendingRefreshWithoutRestartAsync();
 PreviewPlaybackFailureUsesNetworkAwareMessage();
@@ -134,6 +144,100 @@ await LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync();
 ClearCacheButtonUsesLocalizedTextAndBusySpinner();
 
 Console.WriteLine("Fish Audio plugin regression tests passed.");
+
+static void Release110MetadataIsComplete()
+{
+    var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
+        "STranslate.Plugin.Tts.FishAudio",
+        "plugin.json")));
+    using var pluginDocument = JsonDocument.Parse(pluginJson);
+    AssertEqual(
+        "1.1.0",
+        pluginDocument.RootElement.GetProperty("Version").GetString(),
+        "Release plugin version should be 1.1.0");
+
+    var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
+    var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
+    var releaseIndex = changelog.IndexOf("## [1.1.0] - 2026-07-23", StringComparison.Ordinal);
+    var previousReleaseIndex = changelog.IndexOf("## [1.0.5]", StringComparison.Ordinal);
+    AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
+    AssertEqual(true, releaseIndex > unreleasedIndex, "Changelog should contain the dated 1.1.0 release heading after Unreleased");
+    AssertEqual(true, previousReleaseIndex > releaseIndex, "Changelog should place 1.1.0 before 1.0.5");
+
+    var releaseContent = changelog[releaseIndex..previousReleaseIndex];
+    foreach (var expectedChange in new[]
+             {
+                 "SchemaVersion=1",
+                 "从 2026-07-24 延长至 2026-07-31",
+                 "已选声音与搜索结果试听",
+                 "30 秒刷新窗口",
+                 "不再回退旧 URL",
+                 "启动",
+                 "余额行",
+                 "试听音频 URL",
+                 "封面缓存",
+                 "15 秒超时",
+                 "SettingsViewModel",
+                 "原 AudioPlayer 完成",
+                 "不会使用或影响新周期",
+             })
+    {
+        AssertEqual(
+            true,
+            releaseContent.Contains(expectedChange, StringComparison.Ordinal),
+            $"1.1.0 changelog should record net change: {expectedChange}");
+    }
+    AssertEqual(
+        false,
+        releaseContent.Contains("不会播放", StringComparison.Ordinal),
+        "1.1.0 changelog should not claim that an old TTS operation cannot play after reinitialization");
+
+    var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
+    for (var decisionNumber = 36; decisionNumber <= 40; decisionNumber++)
+    {
+        AssertEqual(
+            true,
+            designDecisions.Contains($"## DD-{decisionNumber:D3}:", StringComparison.Ordinal),
+            $"Design decisions should contain DD-{decisionNumber:D3}");
+    }
+
+    var dd031Index = designDecisions.IndexOf("## DD-031:", StringComparison.Ordinal);
+    var dd032Index = designDecisions.IndexOf("## DD-032:", StringComparison.Ordinal);
+    var dd036Index = designDecisions.IndexOf("## DD-036:", StringComparison.Ordinal);
+    var dd037Index = designDecisions.IndexOf("## DD-037:", StringComparison.Ordinal);
+    var dd031Content = designDecisions[dd031Index..dd032Index];
+    var dd036Content = designDecisions[dd036Index..dd037Index];
+    AssertEqual(
+        true,
+        dd031Content.Contains("Free-model cutoff extended by DD-036", StringComparison.Ordinal),
+        "DD-031 should identify DD-036 as the active cutoff extension");
+    AssertEqual(
+        true,
+        dd036Content.Contains("2026-08-01T00:00:00Z", StringComparison.Ordinal),
+        "DD-036 should own the extended free-model cutoff");
+
+    string[]? expectedResourceKeys = null;
+    foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+    {
+        var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
+            "STranslate.Plugin.Tts.FishAudio",
+            "Languages",
+            $"{locale}.xaml")));
+        var resourceKeys = Regex.Matches(
+                xaml,
+                "x:Key=\"(?<key>STranslate_Plugin_Tts_FishAudio_[^\"]+)\"",
+                RegexOptions.CultureInvariant)
+            .Select(match => match.Groups["key"].Value)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        expectedResourceKeys ??= resourceKeys;
+        AssertEqual(
+            true,
+            expectedResourceKeys.SequenceEqual(resourceKeys, StringComparer.Ordinal),
+            $"{locale}.xaml should define the same Fish Audio resource keys as zh-cn.xaml");
+    }
+}
 
 static void NewSettingsSerializeCurrentSchemaFirst()
 {
@@ -1752,7 +1856,7 @@ static void FreeModelDeadlineDocumentationIsConsistent()
     AssertEqual(
         true,
         changelog.Contains("从 2026-07-24 延长至 2026-07-31", StringComparison.Ordinal),
-        "Unreleased changelog should explicitly record both the old and extended free-model deadlines");
+        "1.1.0 changelog should explicitly record both the old and extended free-model deadlines");
 }
 
 static void MainInitNormalizesStructuredSettingsWithoutClearingKeys()
@@ -3308,6 +3412,44 @@ static void PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts()
     AssertPreviewAudioUrlRejected("not a url");
 }
 
+static void PreviewAudioUrlExpirationRefreshesAtThirtySecondWindow()
+{
+    const string url = "https://c97f3361a1c971323738e24f451a0225.r2.cloudflarestorage.com/fish-platform-data/task/f196a6d1769d4a61aa0e48f7e4337f04.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260723T094710Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=signature";
+    var issuedAt = new DateTimeOffset(2026, 7, 23, 9, 47, 10, TimeSpan.Zero);
+
+    AssertEqual(false, PreviewAudioUrlValidator.RequiresRefresh(url, issuedAt.AddSeconds(3569)), "Signed preview URL should remain reusable before the 30-second refresh window");
+    AssertEqual(true, PreviewAudioUrlValidator.RequiresRefresh(url, issuedAt.AddSeconds(3570)), "Signed preview URL should refresh at the 30-second boundary");
+}
+
+static void PreviewAudioUrlExpirationTreatsMalformedSignaturesAsExpiring()
+{
+    var nowUtc = new DateTimeOffset(2026, 7, 23, 10, 0, 0, TimeSpan.Zero);
+    AssertEqual(false, PreviewAudioUrlValidator.RequiresRefresh("https://platform.r2.fish.audio/audio/public.mp3", nowUtc), "Unsigned preview URLs should remain directly reusable");
+    AssertEqual(true, PreviewAudioUrlValidator.RequiresRefresh("https://platform.r2.fish.audio/audio/missing-both.mp3?X-Amz-Signature=signature", nowUtc), "Signed preview URLs missing both timing parameters should refresh conservatively");
+    AssertEqual(true, PreviewAudioUrlValidator.RequiresRefresh("https://platform.r2.fish.audio/audio/missing.mp3?X-Amz-Date=20260723T094710Z", nowUtc), "Incomplete signed preview URLs should refresh conservatively");
+    AssertEqual(true, PreviewAudioUrlValidator.RequiresRefresh("https://platform.r2.fish.audio/audio/invalid.mp3?X-Amz-Date=invalid&X-Amz-Expires=3600", nowUtc), "Malformed signed preview URLs should refresh conservatively");
+    AssertEqual(true, PreviewAudioUrlValidator.RequiresRefresh("https://platform.r2.fish.audio/audio/duplicate.mp3?X-Amz-Date=20260723T094710Z&X-Amz-Date=20260723T094711Z&X-Amz-Expires=3600", nowUtc), "Duplicate signed preview parameters should refresh conservatively");
+}
+
+static void SelectedPreviewCacheUpdateRejectsChangedVoice()
+{
+    const string requestedVoiceId = "11111111111111111111111111111111";
+    var currentCache = new CachedVoiceInfo { Title = "Current Voice" };
+    var settings = new Settings
+    {
+        VoiceId = "22222222222222222222222222222222",
+        CachedVoice = currentCache,
+    };
+
+    var accepted = SettingsViewModel.TryApplyRefreshedCachedVoice(
+        settings,
+        requestedVoiceId,
+        new CachedVoiceInfo { Title = "Stale Voice" });
+
+    AssertEqual(false, accepted, "Selected preview cache update should reject a candidate whose Voice ID changed while waiting to save");
+    AssertEqual(true, ReferenceEquals(currentCache, settings.CachedVoice), "Rejected selected preview cache update should preserve the current cache");
+}
+
 static async Task PlayAudioUsesOldInitializationWhileReinitLoadIsBlockedAsync()
 {
     using var network = OverrideNetworkAvailability(true);
@@ -3494,11 +3636,42 @@ static void PreviewAudioRejectsInvalidSearchUrlWithoutStartingPlayback()
     AssertEqual(true, logger.Contains(LogLevel.Warning, "Rejected preview audio URL"), "Invalid preview URL should be logged as a recoverable warning");
 }
 
+static async Task DisplayPreviewValidUrlSkipsDetailRefreshAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "0123456789abcdef0123456789abcdef";
+    const string currentUrl = "https://platform.r2.fish.audio/audio/current.mp3";
+    var settings = new Settings
+    {
+        VoiceId = voiceId,
+        CachedVoice = new CachedVoiceInfo { Title = "Current Voice", SampleAudioUrl = currentUrl },
+    };
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetResponseJson = $$"""
+        {"_id":"{{voiceId}}","title":"Unexpected Refresh","description":"","cover_image":"","samples":[{"audio":"https://platform.r2.fish.audio/audio/unexpected.mp3"}],"task_count":0}
+        """;
+    var player = new TestPreviewAudioPlayer();
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    var viewModel = new SettingsViewModel(
+        context,
+        settings,
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player);
+
+    await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(0, http.GetCallCount, "Selected voice preview should reuse a URL that is not expiring");
+    AssertEqual(0, contextProxy.SaveCount, "Reusing the current selected voice URL should not save settings");
+    AssertEqual(currentUrl, player.LastOpenedUri?.AbsoluteUri, "Selected voice preview should play the current reusable URL");
+}
+
 static async Task DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/old.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("old.mp3");
     const string freshUrl = "https://bucket.r2.cloudflarestorage.com/audio/fresh.mp3";
     var settings = new Settings
     {
@@ -3585,7 +3758,7 @@ static async Task DisplayPreviewRechecksNetworkBeforePlaybackAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/before-refresh.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("before-refresh.mp3");
     const string freshUrl = "https://platform.r2.fish.audio/audio/after-refresh.mp3";
     var settings = new Settings
     {
@@ -3668,6 +3841,198 @@ static void SearchPreviewUsesListUrlWithoutDetailRefresh()
     AssertEqual(1, player.PlayCallCount, "Online search result preview should start playback once");
 }
 
+static async Task SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    const string freshUrl = "https://platform.r2.fish.audio/audio/search-fresh.mp3";
+    var item = new VoiceSearchItem
+    {
+        Id = voiceId,
+        Title = "Old Search Voice",
+        Description = "Old description",
+        AuthorName = "Old Author",
+        TaskCount = 1,
+        CoverImage = "old-cover",
+        CoverUrl = FishAudioApi.BuildCoverUrl("old-cover"),
+        SampleAudioUrl = CreateExpiredPreviewUrl("search-expired.mp3"),
+    };
+    var settings = new Settings();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetResponseJson = $$"""
+        {
+          "_id": "{{voiceId}}",
+          "title": "Fresh Search Voice",
+          "description": "Fresh description",
+          "cover_image": "fresh-cover",
+          "samples": [{ "audio": "{{freshUrl}}" }],
+          "task_count": 42,
+          "author": { "nickname": "Fresh Author" }
+        }
+        """;
+    var player = new TestPreviewAudioPlayer();
+    var context = CreateContext(settings: settings, httpService: httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    var changedProperties = new HashSet<string>(StringComparer.Ordinal);
+    item.PropertyChanged += (_, args) =>
+    {
+        if (args.PropertyName is not null)
+            changedProperties.Add(args.PropertyName);
+    };
+    var viewModel = new SettingsViewModel(
+        context,
+        settings,
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player)
+    {
+        SearchResults = [item],
+    };
+
+    await viewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(1, http.GetCallCount, "Expired search preview should refresh model details once");
+    AssertEqual($"https://api.fish.audio/model/{voiceId}", http.LastGetUrl, "Expired search preview should refresh the clicked voice ID");
+    AssertEqual("Fresh Search Voice", item.Title, "Search preview refresh should update the visible title");
+    AssertEqual("Fresh description", item.Description, "Search preview refresh should update the visible description");
+    AssertEqual("Fresh Author", item.AuthorName, "Search preview refresh should update the visible author");
+    AssertEqual(42, item.TaskCount, "Search preview refresh should update the visible task count");
+    AssertEqual("fresh-cover", item.CoverImage, "Search preview refresh should update the cover source");
+    AssertEqual(FishAudioApi.BuildCoverUrl("fresh-cover"), item.CoverUrl, "Search preview refresh should update the visible cover URL");
+    AssertEqual(freshUrl, item.SampleAudioUrl, "Search preview refresh should update the sample URL");
+    foreach (var propertyName in new[] { nameof(item.Title), nameof(item.Description), nameof(item.AuthorName), nameof(item.TaskCount), nameof(item.CoverImage), nameof(item.CoverUrl), nameof(item.SampleAudioUrl) })
+        AssertEqual(true, changedProperties.Contains(propertyName), $"Search preview refresh should notify the view that {propertyName} changed");
+    AssertEqual(0, contextProxy.SaveCount, "Search preview refresh should not persist search-only metadata");
+    AssertEqual(freshUrl, player.LastOpenedUri?.AbsoluteUri, "Search preview refresh should play the refreshed URL");
+}
+
+static async Task SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    var oldUrl = CreateExpiredPreviewUrl("search-failure.mp3");
+    var item = new VoiceSearchItem
+    {
+        Id = voiceId,
+        Title = "Keep Search Voice",
+        SampleAudioUrl = oldUrl,
+    };
+    var snackbar = new TestSnackbar();
+    var logger = new TestLogger();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetException = new TimeoutException("model lookup timed out");
+    var player = new TestPreviewAudioPlayer();
+    var viewModel = new SettingsViewModel(
+        CreateContext(snackbar, httpService: httpService, logger: logger),
+        new Settings(),
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player)
+    {
+        SearchResults = [item],
+    };
+
+    await viewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(FishAudioRuntime.PreviewRefreshFailedKey, snackbar.LastError, "Expired search preview refresh failure should show the localized refresh error");
+    AssertEqual("Keep Search Voice", item.Title, "Search preview refresh failure should preserve existing metadata");
+    AssertEqual(oldUrl, item.SampleAudioUrl, "Search preview refresh failure should preserve the old URL without playing it");
+    AssertEqual(0, player.PlayCallCount, "Expired search preview refresh failure should not start fallback playback");
+    AssertEqual(true, logger.Contains(LogLevel.Warning, "Search result preview refresh failed"), "Search preview refresh failure should be logged safely");
+}
+
+static async Task SearchPreviewRemovedResultIgnoresLateRefreshAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    const string lateUrl = "https://platform.r2.fish.audio/audio/search-late.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("search-removed.mp3");
+    var item = new VoiceSearchItem
+    {
+        Id = voiceId,
+        Title = "Original Search Voice",
+        SampleAudioUrl = oldUrl,
+    };
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseResponse = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, _) =>
+    {
+        requestStarted.TrySetResult();
+        return releaseResponse.Task;
+    };
+    var player = new TestPreviewAudioPlayer();
+    var viewModel = new SettingsViewModel(
+        CreateContext(httpService: httpService),
+        new Settings(),
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player)
+    {
+        SearchResults = [item],
+    };
+
+    var previewTask = viewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    viewModel.SearchResults = [];
+    releaseResponse.SetResult($$"""
+        {"_id":"{{voiceId}}","title":"Late Search Voice","description":"late","cover_image":"late-cover","samples":[{"audio":"{{lateUrl}}"}],"task_count":99}
+        """);
+    await previewTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual("Original Search Voice", item.Title, "A removed search item should ignore late refreshed metadata");
+    AssertEqual(oldUrl, item.SampleAudioUrl, "A removed search item should keep its original sample URL after a late response");
+    AssertEqual(0, player.PlayCallCount, "A removed search item should not start playback after a late response");
+}
+
+static async Task SearchPreviewSecondClickCancelsPendingRefreshAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "fedcba9876543210fedcba9876543210";
+    var oldUrl = CreateExpiredPreviewUrl("search-pending.mp3");
+    var item = new VoiceSearchItem
+    {
+        Id = voiceId,
+        Title = "Pending Search Voice",
+        SampleAudioUrl = oldUrl,
+    };
+    var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var requestCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseResponse = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetAsyncHandler = (_, _, cancellationToken) =>
+    {
+        requestStarted.TrySetResult();
+        cancellationToken.Register(() => requestCanceled.TrySetResult());
+        return releaseResponse.Task;
+    };
+    var player = new TestPreviewAudioPlayer();
+    var viewModel = new SettingsViewModel(
+        CreateContext(httpService: httpService),
+        new Settings(),
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player)
+    {
+        SearchResults = [item],
+    };
+
+    var firstPreviewTask = viewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
+    await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    await viewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item).WaitAsync(TimeSpan.FromSeconds(2));
+    await requestCanceled.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+    releaseResponse.SetResult($$"""
+        {"_id":"{{voiceId}}","title":"Late Search Voice","description":"","cover_image":"","samples":[{"audio":"https://platform.r2.fish.audio/audio/search-late-after-cancel.mp3"}],"task_count":0}
+        """);
+    await firstPreviewTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(1, http.GetCallCount, "Second click on a pending search refresh should cancel without starting another detail request");
+    AssertEqual("Pending Search Voice", item.Title, "Canceled search refresh should not apply late metadata");
+    AssertEqual(oldUrl, item.SampleAudioUrl, "Canceled search refresh should preserve the original URL");
+    AssertEqual(0, player.PlayCallCount, "Canceled search refresh should not start playback");
+}
+
 static void SearchPreviewSecondClickStopsWithoutNetwork()
 {
     using var network = OverrideNetworkAvailability(true);
@@ -3694,11 +4059,11 @@ static void SearchPreviewSecondClickStopsWithoutNetwork()
     AssertEqual(null, snackbar.LastError, "Stopping search preview while offline should not show a network error");
 }
 
-static async Task DisplayPreviewRefreshFailureSilentlyFallsBackAsync()
+static async Task DisplayPreviewExpiredRefreshFailureShowsErrorAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/fallback.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("fallback.mp3");
     var originalCache = new CachedVoiceInfo
     {
         Title = "Keep Voice",
@@ -3725,19 +4090,19 @@ static async Task DisplayPreviewRefreshFailureSilentlyFallsBackAsync()
 
     await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
 
-    AssertEqual(null, snackbar.LastError, "Selected preview refresh failure should not show a refresh error");
+    AssertEqual(FishAudioRuntime.PreviewRefreshFailedKey, snackbar.LastError, "Expired selected preview refresh failure should show the localized refresh error");
     AssertEqual(true, ReferenceEquals(originalCache, settings.CachedVoice), "Selected preview refresh failure should preserve the old cache object");
     AssertEqual(0, contextProxy.SaveCount, "Selected preview refresh failure should not save settings");
-    AssertEqual(oldUrl, player.LastOpenedUri?.AbsoluteUri, "Selected preview refresh failure should silently fall back to the captured old URL");
-    AssertEqual(1, player.PlayCallCount, "Selected preview refresh failure should start fallback playback once");
+    AssertEqual(null, player.LastOpenedUri?.AbsoluteUri, "Expired selected preview refresh failure should not open the captured old URL");
+    AssertEqual(0, player.PlayCallCount, "Expired selected preview refresh failure should not start fallback playback");
     AssertEqual(true, logger.Contains(LogLevel.Warning, "Selected voice preview refresh failed"), "Selected preview refresh failure should be logged safely");
 }
 
-static async Task DisplayPreviewNotFoundSilentlyFallsBackAsync()
+static async Task DisplayPreviewNotFoundShowsRefreshErrorAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/not-found-fallback.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("not-found-fallback.mp3");
     var originalCache = new CachedVoiceInfo
     {
         Title = "Keep Missing Voice",
@@ -3764,11 +4129,11 @@ static async Task DisplayPreviewNotFoundSilentlyFallsBackAsync()
     await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
 
     AssertEqual(1, http.GetCallCount, "Selected preview should make one detail request before handling 404");
-    AssertEqual(null, snackbar.LastError, "Selected preview 404 should not show a refresh error");
+    AssertEqual(FishAudioRuntime.PreviewRefreshFailedKey, snackbar.LastError, "Selected preview 404 should show the localized refresh error");
     AssertEqual(true, ReferenceEquals(originalCache, settings.CachedVoice), "Selected preview 404 should preserve the old cache object");
     AssertEqual(0, contextProxy.SaveCount, "Selected preview 404 should not save settings");
-    AssertEqual(oldUrl, player.LastOpenedUri?.AbsoluteUri, "Selected preview 404 should silently fall back to the captured old URL");
-    AssertEqual(1, player.PlayCallCount, "Selected preview 404 should start fallback playback once");
+    AssertEqual(null, player.LastOpenedUri?.AbsoluteUri, "Selected preview 404 should not open the expired old URL");
+    AssertEqual(0, player.PlayCallCount, "Selected preview 404 should not start fallback playback");
     AssertEqual(true, logger.Contains(LogLevel.Warning, "returned no voice"), "Selected preview 404 should be logged safely");
 }
 
@@ -3776,7 +4141,7 @@ static async Task DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/obsolete.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("obsolete.mp3");
     var settings = new Settings
     {
         VoiceId = voiceId,
@@ -3812,6 +4177,40 @@ static async Task DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync()
     AssertEqual("STranslate_Plugin_Tts_FishAudio_Preview_Unavailable", snackbar.LastError, "Latest details without a sample should show the localized unavailable message");
 }
 
+static async Task DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync()
+{
+    using var network = OverrideNetworkAvailability(true);
+    const string voiceId = "0123456789abcdef0123456789abcdef";
+    var oldUrl = CreateExpiredPreviewUrl("selected-old-expired.mp3");
+    var refreshedUrl = CreateExpiredPreviewUrl("selected-still-expired.mp3");
+    var settings = new Settings
+    {
+        VoiceId = voiceId,
+        CachedVoice = new CachedVoiceInfo { Title = "Old Voice", SampleAudioUrl = oldUrl },
+    };
+    var snackbar = new TestSnackbar();
+    var (httpService, http) = TestHttpServiceProxy.Create();
+    http.GetResponseJson = $$"""
+        {"_id":"{{voiceId}}","title":"Refreshed Voice","description":"","cover_image":"","samples":[{"audio":"{{refreshedUrl}}"}],"task_count":0}
+        """;
+    var player = new TestPreviewAudioPlayer();
+    var context = CreateContext(snackbar, settings, httpService);
+    var contextProxy = (ContextProxy)(object)context;
+    var viewModel = new SettingsViewModel(
+        context,
+        settings,
+        clearCoverImageCacheAsync: null,
+        clearCoverImageCacheTimeout: null,
+        previewAudioPlayerFactory: () => player);
+
+    await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+
+    AssertEqual(1, contextProxy.SaveCount, "Authoritative refreshed metadata should still be saved when its sample is already expiring");
+    AssertEqual(refreshedUrl, settings.CachedVoice?.SampleAudioUrl, "Refreshed metadata should preserve the API response sample URL");
+    AssertEqual(FishAudioRuntime.PreviewRefreshFailedKey, snackbar.LastError, "An already expiring refreshed URL should show the refresh failure message");
+    AssertEqual(0, player.PlayCallCount, "An already expiring refreshed URL should not start playback");
+}
+
 static async Task DisplayPreviewSecondClickStopsWithoutNetworkAsync()
 {
     using var network = OverrideNetworkAvailability(true);
@@ -3837,12 +4236,12 @@ static async Task DisplayPreviewSecondClickStopsWithoutNetworkAsync()
 
     await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
     AssertEqual(voiceId, viewModel.PreviewingVoiceId, "First selected preview click should start playback");
-    AssertEqual(1, http.GetCallCount, "First selected preview click should refresh details once");
+    AssertEqual(0, http.GetCallCount, "First selected preview click should reuse the current URL without refreshing details");
 
     network.Set(false);
     await viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
 
-    AssertEqual(1, http.GetCallCount, "Stopping selected preview should not make another detail request");
+    AssertEqual(0, http.GetCallCount, "Stopping selected preview should not make a detail request");
     AssertEqual(1, player.StopCallCount, "Second selected preview click should stop the active player immediately");
     AssertEqual(null, viewModel.PreviewingVoiceId, "Second selected preview click should clear playback state");
     AssertEqual(null, snackbar.LastError, "Stopping selected preview while offline should not show a network error");
@@ -3852,7 +4251,7 @@ static async Task DisplayPreviewSecondClickCancelsPendingRefreshWithoutRestartAs
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "0123456789abcdef0123456789abcdef";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/pending-old.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("pending-old.mp3");
     const string lateUrl = "https://platform.r2.fish.audio/audio/pending-late.mp3";
     var originalCache = new CachedVoiceInfo { Title = "Pending Original", SampleAudioUrl = oldUrl };
     var settings = new Settings { VoiceId = voiceId, CachedVoice = originalCache };
@@ -3940,6 +4339,7 @@ static void PreviewFailureLanguageResourcesAreComplete()
     {
         "STranslate_Plugin_Tts_FishAudio_Preview_Unavailable",
         "STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed",
+        "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed",
     };
 
     foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
@@ -3962,7 +4362,7 @@ static async Task SearchPreviewInvalidatesPendingDisplayRefreshAsync()
     using var network = OverrideNetworkAvailability(true);
     const string selectedVoiceId = "11111111111111111111111111111111";
     const string searchVoiceId = "22222222222222222222222222222222";
-    const string selectedOldUrl = "https://platform.r2.fish.audio/audio/selected-old.mp3";
+    var selectedOldUrl = CreateExpiredPreviewUrl("selected-old.mp3");
     const string selectedLateUrl = "https://platform.r2.fish.audio/audio/selected-late.mp3";
     const string searchUrl = "https://platform.r2.fish.audio/audio/search-current.mp3";
     var originalCache = new CachedVoiceInfo { Title = "Selected Original", SampleAudioUrl = selectedOldUrl };
@@ -4013,7 +4413,7 @@ static async Task DisplayPreviewVoiceSwitchIgnoresLateRefreshAsync()
     using var network = OverrideNetworkAvailability(true);
     const string oldVoiceId = "11111111111111111111111111111111";
     const string newVoiceId = "22222222222222222222222222222222";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/old-selected.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("old-selected.mp3");
     const string newUrl = "https://platform.r2.fish.audio/audio/new-selected.mp3";
     const string lateUrl = "https://platform.r2.fish.audio/audio/late-old.mp3";
     var settings = new Settings
@@ -4072,7 +4472,7 @@ static async Task DisplayPreviewDisposeCancelsAndIgnoresLateRefreshAsync()
 {
     using var network = OverrideNetworkAvailability(true);
     const string voiceId = "11111111111111111111111111111111";
-    const string oldUrl = "https://platform.r2.fish.audio/audio/dispose-old.mp3";
+    var oldUrl = CreateExpiredPreviewUrl("dispose-old.mp3");
     const string lateUrl = "https://platform.r2.fish.audio/audio/dispose-late.mp3";
     var originalCache = new CachedVoiceInfo { Title = "Keep After Dispose", SampleAudioUrl = oldUrl };
     var settings = new Settings { VoiceId = voiceId, CachedVoice = originalCache };
@@ -4799,6 +5199,9 @@ static LocalUtcNowOverride OverrideLocalUtcNow(DateTimeOffset nowUtc)
     FishAudioRuntime.LocalUtcNowOverride = () => nowUtc;
     return new LocalUtcNowOverride(current);
 }
+
+static string CreateExpiredPreviewUrl(string fileName) =>
+    $"https://preview.r2.cloudflarestorage.com/audio/{fileName}?X-Amz-Date=20000101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=expired";
 
 static void AssertEqual<T>(T expected, T actual, string message)
 {

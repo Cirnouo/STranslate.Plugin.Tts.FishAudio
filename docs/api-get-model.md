@@ -67,11 +67,10 @@ GET https://api.fish.audio/model/{id}
 
 | 字段 | 列表接口 `/model` | 详情接口 `/model/{id}` |
 |:--|:--|:--|
-| `samples[].audio` | 公开 CDN 短链接 `https://platform.r2.fish.audio/task/xxx.mp3` | **签名 R2 URL**（含 `X-Amz-Signature`，约 1h 过期） |
+| `samples[].audio` | 公开 CDN 或带 `X-Amz-*` 参数的签名 R2 URL | **签名 R2 URL**（含 `X-Amz-Signature`，通常约 1h 过期） |
 | 其他字段 | 相同 | 相同 |
 
-> 签名 URL 意味着详情接口的 `samples[].audio` 不适合长期缓存。
-> 列表接口的公开 CDN 链接则可以直接缓存和播放。
+> 不应仅根据接口来源判断链接是否长期有效。列表和详情响应都应检查 `X-Amz-Date` 与 `X-Amz-Expires`；不带签名参数的公开 CDN 链接可以直接复用。
 
 ## 错误响应
 
@@ -118,5 +117,5 @@ HTTP/1.1 404 Not Found
 ### 缓存策略建议
 
 - 模型元数据（title/description/tags/cover_image）：可长期缓存
-- `samples[].audio` URL：列表接口的 CDN 链接可长期缓存；详情接口的签名 URL 约 1h 过期
-- 建议使用列表接口获取的 audio URL 进行缓存
+- `samples[].audio` URL：无签名参数的公开 CDN 链接可直接复用；签名链接按 `X-Amz-Date + X-Amz-Expires` 计算到期时间
+- 播放前若签名链接即将到期，应重新请求详情获取当前链接
