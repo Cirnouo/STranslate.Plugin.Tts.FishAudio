@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 封面缓存下载改为 10 秒超时、有界流式读取，单张图片最多缓存 256 KiB，且只落盘有效图片响应
 
 ### Changed
+- 设置存储新增 `SchemaVersion=1` 和插件自有 JSON 迁移/规范化，兼容全部 v1.0.x 配置并按字段保留有效值；受支持版本会清理旧字段、未知字段和重复普通字段，重复版本号或未来版本则进入只读保护以保留宿主文件
+- 启动配置规范化新增数值步进对齐：速度、温度和 Top P 按 0.05，音量按 0.1 使用中点远离零规则吸附到最近刻度
 - `SettingsViewModel` 拆出试听播放和封面缓存显示/清理两个内部边界，保持现有 XAML 绑定属性与命令名称不变
 - 移除 `SettingsViewModel` 构造函数中未使用的 `pendingCreditTask` 参数
 

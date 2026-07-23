@@ -1,3 +1,4 @@
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using System.Net;
 using System.Net.Http;

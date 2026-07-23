@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using System.ComponentModel;
@@ -223,8 +224,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     // ── 静态选项 ──
 
     public IReadOnlyList<string> Models { get; private set; }
-    public static IReadOnlyList<string> Latencies { get; } = FishAudioRuntime.Latencies;
-    public static IReadOnlyList<int> Mp3Bitrates { get; } = FishAudioRuntime.Mp3Bitrates;
+    public static IReadOnlyList<string> Latencies { get; } = SettingsNormalizer.Latencies;
+    public static IReadOnlyList<int> Mp3Bitrates { get; } = SettingsNormalizer.Mp3Bitrates;
 
     private const int SearchPageSize = 6;
 
@@ -466,7 +467,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         IsS21ProFreePromoDismissed = true;
         _settings.IsS21ProFreePromoDismissed = true;
-        _context.SaveSettingStorage<Settings>();
+        SettingsStore.Save(_context, _settings);
     }
 
     [RelayCommand]
@@ -610,7 +611,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             SampleAudioUrl = item.SampleAudioUrl,
         };
         _settings.CachedVoice = cached;
-        _context.SaveSettingStorage<Settings>();
+        SettingsStore.Save(_context, _settings);
 
         ApplyCachedVoice(cached);
     }
@@ -629,7 +630,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (!Settings.IsValidVoiceIdFormat(trimmed))
+        if (!SettingsValidation.IsValidVoiceIdFormat(trimmed))
         {
             VoiceIdError = _context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat");
             return;
@@ -657,7 +658,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
             var cached = CreateCachedVoiceInfo(model);
             _settings.CachedVoice = cached;
-            _context.SaveSettingStorage<Settings>();
+            SettingsStore.Save(_context, _settings);
 
             ApplyCachedVoice(cached);
             VoiceIdError = null;
@@ -753,7 +754,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         VoiceId = "";
         _settings.VoiceId = "";
         _settings.CachedVoice = null;
-        _context.SaveSettingStorage<Settings>();
+        SettingsStore.Save(_context, _settings);
         ApplyCachedVoice(null);
     }
 
@@ -889,7 +890,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         if (e.PropertyName == nameof(ApiKey))
         {
             _settings.ApiKey = ApiKey;
-            _context.SaveSettingStorage<Settings>();
+            SettingsStore.Save(_context, _settings);
             return;
         }
 
@@ -911,7 +912,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
 
         if (!_suppressSettingsSave)
-            _context.SaveSettingStorage<Settings>();
+            SettingsStore.Save(_context, _settings);
     }
 
     public void Dispose()
@@ -930,7 +931,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         voiceIdCancellation?.Cancel();
         _previewPlayback.Dispose();
         _latencyHideTimer?.Stop();
-        _context.SaveSettingStorage<Settings>();
+        SettingsStore.Save(_context, _settings);
     }
 }
 

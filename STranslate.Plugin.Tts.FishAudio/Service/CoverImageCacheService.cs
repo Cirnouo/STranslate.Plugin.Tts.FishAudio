@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 
 namespace STranslate.Plugin.Tts.FishAudio.Service;
 
@@ -38,7 +39,7 @@ internal sealed class CoverImageCacheService
     public CoverImageCacheResult ResolveCoverImageUrl(string voiceId, string coverImage, int displayWidth, Action<string>? onCacheReady = null)
     {
         var remoteUrl = FishAudioApi.BuildCoverUrl(coverImage, displayWidth);
-        if (!IsEnabled || string.IsNullOrWhiteSpace(voiceId) || !Settings.IsValidVoiceIdFormat(voiceId) || string.IsNullOrWhiteSpace(coverImage))
+        if (!IsEnabled || string.IsNullOrWhiteSpace(voiceId) || !SettingsValidation.IsValidVoiceIdFormat(voiceId) || string.IsNullOrWhiteSpace(coverImage))
             return new CoverImageCacheResult(remoteUrl, null);
 
         var localPath = GetCacheFilePath(voiceId);

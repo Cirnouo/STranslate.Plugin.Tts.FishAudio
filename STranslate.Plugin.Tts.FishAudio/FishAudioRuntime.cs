@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 using System.Globalization;
 using System.Net.NetworkInformation;
 using System.Text.Json;
@@ -20,9 +21,6 @@ internal static class FishAudioRuntime
     private static readonly TimeSpan TimeApiTimeout = TimeSpan.FromSeconds(3);
 
     internal static readonly DateTimeOffset FreeModelCutoffUtc = new(2026, 7, 24, 0, 0, 0, TimeSpan.Zero);
-    internal static readonly IReadOnlyList<string> Latencies = ["normal", "balanced", "low"];
-    internal static readonly IReadOnlyList<int> Mp3Bitrates = [64, 128, 192];
-
     internal static Func<bool>? NetworkAvailableOverride { get; set; }
     internal static Func<DateTimeOffset>? LocalUtcNowOverride { get; set; }
 
@@ -46,70 +44,6 @@ internal static class FishAudioRuntime
         string.Equals(model, S21ProFreeModel, StringComparison.Ordinal)
         || string.Equals(model, S21ProModel, StringComparison.Ordinal)
         || string.Equals(model, S2ProModel, StringComparison.Ordinal);
-
-    internal static bool NormalizeSettings(Settings settings, DateTimeOffset nowUtc)
-    {
-        var changed = NormalizeSelectedModel(settings, nowUtc);
-
-        if (!Latencies.Contains(settings.Latency, StringComparer.Ordinal))
-        {
-            settings.Latency = Settings.DefaultLatency;
-            changed = true;
-        }
-
-        if (!Mp3Bitrates.Contains(settings.Mp3Bitrate))
-        {
-            settings.Mp3Bitrate = Settings.DefaultMp3Bitrate;
-            changed = true;
-        }
-
-        if (NormalizeRange(settings.Speed, 0.5, 2.0, Settings.DefaultSpeed, out var speed))
-        {
-            settings.Speed = speed;
-            changed = true;
-        }
-
-        if (NormalizeRange(settings.Volume, -10.0, 10.0, Settings.DefaultVolume, out var volume))
-        {
-            settings.Volume = volume;
-            changed = true;
-        }
-
-        if (NormalizeRange(settings.Temperature, 0.0, 1.0, Settings.DefaultTemperature, out var temperature))
-        {
-            settings.Temperature = temperature;
-            changed = true;
-        }
-
-        if (NormalizeRange(settings.TopP, 0.0, 1.0, Settings.DefaultTopP, out var topP))
-        {
-            settings.TopP = topP;
-            changed = true;
-        }
-
-        return changed;
-    }
-
-    internal static bool NormalizeSelectedModel(Settings settings, DateTimeOffset nowUtc)
-    {
-        if (GetAvailableModels(nowUtc).Contains(settings.SelectedModel, StringComparer.Ordinal))
-            return false;
-
-        settings.SelectedModel = GetDefaultModel(nowUtc);
-        return true;
-    }
-
-    private static bool NormalizeRange(double value, double min, double max, double defaultValue, out double normalized)
-    {
-        if (!double.IsFinite(value) || value < min || value > max)
-        {
-            normalized = defaultValue;
-            return true;
-        }
-
-        normalized = value;
-        return false;
-    }
 
     internal static async Task<DateTimeOffset?> TryGetOnlineUtcNowAsync(IPluginContext context, CancellationToken ct)
     {
@@ -168,7 +102,7 @@ internal static class FishAudioRuntime
             return false;
         }
 
-        if (!Settings.IsValidApiKeyFormat(apiKey))
+        if (!SettingsValidation.IsValidApiKeyFormat(apiKey))
         {
             LogPreflightWarning(context, operation, "API Key format is invalid");
             ShowTranslatedError(context, showError, ApiKeyInvalidFormatKey);

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Service;
 using STranslate.Plugin.Tts.FishAudio.View;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
@@ -32,20 +33,7 @@ public class Main : ITtsPlugin
     {
         CancelStartupRefresh();
         Context = context;
-        Settings = context.LoadSettingStorage<Settings>();
-        var shouldSave = false;
-
-        if (Settings.NeedsMigration)
-        {
-            Settings.Migrate();
-            shouldSave = true;
-        }
-
-        if (FishAudioRuntime.NormalizeSettings(Settings, nowUtc))
-            shouldSave = true;
-
-        if (shouldSave)
-            context.SaveSettingStorage<Settings>();
+        Settings = SettingsStore.Load(context, nowUtc);
 
         _startupRefreshCancellationTokenSource = new CancellationTokenSource();
         PendingStartupTask = RunStartupRefreshAsync(context, Settings, _viewModel, _startupRefreshCancellationTokenSource.Token);
@@ -117,9 +105,9 @@ public class Main : ITtsPlugin
         {
             var onlineUtc = await FishAudioRuntime.TryGetOnlineUtcNowAsync(context, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            if (onlineUtc is not null && FishAudioRuntime.NormalizeSelectedModel(settings, onlineUtc.Value))
+            if (onlineUtc is not null && SettingsNormalizer.NormalizeSelectedModel(settings, onlineUtc.Value))
             {
-                context.SaveSettingStorage<Settings>();
+                SettingsStore.Save(context, settings);
                 viewModel?.ApplyAvailableModels(onlineUtc.Value);
             }
 
@@ -140,7 +128,7 @@ public class Main : ITtsPlugin
         SettingsViewModel? viewModel,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(settings.VoiceId) || !Settings.IsValidVoiceIdFormat(settings.VoiceId))
+        if (string.IsNullOrWhiteSpace(settings.VoiceId) || !SettingsValidation.IsValidVoiceIdFormat(settings.VoiceId))
             return;
 
         if (!FishAudioRuntime.IsNetworkAvailable())
@@ -158,7 +146,7 @@ public class Main : ITtsPlugin
 
             var cached = SettingsViewModel.CreateCachedVoiceInfo(model);
             settings.CachedVoice = cached;
-            context.SaveSettingStorage<Settings>();
+            SettingsStore.Save(context, settings);
             viewModel?.ApplyRefreshedCachedVoice(cached);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
