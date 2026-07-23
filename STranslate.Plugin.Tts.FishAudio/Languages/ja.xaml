@@ -86,6 +86,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key が正しくありません</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Network_Unavailable">ネットワークに接続されていません。接続を確認してから再試行してください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">リクエストがタイムアウトしました。後でもう一度お試しください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">利用可能な試聴音声がありません</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">試聴音声の読み込みに失敗しました。後でもう一度お試しください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">テキストが空です</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">ボイス ID を入力してください</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">ボイス ID の形式が正しくありません</sys:String>

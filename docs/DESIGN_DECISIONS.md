@@ -329,6 +329,17 @@ Preview playback validates sample audio URLs before opening `MediaPlayer`, allow
 
 ---
 
+## DD-037: Selected voice preview refreshes expiring sample URLs
+
+**Date:** 2026-07-23
+**Context:** Model detail sample URLs are signed R2 URLs that expire after about one hour, while selected voice metadata can remain cached much longer. Playing the cached selected-voice URL directly can therefore fail even though a fresh detail response contains a valid sample; search result samples are public CDN URLs and do not need this refresh.
+**Decision:** Keep the existing `ToggleDisplayPreviewCommand` XAML binding but make the selected-voice command asynchronous. A start action checks local network availability, captures the selected Voice ID and old sample URL, and calls Get Model with the `dummy` token and the shared 15 second model timeout. A current successful response replaces every `CachedVoice` field, saves through `SettingsStore`, synchronizes visible settings state, validates the latest sample URL, checks network again, and then starts playback. A refresh failure, 404, or timeout is logged without a user-facing refresh error and falls back to the captured old URL; a successful response without a valid sample is authoritative, is saved, and shows `Preview_Unavailable` without falling back. Search result preview never calls model detail but performs the same start-time network check.
+
+`PreviewPlaybackController` depends on an internal player abstraction backed by WPF `MediaPlayer` and reports asynchronous media failures to `SettingsViewModel`. The ViewModel shows the existing network-unavailable message if connectivity has been lost, otherwise `Preview_PlaybackFailed`. Selected voice changes, a repeated stop click, newer preview requests, and Dispose cancel and invalidate pending refresh operations; responses that arrive after invalidation cannot update settings/UI or start playback. Preview URL validation remains limited to the existing Fish Audio/R2 HTTPS allowlist.
+**Affects:** `SettingsViewModel`, `PreviewPlaybackController`, `FishAudioRuntime`, language resources, regression tests.
+
+---
+
 ## DD-038: Versioned settings are interpreted and guarded by the plugin
 
 **Date:** 2026-07-23

@@ -86,6 +86,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API Key 不正確</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Network_Unavailable">目前未連線，請檢查網路後重試</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">請求逾時，請稍後重試</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">暫無可用試聽音訊</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">試聽音訊載入失敗，請稍後重試</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">文字為空</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">請先輸入聲音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">聲音 ID 格式不正確</sys:String>

@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 设置存储新增 `SchemaVersion=1` 和插件自有 JSON 迁移/规范化，兼容全部 v1.0.x 配置并按字段保留有效值；受支持版本会清理旧字段、未知字段和重复普通字段，重复版本号或未来版本则进入只读保护以保留宿主文件
 - 启动配置规范化新增数值步进对齐：速度、温度和 Top P 按 0.05，音量按 0.1 使用中点远离零规则吸附到最近刻度
 - `SettingsViewModel` 拆出试听播放和封面缓存显示/清理两个内部边界，保持现有 XAML 绑定属性与命令名称不变
+- 已选声音试听会先使用 `dummy` token 和 15 秒超时刷新详情，立即保存并显示最新声音信息后播放最新样本；搜索结果试听继续直接使用列表样本 URL，不额外请求详情
 - 移除 `SettingsViewModel` 构造函数中未使用的 `pendingCreditTask` 参数
 
 ### Fixed
@@ -22,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `GetModelAsync` 只将 HTTP 404 映射为声音未找到，超时、网络错误和空 JSON 响应继续作为请求失败暴露
 - 启动后台刷新在插件释放后取消，避免更新已释放的 ViewModel 或保存过期的声音缓存
 - Dispose 后即使 HTTP 层忽略取消，迟到的声音搜索或按 ID 查询结果也不会回写 UI/设置
+- 试听在请求和播放前检查本地网络；已选声音详情刷新失败会静默回退旧样本，最新详情无有效样本时不再播放旧 URL，并对媒体加载失败提供联网状态相关的本地化提示
+- 已选声音切换、重复点击停止或设置页 Dispose 会取消并淘汰挂起的试听刷新，迟到响应不会保存缓存或开始播放
 
 ## [1.0.5] - 2026-06-27
 
