@@ -43,7 +43,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">合成模型</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">推薦 S2-Pro，支援 80+ 種語言和情緒標記</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free 限時免費至 2026-07-24，支援 80+ 種語言和情緒標記</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free 限時免費至 2026-07-31 UTC，支援 80+ 種語言和情緒標記</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">推薦 s2.1-pro，支援 80+ 種語言和情緒標記</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">關閉推廣</sys:String>
 

@@ -20,7 +20,7 @@ internal static class FishAudioRuntime
     internal const string TimeApiUrl = "https://timeapi.io/api/Time/current/zone?timeZone=UTC";
     private static readonly TimeSpan TimeApiTimeout = TimeSpan.FromSeconds(3);
 
-    internal static readonly DateTimeOffset FreeModelCutoffUtc = new(2026, 7, 24, 0, 0, 0, TimeSpan.Zero);
+    internal static readonly DateTimeOffset FreeModelCutoffUtc = new(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
     internal static Func<bool>? NetworkAvailableOverride { get; set; }
     internal static Func<DateTimeOffset>? LocalUtcNowOverride { get; set; }
 

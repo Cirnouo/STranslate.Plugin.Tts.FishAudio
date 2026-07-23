@@ -78,7 +78,7 @@ STranslate のプラグインマーケットからインストールする方法
 ### 2.3 API クレジットを購入
 
 > [!TIP]
-> S2.1 Pro モデルは `2026-07-24` まで期間限定で無料です。プラグイン内で `s2.1-pro-free` を選択して使用します。詳細: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
+> S2.1 Pro モデルは `2026-07-31` UTC 終了時まで期間限定で無料です。プラグイン内で `s2.1-pro-free` を選択して使用します。詳細: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
 
 Fish Audio TTS は Fish Audio API クレジットを消費します。[開発者 > コンソール](https://fish.audio/app/developers/billing/) で購入できます
 
@@ -135,7 +135,7 @@ Fish Audio のボイスコミュニティには、クリエイターが公開し
 | :-- | :--: | :-- |
 | API Key | - | Fish Audio API キー。必須です。 |
 | ボイス ID | ランダムボイス | 検索で選択、または手動入力できます。空の場合はランダムボイスを使用します。 |
-| 合成モデル | 無料期間中は `s2.1-pro-free`、終了後は `s2.1-pro` | 2026-07-24 UTC までは `s2.1-pro-free`、`s2.1-pro`、`s2-pro`、`s1` を選択可能。以降は無料モデルを非表示。 |
+| 合成モデル | 無料期間中は `s2.1-pro-free`、終了後は `s2.1-pro` | 2026-07-31 UTC 終了時までは `s2.1-pro-free`、`s2.1-pro`、`s2-pro`、`s1` を選択可能。2026-08-01 UTC 以降は無料モデルを非表示。 |
 | MP3 ビットレート | `192 kbps` | `64`、`128`、`192` から選択できます。 |
 | 速度 | `1.0` | 範囲は `0.5` から `2.0`。 |
 | 音量 | `0 dB` | 範囲は `-10 dB` から `+10 dB`。 |

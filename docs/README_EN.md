@@ -78,7 +78,7 @@ Paste it into the plugin settings **API Key** input
 ### 2.3 Buy API Credits
 
 > [!TIP]
-> The S2.1 Pro model is free for a limited time until `2026-07-24`. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
+> The S2.1 Pro model is free for a limited time through `2026-07-31` UTC. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
 
 Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Developer > Console](https://fish.audio/app/developers/billing/)
 
@@ -135,7 +135,7 @@ Return to the plugin's **By ID** tab, paste the ID, then click the confirm butto
 | :-- | :--: | :-- |
 | API Key | - | Fish Audio API key, required. |
 | Voice ID | Random Voice | Search to select or enter manually. When empty, a random voice is used. |
-| Synthesis model | `s2.1-pro-free` during the free period, then `s2.1-pro` | Before 2026-07-24 UTC: `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, `s1`; after that, the free model is hidden. |
+| Synthesis model | `s2.1-pro-free` during the free period, then `s2.1-pro` | Through 2026-07-31 UTC: `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, `s1`; starting 2026-08-01 UTC, the free model is hidden. |
 | MP3 bitrate | `192 kbps` | Available values: `64`, `128`, `192`. |
 | Speed | `1.0` | Range `0.5` to `2.0`. |
 | Volume | `0 dB` | Range `-10 dB` to `+10 dB`. |

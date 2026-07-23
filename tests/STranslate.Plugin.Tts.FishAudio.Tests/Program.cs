@@ -33,6 +33,7 @@ SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities();
 ApiKeyEditingPersistsImmediately();
 MainInitDoesNotValidateCredit();
 ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport();
+FreeModelDeadlineDocumentationIsConsistent();
 MainInitNormalizesStructuredSettingsWithoutClearingKeys();
 await StartupRefreshSelectedVoiceMetadataAsync();
 await StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync();
@@ -562,8 +563,10 @@ static void MainInitDoesNotValidateCredit()
 
 static void ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport()
 {
-    var beforeCutoff = FishAudioRuntime.FreeModelCutoffUtc.AddTicks(-1);
-    var onCutoff = FishAudioRuntime.FreeModelCutoffUtc;
+    var expectedCutoff = new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
+    var lastFreeInstant = expectedCutoff.AddTicks(-1);
+
+    AssertEqual(expectedCutoff, FishAudioRuntime.FreeModelCutoffUtc, "Free model cutoff should be August 1, 2026 UTC");
 
     AssertEnumerableEqual(
         new[]
@@ -573,34 +576,89 @@ static void ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport()
             FishAudioRuntime.S2ProModel,
             FishAudioRuntime.S1Model,
         },
-        FishAudioRuntime.GetAvailableModels(beforeCutoff),
-        "Free model should be available before the cutoff");
-    AssertEqual(FishAudioRuntime.S21ProFreeModel, FishAudioRuntime.GetDefaultModel(beforeCutoff), "Free model should be the default before the cutoff");
+        FishAudioRuntime.GetAvailableModels(lastFreeInstant),
+        "Free model should remain available through the last tick of July 31 UTC");
+    AssertEqual(FishAudioRuntime.S21ProFreeModel, FishAudioRuntime.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of July 31 UTC");
 
     AssertEnumerableEqual(
         new[] { FishAudioRuntime.S21ProModel, FishAudioRuntime.S2ProModel, FishAudioRuntime.S1Model },
-        FishAudioRuntime.GetAvailableModels(onCutoff),
-        "Free model should be unavailable at and after the cutoff");
-    AssertEqual(FishAudioRuntime.S21ProModel, FishAudioRuntime.GetDefaultModel(onCutoff), "s2.1-pro should be the default at and after the cutoff");
+        FishAudioRuntime.GetAvailableModels(expectedCutoff),
+        "Free model should be unavailable at August 1 UTC");
+    AssertEqual(FishAudioRuntime.S21ProModel, FishAudioRuntime.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at August 1 UTC");
 
     AssertEqual(true, FishAudioRuntime.SupportsNormalizeLoudness(FishAudioRuntime.S21ProFreeModel), "s2.1-pro-free should support normalize_loudness");
     AssertEqual(true, FishAudioRuntime.SupportsNormalizeLoudness(FishAudioRuntime.S21ProModel), "s2.1-pro should support normalize_loudness");
     AssertEqual(true, FishAudioRuntime.SupportsNormalizeLoudness(FishAudioRuntime.S2ProModel), "s2-pro should support normalize_loudness");
     AssertEqual(false, FishAudioRuntime.SupportsNormalizeLoudness(FishAudioRuntime.S1Model), "s1 should not support normalize_loudness");
 
-    using (OverrideLocalUtcNow(beforeCutoff))
+    using (OverrideLocalUtcNow(lastFreeInstant))
     {
         var settings = new Settings();
-        new Main().Init(CreateContext(settings: settings), beforeCutoff);
-        AssertEqual(FishAudioRuntime.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default before the cutoff");
+        new Main().Init(CreateContext(settings: settings), lastFreeInstant);
+        AssertEqual(FishAudioRuntime.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default through the last tick of July 31 UTC");
     }
 
-    using (OverrideLocalUtcNow(onCutoff))
+    using (OverrideLocalUtcNow(expectedCutoff))
     {
         var settings = new Settings();
-        new Main().Init(CreateContext(settings: settings), onCutoff);
-        AssertEqual(FishAudioRuntime.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at and after the cutoff");
+        new Main().Init(CreateContext(settings: settings), expectedCutoff);
+        AssertEqual(FishAudioRuntime.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at August 1 UTC");
     }
+}
+
+static void FreeModelDeadlineDocumentationIsConsistent()
+{
+    const string oldFreeDate = "2026-07-24";
+    const string lastFreeDate = "2026-07-31";
+
+    foreach (var relativePath in new[]
+             {
+                 "README.md",
+                 Path.Combine("docs", "README_EN.md"),
+                 Path.Combine("docs", "README_TW.md"),
+                 Path.Combine("docs", "README_JA.md"),
+                 Path.Combine("docs", "README_KO.md"),
+             })
+    {
+        var readme = File.ReadAllText(FindRepoFile(relativePath));
+        AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the July 31 free-model deadline");
+        AssertEqual(false, readme.Contains(oldFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the old July 24 free-model deadline");
+    }
+
+    foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+    {
+        var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
+            "STranslate.Plugin.Tts.FishAudio",
+            "Languages",
+            $"{locale}.xaml")));
+        var freeDescriptionMatch = Regex.Match(
+            xaml,
+            "<sys:String x:Key=\"STranslate_Plugin_Tts_FishAudio_Engine_Description_Free\">(?<text>.*?)</sys:String>",
+            RegexOptions.CultureInvariant);
+
+        AssertEqual(true, freeDescriptionMatch.Success, $"{locale} should define the free-model description");
+        var freeDescription = freeDescriptionMatch.Groups["text"].Value;
+        AssertEqual(true, freeDescription.Contains(lastFreeDate, StringComparison.Ordinal), $"{locale} free-model description should use the July 31 deadline");
+        AssertEqual(true, freeDescription.Contains("UTC", StringComparison.Ordinal), $"{locale} free-model description should identify the deadline as UTC");
+        AssertEqual(false, freeDescription.Contains(oldFreeDate, StringComparison.Ordinal), $"{locale} free-model description should not retain the old July 24 deadline");
+    }
+
+    foreach (var relativePath in new[]
+             {
+                 Path.Combine("docs", "api-tts.md"),
+                 Path.Combine("docs", "DESIGN_DECISIONS.md"),
+             })
+    {
+        var documentation = File.ReadAllText(FindRepoFile(relativePath));
+        AssertEqual(true, documentation.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the July 31 free-model deadline");
+        AssertEqual(true, documentation.Contains("UTC", StringComparison.Ordinal), $"{relativePath} should identify the free-model deadline as UTC");
+    }
+
+    var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
+    AssertEqual(
+        true,
+        changelog.Contains("从 2026-07-24 延长至 2026-07-31", StringComparison.Ordinal),
+        "Unreleased changelog should explicitly record both the old and extended free-model deadlines");
 }
 
 static void MainInitNormalizesStructuredSettingsWithoutClearingKeys()

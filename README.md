@@ -78,7 +78,7 @@
 ### 2.3 购买 API 余额
 
 > [!TIP]
-> S2.1 Pro 模型限时免费至 `2026-07-24`，在插件内选用模型 `s2.1-pro-free` 进行调用。详情入口：[Fish Audio S2.1 Pro：面向开发者的免费文字转语音 API](https://fish.audio/blog/s2-1-pro-free-api/)
+> S2.1 Pro 模型限时免费至 `2026-07-31`（UTC 全日可用），在插件内选用模型 `s2.1-pro-free` 进行调用。详情入口：[Fish Audio S2.1 Pro：面向开发者的免费文字转语音 API](https://fish.audio/blog/s2-1-pro-free-api/)
 
 Fish Audio TTS 会消耗 Fish Audio API 余额。可以在 [开发者 > 控制台](https://fish.audio/app/developers/billing/) 页面中购买
 
@@ -134,7 +134,7 @@ Fish Audio 的声音社区收录了创作者公开分享的声音。你可以在
 | :-- |:----------:|:-----------------------------------------------------------------------|
 | API Key |     -      | Fish Audio API 密钥，必填                                                   |
 | 声音 ID |    随机声音    | 可通过搜索选择或手动输入。为空时使用随机声音                                                 |
-| 合成模型 | 免费期内 `s2.1-pro-free`，到期后 `s2.1-pro` | 免费期内可选 `s2.1-pro-free`、`s2.1-pro`、`s2-pro`、`s1`；2026-07-24 UTC 起隐藏免费模型 |
+| 合成模型 | 免费期内 `s2.1-pro-free`，到期后 `s2.1-pro` | 2026-07-31 UTC 全日可选 `s2.1-pro-free`、`s2.1-pro`、`s2-pro`、`s1`；2026-08-01 UTC 起隐藏免费模型 |
 | MP3 比特率 | `192 kbps` | 可选 `64`、`128`、`192`                                                    |
 | 语速 |   `1.0`    | 范围 `0.5` 到 `2.0`                                                       |
 | 音量 |   `0 dB`   | 范围 `-10 dB` 到 `+10 dB`                                                 |
