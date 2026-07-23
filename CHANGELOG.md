@@ -6,16 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-### Changed
-- 按 Configuration、FishAudio、Lifecycle、Caching、Runtime 和 Presentation 重组内部职责；`SettingsViewModel` 保留现有 XAML facade、公共绑定和命令，129 个回归场景继续按原顺序运行
-
-## [1.1.0] - 2026-07-23
+## [1.1.0] - 2026-07-24
 
 ### Security
 - 试听音频 URL 仅允许 Fish Audio/R2 HTTPS 地址，拒绝本地路径、HTTP、localhost 和非预期 host
 - 封面缓存下载改为 10 秒超时、有界流式读取，单张图片最多缓存 256 KiB，且只落盘有效图片响应
 
 ### Changed
+- 按 Configuration、FishAudio、Lifecycle、Caching、Runtime 和 Presentation 重组内部职责；`SettingsViewModel` 保留现有 XAML facade、公共绑定和命令，原有 129 个回归场景继续按原顺序运行
+- 构建脚本默认执行 Debug 构建并在构建前清理全部仓库、插件项目与测试项目中间目录；移除 `-Configuration` 参数，改用单一 `-Release` 开关，推荐发布命令统一为 `.\build.ps1 -Release -Clean -Test`；Release 输出隔离到 `.artifacts\Release`，避免自动打包混入旧 Debug 文件；`-Clean` 会在构建及回归测试结束后（包括失败路径）清理中间产物，并保留已复制到仓库根目录的 `.spkg`
 - 设置页账户余额行改为始终可见，未加载时显示本地化“点击刷新”占位；插件启动时会静默预取余额，请求期间锁定 API Key，失败仅安全记录日志且不显示延迟
 - s2.1-pro-free 限时免费期从 2026-07-24 延长至 2026-08-31（UTC 全日可用）；2026-09-01T00:00:00Z 起自动隐藏免费模型并默认 s2.1-pro
 - 设置存储新增 `SchemaVersion=1` 和插件自有 JSON 迁移/规范化，兼容全部 v1.0.x 配置并按字段保留有效值；受支持版本会清理旧字段、未知字段和重复普通字段，重复版本号或未来版本则进入只读保护以保留宿主文件

@@ -1,5 +1,12 @@
 RepositoryContractSuite.Release110MetadataIsComplete();
 RepositoryContractSuite.PackageReferenceUsesSdk1012();
+RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();
+RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
+BuildScriptSuite.ConfigurationParameterIsRejected();
+BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
+BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding();
+BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding();
+BuildScriptSuite.CleanBuildCleansAfterFailedRegressionTests();
 SettingsStorageSuite.NewSettingsSerializeCurrentSchemaFirst();
 SettingsStorageSuite.Version100SettingsMigrate();
 SettingsStorageSuite.Version101SettingsMigrate();

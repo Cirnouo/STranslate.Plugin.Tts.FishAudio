@@ -220,20 +220,22 @@ A: No. Clearing the cache only removes voice cover image cache files. The voice 
 ## Build
 
 ```powershell
-# Standard build (Debug + .spkg package)
+# Recommended: Release build + regression tests, then clean intermediates
+.\build.ps1 -Release -Clean -Test
+
+# Debug build (default configuration; pre-cleans intermediates)
 .\build.ps1
 
-# Clean build
+# Clean intermediates after a Debug build
 .\build.ps1 -Clean
 
-# Clean build and run regression tests
+# Clean intermediates after a Debug build and regression tests
 .\build.ps1 -Clean -Test
-
-# Release build
-.\build.ps1 -Configuration Release
 ```
 
 Build output is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root
+
+Debug is the default when `-Release` is omitted; `-Release` is the only build-configuration switch. Standard builds first clean repository `bin`, `obj`, and `.artifacts`; plugin-project `bin`, `obj`, and `.artifacts`; and test-project `obj` and `bin`. `-Clean` defers the same cleanup until after the build and optional regression tests, runs it even on failure, and does not delete an already-produced repository-root `.spkg`. `-CleanOnly` cleans without building.
 
 <details>
 <summary><b>Environment Requirements</b></summary>

@@ -29,11 +29,16 @@ internal static class RepositoryContractSuite
 
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
-        var releaseIndex = changelog.IndexOf("## [1.1.0] - 2026-07-23", StringComparison.Ordinal);
+        var releaseIndex = changelog.IndexOf("## [1.1.0] - 2026-07-24", StringComparison.Ordinal);
         var previousReleaseIndex = changelog.IndexOf("## [1.0.5]", StringComparison.Ordinal);
         AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
         AssertEqual(true, releaseIndex > unreleasedIndex, "Changelog should contain the dated 1.1.0 release heading after Unreleased");
         AssertEqual(true, previousReleaseIndex > releaseIndex, "Changelog should place 1.1.0 before 1.0.5");
+        var unreleasedContent = changelog[unreleasedIndex..releaseIndex];
+        AssertEqual(
+            false,
+            unreleasedContent.Contains("\n-", StringComparison.Ordinal),
+            "Unreleased should not retain changes included in the not-yet-published 1.1.0 release");
 
         var releaseContent = changelog[releaseIndex..previousReleaseIndex];
         foreach (var expectedChange in new[]
@@ -51,6 +56,8 @@ internal static class RepositoryContractSuite
                      "SettingsViewModel",
                      "原 AudioPlayer 完成",
                      "不会使用或影响新周期",
+                     "Configuration、FishAudio、Lifecycle、Caching、Runtime 和 Presentation",
+                     @".\build.ps1 -Release -Clean -Test",
                  })
         {
             AssertEqual(
@@ -120,6 +127,62 @@ internal static class RepositoryContractSuite
             true,
             project.Contains("<PackageReference Include=\"STranslate.Plugin\" Version=\"1.0.12\" />", StringComparison.Ordinal),
             "Plugin project should reference STranslate.Plugin SDK 1.0.12");
+    }
+
+    internal static void ReleaseOutputIsIsolatedFromDebugArtifacts()
+    {
+        var project = File.ReadAllText(FindRepoFile(Path.Combine(
+            "STranslate.Plugin.Tts.FishAudio",
+            "STranslate.Plugin.Tts.FishAudio.csproj")));
+
+        AssertEqual(
+            true,
+            project.Contains("<OutputPath>..\\.artifacts\\Release\\</OutputPath>", StringComparison.Ordinal),
+            "Release output should use its own directory so automatic packaging cannot include stale Debug artifacts");
+    }
+
+    internal static void ReleaseBuildUsesSingleReleaseSwitch()
+    {
+        var buildScript = File.ReadAllText(FindRepoFile("build.ps1"));
+        AssertEqual(
+            true,
+            buildScript.Contains("[switch]$Release", StringComparison.Ordinal),
+            "Build script should expose a -Release switch");
+        AssertEqual(
+            false,
+            buildScript.Contains("[string]$Configuration", StringComparison.Ordinal),
+            "Build script should not expose the removed -Configuration parameter");
+
+        var workflow = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "dotnet.yml")));
+        const string recommendedCommand = @".\build.ps1 -Release -Clean -Test";
+        AssertEqual(
+            true,
+            workflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),
+            "Release workflow should use the recommended -Release build command");
+        AssertEqual(
+            false,
+            workflow.Contains("-Configuration", StringComparison.Ordinal),
+            "Release workflow should not use the removed -Configuration parameter");
+
+        foreach (var relativePath in new[]
+                 {
+                     "README.md",
+                     Path.Combine("docs", "README_EN.md"),
+                     Path.Combine("docs", "README_TW.md"),
+                     Path.Combine("docs", "README_JA.md"),
+                     Path.Combine("docs", "README_KO.md"),
+                 })
+        {
+            var readme = File.ReadAllText(FindRepoFile(relativePath));
+            AssertEqual(
+                true,
+                readme.Contains(recommendedCommand, StringComparison.Ordinal),
+                $"{relativePath} should document the recommended Release build command");
+            AssertEqual(
+                false,
+                readme.Contains("-Configuration", StringComparison.Ordinal),
+                $"{relativePath} should not document the removed -Configuration parameter");
+        }
     }
 
     internal static void FreeModelDeadlineDocumentationIsConsistent()

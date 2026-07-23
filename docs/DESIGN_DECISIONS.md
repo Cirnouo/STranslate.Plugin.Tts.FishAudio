@@ -258,7 +258,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 **Date:** 2026-05-07
 **Context:** The repository needs a repeatable release path that builds and tests the Windows package, then publishes a GitHub Release with notes limited to the version being shipped.
-**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Clean -Configuration Release -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, publish the root `.spkg` with `softprops/action-gh-release`, and use the tag name itself as the GitHub Release title.
+**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Release -Clean -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, publish the root `.spkg` with `softprops/action-gh-release`, and use the tag name itself as the GitHub Release title. The command was updated by DD-043 when the build CLI adopted a single Release switch.
 **Affects:** `.github/workflows/dotnet.yml`, `CHANGELOG.md`, `CLAUDE.md`, `AGENTS.md`.
 
 ---
@@ -401,3 +401,21 @@ The dependency direction is inward: `Main` composes `Lifecycle`, `Configuration`
 
 The rejected alternatives were a full rewrite and adding interfaces for every single implementation. Both would expand the change surface and make concurrency and compatibility review harder without improving the required contracts. The hybrid structure therefore favors mechanical moves plus narrow internal collaborators, with the existing executable test runner retained.
 **Affects:** `Main`, `Configuration`, `FishAudio`, `Lifecycle`, `Runtime`, `Caching`, `Presentation`, `SettingsViewModel`, `SettingsView.xaml`, regression suites, `AGENTS.md`, `CLAUDE.md`, changelog.
+
+---
+
+## DD-042: Build cleanup timing is selected by command mode
+
+**Date:** 2026-07-24
+**Context:** The build script only cleaned a configuration-dependent subset of outputs when `-Clean` was supplied. Ordinary builds could reuse stale repository, plugin, or test intermediates, while contributors had no single mode that left only the copied distributable package after a successful build.
+**Decision:** Maintain one explicit cleanup list containing repository `bin`, `obj`, and `.artifacts`; plugin-project `bin`, `obj`, and `.artifacts`; and test-project `obj` and `bin`. An ordinary build invokes that cleanup before the first `dotnet` command and retains intermediates produced by the current build. `-Clean` defers the same cleanup until the build, package verification, and optional regression tests finish, runs it from `finally` on both success and failure, preserves the failing `dotnet` exit code, and leaves any copied repository-root `.spkg` untouched. `-CleanOnly` applies the same list and exits without building. Cleanup no longer depends on `-Test` or the MSBuild `OutputPath`.
+**Affects:** `build.ps1`, build-script regression tests, README files, `AGENTS.md`, `CLAUDE.md`, changelog.
+
+---
+
+## DD-043: Release is the build script's only configuration switch
+
+**Date:** 2026-07-24
+**Context:** Contributors normally need only the default Debug build or the complete Release verification workflow. Exposing the general `-Configuration Debug|Release` parameter made routine commands longer and allowed an unnecessary explicit Debug form, while release documentation and automation could drift between argument orderings.
+**Decision:** Remove `-Configuration` and expose one `-Release` switch. Omitting it always selects Debug; supplying it selects Release and relies on the SDK's automatic Release packaging. Because that SDK recursively packages the complete `OutputPath`, isolate Release output under `.artifacts\Release` so a post-build `-Clean` workflow cannot package stale `.artifacts\Debug` content. Mark `.\build.ps1 -Release -Clean -Test` as the single recommended release command in all README variants, local contributor instructions, and GitHub Actions. Keep `[Unreleased]` as the empty next-development heading and consolidate every not-yet-published net change into the dated v1.1.0 changelog section before tagging.
+**Affects:** `build.ps1`, plugin project file, `.github/workflows/dotnet.yml`, build and repository contract tests, README files, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`.

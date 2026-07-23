@@ -3,8 +3,11 @@
     Build and package the STranslate.Plugin.Tts.FishAudio plugin.
 
 .DESCRIPTION
-    Builds the plugin using dotnet build, then copies the .spkg file
-    to the repository root.
+    By default, removes all configured intermediate artifact directories,
+    builds the plugin using dotnet build, then copies the .spkg file to the
+    repository root. When -Clean is supplied, cleanup is deferred until the
+    build and optional regression tests finish (including failure paths), and
+    any copied root package is retained.
 
     The MSBuild targets from the STranslate.Plugin NuGet package
     handle the actual .spkg creation. For Release builds it triggers
@@ -12,13 +15,17 @@
     invokes the PackageAsSpkg target explicitly.
 
 .PARAMETER Clean
-    Remove build artifacts (obj, OutputPath) before building.
+    Remove intermediate artifacts after building and optional regression
+    tests, including when either fails. Any copied repository-root .spkg is
+    retained.
 
 .PARAMETER CleanOnly
-    Remove build artifacts and exit without building.
+    Remove all configured intermediate artifact directories and exit without
+    building.
 
-.PARAMETER Configuration
-    Build configuration. Default: Debug.
+.PARAMETER Release
+    Build using the Release configuration. Without this switch, the build
+    uses Debug.
 
 .PARAMETER Test
     Run the regression test project after building and verifying the package.
@@ -27,20 +34,20 @@
     .\build.ps1
     .\build.ps1 -Clean
     .\build.ps1 -CleanOnly
-    .\build.ps1 -Configuration Debug
-    .\build.ps1 -Clean -Configuration Debug
     .\build.ps1 -Clean -Test
+    .\build.ps1 -Release -Clean -Test
 #>
+[CmdletBinding()]
 param(
     [switch]$Clean,
     [switch]$CleanOnly,
     [switch]$Test,
-    [ValidateSet('Debug', 'Release')]
-    [string]$Configuration = 'Debug'
+    [switch]$Release
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$Configuration = if ($Release) { 'Release' } else { 'Debug' }
 
 # ── Paths ──
 $RepoRoot    = $PSScriptRoot
@@ -74,27 +81,18 @@ function Get-ResolvedOutputPath {
 }
 
 # ── Clean ──
-if ($Clean -or $CleanOnly) {
+function Clear-BuildArtifactDirectories {
     Write-Host '[clean] Removing build artifacts...' -ForegroundColor Yellow
     $dirsToClean = @(
+        (Join-Path $RepoRoot 'bin'),
+        (Join-Path $RepoRoot 'obj'),
+        (Join-Path $RepoRoot '.artifacts'),
+        (Join-Path $ProjectDir 'bin'),
         (Join-Path $ProjectDir 'obj'),
-        (Join-Path $ProjectDir 'bin')
+        (Join-Path $ProjectDir '.artifacts'),
+        (Join-Path $TestProjectDir 'obj'),
+        (Join-Path $TestProjectDir 'bin')
     )
-
-    if ($Test) {
-        $dirsToClean += @(
-            (Join-Path $TestProjectDir 'obj'),
-            (Join-Path $TestProjectDir 'bin')
-        )
-    }
-
-    $resolvedOutput = Get-ResolvedOutputPath
-    if ($resolvedOutput) {
-        $dirsToClean += $resolvedOutput
-    }
-    else {
-        $dirsToClean += (Join-Path $RepoRoot '.artifacts')
-    }
 
     foreach ($dir in $dirsToClean) {
         if (Test-Path $dir) {
@@ -102,20 +100,27 @@ if ($Clean -or $CleanOnly) {
             Write-Host "  Removed $dir"
         }
     }
+}
 
-    if ($CleanOnly) {
-        Write-Host '[clean] Done.' -ForegroundColor Green
-        return
-    }
+if (-not $Clean -and -not $CleanOnly) {
+    Clear-BuildArtifactDirectories
+}
+
+if ($CleanOnly) {
+    Clear-BuildArtifactDirectories
+    Write-Host '[clean] Done.' -ForegroundColor Green
+    return
 }
 
 # ── Build ──
+try {
 Write-Host "[build] dotnet build -c $Configuration" -ForegroundColor Cyan
 dotnet build $CsprojPath -c $Configuration
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Build failed with exit code $LASTEXITCODE"
-    exit $LASTEXITCODE
+    $buildExitCode = $LASTEXITCODE
+    Write-Error "Build failed with exit code $buildExitCode" -ErrorAction Continue
+    exit $buildExitCode
 }
 
 # ── Pack (Debug only — Release uses EnableAutoPackage) ──
@@ -123,8 +128,9 @@ if ($Configuration -eq 'Debug') {
     Write-Host '[pack] Invoking PackageAsSpkg target for Debug build...' -ForegroundColor Cyan
     dotnet build $CsprojPath -c $Configuration -t:PackageAsSpkg
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Packaging failed with exit code $LASTEXITCODE"
-        exit $LASTEXITCODE
+        $packageExitCode = $LASTEXITCODE
+        Write-Error "Packaging failed with exit code $packageExitCode" -ErrorAction Continue
+        exit $packageExitCode
     }
 }
 
@@ -196,9 +202,17 @@ if ($Test) {
     Write-Host "[test] dotnet run --project $TestCsprojPath -c $Configuration" -ForegroundColor Cyan
     dotnet run --project $TestCsprojPath -c $Configuration
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Tests failed with exit code $LASTEXITCODE"
-        exit $LASTEXITCODE
+        $testExitCode = $LASTEXITCODE
+        Write-Error "Tests failed with exit code $testExitCode" -ErrorAction Continue
+        exit $testExitCode
     }
 
     Write-Host '[test] Tests passed.' -ForegroundColor Green
+}
+}
+finally {
+    if ($Clean) {
+        Clear-BuildArtifactDirectories
+        Write-Host '[clean] Done.' -ForegroundColor Green
+    }
 }

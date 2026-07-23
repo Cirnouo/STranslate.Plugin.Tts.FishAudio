@@ -220,20 +220,22 @@ A: 아니요. 캐시 정리는 보이스 커버 이미지 캐시만 삭제합니
 ## 빌드
 
 ```powershell
-# 표준 빌드 (Debug + .spkg 패키징)
+# 권장: Release 빌드 + 회귀 테스트 후 중간 산출물 정리
+.\build.ps1 -Release -Clean -Test
+
+# Debug 빌드 (기본 구성, 중간 산출물 사전 정리)
 .\build.ps1
 
-# 정리 후 빌드
+# Debug 빌드 완료 후 중간 산출물 정리
 .\build.ps1 -Clean
 
-# 정리 후 빌드 및 회귀 테스트 실행
+# Debug 빌드 및 회귀 테스트 완료 후 중간 산출물 정리
 .\build.ps1 -Clean -Test
-
-# Release 빌드
-.\build.ps1 -Configuration Release
 ```
 
 빌드 산출물은 저장소 루트의 `STranslate.Plugin.Tts.FishAudio.spkg`로 출력됩니다
+
+`-Release`를 지정하지 않으면 Debug 빌드가 기본이며 `-Release`가 유일한 빌드 구성 스위치입니다. 일반 빌드는 시작 전에 저장소의 `bin`, `obj`, `.artifacts`, 플러그인 프로젝트의 `bin`, `obj`, `.artifacts`, 테스트 프로젝트의 `obj`, `bin`을 정리합니다. `-Clean`은 동일한 정리를 빌드와 선택적 회귀 테스트가 끝난 후로 미루고 실패 시에도 실행하며, 저장소 루트에 이미 생성된 `.spkg`는 삭제하지 않습니다. `-CleanOnly`는 빌드 없이 정리만 수행합니다.
 
 <details>
 <summary><b>환경 요구 사항</b></summary>

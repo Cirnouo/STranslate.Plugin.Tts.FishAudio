@@ -23,7 +23,7 @@ jobs:
 
       - name: Build and test
         shell: pwsh
-        run: .\build.ps1 -Clean -Configuration Release -Test
+        run: .\build.ps1 -Release -Clean -Test
 
       - name: Extract release notes
         env:
