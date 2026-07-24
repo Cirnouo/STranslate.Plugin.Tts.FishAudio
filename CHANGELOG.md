@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 - 精简 README 构建说明和免费期提示，保留推荐命令、默认 Debug 说明及详细模型时间表
+- 将 `.claude/rules/`、`AGENTS.md` 和 `CLAUDE.md` 纳入 Git 跟踪；`AGENTS.md` 作为唯一规范来源，`CLAUDE.md` 通过 `@AGENTS.md` 导入共享说明，兼容不支持符号链接的环境
 
 ## [1.1.0] - 2026-07-24
 

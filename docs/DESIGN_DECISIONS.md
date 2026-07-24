@@ -428,3 +428,12 @@ The rejected alternatives were a full rewrite and adding interfaces for every si
 **Context:** The README build section repeated the implementation-level cleanup directory list and failure-path behavior already maintained in contributor documentation and tests. The free-model tip also repeated the detailed UTC boundary stated in the model table.
 **Decision:** Keep README build guidance focused on runnable commands, the default Debug selection, `-CleanOnly`, and the repository-root package location; omit the internal cleanup-directory and failure-path explanation. Keep the free-model tip concise by stating the calendar date without the parenthetical UTC all-day note, while the detailed model table remains the source for exact UTC availability boundaries. Apply the same information hierarchy to all translated README files.
 **Affects:** README files, changelog.
+
+---
+
+## DD-045: Repository agent guidance has one canonical source
+
+**Date:** 2026-07-24
+**Context:** The repository-level Claude rules and agent guidance were previously treated as ignored local files. A symbolic link can keep `CLAUDE.md` and `AGENTS.md` synchronized, but Git for Windows checks it out as a plain link-target file when the developer environment cannot create symbolic links, leaving Claude Code without the shared instructions.
+**Decision:** Track `.claude/rules/`, `AGENTS.md`, and `CLAUDE.md` as repository guidance. Make `AGENTS.md` the single canonical source and keep `CLAUDE.md` as a regular file containing the `@AGENTS.md` import, which Claude Code expands without requiring filesystem symbolic-link support or a duplicated instruction copy. Record this transition in the Unreleased changelog while preserving the v1.0.3 entry as historical release context.
+**Affects:** `.gitignore`, `.claude/rules/completion-workflow.md`, `AGENTS.md`, `CLAUDE.md`, changelog.
