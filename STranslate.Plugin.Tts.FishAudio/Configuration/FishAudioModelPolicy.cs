@@ -7,7 +7,7 @@ internal static class FishAudioModelPolicy
     internal const string S2ProModel = "s2-pro";
     internal const string S1Model = "s1";
 
-    internal static readonly DateTimeOffset FreeModelCutoffUtc = new(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+    internal static readonly DateTimeOffset FreeModelCutoffUtc = new(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
 
     internal static IReadOnlyList<string> GetAvailableModels(DateTimeOffset nowUtc) =>
         IsS21ProFreeAvailable(nowUtc)

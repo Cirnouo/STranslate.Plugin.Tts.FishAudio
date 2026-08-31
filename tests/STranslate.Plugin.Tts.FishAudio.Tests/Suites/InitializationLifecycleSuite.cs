@@ -144,7 +144,7 @@ internal static class InitializationLifecycleSuite
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
-        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         var failedContext = CreateContext();
@@ -475,10 +475,10 @@ internal static class InitializationLifecycleSuite
 
     internal static void ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport()
     {
-        var expectedCutoff = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.Zero);
+        var expectedCutoff = new DateTimeOffset(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
         var lastFreeInstant = expectedCutoff.AddTicks(-1);
 
-        AssertEqual(expectedCutoff, FishAudioModelPolicy.FreeModelCutoffUtc, "Free model cutoff should be September 1, 2026 UTC");
+        AssertEqual(expectedCutoff, FishAudioModelPolicy.FreeModelCutoffUtc, "Free model cutoff should be December 1, 2026 UTC");
 
         AssertEnumerableEqual(
             new[]
@@ -489,14 +489,14 @@ internal static class InitializationLifecycleSuite
                 FishAudioModelPolicy.S1Model,
             },
             FishAudioModelPolicy.GetAvailableModels(lastFreeInstant),
-            "Free model should remain available through the last tick of August 31 UTC");
-        AssertEqual(FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of August 31 UTC");
+            "Free model should remain available through the last tick of November 30 UTC");
+        AssertEqual(FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of November 30 UTC");
 
         AssertEnumerableEqual(
             new[] { FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel, FishAudioModelPolicy.S1Model },
             FishAudioModelPolicy.GetAvailableModels(expectedCutoff),
-            "Free model should be unavailable at September 1 UTC");
-        AssertEqual(FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at September 1 UTC");
+            "Free model should be unavailable at December 1 UTC");
+        AssertEqual(FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at December 1 UTC");
 
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProFreeModel), "s2.1-pro-free should support normalize_loudness");
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProModel), "s2.1-pro should support normalize_loudness");
@@ -507,14 +507,14 @@ internal static class InitializationLifecycleSuite
         {
             var settings = new Settings();
             new Main().Init(CreateContext(settings: settings), lastFreeInstant);
-            AssertEqual(FishAudioModelPolicy.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default through the last tick of August 31 UTC");
+            AssertEqual(FishAudioModelPolicy.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default through the last tick of November 30 UTC");
         }
 
         using (OverrideLocalUtcNow(expectedCutoff))
         {
             var settings = new Settings();
             new Main().Init(CreateContext(settings: settings), expectedCutoff);
-            AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at September 1 UTC");
+            AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at December 1 UTC");
         }
     }
 
@@ -836,7 +836,7 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
-        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         viewModel.SelectedModel = FishAudioModelPolicy.S2ProModel;
@@ -900,7 +900,7 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
-        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
 
         AssertEqual(FishAudioModelPolicy.S21ProFreeModel, runtimeSettings?.SelectedModel, "A failed startup model save should roll back the runtime Settings model");
@@ -1006,7 +1006,7 @@ internal static class InitializationLifecycleSuite
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
         await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
-        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await startupModelSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
         releaseConstruction.SetResult();
 
@@ -1052,7 +1052,7 @@ internal static class InitializationLifecycleSuite
             });
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
@@ -1147,7 +1147,7 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
-        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         backingStore.Replace(new Settings
@@ -1289,7 +1289,7 @@ internal static class InitializationLifecycleSuite
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
-        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-09-01T00:00:00Z\"}");
+        releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
         await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
         var failedContext = CreateContext();

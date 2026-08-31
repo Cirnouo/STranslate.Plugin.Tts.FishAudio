@@ -285,7 +285,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-031: Temporary s2.1-pro-free model policy and startup normalization
 
-**Status:** Free-model cutoff extended by DD-036; remaining decisions stay active.
+**Status:** Free-model cutoff extended by DD-036 and then DD-045; remaining decisions stay active.
 **Date:** 2026-06-26
 **Context:** Fish Audio introduced `s2.1-pro-free` as a temporary free API model alongside `s2.1-pro`. The free model must disappear automatically after the promotional period, and old local settings can contain stale or out-of-range values after upgrades.
 **Decision:** Centralize synthesis model policy in `Configuration/FishAudioModelPolicy`. Before `2026-07-24T00:00:00Z`, available models are `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, and `s1`, with `s2.1-pro-free` as the default. At and after the cutoff, hide `s2.1-pro-free` and use `s2.1-pro` as the default. Startup first normalizes settings using local UTC, then runs a bounded online UTC check through TimeAPI.io; if that fails, local UTC remains authoritative for that launch. Startup normalization repairs structured values with clear defaults, including model, latency, MP3 bitrate, and numeric ranges, but does not clear API Key or Voice ID text. `normalize_loudness` is sent only for `s2.1-pro-free`, `s2.1-pro`, and `s2-pro`; for `s1`, the setting remains visible but disabled and the request omits the parameter. The promo card uses the local `s2-pro-free-promo.webp` resource with a fixed 1024:540 placeholder so loading does not shift the settings layout. Clicking the card selects the free model and scrolls to the synthesis model card without dismissing the promo; only the close button persists dismissal. Startup also refreshes selected voice metadata with the dummy token when `VoiceId` is present and valid, preserving cached voice data on failure.
@@ -333,6 +333,7 @@ Preview playback validates sample audio URLs before opening `MediaPlayer`, allow
 
 ## DD-036: Free model availability follows the extended UTC cutoff
 
+**Status:** Superseded by DD-045.
 **Date:** 2026-07-23
 **Context:** Fish Audio extended the original `s2.1-pro-free` promotion, which had ended at `2026-07-24T00:00:00Z`, through the full UTC day of August 31. The runtime policy, model descriptions, README files, and API notes must all switch at the same instant so the plugin does not hide a still-available model or advertise it after expiry.
 **Decision:** Keep the cutoff centralized in `Configuration/FishAudioModelPolicy` and move it to `2026-09-01T00:00:00Z`. Every instant before the cutoff, including the final tick of `2026-08-31` UTC, retains `s2.1-pro-free` in the available model list and uses it as the default; at and after the cutoff the plugin hides it and defaults to `s2.1-pro`. User-facing copy describes August 31 as fully available in UTC, while the changelog records the extension from July 24 to August 31.
@@ -428,3 +429,12 @@ The rejected alternatives were a full rewrite and adding interfaces for every si
 **Context:** The README build section repeated the implementation-level cleanup directory list and failure-path behavior already maintained in contributor documentation and tests. The free-model tip also repeated the detailed UTC boundary stated in the model table.
 **Decision:** Keep README build guidance focused on runnable commands, the default Debug selection, `-CleanOnly`, and the repository-root package location; omit the internal cleanup-directory and failure-path explanation. Keep the free-model tip concise by stating the calendar date without the parenthetical UTC all-day note, while the detailed model table remains the source for exact UTC availability boundaries. Apply the same information hierarchy to all translated README files.
 **Affects:** README files, changelog.
+
+---
+
+## DD-045: Free model availability is extended through November 2026
+
+**Date:** 2026-09-01
+**Context:** Fish Audio extended the `s2.1-pro-free` promotion beyond the August 31 deadline recorded by DD-036 through the full UTC day of November 30. The centralized runtime cutoff, five localized model descriptions, README files, API notes, and release metadata must move together so the plugin neither hides an available model nor advertises it after expiry.
+**Decision:** Keep the cutoff centralized in `Configuration/FishAudioModelPolicy` and move it to `2026-12-01T00:00:00Z`. Every instant before the cutoff, including the final tick of `2026-11-30` UTC, retains `s2.1-pro-free` in the available model list and uses it as the default; at and after the cutoff the plugin hides it and defaults to `s2.1-pro`. README tips state the concise November 30 calendar date, while model tables, localized model descriptions, and API documentation retain the exact UTC boundary. DD-036 remains historical and is superseded only for the cutoff date.
+**Affects:** `Configuration/FishAudioModelPolicy`, language resources, README files, `docs/api-tts.md`, changelog, regression tests.

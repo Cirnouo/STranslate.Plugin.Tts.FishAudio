@@ -16,29 +16,65 @@ using static TestAssertions;
 
 internal static class RepositoryContractSuite
 {
-    internal static void Release110MetadataIsComplete()
+    internal static void Release111MetadataIsComplete()
     {
         var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
             "plugin.json")));
         using var pluginDocument = JsonDocument.Parse(pluginJson);
         AssertEqual(
-            "1.1.0",
+            "1.1.1",
             pluginDocument.RootElement.GetProperty("Version").GetString(),
-            "Release plugin version should be 1.1.0");
+            "Release plugin version should be 1.1.1");
 
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
+        var release111Index = changelog.IndexOf("## [1.1.1] - 2026-09-01", StringComparison.Ordinal);
+        var release110Index = changelog.IndexOf("## [1.1.0] - 2026-07-24", StringComparison.Ordinal);
+        AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
+        AssertEqual(true, release111Index > unreleasedIndex, "Changelog should contain the dated 1.1.1 release heading after Unreleased");
+        AssertEqual(true, release110Index > release111Index, "Changelog should place 1.1.1 before 1.1.0");
+
+        var unreleasedContent = changelog[unreleasedIndex..release111Index];
+        AssertEqual(false, unreleasedContent.Contains("\n-", StringComparison.Ordinal), "Unreleased should be empty after preparing v1.1.1");
+
+        var releaseContent = changelog[release111Index..release110Index];
+        foreach (var expectedChange in new[]
+                 {
+                     "从 2026-08-31 延长至 2026-11-30",
+                     "2026-12-01T00:00:00Z",
+                     "精简 README 构建说明和免费期提示",
+                 })
+        {
+            AssertEqual(
+                true,
+                releaseContent.Contains(expectedChange, StringComparison.Ordinal),
+                $"1.1.1 changelog should record net change: {expectedChange}");
+        }
+
+        var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
+        foreach (var decisionNumber in new[] { 44, 45 })
+        {
+            AssertEqual(
+                true,
+                designDecisions.Contains($"## DD-{decisionNumber:D3}:", StringComparison.Ordinal),
+                $"Design decisions should contain DD-{decisionNumber:D3}");
+        }
+
+        var dd045Index = designDecisions.IndexOf("## DD-045:", StringComparison.Ordinal);
+        var dd045Content = designDecisions[dd045Index..];
+        AssertEqual(true, dd045Content.Contains("2026-12-01T00:00:00Z", StringComparison.Ordinal), "DD-045 should own the current free-model cutoff");
+        AssertEqual(true, dd045Content.Contains("2026-11-30", StringComparison.Ordinal), "DD-045 should identify the last free UTC day");
+        AssertEqual(true, dd045Content.Contains("DD-036", StringComparison.Ordinal), "DD-045 should identify the superseded cutoff decision");
+    }
+
+    internal static void Release110MetadataIsComplete()
+    {
+        var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var releaseIndex = changelog.IndexOf("## [1.1.0] - 2026-07-24", StringComparison.Ordinal);
         var previousReleaseIndex = changelog.IndexOf("## [1.0.5]", StringComparison.Ordinal);
-        AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
-        AssertEqual(true, releaseIndex > unreleasedIndex, "Changelog should contain the dated 1.1.0 release heading after Unreleased");
+        AssertEqual(true, releaseIndex >= 0, "Changelog should retain the dated 1.1.0 release heading");
         AssertEqual(true, previousReleaseIndex > releaseIndex, "Changelog should place 1.1.0 before 1.0.5");
-        var unreleasedContent = changelog[unreleasedIndex..releaseIndex];
-        AssertEqual(
-            true,
-            unreleasedContent.Contains("精简 README 构建说明和免费期提示", StringComparison.Ordinal),
-            "Post-release README cleanup should remain under Unreleased");
 
         var releaseContent = changelog[releaseIndex..previousReleaseIndex];
         AssertEqual(
@@ -91,8 +127,8 @@ internal static class RepositoryContractSuite
         var dd036Content = designDecisions[dd036Index..dd037Index];
         AssertEqual(
             true,
-            dd031Content.Contains("Free-model cutoff extended by DD-036", StringComparison.Ordinal),
-            "DD-031 should identify DD-036 as the active cutoff extension");
+            dd031Content.Contains("Free-model cutoff extended by DD-036 and then DD-045", StringComparison.Ordinal),
+            "DD-031 should identify DD-045 as the latest cutoff extension");
         AssertEqual(
             true,
             dd036Content.Contains("2026-09-01T00:00:00Z", StringComparison.Ordinal),
@@ -208,8 +244,9 @@ internal static class RepositoryContractSuite
 
     internal static void FreeModelDeadlineDocumentationIsConsistent()
     {
-        const string oldFreeDate = "2026-07-24";
-        const string lastFreeDate = "2026-08-31";
+        const string staleFreeDate = "2026-08-31";
+        const string lastFreeDate = "2026-11-30";
+        const string cutoffDate = "2026-12-01";
 
         foreach (var relativePath in new[]
                  {
@@ -221,8 +258,9 @@ internal static class RepositoryContractSuite
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
-            AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the August 31 free-model deadline");
-            AssertEqual(false, readme.Contains(oldFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the old July 24 free-model deadline");
+            AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the November 30 free-model deadline");
+            AssertEqual(true, readme.Contains(cutoffDate, StringComparison.Ordinal), $"{relativePath} should identify the December 1 cutoff");
+            AssertEqual(false, readme.Contains(staleFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the August 31 free-model deadline");
         }
 
         foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
@@ -238,26 +276,20 @@ internal static class RepositoryContractSuite
 
             AssertEqual(true, freeDescriptionMatch.Success, $"{locale} should define the free-model description");
             var freeDescription = freeDescriptionMatch.Groups["text"].Value;
-            AssertEqual(true, freeDescription.Contains(lastFreeDate, StringComparison.Ordinal), $"{locale} free-model description should use the August 31 deadline");
+            AssertEqual(true, freeDescription.Contains(lastFreeDate, StringComparison.Ordinal), $"{locale} free-model description should use the November 30 deadline");
             AssertEqual(true, freeDescription.Contains("UTC", StringComparison.Ordinal), $"{locale} free-model description should identify the deadline as UTC");
-            AssertEqual(false, freeDescription.Contains(oldFreeDate, StringComparison.Ordinal), $"{locale} free-model description should not retain the old July 24 deadline");
+            AssertEqual(false, freeDescription.Contains(staleFreeDate, StringComparison.Ordinal), $"{locale} free-model description should not retain the August 31 deadline");
         }
 
-        foreach (var relativePath in new[]
-                 {
-                     Path.Combine("docs", "api-tts.md"),
-                     Path.Combine("docs", "DESIGN_DECISIONS.md"),
-                 })
-        {
-            var documentation = File.ReadAllText(FindRepoFile(relativePath));
-            AssertEqual(true, documentation.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the August 31 free-model deadline");
-            AssertEqual(true, documentation.Contains("UTC", StringComparison.Ordinal), $"{relativePath} should identify the free-model deadline as UTC");
-        }
+        var apiDocumentation = File.ReadAllText(FindRepoFile(Path.Combine("docs", "api-tts.md")));
+        AssertEqual(true, apiDocumentation.Contains(lastFreeDate, StringComparison.Ordinal), "TTS API documentation should use the November 30 free-model deadline");
+        AssertEqual(true, apiDocumentation.Contains($"{cutoffDate}T00:00:00Z", StringComparison.Ordinal), "TTS API documentation should use the exact December 1 UTC cutoff");
+        AssertEqual(false, apiDocumentation.Contains(staleFreeDate, StringComparison.Ordinal), "TTS API documentation should not retain the August 31 free-model deadline");
 
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         AssertEqual(
             true,
-            changelog.Contains("从 2026-07-24 延长至 2026-08-31", StringComparison.Ordinal),
-            "1.1.0 changelog should explicitly record both the old and extended free-model deadlines");
+            changelog.Contains("从 2026-08-31 延长至 2026-11-30", StringComparison.Ordinal),
+            "1.1.1 changelog should explicitly record both the old and extended free-model deadlines");
     }
 }

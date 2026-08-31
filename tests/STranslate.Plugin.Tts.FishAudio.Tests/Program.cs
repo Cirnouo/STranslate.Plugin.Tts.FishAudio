@@ -1,3 +1,4 @@
+RepositoryContractSuite.Release111MetadataIsComplete();
 RepositoryContractSuite.Release110MetadataIsComplete();
 RepositoryContractSuite.PackageReferenceUsesSdk1012();
 RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();

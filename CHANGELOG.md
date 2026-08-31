@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-01
+
 ### Changed
+- s2.1-pro-free 限时免费期从 2026-08-31 延长至 2026-11-30（UTC 全日可用）；2026-12-01T00:00:00Z 起自动隐藏免费模型并默认 s2.1-pro
 - 精简 README 构建说明和免费期提示，保留推荐命令、默认 Debug 说明及详细模型时间表
 
 ## [1.1.0] - 2026-07-24
