@@ -16,17 +16,49 @@ using static TestAssertions;
 
 internal static class RepositoryContractSuite
 {
-    internal static void Release111MetadataIsComplete()
+    internal static void Release112MetadataIsComplete()
     {
         var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
             "plugin.json")));
         using var pluginDocument = JsonDocument.Parse(pluginJson);
         AssertEqual(
-            "1.1.1",
+            "1.1.2",
             pluginDocument.RootElement.GetProperty("Version").GetString(),
-            "Release plugin version should be 1.1.1");
+            "Release plugin version should be 1.1.2");
 
+        var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
+        var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
+        var release112Index = changelog.IndexOf("## [1.1.2] - 2026-10-01", StringComparison.Ordinal);
+        var release111Index = changelog.IndexOf("## [1.1.1] - 2026-09-01", StringComparison.Ordinal);
+        AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
+        AssertEqual(true, release112Index > unreleasedIndex, "Changelog should contain the dated 1.1.2 release heading after Unreleased");
+        AssertEqual(true, release111Index > release112Index, "Changelog should place 1.1.2 before 1.1.1");
+        AssertEqual("", changelog[(unreleasedIndex + "## [Unreleased]".Length)..release112Index].Trim(),
+            "Unreleased should be empty after preparing v1.1.2");
+
+        var releaseContent = changelog[release112Index..release111Index];
+        foreach (var expectedChange in new[]
+                 {
+                     "### Fixed",
+                     "sk-fish-",
+                     "43",
+                     "32 位小写十六进制",
+                     "预检",
+                     "https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/1",
+                 })
+        {
+            AssertEqual(true, releaseContent.Contains(expectedChange, StringComparison.Ordinal),
+                $"1.1.2 changelog should record the compatibility fix: {expectedChange}");
+        }
+
+        var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
+        AssertEqual(true, designDecisions.Contains("## DD-046:", StringComparison.Ordinal),
+            "Design decisions should document dual-format API Key preflight");
+    }
+
+    internal static void Release111MetadataIsComplete()
+    {
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
         var release111Index = changelog.IndexOf("## [1.1.1] - 2026-09-01", StringComparison.Ordinal);
@@ -34,9 +66,6 @@ internal static class RepositoryContractSuite
         AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
         AssertEqual(true, release111Index > unreleasedIndex, "Changelog should contain the dated 1.1.1 release heading after Unreleased");
         AssertEqual(true, release110Index > release111Index, "Changelog should place 1.1.1 before 1.1.0");
-
-        var unreleasedContent = changelog[unreleasedIndex..release111Index];
-        AssertEqual(false, unreleasedContent.Contains("\n-", StringComparison.Ordinal), "Unreleased should be empty after preparing v1.1.1");
 
         var releaseContent = changelog[release111Index..release110Index];
         foreach (var expectedChange in new[]

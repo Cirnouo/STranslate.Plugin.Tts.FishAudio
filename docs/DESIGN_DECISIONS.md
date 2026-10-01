@@ -17,6 +17,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-002: API Key format validation before API call
 
+**Status:** API Key format and shared-regex relationship superseded by DD-046.
 **Date:** 2026-05-06
 **Context:** Fish Audio API Keys follow the MD5 hex format: exactly 32 lowercase hex characters `[0-9a-f]{32}`. Calling the credit API with an obviously invalid key wastes a network round-trip and may confuse users with a generic error.
 **Decision:** Validate 32-hex format client-side first. Only call the API when the format passes. Display a specific "format incorrect" message for malformed inputs. This applies to both API Key (`Settings.IsValidApiKeyFormat`) and Voice ID (`Settings.IsValidVoiceIdFormat`) — they share the same regex (`^[0-9a-f]{32}$`).
@@ -146,6 +147,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-016: Voice ID format validation before API call
 
+**Status:** Shared-regex relationship superseded by DD-046; Voice ID format remains unchanged.
 **Date:** 2026-05-06
 **Context:** Voice IDs follow the same 32-hex format as API Keys. Calling `GET /model/{id}` with a malformed ID always returns 404, wasting a network round-trip.
 **Decision:** Check `Settings.IsValidVoiceIdFormat(id)` before calling `GetModelAsync`. On format failure, show localized "Voice ID format incorrect" error inline (`VoiceIdError`) and skip the API call. The regex is shared with `IsValidApiKeyFormat` — both use `HexId32Regex`.
@@ -274,7 +276,7 @@ Each entry records a behavior, its motivation, and which code it affects.
 
 ## DD-030: API Key saves immediately with request-time preflight
 
-**Status:** Startup credit behavior extended by DD-039.
+**Status:** Startup credit behavior extended by DD-039; API Key format extended by DD-046.
 **Date:** 2026-06-26
 **Context:** The explicit API Key confirmation flow added latency and persistent validation state that users had to understand before TTS would work. The current requirement is to roll that behavior back while still avoiding obvious failed requests and preserving clear failure messages.
 **Decision:** API Key input changes write to settings immediately and are saved like other settings. Startup does not set any applied/verified validation state; DD-039 adds a non-blocking balance refresh without reintroducing that state. TTS, startup/manual credit refresh, and silent post-TTS credit refresh all use the same preflight: local network availability, API Key empty check, and strict 32-lowercase-hex format check. Only when preflight passes does the plugin call Fish Audio. Request timeout failures show a localized timeout message for user-triggered actions; startup and silent refresh failures only log. TTS and credit refresh lock the API Key input while requests are active, using a counter so overlapping operations cannot unlock early. Voice search and by-ID lookup continue to use the `"dummy"` token because those endpoints do not require a valid API Key.
@@ -364,6 +366,7 @@ Preview playback validates sample audio URLs before opening `MediaPlayer`, allow
 
 ## DD-039: Startup credit refresh is a non-blocking initialization cycle
 
+**Status:** API Key format extended by DD-046; initialization and lock behavior remain unchanged.
 **Date:** 2026-07-23
 **Context:** After API Key confirmation was removed, the account row stayed blank until the user manually refreshed it. Restoring a startup balance request must not block plugin initialization, reintroduce validation state, expose API Keys in logs, or let a late response from an old initialization overwrite current settings UI.
 **Decision:** After `SettingsStore.Load()` finishes migration and normalization, `Main.Init()` creates a credit refresh cycle that snapshots the API Key and starts alongside the existing online UTC/selected-voice startup work. The cycle reuses the shared network, non-empty, and strict 32-lowercase-hex preflight plus the existing 15 second credit timeout. Preflight failures and request failures never show a snackbar; they only write safe logs that omit the API Key, and startup credit never displays latency.
@@ -438,3 +441,12 @@ The rejected alternatives were a full rewrite and adding interfaces for every si
 **Context:** Fish Audio extended the `s2.1-pro-free` promotion beyond the August 31 deadline recorded by DD-036 through the full UTC day of November 30. The centralized runtime cutoff, five localized model descriptions, README files, API notes, and release metadata must move together so the plugin neither hides an available model nor advertises it after expiry.
 **Decision:** Keep the cutoff centralized in `Configuration/FishAudioModelPolicy` and move it to `2026-12-01T00:00:00Z`. Every instant before the cutoff, including the final tick of `2026-11-30` UTC, retains `s2.1-pro-free` in the available model list and uses it as the default; at and after the cutoff the plugin hides it and defaults to `s2.1-pro`. README tips state the concise November 30 calendar date, while model tables, localized model descriptions, and API documentation retain the exact UTC boundary. DD-036 remains historical and is superseded only for the cutoff date.
 **Affects:** `Configuration/FishAudioModelPolicy`, language resources, README files, `docs/api-tts.md`, changelog, regression tests.
+
+---
+
+## DD-046: API Key preflight accepts legacy and prefixed keys
+
+**Date:** 2026-10-01
+**Context:** Newly created Fish Audio API Keys use a `sk-fish-` prefix followed by 43 characters from `A-Z`, `a-z`, `0-9`, `-`, and `_`, while existing 32-lowercase-hex keys remain usable. The shared legacy regex rejected these new keys before any request, causing [issue #1](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/1). The fixed suffix length is based on two observed examples and the agreed compatibility requirement, rather than a published provider guarantee.
+**Decision:** Give `SettingsValidation.IsValidApiKeyFormat(string key)` its own compiled, case-sensitive regex: `\A(?:[0-9a-f]{32}|sk-fish-[A-Za-z0-9_-]{43})\z`. Null and empty inputs return false. Absolute anchors reject leading, trailing, or embedded whitespace, including terminal newlines. Validate the string shape without decoding its contents or changing the supplied value. `IsValidVoiceIdFormat` retains the existing 32-lowercase-hex regex. TTS, startup credit refresh, manual credit refresh, and silent credit refresh keep the shared network → empty → format preflight, unchanged Bearer forwarding, request locks, and interactive/silent failure policies. Existing settings and paste normalization require no migration.
+**Affects:** `Configuration/SettingsValidation`, API Key compatibility regression tests, DD-002, DD-016, DD-030, DD-039.

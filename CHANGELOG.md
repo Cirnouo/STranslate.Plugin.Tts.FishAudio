@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-01
+
+### Fixed
+- 修复新版 `sk-fish-` 前缀加 43 位合法字符的 API Key 被误报“格式不正确”的问题，同时兼容旧版 32 位小写十六进制 API Key（[#1](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/1)）
+- 保留 TTS、启动余额刷新、手动余额刷新和静默余额刷新的网络、空值及格式预检，严格拒绝多余空白、换行和非法字符；声音 ID 继续使用原有格式校验
+
 ## [1.1.1] - 2026-09-01
 
 ### Changed

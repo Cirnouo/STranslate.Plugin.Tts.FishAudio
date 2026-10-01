@@ -1,3 +1,8 @@
+ApiKeyCompatibilitySuite.ApiKeyFormatAcceptsLegacyAndPrefixedKeys();
+ApiKeyCompatibilitySuite.ApiKeyFormatRejectsMalformedKeys();
+ApiKeyCompatibilitySuite.VoiceIdFormatRemainsLegacyOnly();
+await ApiKeyCompatibilitySuite.RequestPathsPreservePreflightAndBearerAsync();
+RepositoryContractSuite.Release112MetadataIsComplete();
 RepositoryContractSuite.Release111MetadataIsComplete();
 RepositoryContractSuite.Release110MetadataIsComplete();
 RepositoryContractSuite.PackageReferenceUsesSdk1012();
