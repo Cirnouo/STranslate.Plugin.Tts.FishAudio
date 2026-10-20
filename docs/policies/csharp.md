@@ -13,6 +13,7 @@ This policy applies to production code and regression tests. Preserve observable
 - Own and dispose each stream, timer, cancellation source, decoder and device explicitly. Cover failure during construction, operation and cleanup. Preserve the original failure when cleanup also fails.
 - Do not invoke observable setters, UI dispatch, host I/O, cancellation callbacks or arbitrary delegates while holding a state lock. Document acquisition order when more than one gate is required.
 - Keep WPF callbacks on their owning dispatcher. Apply `ConfigureAwait(false)` deliberately to non-UI work; do not add it mechanically across presentation code.
+- Dispatch a versioned activity publisher as a unit rather than queueing a captured lock/unlock value. Re-read current desired state when queued work runs. Verify background completion and retirement with a real WPF command listener; property-only test doubles can miss dispatcher ownership failures.
 - Treat external bytes and JSON as untrusted input. Validate shape and size before expensive processing, preserve protocol order, and fail malformed/truncated data with a diagnostic that does not expose secrets.
 - Persistent UI text uses XAML `DynamicResource`. Transient errors may use translated strings at action time. Update all five existing locales when changing visible behavior.
 - Prefer behavior tests with fake transports, clocks, storage and audio devices. Avoid tests that duplicate implementation statements or grep source layout unless a real packaging or repository contract requires it.

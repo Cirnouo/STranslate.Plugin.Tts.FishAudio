@@ -12,6 +12,8 @@ Only one formal playback may own output at a time. A newer accepted operation ca
 
 The optional captured ViewModel holds counted API Key activity through session playback and drain. Its corresponding activity ends in `finally`; an old operation never releases activity on a replacement ViewModel. Successful session completion triggers a silent credit refresh only through the captured ViewModel. Disposed ViewModels reject late refresh work.
 
+API Key and credit activity counts change immediately under their state gate. Their entire versioned observable publisher runs through the ViewModel's UI invoker, outside that gate. Queued publication reads the newest desired state, so an earlier background End cannot unlock a newer Begin. Bound command notifications therefore retain WPF dispatcher ownership when native playback resumes or cleans up on a worker. The [real WPF dispatcher regressions](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/OperationActivityDispatcherSuite.cs) cover timeout classification, quiet cancellation and queued retirement.
+
 ## Synthesis and playback
 
 The current path is one authenticated native `wss://api.fish.audio/v1/tts/live` session. `start.request.text` is empty. Bounded text events and flushes feed the session, while an independent receive loop extracts ordered audio events. The unread tail after the first safe readable prefix waits until the local output's actual `Play` call succeeds. PCM and MP3 feed a continuing local decoder/output pipeline; formal playback does not materialize a full audio response or invoke host `AudioPlayer.PlayAsync(byte[])`.
