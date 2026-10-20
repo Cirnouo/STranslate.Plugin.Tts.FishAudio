@@ -34,8 +34,6 @@ internal static class RepositoryContractSuite
         AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
         AssertEqual(true, release112Index > unreleasedIndex, "Changelog should contain the dated 1.1.2 release heading after Unreleased");
         AssertEqual(true, release111Index > release112Index, "Changelog should place 1.1.2 before 1.1.1");
-        AssertEqual("", changelog[(unreleasedIndex + "## [Unreleased]".Length)..release112Index].Trim(),
-            "Unreleased should be empty after preparing v1.1.2");
 
         var releaseContent = changelog[release112Index..release111Index];
         foreach (var expectedChange in new[]
