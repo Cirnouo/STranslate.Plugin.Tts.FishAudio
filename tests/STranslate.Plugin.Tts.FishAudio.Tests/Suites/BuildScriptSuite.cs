@@ -58,6 +58,16 @@ internal static class BuildScriptSuite
             "-Release should discover and copy only the isolated Release package");
     }
 
+    internal static void PackageMissingAudioRuntimeDependencyFails()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuildWithoutAudioDependency();
+        AssertEqual(true, result.ExitCode != 0,
+            "A package missing the required audio runtime must fail verification");
+        AssertEqual(true, result.Output.Contains("NAudio.WinMM.dll", StringComparison.Ordinal),
+            "The failure should identify the missing runtime dependency");
+    }
+
     internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
@@ -133,6 +143,7 @@ internal static class BuildScriptSuite
     {
         private readonly string _fakeDotnetDirectory;
         private readonly string _invocationLogPath;
+        private bool _omitAudioDependency;
 
         private BuildScriptTestRepository(string rootPath, string fakeDotnetDirectory, string invocationLogPath)
         {
@@ -223,7 +234,10 @@ internal static class BuildScriptSuite
                         [System.IO.Compression.ZipArchiveMode]::Create,
                         $false)
                     try {
-                        $entryNames = @('plugin.json', "$projectName.dll")
+                        $entryNames = @('plugin.json', "$projectName.dll", 'NAudio.Core.dll')
+                        if ($env:FISH_AUDIO_BUILD_TEST_OMIT_AUDIO -ne '1') {
+                            $entryNames += 'NAudio.WinMM.dll'
+                        }
                         if (Test-Path -LiteralPath (Join-Path $packageDirectory 'debug-only.txt')) {
                             $entryNames += 'debug-only.txt'
                         }
@@ -281,6 +295,12 @@ internal static class BuildScriptSuite
             return RunBuildCore(failTests: true, arguments);
         }
 
+        internal (int ExitCode, string Output) RunBuildWithoutAudioDependency()
+        {
+            _omitAudioDependency = true;
+            return RunBuild("-Release", "-Clean");
+        }
+
         private (int ExitCode, string Output) RunBuildCore(bool failTests, params string[] arguments)
         {
             var startInfo = new ProcessStartInfo
@@ -303,6 +323,7 @@ internal static class BuildScriptSuite
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_REPO"] = RootPath;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_LOG"] = _invocationLogPath;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_TESTS"] = failTests ? "1" : "0";
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_AUDIO"] = _omitAudioDependency ? "1" : "0";
 
             using var process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Failed to start PowerShell build-script test process.");

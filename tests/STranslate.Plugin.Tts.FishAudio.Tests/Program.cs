@@ -10,6 +10,7 @@ RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();
 RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
 BuildScriptSuite.ConfigurationParameterIsRejected();
 BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
+BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
 BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding();
 BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding();
 BuildScriptSuite.CleanBuildCleansAfterFailedRegressionTests();

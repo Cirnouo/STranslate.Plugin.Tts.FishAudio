@@ -178,20 +178,19 @@ Write-Host '[verify] .spkg contents:' -ForegroundColor Cyan
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($DestPath)
 try {
-    $hasPluginJson = $false
-    $hasDll        = $false
+    $packageEntryNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($entry in $zip.Entries) {
         $sizeKB = [math]::Round($entry.Length / 1KB, 1)
         Write-Host "  $($entry.FullName) ($sizeKB KB)"
-        if ($entry.Name -eq 'plugin.json')          { $hasPluginJson = $true }
-        if ($entry.Name -eq "$ProjectName.dll")      { $hasDll = $true }
+        [void]$packageEntryNames.Add($entry.FullName.Replace('\', '/'))
     }
     Write-Host ''
-    if (-not $hasPluginJson) { Write-Warning 'Missing plugin.json in .spkg!' }
-    if (-not $hasDll)        { Write-Warning "Missing $ProjectName.dll in .spkg!" }
-    if ($hasPluginJson -and $hasDll) {
-        Write-Host '  All required files present.' -ForegroundColor Green
+    $requiredPackageFiles = @('plugin.json', "$ProjectName.dll", 'NAudio.Core.dll', 'NAudio.WinMM.dll')
+    $missingPackageFiles = @($requiredPackageFiles | Where-Object { -not $packageEntryNames.Contains($_) })
+    if ($missingPackageFiles.Count -gt 0) {
+        throw "Missing required files in .spkg: $($missingPackageFiles -join ', ')"
     }
+    Write-Host '  All required files present.' -ForegroundColor Green
 }
 finally {
     $zip.Dispose()
