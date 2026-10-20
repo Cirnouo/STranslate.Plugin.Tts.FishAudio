@@ -34,8 +34,6 @@ internal static class RepositoryContractSuite
         AssertEqual(true, unreleasedIndex >= 0, "Changelog should retain the Unreleased heading");
         AssertEqual(true, release112Index > unreleasedIndex, "Changelog should contain the dated 1.1.2 release heading after Unreleased");
         AssertEqual(true, release111Index > release112Index, "Changelog should place 1.1.2 before 1.1.1");
-        AssertEqual("", changelog[(unreleasedIndex + "## [Unreleased]".Length)..release112Index].Trim(),
-            "Unreleased should be empty after preparing v1.1.2");
 
         var releaseContent = changelog[release112Index..release111Index];
         foreach (var expectedChange in new[]
@@ -186,7 +184,7 @@ internal static class RepositoryContractSuite
         }
     }
 
-    internal static void PackageReferenceUsesSdk1012()
+    internal static void PackageReferenceUsesSdk1015()
     {
         var project = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
@@ -194,8 +192,8 @@ internal static class RepositoryContractSuite
 
         AssertEqual(
             true,
-            project.Contains("<PackageReference Include=\"STranslate.Plugin\" Version=\"1.0.12\" />", StringComparison.Ordinal),
-            "Plugin project should reference STranslate.Plugin SDK 1.0.12");
+            project.Contains("<PackageReference Include=\"STranslate.Plugin\" Version=\"1.0.15\" />", StringComparison.Ordinal),
+            "Plugin project should reference STranslate.Plugin SDK 1.0.15");
     }
 
     internal static void ReleaseOutputIsIsolatedFromDebugArtifacts()

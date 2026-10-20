@@ -17,6 +17,9 @@ public sealed class TestAudioPlayer : IAudioPlayer
     public byte[]? LastPlayedBytes { get; private set; }
     public string? LastPlayedUrl { get; private set; }
 
+    public Task PlayAsync(AudioData audioData, CancellationToken cancellationToken) =>
+        PlayAsync(audioData.Content, cancellationToken);
+
     public Task PlayAsync(byte[] bytes, CancellationToken cancellationToken)
     {
         PlayBytesCallCount++;

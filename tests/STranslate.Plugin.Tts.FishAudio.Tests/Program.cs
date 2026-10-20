@@ -5,7 +5,7 @@ await ApiKeyCompatibilitySuite.RequestPathsPreservePreflightAndBearerAsync();
 RepositoryContractSuite.Release112MetadataIsComplete();
 RepositoryContractSuite.Release111MetadataIsComplete();
 RepositoryContractSuite.Release110MetadataIsComplete();
-RepositoryContractSuite.PackageReferenceUsesSdk1012();
+RepositoryContractSuite.PackageReferenceUsesSdk1015();
 RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();
 RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
 BuildScriptSuite.ConfigurationParameterIsRejected();
