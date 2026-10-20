@@ -20,6 +20,24 @@
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
         <conv:ProgressToDashOffsetConverter x:Key="ProgressToDashOffsetConverter" />
         <BooleanToVisibilityConverter x:Key="BtvConverter" />
+        <Style x:Key="PreviewPreparingSpinner" TargetType="Grid">
+            <Setter Property="Visibility" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource BtvConverter}}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard Name="PreviewPreparingStoryboard">
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                 From="0" To="360" Duration="0:0:0.9" RepeatBehavior="Forever" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <StopStoryboard BeginStoryboardName="PreviewPreparingStoryboard" />
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <ikw:SimpleStackPanel Spacing="12">
@@ -172,7 +190,7 @@
                                 <Style TargetType="Ellipse">
                                     <Setter Property="Visibility" Value="Visible" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -192,10 +210,31 @@
                                 <RotateTransform Angle="-90"/>
                             </Ellipse.RenderTransform>
                         </Ellipse>
+                        <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
+                              IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                            <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                     StrokeDashArray="18 54" StrokeDashCap="Round" />
+                        </Grid>
                         <Button Background="Transparent" BorderThickness="0" Padding="0"
                                 Width="36" Height="36"
-                                Command="{Binding ToggleDisplayPreviewCommand}"
-                                ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}">
+                                Command="{Binding ToggleDisplayPreviewCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreparing}" Value="True">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
                             <Grid>
                                 <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -204,7 +243,7 @@
                                             <Setter Property="Text" Value="&#xE768;" />
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
+                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -213,7 +252,7 @@
                                 </TextBlock>
                                 <Border Width="10" Height="10" CornerRadius="1" Background="White"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
+                                        Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
                             </Grid>
                         </Button>
                     </Grid>
@@ -361,11 +400,32 @@
                                                     <RotateTransform Angle="-90"/>
                                                 </Ellipse.RenderTransform>
                                             </Ellipse>
+                                            <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
+                                                  IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                                                <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                                                <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                                         StrokeDashArray="18 54" StrokeDashCap="Round" />
+                                            </Grid>
                                             <Button Background="Transparent" BorderThickness="0" Padding="0"
                                                     Width="36" Height="36"
                                                     Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}">
+                                                    CommandParameter="{Binding}">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
+                                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsPreparingPreview}" Value="True">
+                                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
                                                 <Grid>
                                                     <TextBlock x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center" Text="&#xE768;" />
@@ -401,9 +461,11 @@
                             </Border>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
-                                    <Setter TargetName="SRestBorder" Property="Visibility" Value="Collapsed" />
                                     <Setter TargetName="STrack" Property="Visibility" Value="Visible" />
                                     <Setter TargetName="SArc" Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsPreviewActive}" Value="True">
+                                    <Setter TargetName="SRestBorder" Property="Visibility" Value="Collapsed" />
                                     <Setter TargetName="SIcon" Property="Visibility" Value="Collapsed" />
                                     <Setter TargetName="SStopIcon" Property="Visibility" Value="Visible" />
                                 </DataTrigger>

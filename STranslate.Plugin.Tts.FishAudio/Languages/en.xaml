@@ -29,6 +29,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">Select</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">Selected</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">Preview</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">Preparing preview… Click to cancel</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">Stop preview</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">Pause</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">Clear</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">Popularity</sys:String>

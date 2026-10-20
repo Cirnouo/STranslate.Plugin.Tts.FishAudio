@@ -2,7 +2,7 @@
 
 These records explain decisions in the current plugin and the designs they replaced. Current/history classification is semantic: an old decision can remain current, while a recent superseded design belongs in history. Numbers are permanent; new records must not reuse an existing DD number.
 
-The migration baseline was v1.1.2 behavior with SDK 1.0.15. Current Unreleased code adds host-HTTP, memory-backed local preview playback (DD-047) and server-window-aware voice pagination (DD-048). Formal TTS still uses complete-buffer HTTP MP3. An unmerged experiment is not a current ADR. In particular, DD-046 here records API Key compatibility, not experimental streaming playback.
+The migration baseline was v1.1.2 behavior with SDK 1.0.15. Current Unreleased code adds host-HTTP, memory-backed local preview playback (DD-047), server-window-aware voice pagination (DD-048) and immediate cancellable preview preparation state (DD-049). Formal TTS still uses complete-buffer HTTP MP3. An unmerged experiment is not a current ADR. In particular, DD-046 here records API Key compatibility, not experimental streaming playback.
 
 Each migrated record retains its original rationale, identifies successors and states the current interpretation when applicable. Historical file/type names in the recorded rationale are provenance; the implementation-basis links and current specs locate today's owners. No record establishes a successful live TTS or physical audio measurement.
 
@@ -16,6 +16,7 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 - DD-045 replaces DD-036's cutoff date; DD-031's centralized policy and normalization remain current.
 - DD-046 replaces DD-002's shared/legacy-only API Key format assumption. DD-016 retains Voice ID validation with a separate regex.
 - DD-043's one-time v1.1.0 Unreleased staging instruction is historical; its build switches and output isolation remain current.
+- DD-049 amends DD-047's pending state presentation and same-voice cancellation across preview entry points; its bounded download and actual playback rules remain current.
 
 ## Complete register
 
@@ -69,3 +70,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-046 | [API Key preflight accepts legacy and prefixed keys](current/DD-046.md) | Current |
 | DD-047 | [Download public voice previews through host HTTP before local playback](current/DD-047.md) | Current |
 | DD-048 | [Keep voice totals separate from accessible pagination](current/DD-048.md) | Current |
+| DD-049 | [Publish cancellable preview preparation before playback](current/DD-049.md) | Current |

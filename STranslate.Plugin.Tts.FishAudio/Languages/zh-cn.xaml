@@ -32,6 +32,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">选择</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">已选</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">试听</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">正在准备试听… 点击取消</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">停止试听</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">暂停</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">清除</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">热度</sys:String>

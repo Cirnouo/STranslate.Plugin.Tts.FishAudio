@@ -29,6 +29,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     private readonly Action<CachedVoiceInfo?> _applyCachedVoice;
     private readonly Func<string, string, int, Action<string>?, string> _resolveCoverImageUrl;
     private readonly Func<bool> _isFacadeDisposed;
+    private readonly Action<string?> _applyPreparingState;
+    private readonly Action<Action> _runOnUiThread;
     private readonly PreviewAudioDownloader _downloader;
     private readonly TimeProvider _timeProvider;
     private readonly object _displayPreviewOperationGate = new();
@@ -44,7 +46,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         Action stopPreview, Action<string, MemoryStream> togglePreview,
         Func<Func<Settings, bool>, bool> updateSettingsAndSave, Action<CachedVoiceInfo?> applyCachedVoice,
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
-        Func<bool> isFacadeDisposed, TimeProvider? timeProvider = null)
+        Func<bool> isFacadeDisposed, TimeProvider? timeProvider = null,
+        Action<string?>? applyPreparingState = null, Action<Action>? runOnUiThread = null)
     {
         _context = context;
         _getCachedVoiceId = getCachedVoiceId;
@@ -59,6 +62,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         _applyCachedVoice = applyCachedVoice;
         _resolveCoverImageUrl = resolveCoverImageUrl;
         _isFacadeDisposed = isFacadeDisposed;
+        _applyPreparingState = applyPreparingState ?? (_ => { });
+        _runOnUiThread = runOnUiThread ?? (action => action());
         _downloader = new PreviewAudioDownloader(context.HttpService);
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
@@ -86,11 +91,13 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         }
         if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var token))
         {
+            PublishPreparingState();
             _stopPreview();
             return;
         }
         _playbackTarget = null;
         _stopPreview();
+        PublishPreparingState();
         MemoryStream? audio = null;
         try
         {
@@ -219,6 +226,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             ++_displayPreviewOperationId;
             CancelCurrentDisplayPreviewOperationLocked();
         }
+        PublishPreparingState();
     }
 
     private void ApplyRefreshedSearchItem(VoiceSearchItem item, ModelEntity model)
@@ -258,7 +266,11 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
                 stop = true;
             }
         }
-        if (stop) _stopPreview();
+        if (stop)
+        {
+            PublishPreparingState();
+            _stopPreview();
+        }
     }
 
     private bool TryBeginDisplayPreviewOperation(PreviewRefreshTarget target, out long operationId,
@@ -267,7 +279,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         lock (_displayPreviewOperationGate)
         {
             operationId = ++_displayPreviewOperationId;
-            var cancelOnly = _displayPreviewCancellationTokenSource is not null && _displayPreviewOperationTarget == target;
+            var cancelOnly = _displayPreviewCancellationTokenSource is not null
+                && _displayPreviewOperationTarget?.VoiceId == target.VoiceId;
             CancelCurrentDisplayPreviewOperationLocked();
             if (_isDisposed || _isFacadeDisposed() || cancelOnly)
             {
@@ -309,7 +322,17 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             _displayPreviewOperationTarget = null;
             cts.Dispose();
         }
+        PublishPreparingState();
     }
+
+    private void PublishPreparingState() => _runOnUiThread(() =>
+    {
+        string? voiceId;
+        lock (_displayPreviewOperationGate)
+            voiceId = _displayPreviewOperationTarget?.VoiceId;
+        // Read the current owner when the UI callback runs, so a queued old completion cannot clear a new request.
+        _applyPreparingState(voiceId);
+    });
     private void CancelCurrentDisplayPreviewOperationLocked()
     {
         var cancellation = _displayPreviewCancellationTokenSource;
@@ -328,6 +351,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             ++_displayPreviewOperationId;
             CancelCurrentDisplayPreviewOperationLocked();
         }
+        PublishPreparingState();
         _playbackTarget = null;
         _stopPreview();
     }
