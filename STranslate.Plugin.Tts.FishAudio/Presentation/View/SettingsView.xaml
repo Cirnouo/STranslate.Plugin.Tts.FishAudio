@@ -160,7 +160,7 @@
                     IsEnabled="{Binding IsApiKeyInputEnabled}"
                     MinWidth="230"
                     plugin:PasswordBoxAssistant.Attach="True"
-                    plugin:PasswordBoxAssistant.Password="{Binding ApiKey}"
+                    plugin:PasswordBoxAssistant.Password="{Binding ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}" />
             </DockPanel>
         </ui:SettingsCard>

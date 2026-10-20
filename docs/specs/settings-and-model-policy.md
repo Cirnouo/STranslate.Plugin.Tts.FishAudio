@@ -4,6 +4,8 @@ Status: current Unreleased implementation; schema version is **2**. See [Setting
 
 Canonical JSON writes SchemaVersion first. Missing or invalid version markers are interpreted as legacy version 0. Supported schema 0/1 settings migrate to 2 with MP3 as the missing/malformed/duplicate/unsupported audio-format fallback, preserving valid bitrate. Explicit supported PCM/MP3 choices survive. New configurations and current schema-2 invalid/missing formats default to PCM. Valid current VoiceId/CachedVoice values take precedence over ReferenceId/CachedModel independent of property order; wrong-type current fields may recover valid legacy fields. Ordinary malformed/duplicate properties fall back independently. Supported schemas are canonically saved after migration/normalization or unknown/deleted-field cleanup. A duplicate SchemaVersion or future schema is read-only: compatible fields remain usable in memory but host saves are skipped.
 
+API Key input changes, including clearing the password field, update the ViewModel and settings storage immediately before focus leaves the control. The password binding explicitly uses `TwoWay` and `PropertyChanged`: SDK 1.0.15 already defaults to two-way binding, but its default `LostFocus` update trigger would delay this save. Editing the key does not itself call Fish Audio.
+
 | Setting | Current default / normalization |
 |---|---|
 | API Key / Voice ID | Empty; text is not silently discarded by numeric normalization. API Key accepts the legacy or prefixed shape; Voice ID keeps the existing 32-lowercase-hex validator. |
