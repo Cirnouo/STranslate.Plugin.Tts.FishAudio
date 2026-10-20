@@ -68,6 +68,20 @@ internal static class BuildScriptSuite
             "The failure should identify the missing runtime dependency");
     }
 
+    internal static void PackageMissingStreamingRuntimeDependencyFails()
+    {
+        string[] dependencies = ["MessagePack.dll", "MessagePack.Annotations.dll", "Microsoft.NET.StringTools.dll"];
+        foreach (var dependency in dependencies)
+        {
+            using var repository = BuildScriptTestRepository.Create();
+            var result = repository.RunBuildWithoutStreamingDependency(dependency);
+            AssertEqual(true, result.ExitCode != 0,
+                $"A package missing the required streaming runtime {dependency} must fail verification");
+            AssertEqual(true, result.Output.Contains(dependency, StringComparison.Ordinal),
+                $"The failure should identify the missing streaming runtime {dependency}");
+        }
+    }
+
     internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
@@ -144,6 +158,7 @@ internal static class BuildScriptSuite
         private readonly string _fakeDotnetDirectory;
         private readonly string _invocationLogPath;
         private bool _omitAudioDependency;
+        private string _omittedStreamingDependency = string.Empty;
 
         private BuildScriptTestRepository(string rootPath, string fakeDotnetDirectory, string invocationLogPath)
         {
@@ -235,6 +250,11 @@ internal static class BuildScriptSuite
                         $false)
                     try {
                         $entryNames = @('plugin.json', "$projectName.dll", 'NAudio.Core.dll')
+                        foreach ($streamingDependency in @('MessagePack.dll', 'MessagePack.Annotations.dll', 'Microsoft.NET.StringTools.dll')) {
+                            if ($env:FISH_AUDIO_BUILD_TEST_OMIT_STREAMING -ne $streamingDependency) {
+                                $entryNames += $streamingDependency
+                            }
+                        }
                         if ($env:FISH_AUDIO_BUILD_TEST_OMIT_AUDIO -ne '1') {
                             $entryNames += 'NAudio.WinMM.dll'
                         }
@@ -301,6 +321,12 @@ internal static class BuildScriptSuite
             return RunBuild("-Release", "-Clean");
         }
 
+        internal (int ExitCode, string Output) RunBuildWithoutStreamingDependency(string dependency)
+        {
+            _omittedStreamingDependency = dependency;
+            return RunBuild("-Release", "-Clean");
+        }
+
         private (int ExitCode, string Output) RunBuildCore(bool failTests, params string[] arguments)
         {
             var startInfo = new ProcessStartInfo
@@ -324,6 +350,7 @@ internal static class BuildScriptSuite
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_LOG"] = _invocationLogPath;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_TESTS"] = failTests ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_AUDIO"] = _omitAudioDependency ? "1" : "0";
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_STREAMING"] = _omittedStreamingDependency;
 
             using var process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Failed to start PowerShell build-script test process.");

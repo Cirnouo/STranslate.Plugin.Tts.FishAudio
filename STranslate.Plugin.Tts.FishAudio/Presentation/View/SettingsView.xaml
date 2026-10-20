@@ -599,11 +599,79 @@
         <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold"
                    Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_AudioOutput}" />
 
-        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Mp3Bitrate}">
+        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Format}">
+            <ui:SettingsCard.Description>
+                <TextBlock MaxWidth="360" TextWrapping="Wrap" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Format_Description}" />
+            </ui:SettingsCard.Description>
+            <ComboBox MinWidth="100" ItemsSource="{Binding AudioFormats}" SelectedItem="{Binding AudioFormat}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding}" Value="pcm">
+                                            <Setter Property="Text" Value="PCM" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding}" Value="mp3">
+                                            <Setter Property="Text" Value="MP3" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </ui:SettingsCard>
+
+        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_Mp3Bitrate}" IsEnabled="{Binding IsMp3BitrateEnabled}">
             <ui:SettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.MusicNote2_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <ComboBox MinWidth="100" ItemsSource="{Binding Mp3Bitrates}" SelectedItem="{Binding Mp3Bitrate}" />
+        </ui:SettingsCard>
+
+        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy}">
+            <ui:SettingsCard.Description>
+                <TextBlock MaxWidth="360" TextWrapping="Wrap" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description}" />
+            </ui:SettingsCard.Description>
+            <ComboBox MinWidth="120" ItemsSource="{Binding StreamingProxyModes}" SelectedItem="{Binding StreamingProxyMode}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding}" Value="system">
+                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_System}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding}" Value="direct">
+                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding}" Value="custom">
+                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </ui:SettingsCard>
+
+        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address}">
+            <StackPanel Width="280">
+                <TextBox IsEnabled="{Binding IsCustomStreamingProxy}"
+                         Text="{Binding StreamingProxyAddress, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                           Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid}"
+                           Visibility="{Binding HasStreamingProxyValidationError, Converter={StaticResource BtvConverter}}" />
+            </StackPanel>
         </ui:SettingsCard>
 
         <!-- ════════ 韵律 ════════ -->

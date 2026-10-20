@@ -2,6 +2,8 @@
 
 Connect to `wss://api.fish.audio/v1/tts/live` with Bearer authentication and an exact native `model` header. Client and server messages are binary **MessagePack**, not JSON text. `start.request` shares the native HTTP request fields. The ordinary WS model enum includes `s2.1-pro-free` and `drama-3`; absence or an unknown value falls back to paid `s2.1-pro`. Source: [official WS protocol](https://docs.fish.audio/api-reference/endpoint/websocket/tts-live).
 
+**Maintenance fact, verified 2026-10-20:** that official page deprecates S1 and states retirement on December 31, 2026, after which requests specifying S1 are served by S2.1-Pro. The plugin currently retains S1 in its selection list. This future server migration is distinct from the client's refusal to fall back for an invalid model; revisit client guidance before retirement. No paid S1/Drama 3 test is implied.
+
 | Direction | Message shape | Meaning |
 | --- | --- | --- |
 | Send first | `{event: "start", request: {..., text: ""}}` | Configure one session. |

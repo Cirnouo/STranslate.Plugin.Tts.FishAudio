@@ -55,7 +55,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量オフセット (dB)、正値で増加、負値で減少</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">ラウドネス正規化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">s2-pro 以上のモデルでのみ対応</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">s2-pro、s2.1-pro、s2.1-pro-free に対応</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">出力形式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 ビットレート (kbps)</sys:String>
@@ -101,4 +101,15 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">検索結果</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">検索結果を展開</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">検索結果を折りたたむ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">PCM は MP3 のデコードなしですばやく再生を開始します。低速なネットワークでは MP3 が適している場合があります。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy">ストリーミング合成のプロキシ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description">WebSocket 音声合成にのみ適用します。アカウント、音声検索、試聴のリクエストはホストアプリのネットワーク設定を使用します。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_System">システム設定</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct">直接接続</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom">カスタム</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address">カスタムプロキシ URL</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid">ホストと明示的なポートを含む http、https、socks5 のプロキシ URL を入力してください。パス、クエリ、フラグメントは使用できません。認証情報は省略できます。</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">ストリーミング読み上げに失敗しました。ネットワーク、プロキシ設定、モデルサービスの状態を確認してください。</sys:String>
+
 </ResourceDictionary>

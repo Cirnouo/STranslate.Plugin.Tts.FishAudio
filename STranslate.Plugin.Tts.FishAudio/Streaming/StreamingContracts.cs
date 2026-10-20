@@ -1,5 +1,10 @@
 namespace STranslate.Plugin.Tts.FishAudio.Streaming;
 
+internal interface IStreamingTtsSession : IDisposable
+{
+    Task PlayAsync(SynthesisRequest request, string text, CancellationToken cancellationToken);
+}
+
 internal interface IStreamingAudioPlayer : IDisposable
 {
     Task PlayAsync(

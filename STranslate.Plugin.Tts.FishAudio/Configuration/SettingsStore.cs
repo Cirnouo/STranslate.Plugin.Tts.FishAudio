@@ -227,7 +227,23 @@ public static class SettingsStore
         return clone;
     }
 
+    internal static Settings CaptureSnapshot(Settings settings)
+    {
+        // Host Load/Save can block while holding the persistence gate. A speech
+        // request must still capture the last published initialization then.
+        lock (settings)
+            return Clone(settings);
+    }
+
     private static void Copy(Settings source, Settings target)
+    {
+        // Publishing a complete runtime copy and capturing it use the same short
+        // object-local lock, never a host callback or the global persistence gate.
+        lock (target)
+            CopyCore(source, target);
+    }
+
+    private static void CopyCore(Settings source, Settings target)
     {
         target.SchemaVersion = source.SchemaVersion;
         target.ApiKey = source.ApiKey;
@@ -240,7 +256,10 @@ public static class SettingsStore
         target.TopP = source.TopP;
         target.Latency = source.Latency;
         target.Normalize = source.Normalize;
+        target.AudioFormat = source.AudioFormat;
         target.Mp3Bitrate = source.Mp3Bitrate;
+        target.StreamingProxyMode = source.StreamingProxyMode;
+        target.StreamingProxyAddress = source.StreamingProxyAddress;
         target.ConditionOnPreviousChunks = source.ConditionOnPreviousChunks;
         target.CachedVoice = source.CachedVoice is null
             ? null

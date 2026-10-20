@@ -93,7 +93,8 @@ internal static class ApiKeyCompatibilitySuite
         var audio = new TestAudioPlayer();
         var (httpService, http) = TestHttpServiceProxy.Create();
         var context = CreateContext(snackbar, settings, httpService, audio, logger);
-        using var plugin = new Main();
+        var session = new StreamingSessionDouble();
+        using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
         SettingsViewModel? viewModel = null;
         try
         {
@@ -134,13 +135,13 @@ internal static class ApiKeyCompatibilitySuite
             var shouldRequest = expectedError is null;
             if (path == RequestPath.Tts)
             {
-                AssertEqual(shouldRequest ? 1 : 0, http.PostAsBytesCallCount,
-                    "TTS should send audio requests only after preflight passes");
-                AssertEqual(shouldRequest ? 1 : 0, audio.PlayBytesCallCount,
-                    "TTS should play audio only after preflight passes");
+                AssertEqual(shouldRequest ? 1 : 0, session.Calls,
+                    "TTS should start a native streaming session only after preflight passes");
+                AssertEqual(0, http.PostAsBytesCallCount, "TTS should not download whole-buffer HTTP audio");
+                AssertEqual(0, audio.PlayBytesCallCount, "TTS should not use host byte-array playback");
                 AssertEqual(0, http.GetCallCount, "TTS should not introduce a separate credit validation request");
                 if (shouldRequest)
-                    AssertEqual($"Bearer {apiKey}", AssertHeaders(http.LastPostOptions, "TTS headers required")["Authorization"],
+                    AssertEqual(apiKey, session.Request!.ApiKey,
                         "TTS should forward the complete API Key unchanged");
             }
             else

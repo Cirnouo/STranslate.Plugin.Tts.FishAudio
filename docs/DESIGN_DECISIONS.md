@@ -2,7 +2,7 @@
 
 This file is a migration index. Decision content now lives in the [ADR register](adr/README.md), with [current records](adr/current/) and [historical records](adr/history/) classified by replacement relationships. Use the [current specs](specs/README.md) for implemented behavior and the [documentation policy](policies/documentation.md) when maintaining these records.
 
-The original DD numbers and heading anchors below are retained so old links continue to land on a forwarding entry. Do not append decision bodies to this index or reuse a number. Current DD-046 is the API Key compatibility decision; unmerged streaming experiments are not part of this baseline.
+The original DD numbers and heading anchors below are retained so old links continue to land on a forwarding entry. Do not append decision bodies to this index or reuse a number. DD-046 is API Key compatibility, DD-049 records immediate cancellable preview preparation, and current streaming decisions are DD-050–053. The [register](adr/README.md) classifies precise replacement relationships.
 
 ## DD-001: Silent credit refresh on startup
 
@@ -187,3 +187,31 @@ Moved to [current DD-045](adr/current/DD-045.md).
 ## DD-046: API Key preflight accepts legacy and prefixed keys
 
 Moved to [current DD-046](adr/current/DD-046.md).
+
+## DD-047: Download public voice previews through host HTTP before local playback
+
+Moved to [current DD-047](adr/current/DD-047.md).
+
+## DD-048: Keep voice totals separate from accessible pagination
+
+Moved to [current DD-048](adr/current/DD-048.md).
+
+## DD-049: Publish cancellable preview preparation before playback
+
+Moved to [current DD-049](adr/current/DD-049.md).
+
+## DD-050: Formal TTS owns one native streaming session through device drain
+
+Moved to [current DD-050](adr/current/DD-050.md).
+
+## DD-051: Prepare a lazy readable prefix and gate the tail on output start
+
+Moved to [current DD-051](adr/current/DD-051.md).
+
+## DD-052: Decode incrementally into a bounded PCM ring with an independent pump
+
+Moved to [current DD-052](adr/current/DD-052.md).
+
+## DD-053: Preserve MP3 compatibility and make native streaming routing explicit
+
+Moved to [current DD-053](adr/current/DD-053.md).

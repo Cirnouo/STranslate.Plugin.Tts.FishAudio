@@ -14,6 +14,8 @@ public sealed class Settings
     public const string DefaultLatency = "normal";
     public const bool DefaultNormalize = false;
     public const int DefaultMp3Bitrate = 192;
+    public const string DefaultAudioFormat = "pcm";
+    public const string DefaultStreamingProxyMode = "system";
     public const bool DefaultConditionOnPreviousChunks = true;
 
     public int SchemaVersion { get; internal set; } = SettingsSchema.Current;
@@ -28,6 +30,9 @@ public sealed class Settings
     public string Latency { get; set; } = DefaultLatency;
     public bool Normalize { get; set; }
     public int Mp3Bitrate { get; set; } = DefaultMp3Bitrate;
+    public string AudioFormat { get; set; } = DefaultAudioFormat;
+    public string StreamingProxyMode { get; set; } = DefaultStreamingProxyMode;
+    public string StreamingProxyAddress { get; set; } = "";
     public bool ConditionOnPreviousChunks { get; set; } = DefaultConditionOnPreviousChunks;
     public CachedVoiceInfo? CachedVoice { get; set; }
     public bool IsS21ProFreePromoDismissed { get; set; }
