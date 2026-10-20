@@ -225,6 +225,11 @@ VoiceSelectionToggleSuite.RemovedOriginsCannotApplyOrClearMatchingCurrentCards()
 VoiceSelectionToggleSuite.FailedSelectionWritesKeepAppliedIdentityAndStars();
 await VoiceSelectionToggleSuite.MatchingByIdQueriesInspectWithoutCancelingSelectionAsync();
 
+TopPCompatibilitySuite.ClientFloorKeepsExistingStepsDefaultsAndTemperatureZero();
+TopPCompatibilitySuite.OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips();
+TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection();
+await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync();
+
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 
 Console.WriteLine("Fish Audio plugin regression tests passed.");

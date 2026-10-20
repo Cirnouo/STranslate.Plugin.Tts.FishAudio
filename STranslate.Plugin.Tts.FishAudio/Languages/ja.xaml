@@ -55,7 +55,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量オフセット (dB)、正値で増加、負値で減少</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">ラウドネス正規化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">s2-pro、s2.1-pro、s2.1-pro-free に対応</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2 シリーズのモデルに対応</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">出力形式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 ビットレート (kbps)</sys:String>

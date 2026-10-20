@@ -31,6 +31,8 @@ internal static class SettingsLayoutSuite
         SelectedVoiceStarSharesFavoriteState();
         PasteButtonsReserveInputSpace();
         SelectionAndPagingActionsUseBareIcons();
+        LoudnessCardFollowsModelCapability();
+        TopPMinimumKeepsSliderTracksAligned();
         ResultTogglesKeepIndependentViewState();
         SharedVoiceCardReflectsMetadataState();
     });
@@ -290,13 +292,22 @@ internal static class SettingsLayoutSuite
         AssertEqual("", settings.VoiceId, "A matching placeholder Cross must clear the current selection");
         AssertEqual(Visibility.Collapsed, clear.Visibility, "Clearing from a browse card must retire the selected-card Cross");
         foreach (var action in actions)
+        {
             AssertEqual("\uE73E", action.Content, "Clearing selection must return every browse action to Tick");
+            AssertEqual("Apply", AutomationProperties.GetName(action), "An unselected card must expose the Apply action");
+            AssertEqual("Apply", action.ToolTip, "An unselected Tick must expose the Apply tooltip");
+        }
         AssertEqual(false, actions[2].IsEnabled, "An unselected placeholder must not apply without metadata");
         typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(actions[0], null);
         DrainBindings();
         AssertEqual(id, settings.VoiceId, "Tick must apply its originating voice");
+        AssertEqual(Visibility.Visible, clear.Visibility, "Applying a browse voice must restore the selected-card Cross");
         foreach (var action in actions)
+        {
             AssertEqual("\uE711", action.Content, "Applying a voice must synchronize every matching card to Cross");
+            AssertEqual("Clear", AutomationProperties.GetName(action), "Every matching card must expose the Clear action");
+            AssertEqual(true, action.IsEnabled, "An applied placeholder must regain its enabled Cross");
+        }
 
         foreach (var (command, glyph, name) in new[]
         {
@@ -375,6 +386,60 @@ internal static class SettingsLayoutSuite
         var key = (DependencyPropertyKey)typeof(UIElement).GetField(name + "PropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         element.SetValue(key, value);
         DrainBindings();
+    }
+
+    private static void LoudnessCardFollowsModelCapability()
+    {
+        foreach (var stored in new[] { false, true })
+        {
+            var settings = new Settings { NormalizeLoudness = stored, SelectedModel = FishAudioModelPolicy.S1Model };
+            using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+            var view = CreateThemedView(viewModel);
+            DrainBindings();
+            var toggle = Descendants(view).OfType<ToggleSwitch>().Single(control =>
+                BindingOperations.GetBinding(control, ToggleSwitch.IsOnProperty)?.Path.Path == nameof(SettingsViewModel.NormalizeLoudness));
+            var card = Ancestor<SettingsCard>(toggle);
+            AssertEqual(Visibility.Collapsed, card.Visibility, "S1 must hide the entire unavailable loudness card");
+            AssertEqual(stored, settings.NormalizeLoudness, "Hiding loudness must preserve its saved value");
+            viewModel.SelectedModel = FishAudioModelPolicy.S21ProModel;
+            DrainBindings();
+            AssertEqual(Visibility.Visible, card.Visibility, "S2.1 must restore the supported loudness card");
+            AssertEqual(true, toggle.IsEnabled, "The restored loudness setting must be usable");
+            AssertEqual(stored, toggle.IsOn, "The restored setting must display its saved value");
+        }
+    }
+
+    private static void TopPMinimumKeepsSliderTracksAligned()
+    {
+        var settings = new Settings();
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        var topP = Descendants(view).OfType<Slider>().Single(control =>
+            BindingOperations.GetBinding(control, Slider.ValueProperty)?.Path.Path == nameof(SettingsViewModel.TopP));
+        var temperature = Descendants(view).OfType<Slider>().Single(control =>
+            BindingOperations.GetBinding(control, Slider.ValueProperty)?.Path.Path == nameof(SettingsViewModel.Temperature));
+        Slider.MinimizeValue.Execute(null, topP);
+        Slider.MinimizeValue.Execute(null, temperature);
+        DrainBindings();
+        AssertEqual(0.05, topP.Value, "The real Top P control must stop at the client-supported minimum");
+        AssertEqual(0.05, viewModel.TopP, "The minimum UI value must reach the ViewModel");
+        AssertEqual(0d, temperature.Value, "The Top P minimum must not change Temperature's zero endpoint");
+        foreach (var width in new[] { 400d, 600d })
+        {
+            Layout(view, width);
+            var topTrack = (Track)topP.Template.FindName("PART_Track", topP);
+            var temperatureTrack = (Track)temperature.Template.FindName("PART_Track", temperature);
+            AssertEqual(180d, topP.Width, "Top P must retain the existing slider width");
+            AssertEqual(temperatureTrack.ActualWidth, topTrack.ActualWidth, $"At {width}px both slider tracks must retain identical bounds");
+            AssertEqual(true, topTrack.Thumb.ActualWidth > 0, "The compiled slider must lay out its native thumb");
+            var topLeft = topTrack.TranslatePoint(new Point(), view).X;
+            var temperatureLeft = temperatureTrack.TranslatePoint(new Point(), view).X;
+            AssertEqual(true, Math.Abs(topLeft - temperatureLeft) < 0.001, $"At {width}px Top P and Temperature tracks must start in the same column");
+            var topThumb = topTrack.Thumb.TranslatePoint(new Point(topTrack.Thumb.ActualWidth / 2, 0), view).X;
+            var temperatureThumb = temperatureTrack.Thumb.TranslatePoint(new Point(temperatureTrack.Thumb.ActualWidth / 2, 0), view).X;
+            AssertEqual(true, Math.Abs(topThumb - temperatureThumb) < 0.001, $"At {width}px the two minimum thumbs must align at the same left endpoint");
+        }
     }
 
     private static void SharedVoiceCardReflectsMetadataState()

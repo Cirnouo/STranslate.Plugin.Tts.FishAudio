@@ -15,7 +15,8 @@ API Key and By-ID paste buttons sit inside their inputs at the right edge. The e
 | Speed | 1.0; range 0.5–2.0, step 0.05. |
 | Volume | 0.0 dB; range -10–10, step 0.1. This is not a client 0–1 mute/volume scale. |
 | Normalize loudness | true; sent only for supported TTS models. |
-| Temperature / top_p | 0.7 / 0.7; range 0–1, step 0.05. |
+| Temperature | 0.7; range 0–1, step 0.05; zero remains valid. |
+| top_p | 0.7; plugin range 0.05–1, step 0.05. This positive client floor avoids the reported zero boundary; it is not a claimed official minimum. |
 | Latency | `normal`; supported values `normal`, `balanced`, `low`. |
 | Normalize text | false. |
 | Audio format | PCM for new configurations; PCM/MP3 choices; legacy migration defaults to MP3. |
@@ -23,6 +24,8 @@ API Key and By-ID paste buttons sit inside their inputs at the right edge. The e
 | Condition on previous chunks | true; describes chunks within the same synthesis request. |
 
 Non-finite/out-of-range numeric values use their defaults; valid values snap to their step with midpoint-away-from-zero rounding. PCM sample rate is fixed at 44100, not exposed as another setting. All new fields participate in conversion, cloning, transactional save/rollback, ViewModel initialization and auto-save. CachedVoice contains selected voice display metadata and a sample URL; it is not an audio-byte cache.
+
+For top_p specifically, stored zero and smaller positive values become at least 0.05 after step rounding; negative/non-finite/>1 values retain the 0.7 fallback. The shared bounds/default/floor guard also protects native and HTTP payloads from raw in-memory settings, while preserving valid fractional request precision such as 0.82. Settings step quantization does not change that request-boundary contract. Normal canonical saves repair old values, while future/duplicate schemas remain read-only. Temperature keeps its separate zero-inclusive rule. Both sliders retain aligned physical track endpoints and value labels. See [DD-057](../adr/current/DD-057.md) and the [official range discrepancy](../references/tts-fields.md#nucleus-sampling-boundary).
 
 REST metadata, credit and sample downloads retain host HTTP routing. Native WebSocket always uses the system proxy (`HttpClient.DefaultProxy`) and exposes no plugin proxy settings or network group. Former `StreamingProxyMode` and `StreamingProxyAddress` fields are obsolete: their values are ignored and removed on ordinary canonical saves without changing schema 2. Old direct/custom/invalid values cannot affect routing or block synthesis. Future/duplicate-schema read-only protection remains active. Private request values are captured in a class without generated record value printing; raw exception contents and API Keys are never logged. See [DD-055](../adr/current/DD-055.md).
 

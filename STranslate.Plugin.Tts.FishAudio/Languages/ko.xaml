@@ -55,7 +55,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">음량</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">음량 오프셋 (dB), 양수는 증가, 음수는 감소</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">라우드니스 정규화</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">s2-pro, s2.1-pro, s2.1-pro-free에서 지원</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2 시리즈 모델에서 지원</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">출력 형식</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 비트레이트 (kbps)</sys:String>

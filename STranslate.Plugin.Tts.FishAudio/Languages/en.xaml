@@ -55,7 +55,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">Volume</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">Volume offset in dB, positive to increase, negative to decrease</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">Normalize Loudness</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">Supported by s2-pro, s2.1-pro, and s2.1-pro-free</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">Supported by models in the S2 series</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">Output Format</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 Bitrate (kbps)</sys:String>

@@ -32,7 +32,7 @@ internal static class FishAudioApi
             ["format"] = "mp3",
             ["mp3_bitrate"] = settings.Mp3Bitrate,
             ["temperature"] = settings.Temperature,
-            ["top_p"] = settings.TopP,
+            ["top_p"] = SettingsNormalizer.NormalizeTopP(settings.TopP),
             ["normalize"] = settings.Normalize,
             ["latency"] = settings.Latency,
             ["condition_on_previous_chunks"] = settings.ConditionOnPreviousChunks,

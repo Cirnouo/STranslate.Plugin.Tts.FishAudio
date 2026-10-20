@@ -60,7 +60,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量偏移 (dB)，正值增大、负值减小</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">响度归一化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">支持 s2-pro、s2.1-pro 和 s2.1-pro-free</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">支持 S2 系列模型</sys:String>
 
     <!-- 音频输出 -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">输出格式</sys:String>

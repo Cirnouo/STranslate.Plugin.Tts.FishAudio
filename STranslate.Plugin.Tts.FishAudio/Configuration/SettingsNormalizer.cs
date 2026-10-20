@@ -2,6 +2,7 @@ namespace STranslate.Plugin.Tts.FishAudio.Configuration;
 
 public static class SettingsNormalizer
 {
+    public const double MinimumTopP = 0.05;
     public static IReadOnlyList<string> Latencies { get; } = ["normal", "balanced", "low"];
     public static IReadOnlyList<int> Mp3Bitrates { get; } = [64, 128, 192];
     public static IReadOnlyList<string> AudioFormats { get; } = ["pcm", "mp3"];
@@ -34,10 +35,20 @@ public static class SettingsNormalizer
         settings.Volume = volume;
         changed |= NormalizeRangeAndStep(settings.Temperature, 0.0, 1.0, 0.05m, Settings.DefaultTemperature, out var temperature);
         settings.Temperature = temperature;
-        changed |= NormalizeRangeAndStep(settings.TopP, 0.0, 1.0, 0.05m, Settings.DefaultTopP, out var topP);
+        NormalizeRangeAndStep(settings.TopP, 0.0, 1.0, 0.05m, Settings.DefaultTopP, out var topP);
+        topP = NormalizeTopP(topP);
+        changed |= topP != settings.TopP;
         settings.TopP = topP;
 
         return changed;
+    }
+
+    // Client compatibility floor; the provider's published numeric domain still includes zero.
+    public static double NormalizeTopP(double value)
+    {
+        if (!double.IsFinite(value) || value < 0 || value > 1)
+            return Settings.DefaultTopP;
+        return Math.Max(MinimumTopP, value);
     }
 
     public static bool NormalizeSelectedModel(Settings settings, DateTimeOffset nowUtc)

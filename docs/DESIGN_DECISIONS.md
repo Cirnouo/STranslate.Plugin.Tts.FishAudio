@@ -227,3 +227,7 @@ Moved to [current DD-055](adr/current/DD-055.md).
 ## DD-056: Share selection state across every voice card
 
 Moved to [current DD-056](adr/current/DD-056.md).
+
+## DD-057: Keep nucleus sampling above zero as a client compatibility rule
+
+Moved to [current DD-057](adr/current/DD-057.md).

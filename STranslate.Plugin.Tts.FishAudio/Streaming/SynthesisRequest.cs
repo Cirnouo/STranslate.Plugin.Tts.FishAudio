@@ -14,7 +14,7 @@ internal sealed class SynthesisRequest(Settings settings)
     internal double Volume { get; } = settings.Volume;
     internal bool NormalizeLoudness { get; } = settings.NormalizeLoudness;
     internal double Temperature { get; } = settings.Temperature;
-    internal double TopP { get; } = settings.TopP;
+    internal double TopP { get; } = SettingsNormalizer.NormalizeTopP(settings.TopP);
     internal bool Normalize { get; } = settings.Normalize;
     internal string Latency { get; } = settings.Latency;
     internal bool ConditionOnPreviousChunks { get; } = settings.ConditionOnPreviousChunks;
