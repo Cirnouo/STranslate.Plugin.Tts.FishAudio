@@ -27,6 +27,7 @@ internal static partial class PreviewSuite
                 AssertEqual(true, stream.Disposed, "Rejected resource stream must be disposed");
                 AssertEqual(true, stream.BytesRead <= PreviewAudioDownloader.MaximumBytes + 1, "Copy must read at most cap plus one byte");
                 AssertEqual(SettingsViewModel.PreviewPlaybackFailedKey, scenario.Snackbar.LastError, "Download rejection should use the playback error");
+                AssertEqual(null, scenario.ViewModel.PreparingPreviewVoiceId, "Rejected downloads must clear the preparation indicator");
             }
             using (var scenario = new PreviewScenario(search))
             {
@@ -97,11 +98,15 @@ internal static partial class PreviewSuite
         };
         var first = scenario.PlayAsync();
         await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        AssertEqual(scenario.Id, scenario.ViewModel.PreparingPreviewVoiceId, "Pending downloads must show the preparation indicator");
         if (trigger == "second-click") await scenario.PlayAsync();
         else if (trigger == "voice-change") scenario.ViewModel.VoiceId = "22222222222222222222222222222222";
         else if (trigger == "results-replaced") scenario.ViewModel.SearchResults = [];
         else scenario.ViewModel.Dispose();
         AssertEqual(true, cancelled, "Stop/switch/removal/dispose must cancel the pending host request");
+        AssertEqual(null, scenario.ViewModel.PreparingPreviewVoiceId, "Stop/switch/removal/dispose must clear preparation before the held response returns");
+        AssertEqual(false, scenario.ViewModel.IsDisplayVoicePreparing, "Stop/switch/removal/dispose must clear selected preparation");
+        AssertEqual(false, scenario.Item.IsPreparingPreview, "Stop/switch/removal/dispose must clear search preparation");
         var late = new CountingPreviewStream(3);
         release.SetResult(late);
         await first.WaitAsync(TimeSpan.FromSeconds(2));
@@ -154,12 +159,15 @@ internal static partial class PreviewSuite
             return Task.FromResult<Stream>(body);
         };
         var plays = 0;
+        string? preparingVoiceId = null;
         using var coordinator = new PreviewRefreshCoordinator(CreateContext(snackbar, settings, service),
             () => settings.VoiceId, () => settings.CachedVoice?.SampleAudioUrl,
             () => settings.VoiceId, () => settings.VoiceId, () => [], () => null, () => { },
-            (_, buffer) => { plays++; buffer.Dispose(); }, update => update(settings), _ => { }, (_, _, _, _) => "", () => false, clock);
+            (_, buffer) => { plays++; buffer.Dispose(); }, update => update(settings), _ => { }, (_, _, _, _) => "", () => false, clock,
+            applyPreparingState: id => preparingVoiceId = id);
         var pending = coordinator.ToggleDisplayPreviewAsync();
         await body.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        AssertEqual(settings.VoiceId, preparingVoiceId, "The shared refresh/download deadline must keep preparation visible while its body is pending");
         clock.Advance(TimeSpan.FromSeconds(5));
         AssertEqual(false, body.Token.IsCancellationRequested, "The whole budget should still have one second remaining");
         clock.Advance(TimeSpan.FromSeconds(1));
@@ -167,6 +175,7 @@ internal static partial class PreviewSuite
         AssertEqual(true, body.Token.IsCancellationRequested, "Body reading must stop at the original 15-second deadline");
         AssertEqual(true, body.Disposed, "Timed-out body must close");
         AssertEqual(0, plays, "A timed-out preparation must not start a player");
+        AssertEqual(null, preparingVoiceId, "The operation deadline must clear preparation after failure");
         AssertEqual(SettingsViewModel.PreviewPlaybackFailedKey, snackbar.LastError, "A still-current timeout should report failure");
     }
 
@@ -228,6 +237,7 @@ internal static partial class PreviewSuite
         internal SettingsViewModel ViewModel { get; }
         private readonly bool _search;
         private readonly VoiceSearchItem _item;
+        internal VoiceSearchItem Item => _item;
         internal PreviewScenario(bool search)
         {
             _search = search;

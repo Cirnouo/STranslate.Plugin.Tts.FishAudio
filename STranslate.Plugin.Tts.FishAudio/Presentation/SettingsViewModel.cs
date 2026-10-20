@@ -208,9 +208,19 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial double PreviewProgress { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDisplayVoicePreviewActive))]
     public partial bool IsDisplayVoicePreviewing { get; set; }
 
-    private VoiceSearchItem? _previewingSearchItem;
+    [ObservableProperty]
+    public partial string? PreparingPreviewVoiceId { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDisplayVoicePreviewActive))]
+    public partial bool IsDisplayVoicePreparing { get; set; }
+
+    public bool IsDisplayVoicePreviewActive => IsDisplayVoicePreparing || IsDisplayVoicePreviewing;
+
+    private readonly List<VoiceSearchItem> _previewStateItems = [];
     private bool _isDisposed;
     private bool _suppressSettingsSave;
 
@@ -318,7 +328,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             updateSettingsAndSave: update => UpdateSettingsAndSave(update),
             applyCachedVoice: ApplyCachedVoice,
             resolveCoverImageUrl: ResolveCoverImageUrl,
-            isFacadeDisposed: () => _isDisposed);
+            isFacadeDisposed: () => _isDisposed,
+            applyPreparingState: ApplyPreviewPreparingState,
+            runOnUiThread: RunOnUiThread);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -518,6 +530,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         UpdatePreviewState();
     }
 
+    private void ApplyPreviewPreparingState(string? voiceId)
+    {
+        PreparingPreviewVoiceId = voiceId;
+        UpdatePreviewState();
+    }
+
     private void HandlePreviewPlaybackFailed(Exception? exception)
     {
         if (_isDisposed)
@@ -532,38 +550,26 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private void UpdatePreviewState()
     {
         IsDisplayVoicePreviewing = CachedVoiceId is not null && CachedVoiceId == PreviewingVoiceId;
+        IsDisplayVoicePreparing = CachedVoiceId is not null && CachedVoiceId == PreparingPreviewVoiceId;
 
-        if (_previewingSearchItem is not null)
+        foreach (var item in _previewStateItems)
         {
-            _previewingSearchItem.IsBeingPreviewed = false;
-            _previewingSearchItem.PreviewProgress = 0;
-            _previewingSearchItem = null;
+            item.IsBeingPreviewed = false;
+            item.IsPreparingPreview = false;
+            item.PreviewProgress = 0;
         }
+        _previewStateItems.Clear();
 
-        if (PreviewingVoiceId is not null)
+        foreach (var item in SearchResults)
         {
-            _previewingSearchItem = SearchResults.FirstOrDefault(x => x.Id == PreviewingVoiceId);
-            if (_previewingSearchItem is not null)
-            {
-                _previewingSearchItem.IsBeingPreviewed = true;
-                _previewingSearchItem.PreviewProgress = PreviewProgress;
-            }
-        }
-    }
-
-    private void SyncPreviewStateToResults()
-    {
-        _previewingSearchItem = null;
-        if (PreviewingVoiceId is not null)
-        {
-            _previewingSearchItem = SearchResults.FirstOrDefault(x => x.Id == PreviewingVoiceId);
-            if (_previewingSearchItem is not null)
-            {
-                _previewingSearchItem.IsBeingPreviewed = true;
-                _previewingSearchItem.PreviewProgress = PreviewProgress;
-            }
+            item.IsBeingPreviewed = PreviewingVoiceId is not null && item.Id == PreviewingVoiceId;
+            item.IsPreparingPreview = PreparingPreviewVoiceId is not null && item.Id == PreparingPreviewVoiceId;
+            item.PreviewProgress = item.IsBeingPreviewed ? PreviewProgress : 0;
+            if (item.IsBeingPreviewed || item.IsPreparingPreview) _previewStateItems.Add(item);
         }
     }
+
+    private void SyncPreviewStateToResults() => UpdatePreviewState();
 
     // ── 清除声音 ──
 
@@ -594,6 +600,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             CachedVoiceAuthor = null;
             CachedVoiceSampleUrl = null;
             CachedVoiceTaskCount = 0;
+            UpdatePreviewState();
             return;
         }
 
@@ -610,7 +617,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         CachedVoiceSampleUrl = cached.SampleAudioUrl;
         CachedVoiceTaskCount = cached.TaskCount;
 
-        IsDisplayVoicePreviewing = CachedVoiceId == PreviewingVoiceId;
+        UpdatePreviewState();
     }
 
     // ── 缓存管理 ──
@@ -698,6 +705,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         {
             case nameof(SearchResults):
                 _previewRefreshCoordinator.OnSearchResultsChanged();
+                SyncPreviewStateToResults();
                 return;
             case nameof(ApiKey):
                 updateSettings = settings => settings.ApiKey = ApiKey;

@@ -29,6 +29,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">選択</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">選択済</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">試聴</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">試聴を準備中… クリックしてキャンセル</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">試聴を停止</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">一時停止</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">クリア</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">人気度</sys:String>

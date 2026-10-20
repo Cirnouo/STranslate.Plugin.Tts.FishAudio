@@ -29,6 +29,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">선택</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">선택됨</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">미리듣기</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">미리듣기 준비 중… 클릭하여 취소</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">미리듣기 중지</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">일시정지</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">지우기</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">인기도</sys:String>

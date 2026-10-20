@@ -21,7 +21,14 @@ public partial class VoiceSearchItem : ObservableObject
     public partial string CoverImage { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPreviewActive))]
     public partial bool IsBeingPreviewed { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPreviewActive))]
+    public partial bool IsPreparingPreview { get; set; }
+
+    public bool IsPreviewActive => IsPreparingPreview || IsBeingPreviewed;
 
     [ObservableProperty]
     public partial double PreviewProgress { get; set; }

@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### 修复
+- 修复试听首次点击后等待请求期间仍显示播放三角的问题：已选声音和搜索结果立即显示加载环与取消方块，再次点击同一声音可取消；实际开始播放后才显示播放进度，并补齐五种语言的状态提示与无障碍名称（[#6](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/6)）。
 - 修复搜索结果与已选声音两个试听入口：通过宿主 HTTP 下载公开 sample，再以内存流本地播放，沿用宿主代理；限制下载时长和大小，停止、切换和关闭后不会被迟到结果重新播放（[#2](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/2)）。
 
 ### 变更
