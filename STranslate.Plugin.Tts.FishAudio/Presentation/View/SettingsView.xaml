@@ -371,6 +371,7 @@
                     </TextBox>
                 </DockPanel>
                 <Expander x:Name="VoiceSearchResultsExpander" IsExpanded="True"
+                          Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                           Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchResults}"
                           Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
                     <Expander.Style>
