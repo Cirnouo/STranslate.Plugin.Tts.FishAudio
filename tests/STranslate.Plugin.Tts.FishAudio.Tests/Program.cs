@@ -1,3 +1,10 @@
+if (args.Contains("--inline-numeric-tests"))
+{
+    await SettingsLayoutSuite.InlineNumericInteractionsAsync();
+    Console.WriteLine("Inline numeric regression tests passed.");
+    return;
+}
+
 await StreamingEntrySuite.FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAsync();
 await StreamingEntrySuite.SnapshotStaysImmutableWhileSettingsAreEditedAsync();
 await StreamingEntrySuite.SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync();
@@ -225,7 +232,7 @@ VoiceSelectionToggleSuite.RemovedOriginsCannotApplyOrClearMatchingCurrentCards()
 VoiceSelectionToggleSuite.FailedSelectionWritesKeepAppliedIdentityAndStars();
 await VoiceSelectionToggleSuite.MatchingByIdQueriesInspectWithoutCancelingSelectionAsync();
 
-TopPCompatibilitySuite.ClientFloorKeepsExistingStepsDefaultsAndTemperatureZero();
+TopPCompatibilitySuite.ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero();
 TopPCompatibilitySuite.OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips();
 TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection();
 await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync();

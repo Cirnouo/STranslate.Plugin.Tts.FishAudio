@@ -264,14 +264,14 @@ internal static class SettingsStorageSuite
             TopP = 0.726,
         };
 
-        AssertEqual(true, SettingsNormalizer.Normalize(settings, FishAudioModelPolicy.FreeModelCutoffUtc), "Invalid or off-step structured settings should normalize");
+        AssertEqual(true, SettingsNormalizer.Normalize(settings, FishAudioModelPolicy.FreeModelCutoffUtc), "Invalid or over-precision structured settings should normalize");
         AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "Unavailable model should normalize through runtime policy");
         AssertEqual(Settings.DefaultLatency, settings.Latency, "Invalid latency should normalize to default");
         AssertEqual(Settings.DefaultMp3Bitrate, settings.Mp3Bitrate, "Invalid bitrate should normalize to default");
-        AssertEqual(1.1, settings.Speed, "Speed midpoint should snap to 0.05 away from zero");
+        AssertEqual(1.08, settings.Speed, "Speed midpoint should round to displayed hundredths away from zero");
         AssertEqual(-0.1, settings.Volume, "Negative volume midpoint should snap to 0.1 away from zero");
-        AssertEqual(0.7, settings.Temperature, "Temperature should snap to the nearest 0.05");
-        AssertEqual(0.75, settings.TopP, "TopP should snap to the nearest 0.05");
+        AssertEqual(0.72, settings.Temperature, "Temperature should retain displayed hundredths independently of slider ticks");
+        AssertEqual(0.73, settings.TopP, "TopP should retain displayed hundredths independently of slider ticks");
 
         settings.Speed = double.NaN;
         settings.Volume = double.PositiveInfinity;

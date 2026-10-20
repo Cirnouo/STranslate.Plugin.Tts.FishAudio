@@ -29,13 +29,13 @@ public static class SettingsNormalizer
             changed = true;
         }
 
-        changed |= NormalizeRangeAndStep(settings.Speed, 0.5, 2.0, 0.05m, Settings.DefaultSpeed, out var speed);
+        changed |= NormalizeRangeAndPrecision(settings.Speed, 0.5, 2.0, 2, Settings.DefaultSpeed, out var speed);
         settings.Speed = speed;
-        changed |= NormalizeRangeAndStep(settings.Volume, -10.0, 10.0, 0.1m, Settings.DefaultVolume, out var volume);
+        changed |= NormalizeRangeAndPrecision(settings.Volume, -10.0, 10.0, 1, Settings.DefaultVolume, out var volume);
         settings.Volume = volume;
-        changed |= NormalizeRangeAndStep(settings.Temperature, 0.0, 1.0, 0.05m, Settings.DefaultTemperature, out var temperature);
+        changed |= NormalizeRangeAndPrecision(settings.Temperature, 0.0, 1.0, 2, Settings.DefaultTemperature, out var temperature);
         settings.Temperature = temperature;
-        NormalizeRangeAndStep(settings.TopP, 0.0, 1.0, 0.05m, Settings.DefaultTopP, out var topP);
+        NormalizeRangeAndPrecision(settings.TopP, 0.0, 1.0, 2, Settings.DefaultTopP, out var topP);
         topP = NormalizeTopP(topP);
         changed |= topP != settings.TopP;
         settings.TopP = topP;
@@ -63,11 +63,11 @@ public static class SettingsNormalizer
     internal static bool NeedsSelectedModelNormalization(Settings settings, DateTimeOffset nowUtc) =>
         !FishAudioModelPolicy.GetAvailableModels(nowUtc).Contains(settings.SelectedModel, StringComparer.Ordinal);
 
-    private static bool NormalizeRangeAndStep(
+    private static bool NormalizeRangeAndPrecision(
         double value,
         double min,
         double max,
-        decimal step,
+        int decimalPlaces,
         double defaultValue,
         out double normalized)
     {
@@ -78,7 +78,7 @@ public static class SettingsNormalizer
         }
 
         var decimalValue = (decimal)value;
-        normalized = (double)(Math.Round(decimalValue / step, 0, MidpointRounding.AwayFromZero) * step);
+        normalized = (double)Math.Round(decimalValue, decimalPlaces, MidpointRounding.AwayFromZero);
         return normalized != value;
     }
 }

@@ -22,3 +22,5 @@ This policy applies to production code and regression tests. Preserve observable
 - Prefer behavior tests with fake transports, clocks, storage and audio devices. Avoid tests that duplicate implementation statements or grep source layout unless a real packaging or repository contract requires it.
 
 See [verification](verification.md), [API evidence](api-evidence.md) and the [architecture specification](../specs/architecture-and-lifecycle.md).
+
+Numeric display precision, pointer interaction steps and provider validity are separate contracts. Keep edit drafts separate from persisted values, and verify that a valid off-tick value survives the complete UI/save/reload path. Do not silently quantize precise input merely because a slider uses coarser ticks.

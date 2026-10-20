@@ -10,14 +10,14 @@ internal static class TopPCompatibilitySuite
 {
     private static readonly DateTimeOffset PolicyTime = new(2026, 10, 21, 0, 0, 0, TimeSpan.Zero);
 
-    internal static void ClientFloorKeepsExistingStepsDefaultsAndTemperatureZero()
+    internal static void ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero()
     {
         AssertEqual(0.7, Settings.DefaultTopP, "The client compatibility floor must not change the existing default");
         foreach (var (input, stored, _) in Cases())
         {
             var settings = new Settings { SelectedModel = "s2-pro", TopP = input, Temperature = 0 };
             SettingsNormalizer.Normalize(settings, PolicyTime);
-            AssertEqual(stored, settings.TopP, "TopP normalization must use the client floor, existing step, and invalid-value default");
+            AssertEqual(stored, settings.TopP, "TopP normalization must use the client floor, displayed precision, and invalid-value default");
             AssertEqual(0.0, settings.Temperature, "Temperature zero remains valid independently of the TopP compatibility floor");
             AssertEqual(false, SettingsNormalizer.Normalize(settings, PolicyTime), "A normalized value must not drift or repeatedly require cleanup");
         }
@@ -88,8 +88,8 @@ internal static class TopPCompatibilitySuite
     private static IEnumerable<(double Input, double Stored, double Wire)> Cases() =>
     [
         (0, 0.05, 0.05), (double.Epsilon, 0.05, 0.05), (0.001, 0.05, 0.05), (0.024, 0.05, 0.05), (0.025, 0.05, 0.05),
-        (0.05, 0.05, 0.05), (0.074, 0.05, 0.074), (0.075, 0.1, 0.075), (0.7, 0.7, 0.7),
-        (0.724, 0.7, 0.724), (0.726, 0.75, 0.726), (0.82, 0.8, 0.82), (1, 1, 1),
+        (0.05, 0.05, 0.05), (0.074, 0.07, 0.074), (0.075, 0.08, 0.075), (0.7, 0.7, 0.7),
+        (0.724, 0.72, 0.724), (0.726, 0.73, 0.726), (0.82, 0.82, 0.82), (1, 1, 1),
         (-0.001, 0.7, 0.7), (1.001, 0.7, 0.7), (double.NaN, 0.7, 0.7), (double.PositiveInfinity, 0.7, 0.7), (double.NegativeInfinity, 0.7, 0.7),
     ];
 }

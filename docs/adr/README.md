@@ -81,3 +81,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-055 | [Use the system proxy without plugin network settings](current/DD-055.md) | Current |
 | DD-056 | [Share selection state across every voice card](current/DD-056.md) | Current |
 | DD-057 | [Keep nucleus sampling above zero as a client compatibility rule](current/DD-057.md) | Current |
+| DD-058 | [Separate slider interaction steps from precise numeric editing](current/DD-058.md) | Current |

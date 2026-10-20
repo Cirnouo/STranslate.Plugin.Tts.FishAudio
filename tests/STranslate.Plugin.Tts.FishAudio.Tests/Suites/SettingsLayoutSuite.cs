@@ -21,6 +21,9 @@ using static TestAssertions;
 
 internal static class SettingsLayoutSuite
 {
+    internal static Task InlineNumericInteractionsAsync() => RunOnStaThreadAsync(() =>
+        InlineNumericEditorSuite.Run(CreateThemedView, Layout));
+
     // The host theme caches dispatcher-bound resources, so render these
     // compiled-view cases on one STA, as they are used in the application.
     internal static Task CompiledViewAudioNetworkAndFoldInteractionsAsync() => RunOnStaThreadAsync(() =>
@@ -35,6 +38,7 @@ internal static class SettingsLayoutSuite
         TopPMinimumKeepsSliderTracksAligned();
         ResultTogglesKeepIndependentViewState();
         SharedVoiceCardReflectsMetadataState();
+        InlineNumericEditorSuite.Run(CreateThemedView, Layout);
     });
 
     private static void PcmHidesWholeBitrateCardAndMp3RestoresIt()

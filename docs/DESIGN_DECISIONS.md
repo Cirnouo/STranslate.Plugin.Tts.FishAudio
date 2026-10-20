@@ -231,3 +231,7 @@ Moved to [current DD-056](adr/current/DD-056.md).
 ## DD-057: Keep nucleus sampling above zero as a client compatibility rule
 
 Moved to [current DD-057](adr/current/DD-057.md).
+
+## DD-058: Separate slider interaction steps from precise numeric editing
+
+Moved to [current DD-058](adr/current/DD-058.md).

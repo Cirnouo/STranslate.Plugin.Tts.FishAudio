@@ -12,20 +12,22 @@ API Key and By-ID paste buttons sit inside their inputs at the right edge. The e
 |---|---|
 | API Key / Voice ID | Empty; text is not silently discarded by numeric normalization. API Key accepts the legacy or prefixed shape; Voice ID keeps the existing 32-lowercase-hex validator. |
 | TTS model | Determined by the UTC model policy below; valid saved selection is preserved. |
-| Speed | 1.0; range 0.5–2.0, step 0.05. |
-| Volume | 0.0 dB; range -10–10, step 0.1. This is not a client 0–1 mute/volume scale. |
+| Speed | 1.0; range 0.5–2.0, slider step 0.05, direct entry/storage to two decimal places. |
+| Volume | 0.0 dB; range -10–10, slider step/direct entry precision 0.1. The dB unit stays outside the editor. This is not a client 0–1 mute/volume scale. |
 | Normalize loudness | true; sent only for supported TTS models. |
-| Temperature | 0.7; range 0–1, step 0.05; zero remains valid. |
-| top_p | 0.7; plugin range 0.05–1, step 0.05. This positive client floor avoids the reported zero boundary; it is not a claimed official minimum. |
+| Temperature | 0.7; range 0–1, slider step 0.05, direct entry/storage to two decimal places; zero remains valid. |
+| top_p | 0.7; plugin range 0.05–1, slider step 0.05, direct entry/storage to two decimal places. This positive client floor avoids the reported zero boundary; it is not a claimed official minimum. |
 | Latency | `normal`; supported values `normal`, `balanced`, `low`. |
 | Normalize text | false. |
 | Audio format | PCM for new configurations; PCM/MP3 choices; legacy migration defaults to MP3. |
 | MP3 bitrate | 192; supported values 64/128/192. Retained under PCM; the whole bitrate card is hidden for PCM, visible for MP3, and the value is sent only for MP3. |
 | Condition on previous chunks | true; describes chunks within the same synthesis request. |
 
-Non-finite/out-of-range numeric values use their defaults; valid values snap to their step with midpoint-away-from-zero rounding. PCM sample rate is fixed at 44100, not exposed as another setting. All new fields participate in conversion, cloning, transactional save/rollback, ViewModel initialization and auto-save. CachedVoice contains selected voice display metadata and a sample URL; it is not an audio-byte cache.
+Non-finite/out-of-range stored numeric values use their defaults; valid values round to the displayed decimal precision with midpoint-away-from-zero rounding. Slider interaction steps do not quantize stored direct-entry values. PCM sample rate is fixed at 44100, not exposed as another setting. All new fields participate in conversion, cloning, transactional save/rollback, ViewModel initialization and auto-save. CachedVoice contains selected voice display metadata and a sample URL; it is not an audio-byte cache.
 
-For top_p specifically, stored zero and smaller positive values become at least 0.05 after step rounding; negative/non-finite/>1 values retain the 0.7 fallback. The shared bounds/default/floor guard also protects native and HTTP payloads from raw in-memory settings, while preserving valid fractional request precision such as 0.82. Settings step quantization does not change that request-boundary contract. Normal canonical saves repair old values, while future/duplicate schemas remain read-only. Temperature keeps its separate zero-inclusive rule. Both sliders retain aligned physical track endpoints and value labels. See [DD-057](../adr/current/DD-057.md) and the [official range discrepancy](../references/tts-fields.md#nucleus-sampling-boundary).
+For top_p specifically, stored zero and smaller positive values become at least 0.05 after decimal rounding; negative/non-finite/>1 values retain the 0.7 fallback. The shared bounds/default/floor guard also protects native and HTTP payloads from raw in-memory settings, while preserving valid fractional request precision such as 0.82. Storage precision normalization does not change that request-boundary contract. Normal canonical saves repair old values, while future/duplicate schemas remain read-only. Temperature keeps its separate zero-inclusive rule. Both sliders retain aligned physical track endpoints and value labels. See [DD-057](../adr/current/DD-057.md) and the [official range discrepancy](../references/tts-fields.md#nucleus-sampling-boundary).
+
+All four slider values use a reusable inline numeric editor. Before editing, the number appears as text; clicking it opens a same-size input containing that displayed text, while units remain separate. The draft does not update settings until a valid focus-loss or Enter commit. Escape and invalid, empty, non-finite or out-of-range input restore the committed value. The slider immediately reflects a valid commit, and off-tick values such as 0.82 survive save/reload. Parsing follows the display culture with decimal-point fallback. See [DD-058](../adr/current/DD-058.md) and the [compiled editor suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/InlineNumericEditorSuite.cs).
 
 REST metadata, credit and sample downloads retain host HTTP routing. Native WebSocket always uses the system proxy (`HttpClient.DefaultProxy`) and exposes no plugin proxy settings or network group. Former `StreamingProxyMode` and `StreamingProxyAddress` fields are obsolete: their values are ignored and removed on ordinary canonical saves without changing schema 2. Old direct/custom/invalid values cannot affect routing or block synthesis. Future/duplicate-schema read-only protection remains active. Private request values are captured in a class without generated record value printing; raw exception contents and API Keys are never logged. See [DD-055](../adr/current/DD-055.md).
 
