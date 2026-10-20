@@ -4,6 +4,9 @@ using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Runtime;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 
 namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
@@ -11,9 +14,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
 {
     internal const string PreviewUnavailableKey = "STranslate_Plugin_Tts_FishAudio_Preview_Unavailable";
     internal const string PreviewRefreshFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed";
-
+    private const string PreviewPlaybackFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed";
     private const string PreviewApiToken = "dummy";
-
     private readonly IPluginContext _context;
     private readonly Func<string?> _getCachedVoiceId;
     private readonly Func<string?> _getCachedVoiceSampleUrl;
@@ -22,32 +24,27 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     private readonly Func<List<VoiceSearchItem>> _getSearchResults;
     private readonly Func<string?> _getPreviewingVoiceId;
     private readonly Action _stopPreview;
-    private readonly Action<string, string> _togglePreview;
+    private readonly Action<string, MemoryStream> _togglePreview;
     private readonly Func<Func<Settings, bool>, bool> _updateSettingsAndSave;
     private readonly Action<CachedVoiceInfo?> _applyCachedVoice;
     private readonly Func<string, string, int, Action<string>?, string> _resolveCoverImageUrl;
     private readonly Func<bool> _isFacadeDisposed;
+    private readonly PreviewAudioDownloader _downloader;
+    private readonly TimeProvider _timeProvider;
     private readonly object _displayPreviewOperationGate = new();
-
     private long _displayPreviewOperationId;
     private bool _isDisposed;
     private CancellationTokenSource? _displayPreviewCancellationTokenSource;
     private PreviewRefreshTarget? _displayPreviewOperationTarget;
+    private PreviewRefreshTarget? _playbackTarget;
 
-    internal PreviewRefreshCoordinator(
-        IPluginContext context,
-        Func<string?> getCachedVoiceId,
-        Func<string?> getCachedVoiceSampleUrl,
-        Func<string> getVoiceId,
-        Func<string> getSettingsVoiceId,
-        Func<List<VoiceSearchItem>> getSearchResults,
-        Func<string?> getPreviewingVoiceId,
-        Action stopPreview,
-        Action<string, string> togglePreview,
-        Func<Func<Settings, bool>, bool> updateSettingsAndSave,
-        Action<CachedVoiceInfo?> applyCachedVoice,
+    internal PreviewRefreshCoordinator(IPluginContext context, Func<string?> getCachedVoiceId,
+        Func<string?> getCachedVoiceSampleUrl, Func<string> getVoiceId, Func<string> getSettingsVoiceId,
+        Func<List<VoiceSearchItem>> getSearchResults, Func<string?> getPreviewingVoiceId,
+        Action stopPreview, Action<string, MemoryStream> togglePreview,
+        Func<Func<Settings, bool>, bool> updateSettingsAndSave, Action<CachedVoiceInfo?> applyCachedVoice,
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
-        Func<bool> isFacadeDisposed)
+        Func<bool> isFacadeDisposed, TimeProvider? timeProvider = null)
     {
         _context = context;
         _getCachedVoiceId = getCachedVoiceId;
@@ -62,193 +59,146 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         _applyCachedVoice = applyCachedVoice;
         _resolveCoverImageUrl = resolveCoverImageUrl;
         _isFacadeDisposed = isFacadeDisposed;
+        _downloader = new PreviewAudioDownloader(context.HttpService);
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
-    internal async Task ToggleDisplayPreviewAsync()
+    internal Task ToggleDisplayPreviewAsync()
     {
-        var cachedVoiceId = _getCachedVoiceId();
-        var cachedVoiceSampleUrl = _getCachedVoiceSampleUrl();
-        if (string.IsNullOrEmpty(cachedVoiceId) || string.IsNullOrEmpty(cachedVoiceSampleUrl))
-            return;
+        var id = _getCachedVoiceId();
+        var url = _getCachedVoiceSampleUrl();
+        return string.IsNullOrEmpty(id) || string.IsNullOrEmpty(url)
+            ? Task.CompletedTask : ToggleAsync(new(id, null), url);
+    }
 
-        var voiceId = cachedVoiceId;
-        var oldAudioUrl = cachedVoiceSampleUrl;
-        if (_getPreviewingVoiceId() == voiceId)
+    internal Task ToggleSearchItemPreviewAsync(VoiceSearchItem? item) =>
+        item is null || string.IsNullOrEmpty(item.SampleAudioUrl)
+            ? Task.CompletedTask : ToggleAsync(new(item.Id, item), item.SampleAudioUrl);
+
+    private async Task ToggleAsync(PreviewRefreshTarget target, string? audioUrl)
+    {
+        if (_getPreviewingVoiceId() == target.VoiceId)
         {
             CancelDisplayPreviewOperation();
+            _playbackTarget = null;
             _stopPreview();
             return;
         }
-
-        if (!PreviewAudioUrlPolicy.RequiresRefresh(oldAudioUrl, FishAudioClock.LocalUtcNow()))
+        if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var token))
         {
-            CancelDisplayPreviewOperation();
-            StartDisplayPreview(voiceId, oldAudioUrl);
-            return;
-        }
-
-        var target = new PreviewRefreshTarget(voiceId, null);
-        if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var cancellationToken))
-            return;
-
-        try
-        {
-            if (!CanStartPreview("Selected voice preview"))
-                return;
-
-            if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                return;
-
-            ModelEntity? model;
-            try
-            {
-                model = await FishAudioApi.GetModelAsync(_context, PreviewApiToken, voiceId, cancellationToken);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            catch (Exception ex)
-            {
-                if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                    return;
-
-                _context.Logger?.LogWarning(ex, "Selected voice preview refresh failed for voice {VoiceId}", voiceId);
-                ShowPreviewRefreshFailed();
-                return;
-            }
-
-            if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                return;
-
-            if (model is null)
-            {
-                _context.Logger?.LogWarning("Selected voice preview refresh returned no voice for {VoiceId}", voiceId);
-                ShowPreviewRefreshFailed();
-                return;
-            }
-
-            var cached = VoiceDiscoveryCoordinator.CreateCachedVoiceInfo(model);
-            if (!_updateSettingsAndSave(settings =>
-                IsCurrentDisplayPreviewOperation(operationId, target)
-                && TryApplyRefreshedCachedVoice(settings, voiceId, cached)))
-            {
-                return;
-            }
-
-            if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                return;
-
-            _applyCachedVoice(cached);
-
-            if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(cached.SampleAudioUrl, out _))
-            {
-                _context.Snackbar.ShowError(_context.GetTranslation(PreviewUnavailableKey));
-                return;
-            }
-
-            if (PreviewAudioUrlPolicy.RequiresRefresh(cached.SampleAudioUrl, FishAudioClock.LocalUtcNow()))
-            {
-                ShowPreviewRefreshFailed();
-                return;
-            }
-
-            if (IsCurrentDisplayPreviewOperation(operationId, target))
-                StartDisplayPreview(voiceId, cached.SampleAudioUrl!);
-        }
-        finally
-        {
-            CompleteDisplayPreviewOperation(cts);
-        }
-    }
-
-    internal async Task ToggleSearchItemPreviewAsync(VoiceSearchItem? item)
-    {
-        if (item is null || string.IsNullOrEmpty(item.SampleAudioUrl))
-            return;
-
-        if (_getPreviewingVoiceId() == item.Id)
-        {
-            CancelDisplayPreviewOperation();
             _stopPreview();
             return;
         }
-
-        var oldAudioUrl = item.SampleAudioUrl;
-        if (!PreviewAudioUrlPolicy.RequiresRefresh(oldAudioUrl, FishAudioClock.LocalUtcNow()))
-        {
-            CancelDisplayPreviewOperation();
-            if (CanStartPreview("Search result preview"))
-                _togglePreview(item.Id, oldAudioUrl);
-            return;
-        }
-
-        var target = new PreviewRefreshTarget(item.Id, item);
-        if (!TryBeginDisplayPreviewOperation(target, out var operationId, out var cts, out var cancellationToken))
-            return;
-
+        _playbackTarget = null;
+        _stopPreview();
+        MemoryStream? audio = null;
         try
         {
-            if (!CanStartPreview("Search result preview"))
-                return;
-
-            if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                return;
-
-            ModelEntity? model;
-            try
+            if (!CanStartPreview(TargetName(target)) || !IsCurrentDisplayPreviewOperation(operationId, target)) return;
+            if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(audioUrl, out _))
             {
-                model = await FishAudioApi.GetModelAsync(_context, PreviewApiToken, item.Id, cancellationToken);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
+                _context.Logger?.LogWarning("Rejected preview audio URL for voice {VoiceId}: host or scheme is not allowed", target.VoiceId);
                 return;
             }
-            catch (Exception ex)
+            var refreshed = false;
+            if (PreviewAudioUrlPolicy.RequiresRefresh(audioUrl, FishAudioClock.LocalUtcNow()))
             {
-                if (!IsCurrentDisplayPreviewOperation(operationId, target))
+                refreshed = true;
+                audioUrl = await RefreshAsync(operationId, target, token);
+                if (audioUrl is null) return;
+            }
+            while (true)
+            {
+                if (!CanStartPreview(TargetName(target)) || !IsCurrentDisplayPreviewOperation(operationId, target)) return;
+                if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(audioUrl, out var uri))
+                {
+                    ShowError(PreviewUnavailableKey);
                     return;
-
-                _context.Logger?.LogWarning(ex, "Search result preview refresh failed for voice {VoiceId}", item.Id);
-                ShowPreviewRefreshFailed();
-                return;
+                }
+                try { audio = await _downloader.DownloadAsync(uri!, token); break; }
+                catch (HttpRequestException exception) when (!refreshed && exception.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound)
+                {
+                    if (!IsCurrentDisplayPreviewOperation(operationId, target)) return;
+                    refreshed = true;
+                    audioUrl = await RefreshAsync(operationId, target, token);
+                    if (audioUrl is null) return;
+                }
             }
+            if (!IsCurrentDisplayPreviewOperation(operationId, target) || !CanStartPreview(TargetName(target))) return;
+            _togglePreview(target.VoiceId, audio);
+            audio = null; // The controller owns the buffer even if local playback fails.
+            if (!IsCurrentDisplayPreviewOperation(operationId, target)) { _stopPreview(); return; }
+            if (_getPreviewingVoiceId() == target.VoiceId) _playbackTarget = target;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            // Explicit cancellation invalidates the identity; a still-current timeout is a failure.
+            if (IsCurrentIdentity(operationId, target)) ShowError(PreviewPlaybackFailedKey);
+        }
+        catch (Exception exception)
+        {
+            if (!IsCurrentDisplayPreviewOperation(operationId, target)) return;
+            _context.Logger?.LogWarning("Preview download failed for voice {VoiceId} ({ErrorType})", target.VoiceId, exception.GetType().Name);
+            ShowError(PreviewPlaybackFailedKey);
+        }
+        finally { audio?.Dispose(); CompleteDisplayPreviewOperation(cts); }
+    }
 
-            if (!IsCurrentDisplayPreviewOperation(operationId, target))
-                return;
-
+    private async Task<string?> RefreshAsync(long operationId, PreviewRefreshTarget target, CancellationToken token)
+    {
+        try
+        {
+            var model = await FishAudioApi.GetModelAsync(_context, PreviewApiToken, target.VoiceId, token);
+            if (!IsCurrentDisplayPreviewOperation(operationId, target)) return null;
             if (model is null)
             {
-                _context.Logger?.LogWarning("Search result preview refresh returned no voice for {VoiceId}", item.Id);
-                ShowPreviewRefreshFailed();
-                return;
+                _context.Logger?.LogWarning("{Operation} refresh returned no voice for {VoiceId}", TargetName(target), target.VoiceId);
+                ShowError(PreviewRefreshFailedKey);
+                return null;
             }
-
-            ApplyRefreshedSearchItem(item, model);
-
-            if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(item.SampleAudioUrl, out _))
+            string? url;
+            if (target.SearchItem is { } item)
             {
-                _context.Snackbar.ShowError(_context.GetTranslation(PreviewUnavailableKey));
-                return;
+                ApplyRefreshedSearchItem(item, model);
+                url = item.SampleAudioUrl;
             }
-
-            if (PreviewAudioUrlPolicy.RequiresRefresh(item.SampleAudioUrl, FishAudioClock.LocalUtcNow()))
+            else
             {
-                ShowPreviewRefreshFailed();
-                return;
+                var cached = VoiceDiscoveryCoordinator.CreateCachedVoiceInfo(model);
+                if (!_updateSettingsAndSave(settings => IsCurrentDisplayPreviewOperation(operationId, target)
+                    && TryApplyRefreshedCachedVoice(settings, target.VoiceId, cached))) return null;
+                if (!IsCurrentDisplayPreviewOperation(operationId, target)) return null;
+                _applyCachedVoice(cached);
+                url = cached.SampleAudioUrl;
             }
-
-            if (IsCurrentDisplayPreviewOperation(operationId, target)
-                && CanStartPreview("Search result preview playback"))
-            {
-                _togglePreview(item.Id, item.SampleAudioUrl!);
-            }
+            if (!PreviewAudioUrlPolicy.TryCreateAllowedUri(url, out _)) { ShowError(PreviewUnavailableKey); return null; }
+            if (PreviewAudioUrlPolicy.RequiresRefresh(url, FishAudioClock.LocalUtcNow())) { ShowError(PreviewRefreshFailedKey); return null; }
+            return url;
         }
-        finally
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            CompleteDisplayPreviewOperation(cts);
+            if (IsCurrentIdentity(operationId, target)) ShowError(PreviewRefreshFailedKey);
+            return null;
+        }
+        catch (Exception exception)
+        {
+            if (!IsCurrentDisplayPreviewOperation(operationId, target)) return null;
+            _context.Logger?.LogWarning("{Operation} refresh failed for voice {VoiceId} ({ErrorType})", TargetName(target), target.VoiceId, exception.GetType().Name);
+            ShowError(PreviewRefreshFailedKey);
+            return null;
         }
     }
+
+    private static string TargetName(PreviewRefreshTarget target) => target.SearchItem is null ? "Selected voice preview" : "Search result preview";
+    private bool CanStartPreview(string operation)
+    {
+        if (FishAudioRequestPolicy.IsNetworkAvailable()) return true;
+        _context.Logger?.LogWarning("{Operation} preflight failed: Network unavailable", operation);
+        ShowError(FishAudioRequestPolicy.NetworkUnavailableKey);
+        return false;
+    }
+    private void ShowError(string key) => _context.Snackbar.ShowError(_context.GetTranslation(
+        FishAudioRequestPolicy.IsNetworkAvailable() ? key : FishAudioRequestPolicy.NetworkUnavailableKey));
 
     internal static bool TryApplyRefreshedCachedVoice(
         Settings settings,
@@ -291,51 +241,41 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         });
     }
 
-    private bool CanStartPreview(string operation)
+    internal void OnSearchResultsChanged()
     {
-        if (FishAudioRequestPolicy.IsNetworkAvailable())
-            return true;
-
-        _context.Logger?.LogWarning("{Operation} preflight failed: Network unavailable", operation);
-        _context.Snackbar.ShowError(_context.GetTranslation(FishAudioRequestPolicy.NetworkUnavailableKey));
-        return false;
+        var stop = false;
+        lock (_displayPreviewOperationGate)
+        {
+            if (_displayPreviewOperationTarget is { SearchItem: { } pending } && !_getSearchResults().Contains(pending))
+            {
+                ++_displayPreviewOperationId;
+                CancelCurrentDisplayPreviewOperationLocked();
+                stop = true;
+            }
+            if (_playbackTarget is { SearchItem: { } playing } && !_getSearchResults().Contains(playing))
+            {
+                _playbackTarget = null;
+                stop = true;
+            }
+        }
+        if (stop) _stopPreview();
     }
 
-    private void ShowPreviewRefreshFailed()
-    {
-        var key = FishAudioRequestPolicy.IsNetworkAvailable()
-            ? PreviewRefreshFailedKey
-            : FishAudioRequestPolicy.NetworkUnavailableKey;
-        _context.Snackbar.ShowError(_context.GetTranslation(key));
-    }
-
-    private void StartDisplayPreview(string voiceId, string audioUrl)
-    {
-        if (CanStartPreview("Selected voice preview playback"))
-            _togglePreview(voiceId, audioUrl);
-    }
-
-    private bool TryBeginDisplayPreviewOperation(
-        PreviewRefreshTarget target,
-        out long operationId,
-        out CancellationTokenSource cts,
-        out CancellationToken cancellationToken)
+    private bool TryBeginDisplayPreviewOperation(PreviewRefreshTarget target, out long operationId,
+        out CancellationTokenSource cts, out CancellationToken cancellationToken)
     {
         lock (_displayPreviewOperationGate)
         {
-            if (_displayPreviewCancellationTokenSource is not null)
+            operationId = ++_displayPreviewOperationId;
+            var cancelOnly = _displayPreviewCancellationTokenSource is not null && _displayPreviewOperationTarget == target;
+            CancelCurrentDisplayPreviewOperationLocked();
+            if (_isDisposed || _isFacadeDisposed() || cancelOnly)
             {
-                var cancelOnly = _displayPreviewOperationTarget == target;
-                operationId = ++_displayPreviewOperationId;
                 cts = null!;
                 cancellationToken = default;
-                CancelCurrentDisplayPreviewOperationLocked();
-                if (cancelOnly)
-                    return false;
+                return false;
             }
-
-            operationId = ++_displayPreviewOperationId;
-            cts = new CancellationTokenSource();
+            cts = new CancellationTokenSource(PreviewAudioDownloader.Timeout, _timeProvider);
             cancellationToken = cts.Token;
             _displayPreviewCancellationTokenSource = cts;
             _displayPreviewOperationTarget = target;
@@ -346,66 +286,50 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     private bool IsCurrentDisplayPreviewOperation(long operationId, PreviewRefreshTarget target)
     {
         lock (_displayPreviewOperationGate)
-        {
-            if (_isDisposed
-                || _isFacadeDisposed()
-                || _displayPreviewOperationId != operationId
-                || _displayPreviewOperationTarget != target)
-            {
-                return false;
-            }
-        }
+            return IsCurrentIdentity(operationId, target) && _displayPreviewCancellationTokenSource?.IsCancellationRequested == false;
+    }
 
+    private bool IsCurrentIdentity(long operationId, PreviewRefreshTarget target)
+    {
+        lock (_displayPreviewOperationGate)
+        {
+            if (_isDisposed || _isFacadeDisposed() || _displayPreviewOperationId != operationId || _displayPreviewOperationTarget != target) return false;
+        }
         return target.SearchItem is null
-            ? string.Equals(_getVoiceId(), target.VoiceId, StringComparison.Ordinal)
-                && string.Equals(_getSettingsVoiceId(), target.VoiceId, StringComparison.Ordinal)
-            : string.Equals(target.SearchItem.Id, target.VoiceId, StringComparison.Ordinal)
-                && _getSearchResults().Contains(target.SearchItem);
+            ? string.Equals(_getVoiceId(), target.VoiceId, StringComparison.Ordinal) && string.Equals(_getSettingsVoiceId(), target.VoiceId, StringComparison.Ordinal)
+            : string.Equals(target.SearchItem.Id, target.VoiceId, StringComparison.Ordinal) && _getSearchResults().Contains(target.SearchItem);
     }
 
     private void CompleteDisplayPreviewOperation(CancellationTokenSource cts)
     {
         lock (_displayPreviewOperationGate)
         {
-            if (!ReferenceEquals(_displayPreviewCancellationTokenSource, cts))
-                return;
-
+            if (!ReferenceEquals(_displayPreviewCancellationTokenSource, cts)) return;
             _displayPreviewCancellationTokenSource = null;
             _displayPreviewOperationTarget = null;
             cts.Dispose();
         }
     }
-
     private void CancelCurrentDisplayPreviewOperationLocked()
     {
         var cancellation = _displayPreviewCancellationTokenSource;
         _displayPreviewCancellationTokenSource = null;
         _displayPreviewOperationTarget = null;
-        if (cancellation is null)
-            return;
-
-        try
-        {
-            cancellation.Cancel();
-        }
-        finally
-        {
-            cancellation.Dispose();
-        }
+        if (cancellation is null) return;
+        try { cancellation.Cancel(); }
+        finally { cancellation.Dispose(); }
     }
-
     public void Dispose()
     {
         lock (_displayPreviewOperationGate)
         {
-            if (_isDisposed)
-                return;
-
+            if (_isDisposed) return;
             _isDisposed = true;
             ++_displayPreviewOperationId;
             CancelCurrentDisplayPreviewOperationLocked();
         }
+        _playbackTarget = null;
+        _stopPreview();
     }
-
     private readonly record struct PreviewRefreshTarget(string VoiceId, VoiceSearchItem? SearchItem);
 }

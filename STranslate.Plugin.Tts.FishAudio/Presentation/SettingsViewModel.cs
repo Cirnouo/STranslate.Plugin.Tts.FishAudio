@@ -275,7 +275,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             context.Logger,
             ApplyPreviewPlaybackState,
             HandlePreviewPlaybackFailed,
-            previewAudioPlayerFactory);
+            previewAudioPlayerFactory,
+            runOnUiThread: RunOnUiThread);
         _coverImageCacheDisplay = new CoverImageCacheDisplayManager(
             context,
             DownloadCoverImageAsync,
@@ -695,6 +696,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Action<Settings> updateSettings;
         switch (e.PropertyName)
         {
+            case nameof(SearchResults):
+                _previewRefreshCoordinator.OnSearchResultsChanged();
+                return;
             case nameof(ApiKey):
                 updateSettings = settings => settings.ApiKey = ApiKey;
                 break;

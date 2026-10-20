@@ -19,16 +19,19 @@ public class TestHttpServiceProxy : DispatchProxy
     public List<(string Url, Options? Options)> GetOptionsByUrl { get; } = [];
     public string GetResponseJson { get; set; } = "{\"credit\":\"1.00\"}";
     public byte[] GetBytesResponse { get; set; } = new byte[] { 9 };
-    public Stream GetStreamResponse { get; set; } = new MemoryStream(new byte[] { 9 });
+    private Stream? _getStreamResponse;
+    public Stream GetStreamResponse { get => _getStreamResponse ?? new MemoryStream(new byte[] { 9 }); set => _getStreamResponse = value; }
     public byte[] PostBytes { get; set; } = new byte[] { 1 };
     public Exception? GetException { get; set; }
     public Exception? PostException { get; set; }
     public Func<string, Options?, CancellationToken, Task<string>>? GetAsyncHandler { get; set; }
+    public Func<string, Options?, CancellationToken, Task<Stream>>? GetAsStreamAsyncHandler { get; set; }
     public Func<string, object?, Options?, CancellationToken, Task<byte[]>>? PostAsBytesAsyncHandler { get; set; }
     public TaskCompletionSource GetStreamReturned { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public string? LastGetUrl { get; private set; }
     public Options? LastGetOptions { get; private set; }
     public string? LastGetStreamUrl { get; private set; }
+    public List<(string Url, Options? Options)> GetStreamOptionsByUrl { get; } = [];
     public Options? LastGetStreamOptions { get; private set; }
     public string? LastPostUrl { get; private set; }
     public object? LastPostBody { get; private set; }
@@ -77,7 +80,10 @@ public class TestHttpServiceProxy : DispatchProxy
             var hasClientName = args?.Length == 4;
             LastGetStreamUrl = GetStringArgument(args, hasClientName ? 1 : 0);
             LastGetStreamOptions = GetOptionsArgument(args);
-            GetStreamReturned.SetResult();
+            GetStreamOptionsByUrl.Add((LastGetStreamUrl ?? "", LastGetStreamOptions));
+            GetStreamReturned.TrySetResult();
+            if (GetAsStreamAsyncHandler is not null)
+                return GetAsStreamAsyncHandler(LastGetStreamUrl ?? "", LastGetStreamOptions, GetCancellationTokenArgument(args));
             return Task.FromResult(GetStreamResponse);
         }
 
