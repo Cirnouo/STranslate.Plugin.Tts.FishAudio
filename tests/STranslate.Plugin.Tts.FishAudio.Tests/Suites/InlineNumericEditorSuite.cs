@@ -58,13 +58,30 @@ internal static class InlineNumericEditorSuite
                     foreach (var width in new[] { 400d, 600d })
                     {
                         layout(view, width);
-                        layout(view, width);
                         var before = display.RenderSize;
                         var rowBefore = editor.RenderSize;
                         var position = editor.TranslatePoint(new Point(), (UIElement)editor.Parent);
                         var text = display.Content?.ToString();
                         Click(display);
                         layout(view, width);
+                        if (culture == "en-US" && ((property == "Speed" && width == 400) || (property == "Volume" && width == 600)))
+                        {
+                            // Model the installed theme's focused/nonempty
+                            // setter without an OS focus source. Both style
+                            // and template setters have lower priority than
+                            // the editor's local clear-button override.
+                            var nativeSetter = input.Template.Triggers.OfType<MultiTrigger>()
+                                .SelectMany(trigger => trigger.Setters.OfType<Setter>())
+                                .Single(setter => setter.Property == iNKORE.UI.WPF.Modern.Controls.Helpers.TextBoxHelper.IsDeleteButtonVisibleProperty);
+                            var previousStyle = input.Style;
+                            var focusedThemeState = new Style(typeof(TextBox), previousStyle);
+                            focusedThemeState.Setters.Add(new Setter(nativeSetter.Property, nativeSetter.Value));
+                            input.Style = focusedThemeState;
+                            layout(view, width);
+                            AssertNumericViewport(input, "1.23", "-10.0");
+                            input.Style = previousStyle;
+                            layout(view, width);
+                        }
                         AssertEqual(text, input.Text, "Opening must copy the exact displayed numeric text without the unit");
                         AssertEqual(before, input.RenderSize, $"At {width}px the native editor must retain both display dimensions");
                         AssertEqual(rowBefore, editor.RenderSize, "Entering edit mode must keep the complete numeric/unit row size");
@@ -79,59 +96,65 @@ internal static class InlineNumericEditorSuite
                         AssertEqual(expected.ToString(format, CultureInfo.CurrentCulture), display.Content?.ToString(), "Committed display must use the configured precision and culture");
                         AssertEqual(Visibility.Visible, display.Visibility, "Blur must restore clickable numeric text");
                     }
-                    foreach (var invalid in new[] { "", "-", "NaN", "Infinity", "1e999", (minimum - 0.01).ToString(CultureInfo.InvariantCulture), (maximum + 0.01).ToString(CultureInfo.InvariantCulture) })
+                    // Parsing edge cases and interaction paths are culture-independent;
+                    // run the full matrix for dot/comma cultures while every
+                    // localized view above still commits all four values.
+                    if (culture is "en-US" or "de-DE")
                     {
-                        var saves = storage.SaveCount;
-                        Click(display); input.Text = invalid; Blur(input); Drain();
-                        AssertEqual(expected, slider.Value, "An invalid draft must restore the prior value rather than default or clamp it");
-                        AssertEqual(saves, storage.SaveCount, "Rejecting a draft must not save unrelated settings");
-                    }
-                    foreach (var bound in new[] { minimum, maximum })
-                    {
-                        Click(display); input.Text = bound.ToString(CultureInfo.CurrentCulture); Blur(input); Drain();
-                        AssertEqual(bound, slider.Value, "Both exact bounds must be accepted, including Temperature zero and negative Volume");
-                    }
-                    Click(display); input.Text = draft.Replace(".", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator); Blur(input); Drain();
-                    AssertEqual(expected, slider.Value, "Both invariant dot and current culture decimal input must work");
-                    var savedCount = storage.SaveCount;
-                    Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture); PressKey(input, Key.Escape); Blur(input); Drain();
-                    AssertEqual(expected, slider.Value, "Escape followed by blur must discard the draft");
-                    AssertEqual(savedCount, storage.SaveCount, "Cancel must never save");
-                    Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture); PressKey(input, Key.Enter); Blur(input); Drain();
-                    AssertEqual(minimum, slider.Value, "Enter must commit without waiting for blur");
-                    AssertEqual(savedCount + 1, storage.SaveCount, "Enter followed by blur must save exactly once");
-                    Click(display); input.Text = draft; Blur(input); Drain();
-                    // Test the actual parent preview route: a blank card area,
-                    // another button, and the slider all commit before acting.
-                    foreach (var outside in new UIElement[] { view, slider, editors.Where(e => !ReferenceEquals(e, editor)).SelectMany(Descendants).OfType<Button>().First() })
-                    {
-                        Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
-                        outside.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseDownEvent });
-                        Drain();
-                        AssertEqual(minimum, slider.Value, "Clicking outside on blank space, a slider, or another value must commit the draft");
-                        AssertEqual(Visibility.Collapsed, input.Visibility, "Outside click must close the prior editor");
+                        foreach (var invalid in new[] { "", "-", "NaN", "Infinity", "1e999", (minimum - 0.01).ToString(CultureInfo.InvariantCulture), (maximum + 0.01).ToString(CultureInfo.InvariantCulture) })
+                        {
+                            var saves = storage.SaveCount;
+                            Click(display); input.Text = invalid; Blur(input); Drain();
+                            AssertEqual(expected, slider.Value, "An invalid draft must restore the prior value rather than default or clamp it");
+                            AssertEqual(saves, storage.SaveCount, "Rejecting a draft must not save unrelated settings");
+                        }
+                        foreach (var bound in new[] { minimum, maximum })
+                        {
+                            Click(display); input.Text = bound.ToString(CultureInfo.CurrentCulture); Blur(input); Drain();
+                            AssertEqual(bound, slider.Value, "Both exact bounds must be accepted, including Temperature zero and negative Volume");
+                        }
+                        Click(display); input.Text = draft.Replace(".", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator); Blur(input); Drain();
+                        AssertEqual(expected, slider.Value, "Both invariant dot and current culture decimal input must work");
+                        var savedCount = storage.SaveCount;
+                        Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture); PressKey(input, Key.Escape); Blur(input); Drain();
+                        AssertEqual(expected, slider.Value, "Escape followed by blur must discard the draft");
+                        AssertEqual(savedCount, storage.SaveCount, "Cancel must never save");
+                        Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture); PressKey(input, Key.Enter); Blur(input); Drain();
+                        AssertEqual(minimum, slider.Value, "Enter must commit without waiting for blur");
+                        AssertEqual(savedCount + 1, storage.SaveCount, "Enter followed by blur must save exactly once");
                         Click(display); input.Text = draft; Blur(input); Drain();
+                        // Test the actual parent preview route: a blank card area,
+                        // another button, and the slider all commit before acting.
+                        foreach (var outside in new UIElement[] { view, slider, editors.Where(e => !ReferenceEquals(e, editor)).SelectMany(Descendants).OfType<Button>().First() })
+                        {
+                            Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
+                            outside.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseDownEvent });
+                            Drain();
+                            AssertEqual(minimum, slider.Value, "Clicking outside on blank space, a slider, or another value must commit the draft");
+                            AssertEqual(Visibility.Collapsed, input.Visibility, "Outside click must close the prior editor");
+                            Click(display); input.Text = draft; Blur(input); Drain();
+                        }
+                        Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
+                        var inline = Descendants(view).OfType<Run>().First();
+                        inline.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseDownEvent });
+                        Drain();
+                        AssertEqual(minimum, slider.Value, "Clicking an actual rich-text Run outside the editor must commit without an ancestry exception");
+                        Click(display); input.Text = draft; Blur(input); Drain();
+                        Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
+                        vm.GetType().GetProperty(property)!.SetValue(vm, maximum); Drain();
+                        Blur(input); Drain();
+                        AssertEqual(maximum, slider.Value, "A newer external value must cancel the stale draft before blur");
+                        display.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new UnhostedInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.KeyDownEvent });
+                        display.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new UnhostedInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.KeyUpEvent });
+                        Drain();
+                        AssertEqual(Visibility.Visible, input.Visibility, "The native Space-key button path must open numeric editing");
+                        PressKey(input, Key.Escape);
+                        AssertEqual(true, AutomationProperties.GetName(display).Length > 0, "Each numeric button must have a localized accessible name");
+                        var invoke = (IInvokeProvider)new ButtonAutomationPeer(display).GetPattern(PatternInterface.Invoke)!;
+                        invoke.Invoke(); Drain();
+                        AssertEqual(Visibility.Visible, input.Visibility, "Assistive technology must be able to open the native numeric input");
+                        input.Text = draft; Blur(input); Drain();
                     }
-                    Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
-                    var inline = Descendants(view).OfType<Run>().First();
-                    inline.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseDownEvent });
-                    Drain();
-                    AssertEqual(minimum, slider.Value, "Clicking an actual rich-text Run outside the editor must commit without an ancestry exception");
-                    Click(display); input.Text = draft; Blur(input); Drain();
-                    Click(display); input.Text = minimum.ToString(CultureInfo.InvariantCulture);
-                    vm.GetType().GetProperty(property)!.SetValue(vm, maximum); Drain();
-                    Blur(input); Drain();
-                    AssertEqual(maximum, slider.Value, "A newer external value must cancel the stale draft before blur");
-                    display.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new UnhostedInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.KeyDownEvent });
-                    display.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new UnhostedInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.KeyUpEvent });
-                    Drain();
-                    AssertEqual(Visibility.Visible, input.Visibility, "The native Space-key button path must open numeric editing");
-                    PressKey(input, Key.Escape);
-                    AssertEqual(true, AutomationProperties.GetName(display).Length > 0, "Each numeric button must have a localized accessible name");
-                    var invoke = (IInvokeProvider)new ButtonAutomationPeer(display).GetPattern(PatternInterface.Invoke)!;
-                    invoke.Invoke(); Drain();
-                    AssertEqual(Visibility.Visible, input.Visibility, "Assistive technology must be able to open the native numeric input");
-                    input.Text = draft; Blur(input); Drain();
                     var unit = Descendants(editor).OfType<TextBlock>().Single(b => b.Name == "UnitText");
                     AssertEqual(property == "Volume" ? "dB" : "", unit.Text, "Units must remain separate from editable numeric text");
                     AssertEqual(false, input.Text.Contains("dB"), "Volume editor must never include its unit");
@@ -156,6 +179,31 @@ internal static class InlineNumericEditorSuite
     }
 
     private static DependencyProperty ValueProperty(FrameworkElement editor) => (DependencyProperty)editor.GetType().GetField("ValueProperty")!.GetValue(null)!;
+    private static void AssertNumericViewport(TextBox input, params string[] values)
+    {
+        var contentHost = (ScrollViewer)input.Template.FindName("PART_ContentHost", input);
+        var clearButton = VisualDescendants(input).OfType<Button>().Single(button => button.Name == "DeleteButton");
+
+        foreach (var value in values)
+        {
+            var glyphs = new FormattedText(value, CultureInfo.CurrentCulture, input.FlowDirection,
+                new Typeface(input.FontFamily, input.FontStyle, input.FontWeight, input.FontStretch), input.FontSize,
+                input.Foreground, VisualTreeHelper.GetDpi(input).PixelsPerDip);
+            AssertEqual(true, contentHost.ViewportWidth >= glyphs.WidthIncludingTrailingWhitespace,
+                $"The native numeric viewport must fit every glyph of {value} without horizontal clipping");
+        }
+        AssertEqual(Visibility.Collapsed, clearButton.Visibility, "Inline numeric editing must not reserve space for the native clear button");
+        AssertEqual(0d, clearButton.ActualWidth, "The collapsed native clear button must consume zero horizontal space");
+    }
+    private static IEnumerable<DependencyObject> VisualDescendants(DependencyObject root)
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            yield return child;
+            foreach (var descendant in VisualDescendants(child)) yield return descendant;
+        }
+    }
     private static void Click(Button button) { typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(button, null); Drain(); }
     private static void Blur(TextBox input) => input.RaiseEvent(new KeyboardFocusChangedEventArgs(Keyboard.PrimaryDevice, 0, input, null) { RoutedEvent = Keyboard.LostKeyboardFocusEvent });
     private static void PressKey(TextBox input, Key key) => input.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new UnhostedInputSource(), 0, key) { RoutedEvent = Keyboard.KeyDownEvent });

@@ -26,20 +26,25 @@ internal static class SettingsLayoutSuite
 
     // The host theme caches dispatcher-bound resources, so render these
     // compiled-view cases on one STA, as they are used in the application.
-    internal static Task CompiledViewAudioNetworkAndFoldInteractionsAsync() => RunOnStaThreadAsync(() =>
+    internal static async Task CompiledViewAudioNetworkAndFoldInteractionsAsync()
     {
-        PcmHidesWholeBitrateCardAndMp3RestoresIt();
-        ReadingNetworkSettingsAreAbsent();
-        FavoriteVoicesTabMatchesPeerTabs();
-        SelectedVoiceStarSharesFavoriteState();
-        PasteButtonsReserveInputSpace();
-        SelectionAndPagingActionsUseBareIcons();
-        LoudnessCardFollowsModelCapability();
-        TopPMinimumKeepsSliderTracksAligned();
-        ResultTogglesKeepIndependentViewState();
-        SharedVoiceCardReflectsMetadataState();
-        InlineNumericEditorSuite.Run(CreateThemedView, Layout);
-    });
+        await RunOnStaThreadAsync(() =>
+        {
+            PcmHidesWholeBitrateCardAndMp3RestoresIt();
+            ReadingNetworkSettingsAreAbsent();
+            FavoriteVoicesTabMatchesPeerTabs();
+            SelectedVoiceStarSharesFavoriteState();
+            PasteButtonsReserveInputSpace();
+            SelectionAndPagingActionsUseBareIcons();
+            LoudnessCardFollowsModelCapability();
+            TopPMinimumKeepsSliderTracksAligned();
+            ResultTogglesKeepIndependentViewState();
+            SharedVoiceCardReflectsMetadataState();
+        });
+        // Keep the same dispatcher and bounded per-group deadline as the
+        // native template/viewport matrix grows.
+        await InlineNumericInteractionsAsync();
+    }
 
     private static void PcmHidesWholeBitrateCardAndMp3RestoresIt()
     {
