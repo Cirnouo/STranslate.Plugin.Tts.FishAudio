@@ -186,7 +186,7 @@ internal static class RepositoryContractSuite
         }
     }
 
-    internal static void PackageReferenceUsesSdk1012()
+    internal static void PackageReferenceUsesSdk1015()
     {
         var project = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
@@ -194,8 +194,8 @@ internal static class RepositoryContractSuite
 
         AssertEqual(
             true,
-            project.Contains("<PackageReference Include=\"STranslate.Plugin\" Version=\"1.0.12\" />", StringComparison.Ordinal),
-            "Plugin project should reference STranslate.Plugin SDK 1.0.12");
+            project.Contains("<PackageReference Include=\"STranslate.Plugin\" Version=\"1.0.15\" />", StringComparison.Ordinal),
+            "Plugin project should reference STranslate.Plugin SDK 1.0.15");
     }
 
     internal static void ReleaseOutputIsIsolatedFromDebugArtifacts()
