@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 升级 STranslate.Plugin SDK 至 1.0.15，适配新增音频数据接口，保留现有朗读入口。
 - 正式朗读改为原生 WebSocket MessagePack 流式合成与本地增量播放；首段按需读取并在播放启动后继续发送长文本，支持 PCM/MP3，不自动重试或回退模型、HTTP/SSE。
 - 设置升级至 SchemaVersion=2：新配置默认 PCM，旧版配置保留 MP3 兼容与有效比特率；新增独立流式代理设置（系统、直连、自定义），REST 查询与试听继续使用宿主 HTTP。
+- 合成模型新增 Drama 3，排序与默认选择独立；免费期前默认免费模型，到期后仍默认 s2.1-pro；Drama 3 和 S1 不发送响度归一化参数。
 - 新朗读会取消并等待旧播放清理；调用方取消、重初始化和关闭会停止所属会话，正常完成会等待真实输出进度排空。
 - 声音搜索适配可访问窗口、近似总量与 `has_more`，区分可访问页数和报告总量；保留旧响应兼容，筛除明确非 TTS 类型并防止旧请求覆盖新分页。
 

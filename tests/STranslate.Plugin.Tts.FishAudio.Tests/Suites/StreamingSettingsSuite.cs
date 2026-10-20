@@ -191,16 +191,17 @@ internal static class StreamingSettingsSuite
 
     internal static void ModelOrderDefaultsAndSavedChoicesStayIndependent()
     {
-        AssertEnumerableEqual(new[] { "s2.1-pro-free", "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(BeforeCutoff), "Free precedes capability groups");
-        AssertEnumerableEqual(new[] { "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(FishAudioModelPolicy.FreeModelCutoffUtc), "Cutoff removes only expired free option");
+        AssertEnumerableEqual(new[] { "s2.1-pro-free", "drama-3", "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(BeforeCutoff), "Free precedes capability groups");
+        AssertEnumerableEqual(new[] { "drama-3", "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(FishAudioModelPolicy.FreeModelCutoffUtc), "Cutoff removes only expired free option");
         AssertEqual("s2.1-pro-free", FishAudioModelPolicy.GetDefaultModel(BeforeCutoff), "Free remains pre-cutoff default");
         AssertEqual("s2.1-pro", FishAudioModelPolicy.GetDefaultModel(FishAudioModelPolicy.FreeModelCutoffUtc), "S2.1 remains post-cutoff default independent of ranking");
-        foreach (var model in new[] { "s2.1-pro", "s2-pro", "s1" })
+        foreach (var model in new[] { "drama-3", "s2.1-pro", "s2-pro", "s1" })
         {
             var settings = new Settings { SelectedModel = model };
             AssertEqual(false, SettingsNormalizer.NormalizeSelectedModel(settings, FishAudioModelPolicy.FreeModelCutoffUtc), "Valid saved choice remains unchanged");
             AssertEqual(model, settings.SelectedModel, "Model ranking never replaces saved choice");
         }
+        AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness("drama-3"), "Drama has no normalize-loudness support");
         AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness("s1"), "S1 remains unsupported");
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness("s2-pro"), "Existing S2 capability remains supported");
     }
@@ -227,11 +228,11 @@ internal static class StreamingSettingsSuite
         vm.StreamingProxyMode = "system";
         AssertEqual(false, vm.HasStreamingProxyValidationError, "System ignores retained invalid address");
         AssertEqual("invalid", settings.StreamingProxyAddress, "Ignoring address never clears it");
-        vm.SelectedModel = "s1";
-        AssertEqual(false, vm.IsNormalizeLoudnessEnabled, "S1 disables loudness switch");
+        vm.SelectedModel = "drama-3";
+        AssertEqual(false, vm.IsNormalizeLoudnessEnabled, "Drama disables loudness switch");
         AssertEqual(true, vm.NormalizeLoudness, "Unsupported model retains stored loudness preference");
         vm.ApplyAvailableModels(FishAudioModelPolicy.FreeModelCutoffUtc);
-        AssertEqual("s1", vm.SelectedModel, "Refreshing model choices preserves S1 selection");
+        AssertEqual("drama-3", vm.SelectedModel, "Refreshing ranked choices preserves Drama selection");
         AssertEqual(true, vm.IsApiKeyInputEnabled, "Format/proxy changes preserve API key lock behavior");
     }
 

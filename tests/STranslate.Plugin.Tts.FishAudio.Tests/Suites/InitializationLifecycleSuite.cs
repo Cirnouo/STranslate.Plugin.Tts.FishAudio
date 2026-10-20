@@ -484,6 +484,7 @@ internal static class InitializationLifecycleSuite
             new[]
             {
                 FishAudioModelPolicy.S21ProFreeModel,
+                FishAudioModelPolicy.Drama3Model,
                 FishAudioModelPolicy.S21ProModel,
                 FishAudioModelPolicy.S2ProModel,
                 FishAudioModelPolicy.S1Model,
@@ -493,7 +494,7 @@ internal static class InitializationLifecycleSuite
         AssertEqual(FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of November 30 UTC");
 
         AssertEnumerableEqual(
-            new[] { FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel, FishAudioModelPolicy.S1Model },
+            new[] { FishAudioModelPolicy.Drama3Model, FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel, FishAudioModelPolicy.S1Model },
             FishAudioModelPolicy.GetAvailableModels(expectedCutoff),
             "Free model should be unavailable at December 1 UTC");
         AssertEqual(FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at December 1 UTC");

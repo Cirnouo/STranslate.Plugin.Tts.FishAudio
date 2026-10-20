@@ -94,7 +94,7 @@ internal static class StreamingSessionSuite
             await CaptureFailureAsync(session.PlayAsync(Request(model), "hello", CancellationToken.None));
             AssertEqual(0, socket.ConnectCount, "Missing or unknown native models must fail before any connection");
         }
-        foreach (var model in new[] { "s1", "s2-pro", "s2.1-pro", "s2.1-pro-free" })
+        foreach (var model in new[] { "s1", "s2-pro", "s2.1-pro", "s2.1-pro-free", "drama-3" })
         foreach (var format in new[] { "pcm", "mp3" })
         {
             var socket = new FishAudioSocketDouble();
