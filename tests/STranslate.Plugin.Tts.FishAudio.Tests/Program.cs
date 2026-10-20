@@ -1,3 +1,4 @@
+await StreamingPlaybackSuite.RunAllAsync();
 ApiKeyCompatibilitySuite.ApiKeyFormatAcceptsLegacyAndPrefixedKeys();
 ApiKeyCompatibilitySuite.ApiKeyFormatRejectsMalformedKeys();
 ApiKeyCompatibilitySuite.VoiceIdFormatRemainsLegacyOnly();
