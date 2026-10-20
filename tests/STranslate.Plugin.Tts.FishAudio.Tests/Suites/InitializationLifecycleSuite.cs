@@ -648,13 +648,15 @@ internal static class InitializationLifecycleSuite
             await startupVoiceSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
             var applyStartupVoiceToUi = await queuedUiApply.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
-            viewModel.SelectVoiceCommand.Execute(new VoiceSearchItem
+            var replacementCard = new VoiceSearchItem
             {
                 Id = replacementVoiceId,
                 Title = "Voice B",
                 Description = "Replacement voice",
                 SampleAudioUrl = "https://audio.example/voice-b.mp3",
-            });
+            };
+            viewModel.SearchResults = [replacementCard];
+            viewModel.SelectVoiceCommand.Execute(replacementCard);
             applyStartupVoiceToUi();
             await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
         }
@@ -775,13 +777,15 @@ internal static class InitializationLifecycleSuite
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        viewModel.SelectVoiceCommand.Execute(new VoiceSearchItem
+        var replacementCard = new VoiceSearchItem
         {
             Id = replacementVoiceId,
             Title = "Voice B",
             Description = "Replacement voice",
             SampleAudioUrl = "https://audio.example/voice-b.mp3",
-        });
+        };
+        viewModel.SearchResults = [replacementCard];
+        viewModel.SelectVoiceCommand.Execute(replacementCard);
 
         releaseResponse.SetResult($$"""
             {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"stale response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}

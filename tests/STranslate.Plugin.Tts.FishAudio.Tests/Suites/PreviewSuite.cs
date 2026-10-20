@@ -919,7 +919,7 @@ internal static partial class PreviewSuite
         var previewTask = viewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null);
         await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
-        viewModel.SelectVoiceCommand.Execute(new VoiceSearchItem
+        var replacementCard = new VoiceSearchItem
         {
             Id = newVoiceId,
             Title = "New Voice",
@@ -927,7 +927,9 @@ internal static partial class PreviewSuite
             AuthorName = "New Author",
             TaskCount = 5,
             SampleAudioUrl = newUrl,
-        });
+        };
+        viewModel.SearchResults = [replacementCard];
+        viewModel.SelectVoiceCommand.Execute(replacementCard);
         var saveCountAfterSwitch = contextProxy.SaveCount;
 
         releaseResponse.SetResult($$"""

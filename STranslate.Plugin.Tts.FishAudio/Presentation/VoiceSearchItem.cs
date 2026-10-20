@@ -8,7 +8,13 @@ public partial class VoiceSearchItem : ObservableObject
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanToggleSelection))]
+    public partial bool IsApplied { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanToggleSelection))]
     public partial bool HasMetadata { get; set; } = true;
+
+    public bool CanToggleSelection => IsApplied || HasMetadata;
     [ObservableProperty]
     public partial bool IsLoadingMetadata { get; set; }
     [ObservableProperty]

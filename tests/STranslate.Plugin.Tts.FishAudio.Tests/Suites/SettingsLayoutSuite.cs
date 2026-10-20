@@ -1,4 +1,5 @@
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio.View;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using System.Reflection;
@@ -26,6 +27,10 @@ internal static class SettingsLayoutSuite
     {
         PcmHidesWholeBitrateCardAndMp3RestoresIt();
         ReadingNetworkSettingsAreAbsent();
+        FavoriteVoicesTabMatchesPeerTabs();
+        SelectedVoiceStarSharesFavoriteState();
+        PasteButtonsReserveInputSpace();
+        SelectionAndPagingActionsUseBareIcons();
         ResultTogglesKeepIndependentViewState();
         SharedVoiceCardReflectsMetadataState();
     });
@@ -134,6 +139,244 @@ internal static class SettingsLayoutSuite
             "Removing the network controls must also remove their group heading");
     }
 
+    private static void FavoriteVoicesTabMatchesPeerTabs()
+    {
+        var settings = new Settings();
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        var favorites = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.SwitchToFavoritesCommand));
+        var search = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.SwitchToSearchCommand));
+        var content = favorites.Content as StackPanel;
+        AssertNotNull(content, "The Favorite Voices tab must have an icon and label like its peer tabs");
+        var icon = content!.Children.OfType<TextBlock>().SingleOrDefault(block => block.FontFamily.Source == "Segoe MDL2 Assets");
+        AssertNotNull(icon, "The Favorite Voices tab must use the same symbol font as Search and By ID");
+        AssertEqual(true, icon!.Text.Length == 1 && icon.Text[0] is >= '\uE000' and <= '\uF8FF',
+            "The Favorite Voices tab must use a symbol-font glyph");
+        var referenceIcon = ((StackPanel)search.Content).Children.OfType<TextBlock>().Single(block => block.FontFamily.Source == "Segoe MDL2 Assets");
+        AssertEqual(referenceIcon.FontSize, icon!.FontSize, "Favorite Voices must use the same tab icon size");
+        AssertEqual(referenceIcon.Margin, icon.Margin, "Favorite Voices must use the same tab icon spacing");
+        AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == "Favorite Voices"),
+            "The tab must display the localized Favorite Voices label");
+        foreach (var (locale, label) in new[] { ("zh-cn", "收藏的声音"), ("zh-tw", "收藏的聲音"), ("ja", "お気に入りの音声"), ("ko", "즐겨찾는 음성") })
+        {
+            view.Resources.MergedDictionaries.Add(new ResourceDictionary
+            {
+                Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml"), UriKind.Absolute),
+            });
+            DrainBindings();
+            AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == label),
+                $"Changing to {locale} must update the compiled tab label");
+        }
+    }
+
+    private static void SelectedVoiceStarSharesFavoriteState()
+    {
+        var id = "0123456789abcdef0123456789abcdef";
+        var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: CreateTempDirectory()), settings);
+        var matching = new VoiceSearchItem { Id = id, Title = "Matching search result" };
+        viewModel.SearchResults = [matching];
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        Layout(view);
+        var selected = Descendants(view).OfType<Button>().SingleOrDefault(button =>
+            BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path == "ToggleSelectedVoiceFavoriteCommand");
+        AssertNotNull(selected, "The selected voice card must expose its own favorite action");
+        AssertEqual(true, selected!.Content is System.Windows.Shapes.Path, "The selected voice favorite must use a vector star");
+        AssertNotNull(selected.Command, "The selected voice favorite command must bind to the live ViewModel");
+        AssertEqual(Visibility.Visible, selected.Visibility, "A selected voice must expose its favorite star");
+        AssertEqual("Add to favorites", AutomationProperties.GetName(selected), "An unbookmarked selected voice must offer Add");
+        var star = (System.Windows.Shapes.Path)selected.Content;
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)star.Fill).Color, "An unbookmarked selected voice must show an outline star");
+
+        typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(selected, null);
+        DrainBindings();
+        AssertEqual(true, matching.IsFavorite, "Favoriting the selected voice must update a matching browse card");
+        AssertEqual("Remove from favorites", AutomationProperties.GetName(selected), "The selected star must reflect the saved favorite state");
+        AssertEqual(Color.FromArgb(255, 255, 200, 87), ((SolidColorBrush)star.Fill).Color, "A saved selected voice must show a filled star");
+        AssertEqual(1, viewModel.FavoriteCount, "The selected-card action must save through the shared favorites store");
+        AssertEqual(id, settings.VoiceId, "Favoriting a selected voice must preserve the applied voice");
+
+        viewModel.ToggleFavoriteCommand.Execute(matching);
+        DrainBindings();
+        AssertEqual("Add to favorites", AutomationProperties.GetName(selected), "Removing a matching browse favorite must update the selected star");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)star.Fill).Color, "Browse removal must restore the selected star outline");
+        AssertEqual(0, viewModel.FavoriteCount, "Browse removal must remove the same persisted favorite");
+        viewModel.ClearVoiceCommand.Execute(null);
+        DrainBindings();
+        AssertEqual(Visibility.Collapsed, selected.Visibility, "Random voice mode must hide the selected-card favorite action");
+    }
+
+    private static void PasteButtonsReserveInputSpace()
+    {
+        var settings = new Settings();
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+        viewModel.BrowseMode = VoiceBrowseMode.ById;
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        var password = Descendants(view).OfType<PasswordBox>().Single();
+        var voiceId = Descendants(view).OfType<TextBox>().Single(box =>
+            BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == nameof(SettingsViewModel.VoiceIdInput));
+        var passwordPaste = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.PasteApiKeyCommand));
+        var voiceIdPaste = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.PasteVoiceIdCommand));
+        foreach (var width in new[] { 400d, 600d })
+        {
+            Layout(view, width);
+            foreach (var (input, paste) in new (Control, Button)[] { (password, passwordPaste), (voiceId, voiceIdPaste) })
+            {
+                var pasteLeft = paste.TranslatePoint(new Point(), input).X;
+                AssertEqual(true, pasteLeft >= 0 && pasteLeft + paste.ActualWidth <= input.ActualWidth,
+                    $"At {width}px Paste must be inside the input's right edge");
+                AssertEqual(true, input.ActualWidth - input.Padding.Right <= pasteLeft,
+                    $"At {width}px the input must reserve real text space before Paste");
+                var textHost = input.Template.FindName("PART_ContentHost", input) as FrameworkElement;
+                AssertNotNull(textHost, "The real input template must expose its text viewport");
+                var viewport = VisualDescendants(textHost!).OfType<ScrollContentPresenter>().Single();
+                AssertEqual(true, viewport.TranslatePoint(new Point(viewport.ActualWidth, 0), input).X <= pasteLeft,
+                    $"At {width}px typed input must not run underneath Paste");
+            }
+        }
+        password.Password = DraftKey;
+        DrainBindings();
+        AssertEqual(DraftKey, viewModel.ApiKey, "Embedding Paste must preserve immediate password updates");
+        var binding = BindingOperations.GetBinding(password, PasswordBoxAssistant.PasswordProperty)!;
+        AssertEqual(BindingMode.TwoWay, binding.Mode, "The embedded API Key input must retain explicit TwoWay binding");
+        AssertEqual(UpdateSourceTrigger.PropertyChanged, binding.UpdateSourceTrigger, "The embedded API Key input must save before focus leaves");
+        var query = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.SubmitVoiceIdCommand));
+        var search = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.SearchVoicesCommand));
+        AssertEqual(true, query.Content is FontIcon, "By ID lookup must use the native search magnifier");
+        AssertEqual(((FontIcon)search.Content).Icon, ((FontIcon)query.Content).Icon, "By ID lookup must match the existing Search magnifier");
+    }
+
+    private static void SelectionAndPagingActionsUseBareIcons()
+    {
+        var id = "0123456789abcdef0123456789abcdef";
+        var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var searchItem = new VoiceSearchItem { Id = id, Title = "Search voice" };
+        var byIdItem = new VoiceSearchItem { Id = id, Title = "By ID voice" };
+        var favoriteItem = new VoiceSearchItem { Id = id, Title = id, HasMetadata = false };
+        viewModel.SearchResults = [searchItem];
+        viewModel.ByIdResults = [byIdItem];
+        viewModel.FavoriteResults = [favoriteItem];
+        viewModel.HasSearched = true;
+        viewModel.SearchPage = 2;
+        viewModel.SearchTotalPages = 3;
+        viewModel.SearchHasNextPage = true;
+        viewModel.FavoritePage = 2;
+        viewModel.FavoriteTotalPages = 3;
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+        {
+            viewModel.BrowseMode = mode;
+            DrainBindings();
+            Layout(view);
+        }
+        var clear = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.ClearVoiceCommand));
+        AssertBareIcon(clear, "\uE711", "Clear");
+        var actions = new[] { searchItem, byIdItem, favoriteItem }.Select(item =>
+            VisualDescendants(view).OfType<Button>().Single(button =>
+                ReferenceEquals(button.Command, viewModel.SelectVoiceCommand) && ReferenceEquals(button.CommandParameter, item))).ToArray();
+        foreach (var action in actions)
+        {
+            AssertBareIcon(action, "\uE711", "Clear");
+            AssertEqual(true, action.IsEnabled, "Every matching card, including an ID-only placeholder, must allow clearing selection");
+            AssertEqual(clear.Template, action.Template, "Selected and browse selection actions must share their bare icon template");
+        }
+        typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(actions[2], null);
+        DrainBindings();
+        AssertEqual("", settings.VoiceId, "A matching placeholder Cross must clear the current selection");
+        AssertEqual(Visibility.Collapsed, clear.Visibility, "Clearing from a browse card must retire the selected-card Cross");
+        foreach (var action in actions)
+            AssertEqual("\uE73E", action.Content, "Clearing selection must return every browse action to Tick");
+        AssertEqual(false, actions[2].IsEnabled, "An unselected placeholder must not apply without metadata");
+        typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(actions[0], null);
+        DrainBindings();
+        AssertEqual(id, settings.VoiceId, "Tick must apply its originating voice");
+        foreach (var action in actions)
+            AssertEqual("\uE711", action.Content, "Applying a voice must synchronize every matching card to Cross");
+
+        foreach (var (command, glyph, name) in new[]
+        {
+            ((System.Windows.Input.ICommand)viewModel.PrevPageCommand, "\uE76B", "Prev"),
+            (viewModel.NextPageCommand, "\uE76C", "Next"),
+            (viewModel.FavoritePrevPageCommand, "\uE76B", "Prev"),
+            (viewModel.FavoriteNextPageCommand, "\uE76C", "Next"),
+        })
+        {
+            var pager = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, command));
+            AssertBareIcon(pager, glyph, name);
+            AssertEqual(clear.Template, pager.Template, "Both pagers must share the selection action's bare icon template");
+        }
+        foreach (var (mode, inputName) in new[] { (VoiceBrowseMode.Search, "PageInputBox"), (VoiceBrowseMode.Favorites, "FavoritePageInputBox") })
+        {
+            viewModel.BrowseMode = mode;
+            DrainBindings();
+            foreach (var width in new[] { 400d, 600d })
+            {
+                Layout(view, width);
+                var input = (TextBox)view.FindName(inputName);
+                var center = (StackPanel)LogicalTreeHelper.GetParent(input);
+                var row = (Grid)LogicalTreeHelper.GetParent(center);
+                var centerX = center.TranslatePoint(new Point(center.ActualWidth / 2, 0), row).X;
+                AssertEqual(true, Math.Abs(centerX - row.ActualWidth / 2) < 0.001,
+                    $"At {width}px the {mode} page input must stay centered between its chevrons");
+            }
+        }
+        viewModel.SearchPage = 1;
+        viewModel.SearchHasNextPage = false;
+        viewModel.FavoritePage = 1;
+        viewModel.FavoriteTotalPages = 1;
+        DrainBindings();
+        foreach (var command in new System.Windows.Input.ICommand[]
+        {
+            viewModel.PrevPageCommand, viewModel.NextPageCommand,
+            viewModel.FavoritePrevPageCommand, viewModel.FavoriteNextPageCommand,
+        })
+            AssertEqual(Visibility.Collapsed, Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, command)).Visibility,
+                "Pager boundaries must still hide unavailable page actions");
+    }
+
+    private static void AssertBareIcon(Button button, string glyph, string action)
+    {
+        button.ApplyTemplate();
+        AssertEqual(glyph, button.Content, "The action must contain only its symbol glyph");
+        AssertEqual("Segoe MDL2 Assets", button.FontFamily.Source, "The action must use the native symbol font");
+        AssertEqual(action, AutomationProperties.GetName(button), "The icon must expose its localized accessible action");
+        AssertEqual(action, button.ToolTip, "The icon must expose its localized tooltip");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)button.Background).Color, "Idle actions must have a transparent background");
+        AssertEqual(new Thickness(0), button.BorderThickness, "Idle actions must have no surrounding border");
+        var circle = VisualDescendants(button).OfType<Border>().FirstOrDefault(border =>
+            border.Child is ContentPresenter && border.CornerRadius.TopLeft >= button.Height / 2);
+        AssertNotNull(circle, "The resolved action template must provide a round hover and focus surface");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)circle!.Background).Color, "The resolved idle template must show only the glyph");
+        AssertEqual(new Thickness(0), circle.BorderThickness, "The resolved idle template must not draw a box");
+        AssertEqual<Style?>(null, button.FocusVisualStyle, "The action must use its circular focus indicator without a rectangular focus adorner");
+        try
+        {
+            SetNativeInputState(button, "IsMouseOver", true);
+            AssertEqual(true, ((SolidColorBrush)circle.Background).Color.A > 0, "Hover must resolve to a visible themed fill");
+        }
+        finally { SetNativeInputState(button, "IsMouseOver", false); }
+        try
+        {
+            SetNativeInputState(button, "IsKeyboardFocused", true);
+            AssertEqual(new Thickness(1), circle.BorderThickness, "Keyboard focus must resolve to the circular outline");
+            AssertEqual(true, ((SolidColorBrush)circle.BorderBrush).Color.A > 0, "Keyboard focus must use a visible themed outline");
+        }
+        finally { SetNativeInputState(button, "IsKeyboardFocused", false); }
+    }
+
+    private static void SetNativeInputState(UIElement element, string name, bool value)
+    {
+        // Drive the native template inputs without opening a desktop window.
+        var key = (DependencyPropertyKey)typeof(UIElement).GetField(name + "PropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        element.SetValue(key, value);
+        DrainBindings();
+    }
+
     private static void SharedVoiceCardReflectsMetadataState()
     {
         var settings = new Settings();
@@ -219,9 +462,10 @@ internal static class SettingsLayoutSuite
     private static SettingsView CreateThemedView(SettingsViewModel viewModel)
     {
         var view = new SettingsView { DataContext = viewModel };
-        view.Resources.MergedDictionaries.Add(new ThemeResources());
+        view.Resources.MergedDictionaries.Add(new ThemeResources { RequestedTheme = ApplicationTheme.Light });
         view.Resources.MergedDictionaries.Add(new XamlControlsResources());
         AddLanguageResources(view);
+        ThemeManager.SetRequestedTheme(view, ElementTheme.Light);
         return view;
     }
 

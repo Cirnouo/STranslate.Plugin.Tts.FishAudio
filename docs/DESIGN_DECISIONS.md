@@ -223,3 +223,7 @@ Moved to [current DD-054](adr/current/DD-054.md).
 ## DD-055: Use the system proxy without plugin network settings
 
 Moved to [current DD-055](adr/current/DD-055.md).
+
+## DD-056: Share selection state across every voice card
+
+Moved to [current DD-056](adr/current/DD-056.md).

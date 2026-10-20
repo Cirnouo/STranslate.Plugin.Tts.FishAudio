@@ -48,6 +48,11 @@ public partial class SettingsViewModel
     public bool ShowFavoritePrevPage => FavoritePage > 1;
     public bool ShowFavoriteNextPage => FavoritePage < FavoriteTotalPages;
     public bool ShowFavoritePagination => FavoriteTotalPages > 1;
+    public bool IsSelectedVoiceFavorite => SettingsValidation.IsValidVoiceIdFormat(VoiceId)
+        && _favoriteIds.Contains(VoiceId, StringComparer.Ordinal);
+
+    [RelayCommand]
+    private void ToggleSelectedVoiceFavorite() => ToggleFavoriteId(VoiceId);
 
     [RelayCommand]
     private void SwitchToFavorites()
@@ -82,9 +87,15 @@ public partial class SettingsViewModel
     [RelayCommand]
     private void ToggleFavorite(VoiceSearchItem? item)
     {
-        if (_isDisposed || item is null || !SettingsValidation.IsValidVoiceIdFormat(item.Id))
+        if (item is not null)
+            ToggleFavoriteId(item.Id);
+    }
+
+    private void ToggleFavoriteId(string voiceId)
+    {
+        if (_isDisposed || !SettingsValidation.IsValidVoiceIdFormat(voiceId))
             return;
-        var add = !_favoriteIds.Contains(item.Id, StringComparer.Ordinal);
+        var add = !_favoriteIds.Contains(voiceId, StringComparer.Ordinal);
         IReadOnlyList<string>? savedIds = null;
         try
         {
@@ -97,12 +108,12 @@ public partial class SettingsViewModel
                 if (_settingsWriteLease is { } lease)
                 {
                     if (!SettingsStore.TryExecuteWithWriteLease(_settings, lease,
-                        () => savedIds = _favoriteStore.SetFavorite(item.Id, add)))
+                        () => savedIds = _favoriteStore.SetFavorite(voiceId, add)))
                         return;
                 }
                 else
                 {
-                    savedIds = _favoriteStore.SetFavorite(item.Id, add);
+                    savedIds = _favoriteStore.SetFavorite(voiceId, add);
                 }
             }
             if (_isDisposed)
@@ -150,7 +161,12 @@ public partial class SettingsViewModel
     {
         var ids = _favoriteIds.ToHashSet(StringComparer.Ordinal);
         foreach (var card in GetVoiceCards())
+        {
             card.IsFavorite = ids.Contains(card.Id);
+            card.IsApplied = SettingsValidation.IsValidVoiceIdFormat(VoiceId)
+                && string.Equals(card.Id, VoiceId, StringComparison.Ordinal);
+        }
+        OnPropertyChanged(nameof(IsSelectedVoiceFavorite));
     }
 
     private void RefreshFavoriteCards()

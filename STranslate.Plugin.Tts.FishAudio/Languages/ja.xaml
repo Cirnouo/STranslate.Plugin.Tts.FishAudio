@@ -105,7 +105,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">音声合成に失敗しました。システムのネットワーク接続とモデルサービスの状態を確認してください。</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">お気に入り</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">お気に入りの音声</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">適用</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">お気に入りに追加</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">お気に入りから削除</sys:String>

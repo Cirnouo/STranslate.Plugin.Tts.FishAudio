@@ -8,7 +8,7 @@ Use these terms consistently in code reviews, specifications, API references and
 | Voice ID | The identifier of a Voice. The plugin stores it as `Settings.VoiceId`. | It is independent of the API Key. |
 | TTS model | The synthesis engine selected by the `model` HTTP header, such as `s2-pro`. | UI discussions should say “TTS model” when “model” could mean a Voice. |
 | Provider model entity | A voice metadata object returned by Fish Audio's `/model` endpoints. | `ModelEntity` and related DTO names follow the provider and remain valid code identifiers. |
-| Selected voice | The voice identity and cached metadata shown in the settings selection area. | A search result can describe the same Voice without being the selected object. |
+| Selected voice | The applied Voice ID and cached metadata shown in the settings selection area. | A card is applied when its ID matches that selection; matching cards still have distinct originating object identities for asynchronous ownership. |
 | Favorite voice | A locally bookmarked Voice ID persisted independently of settings metadata. | Display metadata comes from the same in-memory cache used by search; bookmarking does not select the voice, store audio bytes or modify a provider account. |
 | Voice sample / preview | Provider-supplied sample audio played while browsing voices. | Preview playback does not synthesize the user's text. |
 | Random/default voice | The provider's voice choice when the plugin omits `reference_id`. | Omission is not evidence of free synthesis or stable identity across requests. |

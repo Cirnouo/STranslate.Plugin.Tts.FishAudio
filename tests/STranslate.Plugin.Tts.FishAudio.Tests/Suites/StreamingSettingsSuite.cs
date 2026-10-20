@@ -152,7 +152,7 @@ internal static class StreamingSettingsSuite
             AssertEqual(false, SettingsNormalizer.NormalizeSelectedModel(settings, FishAudioModelPolicy.FreeModelCutoffUtc), "Valid saved choice remains unchanged");
             AssertEqual(model, settings.SelectedModel, "Model ranking never replaces saved choice");
         }
-        AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness("drama-3"), "Drama has no normalize-loudness support");
+        AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness("drama-3"), "Drama normalization stays unavailable until its effect is officially confirmed");
         AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness("s1"), "S1 remains unsupported");
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness("s2-pro"), "Existing S2 capability remains supported");
     }

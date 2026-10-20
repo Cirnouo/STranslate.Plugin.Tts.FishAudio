@@ -530,7 +530,16 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private Task CommitPageInputAsync() => _voiceDiscoveryCoordinator.CommitPageInputAsync();
 
     [RelayCommand]
-    private void SelectVoice(VoiceSearchItem? item) => _voiceDiscoveryCoordinator.SelectVoice(item);
+    private void SelectVoice(VoiceSearchItem? item)
+    {
+        if (_isDisposed || item is null || !GetVoiceCards().Contains(item)
+            || !SettingsValidation.IsValidVoiceIdFormat(item.Id))
+            return;
+        if (string.Equals(item.Id, VoiceId, StringComparison.Ordinal))
+            ClearVoice();
+        else
+            _voiceDiscoveryCoordinator.SelectVoice(item);
+    }
 
     // ── 通过 ID 选择 ──
 
@@ -601,7 +610,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void ClearVoice()
     {
-        SetVoiceIdWithoutSaving("");
         if (!UpdateSettingsAndSave(settings =>
             {
                 settings.VoiceId = "";
@@ -611,6 +619,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             return;
         }
 
+        SetVoiceIdWithoutSaving("");
         ApplyCachedVoice(null);
     }
 
@@ -746,6 +755,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 updateSettings = settings => settings.ApiKey = ApiKey;
                 break;
             case nameof(VoiceId):
+                SyncFavoriteState();
                 _previewRefreshCoordinator.CancelDisplayPreviewOperation();
                 if (_previewPlayback.PreviewingVoiceId is not null
                     && !string.Equals(_previewPlayback.PreviewingVoiceId, VoiceId, StringComparison.Ordinal))
