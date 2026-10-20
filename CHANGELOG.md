@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 变更
+- 升级 STranslate.Plugin SDK 至 1.0.15，适配新增音频数据接口，保留现有朗读入口。
+
+### 工程
+- 为 Pull Request 和 main 分支增加 Windows 构建、回归测试及安装包验证；版本标签继续独立触发发布。
+
 ## [1.1.2] - 2026-10-01
 
 ### Fixed
