@@ -98,4 +98,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">聲音 ID 格式不正確</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">找不到該聲音</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">搜尋結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">展開搜尋結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">收起搜尋結果</sys:String>
 </ResourceDictionary>
