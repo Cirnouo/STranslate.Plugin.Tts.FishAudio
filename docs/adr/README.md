@@ -78,3 +78,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-052 | [Decode incrementally into a bounded PCM ring with an independent pump](current/DD-052.md) | Current |
 | DD-053 | [Preserve MP3 compatibility and make native streaming routing explicit](current/DD-053.md) | Current |
 | DD-054 | [Persist favorite IDs separately and share browsing caches](current/DD-054.md) | Current |
+| DD-055 | [Use the system proxy without plugin network settings](current/DD-055.md) | Current |

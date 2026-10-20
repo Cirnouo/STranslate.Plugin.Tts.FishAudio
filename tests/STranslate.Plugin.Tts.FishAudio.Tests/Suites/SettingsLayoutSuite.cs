@@ -25,7 +25,7 @@ internal static class SettingsLayoutSuite
     internal static Task CompiledViewAudioNetworkAndFoldInteractionsAsync() => RunOnStaThreadAsync(() =>
     {
         PcmHidesWholeBitrateCardAndMp3RestoresIt();
-        ReadingNetworkShowsAddressOnlyForCustomMode();
+        ReadingNetworkSettingsAreAbsent();
         ResultTogglesKeepIndependentViewState();
         SharedVoiceCardReflectsMetadataState();
     });
@@ -118,31 +118,20 @@ internal static class SettingsLayoutSuite
         AssertEqual(Visibility.Visible, searchBody.Visibility, "Accessible favorites toggling must leave search unchanged");
     }
 
-    private static void ReadingNetworkShowsAddressOnlyForCustomMode()
+    private static void ReadingNetworkSettingsAreAbsent()
     {
-        var settings = new Settings { StreamingProxyMode = "system", StreamingProxyAddress = "http://127.0.0.1:7890" };
+        var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
         var view = CreateThemedView(viewModel);
         DrainBindings();
-        var address = Descendants(view).OfType<TextBox>().Single(control =>
-            BindingOperations.GetBinding(control, TextBox.TextProperty)?.Path.Path == nameof(SettingsViewModel.StreamingProxyAddress));
-        var card = Ancestor<SettingsCard>(address);
-        var modes = BoundComboBox(view, nameof(SettingsViewModel.StreamingProxyMode));
-        AssertEqual(Visibility.Collapsed, card.Visibility, "System mode must hide the custom address setting");
-
-        modes.SelectedItem = "custom";
-        DrainBindings();
-        AssertEqual(Visibility.Visible, card.Visibility, "Custom mode must reveal the complete address setting");
-        AssertEqual(true, address.IsEnabled, "A revealed custom address must be editable");
-        AssertEqual("http://127.0.0.1:7890", address.Text, "Changing connection mode must retain the saved custom address");
-        Layout(view);
-        AssertStandardCard(view, modes);
-        AssertStandardCard(view, address);
-
-        modes.SelectedItem = "direct";
-        DrainBindings();
-        AssertEqual(Visibility.Collapsed, card.Visibility, "Direct mode must hide the irrelevant address setting");
-        AssertEqual("http://127.0.0.1:7890", settings.StreamingProxyAddress, "Hiding the address must preserve it for a later Custom selection");
+        var proxyModes = Descendants(view).OfType<ComboBox>().Where(control =>
+            BindingOperations.GetBinding(control, ComboBox.SelectedItemProperty)?.Path.Path == "StreamingProxyMode");
+        var proxyAddresses = Descendants(view).OfType<TextBox>().Where(control =>
+            BindingOperations.GetBinding(control, TextBox.TextProperty)?.Path.Path == "StreamingProxyAddress");
+        AssertEqual(0, proxyModes.Count(), "The compiled view must not contain reading connection settings");
+        AssertEqual(0, proxyAddresses.Count(), "The compiled view must not contain a custom proxy address field");
+        AssertEqual(false, Descendants(view).OfType<TextBlock>().Any(block => block.Text == "Reading Network"),
+            "Removing the network controls must also remove their group heading");
     }
 
     private static void SharedVoiceCardReflectsMetadataState()
@@ -236,10 +225,12 @@ internal static class SettingsLayoutSuite
         return view;
     }
 
-    private static void Layout(FrameworkElement view)
+    private static void Layout(FrameworkElement view, double width = 600)
     {
-        view.Measure(new Size(600, double.PositiveInfinity));
-        view.Arrange(new Rect(0, 0, 600, view.DesiredSize.Height));
+        view.Measure(new Size(width, double.PositiveInfinity));
+        view.Arrange(new Rect(0, 0, width, view.DesiredSize.Height));
+        view.UpdateLayout();
+        DrainBindings();
         view.UpdateLayout();
     }
 

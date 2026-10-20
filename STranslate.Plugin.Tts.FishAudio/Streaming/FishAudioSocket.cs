@@ -1,7 +1,5 @@
-using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
-using STranslate.Plugin.Tts.FishAudio.Configuration;
 
 namespace STranslate.Plugin.Tts.FishAudio.Streaming;
 
@@ -23,29 +21,7 @@ internal sealed class FishAudioSocket : IFishAudioSocket
         _socket.Options.SetRequestHeader("Authorization", $"Bearer {request.ApiKey}");
         _socket.Options.SetRequestHeader("model", request.Model);
         _socket.Options.KeepAliveTimeout = Timeout.InfiniteTimeSpan;
-        _socket.Options.Proxy = CreateProxy(request.ProxyMode, request.ProxyAddress);
-    }
-
-    internal static IWebProxy? CreateProxy(string mode, string address)
-    {
-        if (!SettingsValidation.IsValidStreamingProxyConfiguration(mode, address))
-            throw new InvalidOperationException("Fish Audio streaming proxy configuration is invalid.");
-        if (mode == "system") return HttpClient.DefaultProxy;
-        if (mode == "direct") return null;
-        var uri = new Uri(address, UriKind.Absolute);
-
-        // Never retain credentials in the URI handed to the transport or include the
-        // configured address in an exception. The transport applies credentials separately.
-        var proxyAddress = new UriBuilder(uri) { UserName = "", Password = "" }.Uri;
-        var proxy = new WebProxy(proxyAddress);
-        if (uri.UserInfo.Length > 0)
-        {
-            var separator = uri.UserInfo.IndexOf(':');
-            var user = separator < 0 ? uri.UserInfo : uri.UserInfo[..separator];
-            var password = separator < 0 ? "" : uri.UserInfo[(separator + 1)..];
-            proxy.Credentials = new NetworkCredential(Uri.UnescapeDataString(user), Uri.UnescapeDataString(password));
-        }
-        return proxy;
+        _socket.Options.Proxy = HttpClient.DefaultProxy;
     }
 
     public Task ConnectAsync(CancellationToken cancellationToken) => _socket.ConnectAsync(Endpoint, cancellationToken);

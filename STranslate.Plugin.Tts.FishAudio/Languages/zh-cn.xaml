@@ -113,15 +113,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">展开搜索结果</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">收起搜索结果</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">MP3 在较慢网络上可能更合适。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy">连接方式</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description">通常保持“跟随系统”即可。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_System">跟随系统</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct">直接连接</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom">自定义代理</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address">自定义代理地址</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid">请输入含主机和明确端口的 http、https 或 socks5 代理 URL，不含路径、查询参数或片段；可包含用户名和密码。</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">流式朗读失败，请检查网络、代理设置和模型服务状态。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">语音合成失败，请检查系统网络连接和模型服务状态。</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">收藏声音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">应用</sys:String>
@@ -133,8 +126,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">最多可收藏 300 个声音，请先取消一个收藏再添加。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">当前无法修改收藏。请检查收藏声音文件后重试。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">收藏保存失败，请重试。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Network">朗读网络设置</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Network_Description">仅影响正式朗读。账户、声音搜索和试听使用 STranslate 的网络设置。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">正在加载声音信息…</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">无法读取收藏声音文件。已有收藏会保留；文件恢复可读后才能修改收藏。</sys:String>
 </ResourceDictionary>

@@ -9,8 +9,6 @@ internal sealed class SynthesisRequest(Settings settings)
     internal string VoiceId { get; } = settings.VoiceId;
     internal string Model { get; } = settings.SelectedModel;
     internal string AudioFormat { get; } = settings.AudioFormat;
-    internal string ProxyMode { get; } = settings.StreamingProxyMode;
-    internal string ProxyAddress { get; } = settings.StreamingProxyAddress;
     internal int Mp3Bitrate { get; } = settings.Mp3Bitrate;
     internal double Speed { get; } = settings.Speed;
     internal double Volume { get; } = settings.Volume;

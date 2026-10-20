@@ -91,13 +91,6 @@ public class Main : ITtsPlugin
         }
 
         var request = new SynthesisRequest(operation.Settings);
-        if (!SettingsValidation.IsValidStreamingProxyConfiguration(request.ProxyMode, request.ProxyAddress))
-        {
-            operation.Context.Snackbar.ShowError(operation.Context.GetTranslation(
-                "STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid"));
-            return;
-        }
-
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, operation.LifetimeToken);
         var active = new ActivePlayback(cancellation);
         ActivePlayback? previous;

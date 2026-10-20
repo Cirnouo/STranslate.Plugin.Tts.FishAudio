@@ -14,7 +14,6 @@ internal static class FavoriteSettingsIntegrationSuite
         var storage = new Settings
         {
             ApiKey = AppliedKey, VoiceId = Id(99), SelectedModel = "s2-pro", AudioFormat = "mp3", Mp3Bitrate = 64,
-            StreamingProxyMode = "custom", StreamingProxyAddress = "https://fixture-user:fixture-password@proxy.invalid:8443/",
             Speed = 1.25, Volume = -1.3, Temperature = 0.4, TopP = 0.8, Latency = "low", Normalize = true,
             ConditionOnPreviousChunks = false, CachedVoice = new() { Title = "Selected metadata" },
         };
@@ -34,7 +33,7 @@ internal static class FavoriteSettingsIntegrationSuite
         failedView.ToggleFavoriteCommand.Execute(failedView.FavoriteResults[0]);
         AssertEqual(durableBefore, File.ReadAllText(FilePath(directory)), "Failed removal preserves the last durable ID file");
         AssertEqual(1, failedView.FavoriteCount, "Failed removal preserves the displayed favorite");
-        AssertEqual(before, JsonSerializer.Serialize(runtime), "Favorite success/failure must leave format, bitrate, proxy credentials and all runtime settings untouched");
+        AssertEqual(before, JsonSerializer.Serialize(runtime), "Favorite success/failure must leave format, bitrate and all runtime settings untouched");
         AssertEqual(before, JsonSerializer.Serialize(storage), "Favorite success/failure must not mutate host Settings");
         AssertEqual(before, JsonSerializer.Serialize(snapshot), "Captured synthesis settings must not gain favorite state");
         runtime.CachedVoice!.Title = "Later selected edit";

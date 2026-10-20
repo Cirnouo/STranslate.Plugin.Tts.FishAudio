@@ -271,8 +271,6 @@ public static class SettingsStore
         target.Normalize = source.Normalize;
         target.AudioFormat = source.AudioFormat;
         target.Mp3Bitrate = source.Mp3Bitrate;
-        target.StreamingProxyMode = source.StreamingProxyMode;
-        target.StreamingProxyAddress = source.StreamingProxyAddress;
         target.ConditionOnPreviousChunks = source.ConditionOnPreviousChunks;
         target.CachedVoice = source.CachedVoice is null
             ? null

@@ -127,19 +127,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial int Mp3Bitrate { get; set; }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsCustomStreamingProxy))]
-    [NotifyPropertyChangedFor(nameof(HasStreamingProxyValidationError))]
-    public partial string StreamingProxyMode { get; set; }
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasStreamingProxyValidationError))]
-    public partial string StreamingProxyAddress { get; set; }
-
-    public bool IsCustomStreamingProxy => string.Equals(StreamingProxyMode, "custom", StringComparison.Ordinal);
-    public bool HasStreamingProxyValidationError => IsCustomStreamingProxy
-        && !SettingsValidation.IsValidStreamingProxyAddress(StreamingProxyAddress);
-
     // ── 生成参数 ──
 
     [ObservableProperty]
@@ -271,7 +258,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public static IReadOnlyList<string> Latencies { get; } = SettingsNormalizer.Latencies;
     public static IReadOnlyList<int> Mp3Bitrates { get; } = SettingsNormalizer.Mp3Bitrates;
     public static IReadOnlyList<string> AudioFormats { get; } = SettingsNormalizer.AudioFormats;
-    public static IReadOnlyList<string> StreamingProxyModes { get; } = SettingsNormalizer.StreamingProxyModes;
 
     public SettingsViewModel(
         IPluginContext context,
@@ -381,8 +367,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Normalize = settings.Normalize;
         AudioFormat = settings.AudioFormat;
         Mp3Bitrate = settings.Mp3Bitrate;
-        StreamingProxyMode = settings.StreamingProxyMode;
-        StreamingProxyAddress = settings.StreamingProxyAddress;
         ConditionOnPreviousChunks = settings.ConditionOnPreviousChunks;
 
         UserCredit = "";
@@ -780,8 +764,6 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             case nameof(Normalize): updateSettings = settings => settings.Normalize = Normalize; break;
             case nameof(AudioFormat): updateSettings = settings => settings.AudioFormat = AudioFormat; break;
             case nameof(Mp3Bitrate): updateSettings = settings => settings.Mp3Bitrate = Mp3Bitrate; break;
-            case nameof(StreamingProxyMode): updateSettings = settings => settings.StreamingProxyMode = StreamingProxyMode; break;
-            case nameof(StreamingProxyAddress): updateSettings = settings => settings.StreamingProxyAddress = StreamingProxyAddress; break;
             case nameof(ConditionOnPreviousChunks): updateSettings = settings => settings.ConditionOnPreviousChunks = ConditionOnPreviousChunks; break;
             case nameof(IsS21ProFreePromoDismissed): updateSettings = settings => settings.IsS21ProFreePromoDismissed = IsS21ProFreePromoDismissed; break;
             default: return;

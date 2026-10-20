@@ -20,8 +20,6 @@ internal static class SettingsMigrator
         "Normalize",
         "AudioFormat",
         "Mp3Bitrate",
-        "StreamingProxyMode",
-        "StreamingProxyAddress",
         "ConditionOnPreviousChunks",
         "CachedVoice",
         "CachedModel",
@@ -71,8 +69,6 @@ internal static class SettingsMigrator
             settings.NeedsCanonicalSave = true;
         }
         ReadInt32(properties, "Mp3Bitrate", value => settings.Mp3Bitrate = value, settings);
-        ReadString(properties, "StreamingProxyMode", value => settings.StreamingProxyMode = value, settings);
-        ReadString(properties, "StreamingProxyAddress", value => settings.StreamingProxyAddress = value, settings);
         ReadBoolean(properties, "ConditionOnPreviousChunks", value => settings.ConditionOnPreviousChunks = value, settings);
         ReadCachedVoice(properties, settings);
         ReadBoolean(properties, "IsS21ProFreePromoDismissed", value => settings.IsS21ProFreePromoDismissed = value, settings);

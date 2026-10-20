@@ -951,60 +951,6 @@
             <ui:ToggleSwitch IsOn="{Binding ConditionOnPreviousChunks}" />
         </ui:SettingsCard>
 
-        <!-- ════════ 朗读网络设置 ════════ -->
-
-        <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold"
-                   Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_Network}" />
-        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_Network_Description}" />
-
-        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy}">
-            <ui:SettingsCard.HeaderIcon>
-                <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Globe_24_Regular}" />
-            </ui:SettingsCard.HeaderIcon>
-            <ui:SettingsCard.Description>
-                <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description}" />
-            </ui:SettingsCard.Description>
-            <ComboBox MinWidth="120" ItemsSource="{Binding StreamingProxyModes}" SelectedItem="{Binding StreamingProxyMode}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock>
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding}" Value="system">
-                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_System}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding}" Value="direct">
-                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding}" Value="custom">
-                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-        </ui:SettingsCard>
-
-        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address}"
-                         Visibility="{Binding IsCustomStreamingProxy, Converter={StaticResource BtvConverter}}">
-            <ui:SettingsCard.HeaderIcon>
-                <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.LinkMultiple_24_Regular}" />
-            </ui:SettingsCard.HeaderIcon>
-            <StackPanel MaxWidth="280" MinWidth="180">
-                <TextBox Text="{Binding StreamingProxyAddress, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Margin="0,4,0,0" TextWrapping="Wrap"
-                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                           Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid}"
-                           Visibility="{Binding HasStreamingProxyValidationError, Converter={StaticResource BtvConverter}}" />
-            </StackPanel>
-        </ui:SettingsCard>
-
         <!-- ════════ 其他 ════════ -->
 
         <TextBlock Margin="0,8,0,0" FontSize="14" FontWeight="SemiBold"

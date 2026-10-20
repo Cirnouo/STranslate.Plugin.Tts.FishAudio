@@ -9,15 +9,13 @@ internal static class StreamingSettingsSuite
 {
     private static readonly DateTimeOffset BeforeCutoff = new(2026, 10, 20, 0, 0, 0, TimeSpan.Zero);
 
-    internal static void MissingConfigurationLoadsPcmAndSystemProxy()
+    internal static void MissingConfigurationLoadsPcm()
     {
         var context = CreateContext();
         ((ContextProxy)context).LoadSettings = () => null!;
         var settings = SettingsStore.Load(context, BeforeCutoff, out _);
         AssertEqual(2, settings.SchemaVersion, "Missing configuration starts at schema 2");
         AssertEqual("pcm", settings.AudioFormat, "Missing configuration starts with PCM");
-        AssertEqual("system", settings.StreamingProxyMode, "Missing configuration starts with system proxy");
-        AssertEqual("", settings.StreamingProxyAddress, "Missing configuration has no custom address");
     }
 
     internal static void LegacyFormatsMigrateAndCurrentDefaultsUsePcm()
@@ -38,8 +36,6 @@ internal static class StreamingSettingsSuite
 
         var current = Read("{\"SchemaVersion\":2}");
         AssertEqual("pcm", current.AudioFormat, "Missing schema 2 format uses PCM");
-        AssertEqual("system", current.StreamingProxyMode, "Missing proxy mode uses system");
-        AssertEqual("", current.StreamingProxyAddress, "Missing proxy address is empty");
         AssertEqual(false, current.NeedsCanonicalSave, "Current sparse settings retain existing canonical-save semantics");
 
         AssertEqual("pcm", Read("{\"SchemaVersion\":1,\"AudioFormat\":\"pcm\"}").AudioFormat, "Explicit valid legacy format is preserved");
@@ -87,8 +83,6 @@ internal static class StreamingSettingsSuite
         {
             var settings = Read("{\"SchemaVersion\":2,\"ApiKey\":\"preserved\",\"Mp3Bitrate\":128," + fields + "}");
             AssertEqual("pcm", settings.AudioFormat, "Malformed or duplicate format uses PCM");
-            AssertEqual("system", settings.StreamingProxyMode, "Malformed or duplicate mode uses system");
-            AssertEqual("", settings.StreamingProxyAddress, "Malformed or duplicate address uses empty default");
             AssertEqual("preserved", settings.ApiKey, "Bad streaming fields preserve existing settings");
             AssertEqual(128, settings.Mp3Bitrate, "Bad streaming fields preserve MP3 bitrate");
             AssertEqual(true, settings.NeedsCanonicalSave, "Bad streaming fields require canonical save");
@@ -104,12 +98,8 @@ internal static class StreamingSettingsSuite
         var snapshot = SettingsStore.CaptureSnapshot(original);
         AssertEqual(JsonSerializer.Serialize(original), JsonSerializer.Serialize(snapshot), "Snapshot copies all settings");
         original.AudioFormat = "pcm";
-        original.StreamingProxyMode = "direct";
-        original.StreamingProxyAddress = "";
         original.CachedVoice!.Title = "changed";
         AssertEqual("mp3", snapshot.AudioFormat, "Snapshot format is detached");
-        AssertEqual("custom", snapshot.StreamingProxyMode, "Snapshot mode is detached");
-        AssertEqual("https://name:secret@proxy.test:8443/", snapshot.StreamingProxyAddress, "Snapshot preserves proxy credentials");
         AssertEqual("Saved voice", snapshot.CachedVoice!.Title, "Snapshot deep-copies cached metadata");
     }
 
@@ -121,7 +111,6 @@ internal static class StreamingSettingsSuite
         var candidate = SettingsStore.Load(context, BeforeCutoff, out var lease);
         AssertEqual(baseline, JsonSerializer.Serialize(candidate), "Initialization clone includes every setting");
         candidate.AudioFormat = "pcm";
-        candidate.StreamingProxyMode = "direct";
         ((ContextProxy)context).OnSave = () => throw new InvalidOperationException("Expected save failure");
         try
         {
@@ -133,8 +122,6 @@ internal static class StreamingSettingsSuite
         ((ContextProxy)context).OnSave = null;
         SettingsStore.Save(context, candidate, lease);
         AssertEqual("pcm", storage.AudioFormat, "Successful lease save copies format");
-        AssertEqual("direct", storage.StreamingProxyMode, "Successful lease save copies mode");
-        AssertEqual("https://name:secret@proxy.test:8443/", storage.StreamingProxyAddress, "Switching modes preserves custom address");
 
         var beforeUpdate = JsonSerializer.Serialize(candidate);
         ((ContextProxy)context).OnSave = () => throw new InvalidOperationException("Expected update failure");
@@ -143,8 +130,6 @@ internal static class StreamingSettingsSuite
             SettingsStore.TryUpdateAndSave(context, candidate, lease, updated =>
             {
                 updated.AudioFormat = "mp3";
-                updated.StreamingProxyMode = "custom";
-                updated.StreamingProxyAddress = "socks5://other:1080";
                 updated.ApiKey = "replacement";
                 return true;
             });
@@ -153,40 +138,6 @@ internal static class StreamingSettingsSuite
         catch (InvalidOperationException error) when (error.Message == "Expected update failure") { }
         AssertEqual(beforeUpdate, JsonSerializer.Serialize(candidate), "Failed update preserves runtime snapshot");
         AssertEqual(beforeUpdate, JsonSerializer.Serialize(storage), "Failed update preserves stored snapshot");
-    }
-
-    internal static void ProxyValidationAndNormalizationKeepCredentialsAndModeIntent()
-    {
-        foreach (var address in new[]
-        {
-            "http://localhost:8080", "https://proxy.test:443/", "socks5://127.0.0.1:1080",
-            "http://name:secret@proxy.test:80", "socks5://name:p%40ss@proxy.test:1080", "http://[::1]:8080/",
-        })
-            AssertEqual(true, SettingsValidation.IsValidStreamingProxyAddress(address), "Explicit supported proxy address is valid: " + address);
-        foreach (var address in new[]
-        {
-            "", "proxy.test:8080", "http://proxy.test", "https://proxy.test/", "socks4://proxy.test:1080",
-            "http://proxy.test:0", "http://proxy.test:65536", "http://proxy.test:8080/path", "http://proxy.test:8080/path/..", "http://proxy.test:8080/?q=1",
-            "http://proxy.test:8080/#fragment", "http://proxy.test:8080?", "http://proxy.test:8080#", "http://:8080",
-            " http://proxy.test:8080", "http://proxy.test:8080 ", "http:\\proxy.test:8080", "http://proxy.test:/",
-        })
-            AssertEqual(false, SettingsValidation.IsValidStreamingProxyAddress(address), "Unsupported proxy address is invalid: " + address);
-        AssertEqual(true, SettingsValidation.IsValidStreamingProxyConfiguration("system", "invalid"), "System ignores retained address");
-        AssertEqual(true, SettingsValidation.IsValidStreamingProxyConfiguration("direct", "invalid"), "Direct ignores retained address");
-        AssertEqual(false, SettingsValidation.IsValidStreamingProxyConfiguration("custom", "invalid"), "Invalid custom address fails preflight");
-        AssertEqual(false, SettingsValidation.IsValidStreamingProxyConfiguration("other", "http://proxy.test:8080"), "Unknown mode fails direct validation");
-        var settings = CreatePopulatedSettings();
-        settings.AudioFormat = "wav";
-        settings.StreamingProxyMode = "custom";
-        settings.StreamingProxyAddress = "invalid but retained";
-        SettingsNormalizer.Normalize(settings, BeforeCutoff);
-        AssertEqual("pcm", settings.AudioFormat, "Invalid runtime format falls back to new PCM default");
-        AssertEqual("custom", settings.StreamingProxyMode, "Invalid custom address preserves explicit mode");
-        AssertEqual("invalid but retained", settings.StreamingProxyAddress, "Invalid address stays editable and visible");
-        settings.StreamingProxyMode = "invalid-mode";
-        SettingsNormalizer.Normalize(settings, BeforeCutoff);
-        AssertEqual("system", settings.StreamingProxyMode, "Unknown stored mode uses system default");
-        AssertEqual("invalid but retained", settings.StreamingProxyAddress, "Mode normalization preserves retained address");
     }
 
     internal static void ModelOrderDefaultsAndSavedChoicesStayIndependent()
@@ -206,7 +157,7 @@ internal static class StreamingSettingsSuite
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness("s2-pro"), "Existing S2 capability remains supported");
     }
 
-    internal static void ViewModelFormatProxyAndModelTogglesPreserveSettings()
+    internal static void ViewModelFormatAndModelTogglesPreserveSettings()
     {
         var settings = CreatePopulatedSettings();
         var context = CreateContext(settings: settings, pluginCacheDirectoryPath: CreateTempDirectory());
@@ -218,22 +169,12 @@ internal static class StreamingSettingsSuite
         AssertEqual(64, vm.Mp3Bitrate, "PCM retains remembered MP3 bitrate");
         vm.AudioFormat = "mp3";
         AssertEqual(64, settings.Mp3Bitrate, "Returning to MP3 restores remembered bitrate");
-        AssertEqual(true, vm.IsCustomStreamingProxy, "Custom enables address editing");
-        vm.StreamingProxyMode = "direct";
-        AssertEqual(false, vm.IsCustomStreamingProxy, "Direct disables custom address input");
-        AssertEqual("https://name:secret@proxy.test:8443/", vm.StreamingProxyAddress, "Mode changes preserve credentials");
-        vm.StreamingProxyMode = "custom";
-        vm.StreamingProxyAddress = "invalid";
-        AssertEqual(true, vm.HasStreamingProxyValidationError, "Invalid custom setting is visible");
-        vm.StreamingProxyMode = "system";
-        AssertEqual(false, vm.HasStreamingProxyValidationError, "System ignores retained invalid address");
-        AssertEqual("invalid", settings.StreamingProxyAddress, "Ignoring address never clears it");
         vm.SelectedModel = "drama-3";
         AssertEqual(false, vm.IsNormalizeLoudnessEnabled, "Drama disables loudness switch");
         AssertEqual(true, vm.NormalizeLoudness, "Unsupported model retains stored loudness preference");
         vm.ApplyAvailableModels(FishAudioModelPolicy.FreeModelCutoffUtc);
         AssertEqual("drama-3", vm.SelectedModel, "Refreshing ranked choices preserves Drama selection");
-        AssertEqual(true, vm.IsApiKeyInputEnabled, "Format/proxy changes preserve API key lock behavior");
+        AssertEqual(true, vm.IsApiKeyInputEnabled, "Format changes preserve API key lock behavior");
     }
 
     internal static void StreamingSettingsUiResourcesAreComplete()
@@ -244,7 +185,7 @@ internal static class StreamingSettingsSuite
         foreach (var locale in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
         {
             var document = XDocument.Load(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml"));
-            foreach (var suffix in new[] { "Format_Description", "StreamingProxy", "StreamingProxy_Description", "StreamingProxy_System", "StreamingProxy_Direct", "StreamingProxy_Custom", "StreamingProxy_Address", "StreamingProxy_Invalid", "Streaming_Failed" })
+            foreach (var suffix in new[] { "Format_Description", "Streaming_Failed" })
                 AssertEqual(true, document.Root!.Elements().Any(e => (string?)e.Attribute(x + "Key") == "STranslate_Plugin_Tts_FishAudio_" + suffix && !string.IsNullOrWhiteSpace(e.Value)), $"{locale} translates {suffix}");
         }
     }
@@ -254,7 +195,7 @@ internal static class StreamingSettingsSuite
     private static Settings CreatePopulatedSettings() => new()
     {
         ApiKey = AppliedKey, VoiceId = "0123456789abcdef0123456789abcdef", SelectedModel = "s2-pro",
-        AudioFormat = "mp3", StreamingProxyMode = "custom", StreamingProxyAddress = "https://name:secret@proxy.test:8443/",
+        AudioFormat = "mp3",
         Mp3Bitrate = 64, Speed = 1.25, Volume = -1.3, NormalizeLoudness = true,
         Temperature = 0.4, TopP = 0.8, Latency = "low", Normalize = true, ConditionOnPreviousChunks = false,
         IsS21ProFreePromoDismissed = true,

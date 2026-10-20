@@ -102,15 +102,8 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">Expand search results</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">Collapse search results</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">MP3 may suit slower networks.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy">Connection</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description">Leave System selected in most cases.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_System">System</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct">Direct</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom">Custom</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address">Custom Proxy Address</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid">Enter an http, https, or socks5 proxy URL with a host and explicit port, without a path, query, or fragment. Credentials are optional.</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Streaming speech failed. Check your network, proxy settings, and model service status.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Speech synthesis failed. Check your system network connection and model service status.</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favorites</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Apply</sys:String>
@@ -122,8 +115,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">You can save up to 300 voices. Remove a favorite before adding another.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Favorites are currently read-only. Check the favorites file and try again.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Could not save favorites. Please try again.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Network">Reading Network</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Network_Description">Applies to reading. Account, voice search, and previews use STranslate’s network settings.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Loading voice details…</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Could not read the favorites file. Existing favorites are preserved; changes are unavailable until the file can be read.</sys:String>
 </ResourceDictionary>

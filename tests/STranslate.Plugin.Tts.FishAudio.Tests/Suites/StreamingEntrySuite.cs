@@ -41,8 +41,6 @@ internal static class StreamingEntrySuite
         using var network = OverrideNetworkAvailability(false);
         var settings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);
         settings.AudioFormat = "mp3";
-        settings.StreamingProxyMode = "custom";
-        settings.StreamingProxyAddress = "http://fixture-user:fixture-password@localhost:8080";
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var session = new StreamingSessionDouble { Handler = (_, _, token) => release.Task.WaitAsync(token) };
         using var plugin = CreatePlugin(() => session);
@@ -56,14 +54,9 @@ internal static class StreamingEntrySuite
         viewModel.Speed = 1.75;
         viewModel.Mp3Bitrate = 64;
         viewModel.AudioFormat = "pcm";
-        viewModel.StreamingProxyMode = "direct";
-        viewModel.StreamingProxyAddress = "http://localhost:9090";
         AssertEqual(1.25, session.Request!.Speed, "Later settings edits must not change an active request's prosody");
         AssertEqual(128, session.Request.Mp3Bitrate, "Later settings edits must not change active bitrate");
         AssertEqual("mp3", session.Request.AudioFormat, "Active format must remain immutable");
-        AssertEqual("custom", session.Request.ProxyMode, "Active proxy mode must remain immutable");
-        AssertEqual("http://fixture-user:fixture-password@localhost:8080", session.Request.ProxyAddress,
-            "Active proxy credentials must remain in the private immutable request");
         release.TrySetResult();
         await playback.WaitAsync(TimeSpan.FromSeconds(2));
         AssertEqual(false, viewModel.IsApiKeyInputLocked, "Completion should release only its own key operation");
@@ -125,12 +118,10 @@ internal static class StreamingEntrySuite
         }
     }
 
-    internal static async Task InvalidProxyAndTransportFailuresDoNotExposeCredentialsAsync()
+    internal static async Task TransportFailuresDoNotExposeCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var settings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);
-        settings.StreamingProxyMode = "custom";
-        settings.StreamingProxyAddress = "invalid-private-proxy";
         var logger = new TestLogger();
         var snackbar = new TestSnackbar();
         var session = new StreamingSessionDouble();
@@ -138,16 +129,11 @@ internal static class StreamingEntrySuite
         plugin.Init(CreateContext(snackbar: snackbar, settings: settings, logger: logger));
         await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
         network.Set(true);
-        await plugin.PlayAudioAsync("invalid proxy");
-        AssertEqual(0, session.Calls, "Invalid custom proxy must fail before session creation or connection");
-        AssertEqual("STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid", snackbar.LastError, "Proxy failure should be localized");
-        plugin.GetOrCreateSettingsViewModel().StreamingProxyMode = "direct";
         session.Handler = (_, _, _) => throw new System.IO.InvalidDataException(AppliedKey + " http://user:private-password@localhost:8080");
         await plugin.PlayAudioAsync("transport failure");
         AssertEqual("STranslate_Plugin_Tts_FishAudio_Streaming_Failed", snackbar.LastError, "Transport details must not appear in user errors");
         AssertEqual(false, logger.Contains(AppliedKey), "Transport exceptions must not expose keys through logging");
         AssertEqual(false, logger.Contains("private-password"), "Transport exceptions must not expose proxy authentication through logging");
-        AssertEqual(false, logger.Contains("invalid-private-proxy"), "Invalid proxy addresses must not be logged");
     }
 
     internal static async Task AssertCanceledAsync(Task operation)

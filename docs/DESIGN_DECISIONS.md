@@ -219,3 +219,7 @@ Moved to [current DD-053](adr/current/DD-053.md).
 ## DD-054: Persist favorite IDs separately and share browsing caches
 
 Moved to [current DD-054](adr/current/DD-054.md).
+
+## DD-055: Use the system proxy without plugin network settings
+
+Moved to [current DD-055](adr/current/DD-055.md).
