@@ -45,10 +45,12 @@ internal sealed class CreditRefreshCoordinator : IDisposable
         _isDisposed = isDisposed;
         _apiKeyOperationState = new OperationActivityCounter(
             _operationStateGate,
-            setApiKeyInputLocked);
+            setApiKeyInputLocked,
+            runOnUiThread);
         _creditOperationState = new OperationActivityCounter(
             _operationStateGate,
-            setCreditLoading);
+            setCreditLoading,
+            runOnUiThread);
     }
 
     internal async Task RefreshCreditAsync()

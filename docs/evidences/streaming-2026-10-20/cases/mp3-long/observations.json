@@ -1,0 +1,42 @@
+[
+  {
+    "stage": "Request",
+    "elapsedMs": 0,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "Connected",
+    "elapsedMs": 827.6898,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "PrefixSent",
+    "elapsedMs": 889.6324,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "FirstAudio",
+    "elapsedMs": 3908.7452,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "FirstPcm",
+    "elapsedMs": 3925.4103,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "PlaybackStarted",
+    "elapsedMs": 4021.2191,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "Finish",
+    "elapsedMs": 10308.0964,
+    "origin": "native-completion-observer"
+  },
+  {
+    "stage": "Drained",
+    "elapsedMs": 21512.2896,
+    "origin": "native-completion-observer"
+  }
+]

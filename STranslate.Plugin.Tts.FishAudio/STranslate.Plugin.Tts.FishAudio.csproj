@@ -55,6 +55,7 @@
         <PackageReference Include="STranslate.Plugin" Version="1.0.15" />
         <PackageReference Include="NAudio.Core" Version="2.3.0" />
         <PackageReference Include="NAudio.WinMM" Version="2.3.0" />
+        <PackageReference Include="MessagePack" Version="3.1.12" />
     </ItemGroup>
 
     <ItemGroup>
@@ -62,7 +63,7 @@
     </ItemGroup>
 
     <!-- A plugin library does not copy every NuGet runtime asset by default. Keep
-         host SDK/UI dependencies shared, and copy only the two preview runtimes.
+         host SDK/UI dependencies shared, and copy only private audio/WS runtimes.
          Use resolved runtime assets so NuGet chooses the compatible framework. -->
     <Target Name="IncludePreviewRuntimeDependencies"
             AfterTargets="ResolveLockFileCopyLocalFiles"
@@ -72,11 +73,19 @@
                 Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'NAudio.Core' and '%(RuntimeCopyLocalItems.Filename)' == 'NAudio.Core' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
             <_FishAudioPreviewWinMMRuntime Include="@(RuntimeCopyLocalItems)"
                 Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'NAudio.WinMM' and '%(RuntimeCopyLocalItems.Filename)' == 'NAudio.WinMM' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
+            <_FishAudioMessagePackRuntime Include="@(RuntimeCopyLocalItems)"
+                Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'MessagePack' and '%(RuntimeCopyLocalItems.Filename)' == 'MessagePack' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
+            <_FishAudioMessagePackAnnotationsRuntime Include="@(RuntimeCopyLocalItems)"
+                Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'MessagePack.Annotations' and '%(RuntimeCopyLocalItems.Filename)' == 'MessagePack.Annotations' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
+            <_FishAudioStringToolsRuntime Include="@(RuntimeCopyLocalItems)"
+                Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'Microsoft.NET.StringTools' and '%(RuntimeCopyLocalItems.Filename)' == 'Microsoft.NET.StringTools' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
         </ItemGroup>
         <Error Condition="'@(_FishAudioPreviewCoreRuntime->Count())' != '1' or '@(_FishAudioPreviewWinMMRuntime->Count())' != '1'"
                Text="Preview runtime resolution must provide exactly NAudio.Core.dll and NAudio.WinMM.dll before packaging." />
+        <Error Condition="'@(_FishAudioMessagePackRuntime->Count())' != '1' or '@(_FishAudioMessagePackAnnotationsRuntime->Count())' != '1' or '@(_FishAudioStringToolsRuntime->Count())' != '1'"
+               Text="Streaming runtime resolution must provide MessagePack.dll, MessagePack.Annotations.dll and Microsoft.NET.StringTools.dll before packaging." />
         <ItemGroup>
-            <ReferenceCopyLocalPaths Include="@(_FishAudioPreviewCoreRuntime);@(_FishAudioPreviewWinMMRuntime)"
+            <ReferenceCopyLocalPaths Include="@(_FishAudioPreviewCoreRuntime);@(_FishAudioPreviewWinMMRuntime);@(_FishAudioMessagePackRuntime);@(_FishAudioMessagePackAnnotationsRuntime);@(_FishAudioStringToolsRuntime)"
                                      Exclude="@(ReferenceCopyLocalPaths)"
                                      KeepDuplicates="false" />
         </ItemGroup>

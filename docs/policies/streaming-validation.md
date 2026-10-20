@@ -1,10 +1,10 @@
 # Streaming verification policy
 
-This is a verification policy for changes that introduce or modify streaming. It is not a claim that a streaming path exists in the current plugin: the [current TTS spec](../specs/tts-and-credit.md) still describes complete-buffer HTTP MP3 playback.
+This policy applies to streaming changes. The [current TTS spec](../specs/tts-and-credit.md) describes native WebSocket playback; policy requirements are reusable verification rules, not claims that every platform/device scenario has been exercised.
 
 ## Protocol and ownership
 
-Test transport fragmentation independently from application messages and codec/PCM boundaries. Include fragmented MessagePack/SSE data, empty events, malformed/truncated payloads, oversize messages, unexpected event order, remote errors, normal finish and close without finish. Preserve one ordered audio stream; do not turn a transport error into an implicit second synthesis.
+Test transport fragmentation independently from application messages and codec/PCM boundaries. Exercise the selected protocol (currently MessagePack, not SSE): empty events, malformed/truncated payloads, oversize messages, unexpected event order, remote errors, normal finish and close without finish. Preserve one ordered audio stream; do not turn an error into an implicit second synthesis.
 
 Define one session owner for send, receive, cancellation, device errors and terminal state. Verify cancellation while waiting for input, queue capacity, initial playback, output drain and close. Completion must distinguish normal provider finish, audio queue completion and device drain. Dispose is idempotent and late callbacks cannot touch replaced state.
 
@@ -18,6 +18,8 @@ Test start thresholds using audio duration and an injected wall clock separately
 
 Test underflow and later recovery, slow consumers, no-progress output, asynchronous device failure, cleanup failure and resampler/codec tails. Output start and first PCM are software milestones; they do not establish physical sound.
 
+Install the clock/output pump before a synchronously available producer can monopolize decoding. Test both 250 ms of buffered audio and the 100 ms wall-clock threshold from first PCM with input blocked. A timeout checked only on the next input event is not independent startup. Exercise device position wrap and final real-sample position after underflow silence. Attempt cleanup independently for every resource, preserving the original failure; also test cleanup as the only failure and input that ignores cancellation.
+
 ## Bounded text preparation
 
 Use a deterministic corpus with a shared prefix and increasingly long tails. A guarded cursor or poison suffix must prove that startup does not enumerate, normalize or serialize the full tail. Cover Unicode scalars, grapheme clusters, long words, markup delimiters and incomplete/oversized atomic spans. Flush only at boundaries that are safe for the selected protocol and markup grammar. Do not duplicate or discard text to manufacture a better first-audio measurement.
@@ -27,6 +29,8 @@ Use a deterministic corpus with a shared prefix and increasingly long tails. A g
 Verify full queues followed by finish/error/close, cancellation during pressure, sender failure while receive waits and device failure while the producer waits. A receiver blocked on a bounded queue cannot simultaneously read later control messages from that same ordered connection. Document the acceptable delay and use independent cancellation/no-progress handling.
 
 If active WebSocket PING/PONG timeouts are enabled, verify that required pending reads are maintained or that local pressure cannot cause a false timeout. Do not solve this by issuing concurrent receives or removing memory bounds. Keep server idle, local backpressure and output no-progress timers semantically separate.
+
+Account overlapping encoded/PCM pressure as a union, not a sum or an entire buffer-occupied interval. Test first PCM separately from first encoded bytes. Freeze request values before await and prove that capture of the last published initialization remains available while replacement host load is blocked. Test successor cleanup ordering across at least three calls and all caller/supersession/retirement/disposal cancellation paths.
 
 ## Evidence and compatibility
 

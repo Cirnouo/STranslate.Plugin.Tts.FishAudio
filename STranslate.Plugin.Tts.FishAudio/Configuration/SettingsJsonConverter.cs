@@ -25,7 +25,10 @@ public sealed class SettingsJsonConverter : JsonConverter<Settings>
         writer.WriteNumber(nameof(Settings.TopP), value.TopP);
         writer.WriteString(nameof(Settings.Latency), value.Latency);
         writer.WriteBoolean(nameof(Settings.Normalize), value.Normalize);
+        writer.WriteString(nameof(Settings.AudioFormat), value.AudioFormat);
         writer.WriteNumber(nameof(Settings.Mp3Bitrate), value.Mp3Bitrate);
+        writer.WriteString(nameof(Settings.StreamingProxyMode), value.StreamingProxyMode);
+        writer.WriteString(nameof(Settings.StreamingProxyAddress), value.StreamingProxyAddress);
         writer.WriteBoolean(nameof(Settings.ConditionOnPreviousChunks), value.ConditionOnPreviousChunks);
         writer.WritePropertyName(nameof(Settings.CachedVoice));
         JsonSerializer.Serialize(writer, value.CachedVoice, options);

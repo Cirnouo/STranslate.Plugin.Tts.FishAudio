@@ -3,6 +3,7 @@ namespace STranslate.Plugin.Tts.FishAudio.Configuration;
 internal static class FishAudioModelPolicy
 {
     internal const string S21ProFreeModel = "s2.1-pro-free";
+    internal const string Drama3Model = "drama-3";
     internal const string S21ProModel = "s2.1-pro";
     internal const string S2ProModel = "s2-pro";
     internal const string S1Model = "s1";
@@ -11,8 +12,8 @@ internal static class FishAudioModelPolicy
 
     internal static IReadOnlyList<string> GetAvailableModels(DateTimeOffset nowUtc) =>
         IsS21ProFreeAvailable(nowUtc)
-            ? [S21ProFreeModel, S21ProModel, S2ProModel, S1Model]
-            : [S21ProModel, S2ProModel, S1Model];
+            ? [S21ProFreeModel, Drama3Model, S21ProModel, S2ProModel, S1Model]
+            : [Drama3Model, S21ProModel, S2ProModel, S1Model];
 
     internal static bool IsS21ProFreeAvailable(DateTimeOffset nowUtc) =>
         nowUtc.ToUniversalTime() < FreeModelCutoffUtc;

@@ -11,6 +11,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\STranslate.Plugin.Tts.FishAudio\STranslate.Plugin.Tts.FishAudio.csproj" />
+        <Content Include="Fixtures\*.mp3" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

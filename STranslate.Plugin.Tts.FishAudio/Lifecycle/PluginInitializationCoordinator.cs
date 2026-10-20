@@ -275,15 +275,20 @@ internal sealed class PluginInitializationCoordinator : IDisposable
 
     internal OperationSnapshot CaptureOperationSnapshot()
     {
+        OperationSnapshot snapshot;
         lock (_stateGate)
         {
             var state = GetRequiredInitializationState();
-            return new OperationSnapshot(
+            snapshot = new OperationSnapshot(
                 state.Context,
                 state.Settings,
                 state.ViewModel,
-                state.AudioPlayer);
+                state.AudioPlayer,
+                state.StartupRefreshCancellationTokenSource.Token);
         }
+        // Never acquire the settings persistence gate while holding _stateGate.
+        // Retirement cancels this captured lifetime if initialization overtakes us.
+        return snapshot with { Settings = SettingsStore.CaptureSnapshot(snapshot.Settings) };
     }
 
     public void Dispose()
@@ -661,7 +666,8 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         IPluginContext Context,
         Settings Settings,
         SettingsViewModel? ViewModel,
-        IAudioPlayer AudioPlayer);
+        IAudioPlayer AudioPlayer,
+        CancellationToken LifetimeToken);
 
     private sealed record InitializationState(
         object Identity,

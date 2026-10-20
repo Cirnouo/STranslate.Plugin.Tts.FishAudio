@@ -18,7 +18,10 @@ internal static class SettingsMigrator
         "TopP",
         "Latency",
         "Normalize",
+        "AudioFormat",
         "Mp3Bitrate",
+        "StreamingProxyMode",
+        "StreamingProxyAddress",
         "ConditionOnPreviousChunks",
         "CachedVoice",
         "CachedModel",
@@ -43,6 +46,10 @@ internal static class SettingsMigrator
         var properties = CollectProperties(root);
         var settings = new Settings();
         ReadSchema(properties, settings);
+        // Apply the source schema's format default before reading the field so
+        // missing, malformed and duplicated legacy formats all retain MP3.
+        var defaultAudioFormat = settings.SchemaVersion < SettingsSchema.Current ? "mp3" : Settings.DefaultAudioFormat;
+        settings.AudioFormat = defaultAudioFormat;
 
         if (properties.Keys.Any(name => !KnownSettingsProperties.Contains(name)))
             settings.NeedsCanonicalSave = true;
@@ -57,12 +64,20 @@ internal static class SettingsMigrator
         ReadDouble(properties, "TopP", value => settings.TopP = value, settings);
         ReadString(properties, "Latency", value => settings.Latency = value, settings);
         ReadBoolean(properties, "Normalize", value => settings.Normalize = value, settings);
+        ReadString(properties, "AudioFormat", value => settings.AudioFormat = value, settings);
+        if (!SettingsNormalizer.AudioFormats.Contains(settings.AudioFormat, StringComparer.Ordinal))
+        {
+            settings.AudioFormat = defaultAudioFormat;
+            settings.NeedsCanonicalSave = true;
+        }
         ReadInt32(properties, "Mp3Bitrate", value => settings.Mp3Bitrate = value, settings);
+        ReadString(properties, "StreamingProxyMode", value => settings.StreamingProxyMode = value, settings);
+        ReadString(properties, "StreamingProxyAddress", value => settings.StreamingProxyAddress = value, settings);
         ReadBoolean(properties, "ConditionOnPreviousChunks", value => settings.ConditionOnPreviousChunks = value, settings);
         ReadCachedVoice(properties, settings);
         ReadBoolean(properties, "IsS21ProFreePromoDismissed", value => settings.IsS21ProFreePromoDismissed = value, settings);
 
-        if (settings.SchemaVersion <= SettingsSchema.Legacy && !settings.IsReadOnly)
+        if (settings.SchemaVersion < SettingsSchema.Current && !settings.IsReadOnly)
         {
             settings.SchemaVersion = SettingsSchema.Current;
             settings.NeedsCanonicalSave = true;

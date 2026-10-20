@@ -6,16 +6,19 @@ internal sealed class OperationActivityCounter
 {
     private readonly object _gate;
     private readonly Action<bool> _setIsActive;
+    private readonly Action<Action> _runOnUiThread;
     private int _count;
     private bool _desiredIsActive;
     private long _stateVersion;
     private long _publishedStateVersion;
     private bool _isPublishing;
 
-    internal OperationActivityCounter(object gate, Action<bool>? setIsActive = null)
+    internal OperationActivityCounter(object gate, Action<bool>? setIsActive = null,
+        Action<Action>? runOnUiThread = null)
     {
         _gate = gate;
         _setIsActive = setIsActive ?? (_ => { });
+        _runOnUiThread = runOnUiThread ?? (action => action());
     }
 
     internal bool IsActive
@@ -44,7 +47,7 @@ internal sealed class OperationActivityCounter
         }
 
         if (shouldPublish)
-            PublishObservableState();
+            _runOnUiThread(PublishObservableState);
 
         return transitioned;
     }
@@ -71,7 +74,7 @@ internal sealed class OperationActivityCounter
         }
 
         if (shouldPublish)
-            PublishObservableState();
+            _runOnUiThread(PublishObservableState);
 
         return transitioned;
     }
@@ -93,6 +96,8 @@ internal sealed class OperationActivityCounter
 
     private void PublishObservableState()
     {
+        // Dispatch the publisher, rather than a captured bool setter: a queued
+        // old End must observe any newer Begin before notifying bound commands.
         ExceptionDispatchInfo? deferredException = null;
         while (true)
         {

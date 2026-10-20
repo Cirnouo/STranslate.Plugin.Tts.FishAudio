@@ -160,6 +160,9 @@ internal sealed class SharedSettingsBackingStore
         Latency = settings.Latency,
         Normalize = settings.Normalize,
         Mp3Bitrate = settings.Mp3Bitrate,
+        AudioFormat = settings.AudioFormat,
+        StreamingProxyMode = settings.StreamingProxyMode,
+        StreamingProxyAddress = settings.StreamingProxyAddress,
         ConditionOnPreviousChunks = settings.ConditionOnPreviousChunks,
         CachedVoice = settings.CachedVoice is null
             ? null

@@ -1,0 +1,235 @@
+{
+  "schema": 1,
+  "beganUtc": "2026-10-20T13:56:28.1465142+00:00",
+  "completedUtc": "2026-10-20T13:56:49.749146+00:00",
+  "format": "mp3",
+  "caseName": "long",
+  "outcome": "completed",
+  "nativeOutcome": "completed",
+  "failureType": null,
+  "verification": {
+    "Passed": true,
+    "Failures": []
+  },
+  "stageObservations": [
+    {
+      "stage": "Request",
+      "elapsedMs": 0,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "Connected",
+      "elapsedMs": 827.6898,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "PrefixSent",
+      "elapsedMs": 889.6324,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "FirstAudio",
+      "elapsedMs": 3908.7452,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "FirstPcm",
+      "elapsedMs": 3925.4103,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "PlaybackStarted",
+      "elapsedMs": 4021.2191,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "Finish",
+      "elapsedMs": 10308.0964,
+      "origin": "native-completion-observer"
+    },
+    {
+      "stage": "Drained",
+      "elapsedMs": 21512.2896,
+      "origin": "native-completion-observer"
+    }
+  ],
+  "counters": {
+    "sourceReadHighestIndex": 214,
+    "sourceReadCount": 262,
+    "highestReadIndexBeforeActualPlayback": 99,
+    "indexedReadsAfterActualPlayback": 162,
+    "sourceAtActualPlayback": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 53,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    },
+    "sentTextUtf16": 215,
+    "completedTextEvents": 2,
+    "completedStopEvents": 1,
+    "receivedBinaryMessages": 6,
+    "receivedFragments": 28,
+    "receivedAudioMessages": 5,
+    "receivedAudioBytes": 399986,
+    "highestDevicePlayedBytes": 1470644,
+    "firstAudioMs": 3917.4976,
+    "actualWaveOutPlayReturnedMs": 4029.7119,
+    "actualPlaybackCallbackMs": 4029.9589,
+    "stopSendCompletedMs": 4031.8145,
+    "playbackBeforeStopSendCompleted": true,
+    "captureLimitReached": false,
+    "deadlineUtc": "2026-10-20T13:58:28.1465142+00:00"
+  },
+  "deadlineUtc": "2026-10-20T13:58:28.1465142+00:00",
+  "captureLimitBytes": 8388608,
+  "captureBytes": 800734,
+  "anyArtifactRedacted": false,
+  "artifacts": [
+    {
+      "Name": "request-summary.json",
+      "OriginalBytes": 1772,
+      "OriginalSha256": "2cf5d66d7e6702238dc3b50a3f741c670a21c86b05da6b9fe983739068b47daf",
+      "PersistedBytes": 1772,
+      "PersistedSha256": "2cf5d66d7e6702238dc3b50a3f741c670a21c86b05da6b9fe983739068b47daf",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "timeline.json",
+      "OriginalBytes": 86701,
+      "OriginalSha256": "553c89a0fc08ec3980ca3bf55286fd8b9d46333b696daa0d81f5a0d23bb05d5e",
+      "PersistedBytes": 86701,
+      "PersistedSha256": "553c89a0fc08ec3980ca3bf55286fd8b9d46333b696daa0d81f5a0d23bb05d5e",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "observations.json",
+      "OriginalBytes": 883,
+      "OriginalSha256": "0855f2585523b4184b93c3f1df4597665a664446398f2942eb23ca60420a6d6c",
+      "PersistedBytes": 883,
+      "PersistedSha256": "0855f2585523b4184b93c3f1df4597665a664446398f2942eb23ca60420a6d6c",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0000.msgpack",
+      "OriginalBytes": 243,
+      "OriginalSha256": "6e5f3ec6a09583be7afd527c9e32676bad10bbda4bfd6b6577a51702677be9f3",
+      "PersistedBytes": 243,
+      "PersistedSha256": "6e5f3ec6a09583be7afd527c9e32676bad10bbda4bfd6b6577a51702677be9f3",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0001.msgpack",
+      "OriginalBytes": 72,
+      "OriginalSha256": "df4e61c1ea3a4f93f1965a0cc0cdc781dd4a9de0c8d9fcf89bcf22fbd7e2435f",
+      "PersistedBytes": 72,
+      "PersistedSha256": "df4e61c1ea3a4f93f1965a0cc0cdc781dd4a9de0c8d9fcf89bcf22fbd7e2435f",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0002.msgpack",
+      "OriginalBytes": 13,
+      "OriginalSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "PersistedBytes": 13,
+      "PersistedSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0000.msgpack",
+      "OriginalBytes": 97996,
+      "OriginalSha256": "eae9fcab2f06f17efcbb0d80db579dcdfdb51f97213fab4f57ac270970146e1e",
+      "PersistedBytes": 97996,
+      "PersistedSha256": "eae9fcab2f06f17efcbb0d80db579dcdfdb51f97213fab4f57ac270970146e1e",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0003.msgpack",
+      "OriginalBytes": 181,
+      "OriginalSha256": "0fdf9811e3f6f2035dfb3a03d00b1fc4044151de4b2e23fa8a288a7f3d692bec",
+      "PersistedBytes": 181,
+      "PersistedSha256": "0fdf9811e3f6f2035dfb3a03d00b1fc4044151de4b2e23fa8a288a7f3d692bec",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0004.msgpack",
+      "OriginalBytes": 13,
+      "OriginalSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "PersistedBytes": 13,
+      "PersistedSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "outgoing-0005.msgpack",
+      "OriginalBytes": 12,
+      "OriginalSha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75",
+      "PersistedBytes": 12,
+      "PersistedSha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0001.msgpack",
+      "OriginalBytes": 88423,
+      "OriginalSha256": "a6198a90768bad89d1b3b6bb4feec256264ac764ebdfd5bee36e4005a58cdcc2",
+      "PersistedBytes": 88423,
+      "PersistedSha256": "a6198a90768bad89d1b3b6bb4feec256264ac764ebdfd5bee36e4005a58cdcc2",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0002.msgpack",
+      "OriginalBytes": 105385,
+      "OriginalSha256": "a47ffc277eeaf1e775b3a95ee5d965242b24325124796620fc5efbe1d1ef7a3f",
+      "PersistedBytes": 105385,
+      "PersistedSha256": "a47ffc277eeaf1e775b3a95ee5d965242b24325124796620fc5efbe1d1ef7a3f",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0003.msgpack",
+      "OriginalBytes": 106605,
+      "OriginalSha256": "d2edcdf5a5a64b505adbf6ec33c173cd095dcaba9a93651a08f8ba4648d73f89",
+      "PersistedBytes": 106605,
+      "PersistedSha256": "d2edcdf5a5a64b505adbf6ec33c173cd095dcaba9a93651a08f8ba4648d73f89",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0004.msgpack",
+      "OriginalBytes": 1765,
+      "OriginalSha256": "e042cd6b58687c6d744164c2dd5598f80b94ec6b8234d2bfc22199ff27683988",
+      "PersistedBytes": 1765,
+      "PersistedSha256": "e042cd6b58687c6d744164c2dd5598f80b94ec6b8234d2bfc22199ff27683988",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "incoming-0005.msgpack",
+      "OriginalBytes": 40,
+      "OriginalSha256": "6d95a5127dbf2229775530de640f54e41963c037ff1b64dd7428dcd3a3d92377",
+      "PersistedBytes": 40,
+      "PersistedSha256": "6d95a5127dbf2229775530de640f54e41963c037ff1b64dd7428dcd3a3d92377",
+      "Redacted": false,
+      "RedactionReason": null
+    },
+    {
+      "Name": "raw-audio.mp3",
+      "OriginalBytes": 399986,
+      "OriginalSha256": "d09f22cd54de08ab7f518ee7d8f397b91eb7c543a39c973f881f245e0a3c49b6",
+      "PersistedBytes": 399986,
+      "PersistedSha256": "d09f22cd54de08ab7f518ee7d8f397b91eb7c543a39c973f881f245e0a3c49b6",
+      "Redacted": false,
+      "RedactionReason": null
+    }
+  ],
+  "persistence": "Exact key bytes are scanned before every write; untrusted URLs cause whole-artifact redaction; no exception messages or stack traces."
+}

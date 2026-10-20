@@ -4,10 +4,24 @@ public static class SettingsNormalizer
 {
     public static IReadOnlyList<string> Latencies { get; } = ["normal", "balanced", "low"];
     public static IReadOnlyList<int> Mp3Bitrates { get; } = [64, 128, 192];
+    public static IReadOnlyList<string> AudioFormats { get; } = ["pcm", "mp3"];
+    public static IReadOnlyList<string> StreamingProxyModes { get; } = ["system", "direct", "custom"];
 
     public static bool Normalize(Settings settings, DateTimeOffset nowUtc)
     {
         var changed = NormalizeSelectedModel(settings, nowUtc);
+
+        if (!AudioFormats.Contains(settings.AudioFormat, StringComparer.Ordinal))
+        {
+            settings.AudioFormat = Settings.DefaultAudioFormat;
+            changed = true;
+        }
+
+        if (!StreamingProxyModes.Contains(settings.StreamingProxyMode, StringComparer.Ordinal))
+        {
+            settings.StreamingProxyMode = Settings.DefaultStreamingProxyMode;
+            changed = true;
+        }
 
         if (!Latencies.Contains(settings.Latency, StringComparer.Ordinal))
         {

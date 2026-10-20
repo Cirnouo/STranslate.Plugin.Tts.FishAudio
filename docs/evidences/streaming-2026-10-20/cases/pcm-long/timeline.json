@@ -1,0 +1,4510 @@
+[
+  {
+    "sequence": 0,
+    "elapsedMs": 83.1927,
+    "utc": "2026-10-20T13:55:00.4059925+00:00",
+    "kind": "connectAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 1,
+    "elapsedMs": 1960.5159,
+    "utc": "2026-10-20T13:55:02.2833154+00:00",
+    "kind": "connectCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 2,
+    "elapsedMs": 2017.555,
+    "utc": "2026-10-20T13:55:02.3403549+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 3,
+    "elapsedMs": 2018.363,
+    "utc": "2026-10-20T13:55:02.3411627+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 4,
+    "elapsedMs": 2019.0567,
+    "utc": "2026-10-20T13:55:02.341856+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 0,
+    "details": {
+      "index": 0,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 5,
+    "elapsedMs": 2019.5251,
+    "utc": "2026-10-20T13:55:02.3423244+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 1,
+    "details": {
+      "index": 1,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 6,
+    "elapsedMs": 2019.5284,
+    "utc": "2026-10-20T13:55:02.3423276+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 2,
+    "details": {
+      "index": 2,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 7,
+    "elapsedMs": 2019.5287,
+    "utc": "2026-10-20T13:55:02.342328+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 3,
+    "details": {
+      "index": 3,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 8,
+    "elapsedMs": 2019.5292,
+    "utc": "2026-10-20T13:55:02.3423284+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 4,
+    "details": {
+      "index": 4,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 9,
+    "elapsedMs": 2019.5301,
+    "utc": "2026-10-20T13:55:02.3423294+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 5,
+    "details": {
+      "index": 5,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 10,
+    "elapsedMs": 2019.5304,
+    "utc": "2026-10-20T13:55:02.3423296+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 6,
+    "details": {
+      "index": 6,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 11,
+    "elapsedMs": 2019.5306,
+    "utc": "2026-10-20T13:55:02.3423299+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 7,
+    "details": {
+      "index": 7,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 12,
+    "elapsedMs": 2019.5317,
+    "utc": "2026-10-20T13:55:02.3423309+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 8,
+    "details": {
+      "index": 8,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 13,
+    "elapsedMs": 2019.5319,
+    "utc": "2026-10-20T13:55:02.3423311+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 9,
+    "details": {
+      "index": 9,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 14,
+    "elapsedMs": 2019.5321,
+    "utc": "2026-10-20T13:55:02.3423314+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 10,
+    "details": {
+      "index": 10,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 15,
+    "elapsedMs": 2019.5326,
+    "utc": "2026-10-20T13:55:02.3423322+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 11,
+    "details": {
+      "index": 11,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 16,
+    "elapsedMs": 2019.5333,
+    "utc": "2026-10-20T13:55:02.3423325+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 12,
+    "details": {
+      "index": 12,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 17,
+    "elapsedMs": 2019.5337,
+    "utc": "2026-10-20T13:55:02.3423329+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 13,
+    "details": {
+      "index": 13,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 18,
+    "elapsedMs": 2019.5339,
+    "utc": "2026-10-20T13:55:02.3423331+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 14,
+    "details": {
+      "index": 14,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 19,
+    "elapsedMs": 2019.5344,
+    "utc": "2026-10-20T13:55:02.3423336+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 15,
+    "details": {
+      "index": 15,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 20,
+    "elapsedMs": 2019.5346,
+    "utc": "2026-10-20T13:55:02.3423339+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 16,
+    "details": {
+      "index": 16,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 21,
+    "elapsedMs": 2019.5348,
+    "utc": "2026-10-20T13:55:02.3423341+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 17,
+    "details": {
+      "index": 17,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 22,
+    "elapsedMs": 2019.5351,
+    "utc": "2026-10-20T13:55:02.3423343+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 18,
+    "details": {
+      "index": 18,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 23,
+    "elapsedMs": 2019.5353,
+    "utc": "2026-10-20T13:55:02.3423346+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 19,
+    "details": {
+      "index": 19,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 24,
+    "elapsedMs": 2019.5356,
+    "utc": "2026-10-20T13:55:02.3423348+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 20,
+    "details": {
+      "index": 20,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 25,
+    "elapsedMs": 2019.5358,
+    "utc": "2026-10-20T13:55:02.342335+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 21,
+    "details": {
+      "index": 21,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 26,
+    "elapsedMs": 2019.5361,
+    "utc": "2026-10-20T13:55:02.3423355+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 22,
+    "details": {
+      "index": 22,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 27,
+    "elapsedMs": 2019.5365,
+    "utc": "2026-10-20T13:55:02.3423357+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 23,
+    "details": {
+      "index": 23,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 28,
+    "elapsedMs": 2019.5367,
+    "utc": "2026-10-20T13:55:02.3423359+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 24,
+    "details": {
+      "index": 24,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 29,
+    "elapsedMs": 2019.537,
+    "utc": "2026-10-20T13:55:02.3423362+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 25,
+    "details": {
+      "index": 25,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 30,
+    "elapsedMs": 2019.5379,
+    "utc": "2026-10-20T13:55:02.3423371+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 26,
+    "details": {
+      "index": 26,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 31,
+    "elapsedMs": 2019.5403,
+    "utc": "2026-10-20T13:55:02.3423395+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 27,
+    "details": {
+      "index": 27,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 32,
+    "elapsedMs": 2019.5406,
+    "utc": "2026-10-20T13:55:02.3423398+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 28,
+    "details": {
+      "index": 28,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 33,
+    "elapsedMs": 2019.541,
+    "utc": "2026-10-20T13:55:02.3423402+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 29,
+    "details": {
+      "index": 29,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 34,
+    "elapsedMs": 2019.5414,
+    "utc": "2026-10-20T13:55:02.3423406+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 30,
+    "details": {
+      "index": 30,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 35,
+    "elapsedMs": 2019.5417,
+    "utc": "2026-10-20T13:55:02.3423409+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 31,
+    "details": {
+      "index": 31,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 36,
+    "elapsedMs": 2019.5419,
+    "utc": "2026-10-20T13:55:02.3423411+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 32,
+    "details": {
+      "index": 32,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 37,
+    "elapsedMs": 2019.5421,
+    "utc": "2026-10-20T13:55:02.3423414+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 33,
+    "details": {
+      "index": 33,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 38,
+    "elapsedMs": 2019.5424,
+    "utc": "2026-10-20T13:55:02.3423416+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 34,
+    "details": {
+      "index": 34,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 39,
+    "elapsedMs": 2019.5426,
+    "utc": "2026-10-20T13:55:02.3423418+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 35,
+    "details": {
+      "index": 35,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 40,
+    "elapsedMs": 2019.5428,
+    "utc": "2026-10-20T13:55:02.342342+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 36,
+    "details": {
+      "index": 36,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 41,
+    "elapsedMs": 2019.5431,
+    "utc": "2026-10-20T13:55:02.3423424+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 37,
+    "details": {
+      "index": 37,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 42,
+    "elapsedMs": 2019.5433,
+    "utc": "2026-10-20T13:55:02.3423426+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 38,
+    "details": {
+      "index": 38,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 43,
+    "elapsedMs": 2019.5436,
+    "utc": "2026-10-20T13:55:02.3423428+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 39,
+    "details": {
+      "index": 39,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 44,
+    "elapsedMs": 2019.5438,
+    "utc": "2026-10-20T13:55:02.342343+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 40,
+    "details": {
+      "index": 40,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 45,
+    "elapsedMs": 2019.544,
+    "utc": "2026-10-20T13:55:02.3423433+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 41,
+    "details": {
+      "index": 41,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 46,
+    "elapsedMs": 2019.5443,
+    "utc": "2026-10-20T13:55:02.3423435+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 42,
+    "details": {
+      "index": 42,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 47,
+    "elapsedMs": 2019.5445,
+    "utc": "2026-10-20T13:55:02.3423438+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 43,
+    "details": {
+      "index": 43,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 48,
+    "elapsedMs": 2019.552,
+    "utc": "2026-10-20T13:55:02.3423512+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 44,
+    "details": {
+      "index": 44,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 49,
+    "elapsedMs": 2019.5522,
+    "utc": "2026-10-20T13:55:02.3423514+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 45,
+    "details": {
+      "index": 45,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 50,
+    "elapsedMs": 2019.5525,
+    "utc": "2026-10-20T13:55:02.3423517+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 46,
+    "details": {
+      "index": 46,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 51,
+    "elapsedMs": 2019.5528,
+    "utc": "2026-10-20T13:55:02.342352+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 47,
+    "details": {
+      "index": 47,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 52,
+    "elapsedMs": 2019.553,
+    "utc": "2026-10-20T13:55:02.3423522+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 48,
+    "details": {
+      "index": 48,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 53,
+    "elapsedMs": 2019.5532,
+    "utc": "2026-10-20T13:55:02.3423525+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 49,
+    "details": {
+      "index": 49,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 54,
+    "elapsedMs": 2019.5535,
+    "utc": "2026-10-20T13:55:02.3423527+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 50,
+    "details": {
+      "index": 50,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 55,
+    "elapsedMs": 2019.5537,
+    "utc": "2026-10-20T13:55:02.3423529+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 51,
+    "details": {
+      "index": 51,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 56,
+    "elapsedMs": 2019.5539,
+    "utc": "2026-10-20T13:55:02.3423532+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 52,
+    "details": {
+      "index": 52,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 57,
+    "elapsedMs": 2019.5542,
+    "utc": "2026-10-20T13:55:02.3423534+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 53,
+    "details": {
+      "index": 53,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 58,
+    "elapsedMs": 2019.5544,
+    "utc": "2026-10-20T13:55:02.3423537+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 54,
+    "details": {
+      "index": 54,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 59,
+    "elapsedMs": 2019.5547,
+    "utc": "2026-10-20T13:55:02.3423539+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 55,
+    "details": {
+      "index": 55,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 60,
+    "elapsedMs": 2019.5549,
+    "utc": "2026-10-20T13:55:02.3423542+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 56,
+    "details": {
+      "index": 56,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 61,
+    "elapsedMs": 2019.5552,
+    "utc": "2026-10-20T13:55:02.3423544+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 57,
+    "details": {
+      "index": 57,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 62,
+    "elapsedMs": 2019.5554,
+    "utc": "2026-10-20T13:55:02.3423546+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 58,
+    "details": {
+      "index": 58,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 63,
+    "elapsedMs": 2019.5556,
+    "utc": "2026-10-20T13:55:02.3423548+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 59,
+    "details": {
+      "index": 59,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 64,
+    "elapsedMs": 2019.5559,
+    "utc": "2026-10-20T13:55:02.3423551+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 60,
+    "details": {
+      "index": 60,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 65,
+    "elapsedMs": 2019.5562,
+    "utc": "2026-10-20T13:55:02.3423554+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 61,
+    "details": {
+      "index": 61,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 66,
+    "elapsedMs": 2019.5564,
+    "utc": "2026-10-20T13:55:02.3423556+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 62,
+    "details": {
+      "index": 62,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 67,
+    "elapsedMs": 2019.5566,
+    "utc": "2026-10-20T13:55:02.3423559+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 63,
+    "details": {
+      "index": 63,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 68,
+    "elapsedMs": 2019.5569,
+    "utc": "2026-10-20T13:55:02.3423561+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 64,
+    "details": {
+      "index": 64,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 69,
+    "elapsedMs": 2019.5571,
+    "utc": "2026-10-20T13:55:02.3423563+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 65,
+    "details": {
+      "index": 65,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 70,
+    "elapsedMs": 2019.5573,
+    "utc": "2026-10-20T13:55:02.3423565+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 66,
+    "details": {
+      "index": 66,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 71,
+    "elapsedMs": 2019.5575,
+    "utc": "2026-10-20T13:55:02.3423568+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 67,
+    "details": {
+      "index": 67,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 72,
+    "elapsedMs": 2019.5578,
+    "utc": "2026-10-20T13:55:02.342357+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 68,
+    "details": {
+      "index": 68,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 73,
+    "elapsedMs": 2019.558,
+    "utc": "2026-10-20T13:55:02.3423572+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 69,
+    "details": {
+      "index": 69,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 74,
+    "elapsedMs": 2019.5582,
+    "utc": "2026-10-20T13:55:02.3423575+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 70,
+    "details": {
+      "index": 70,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 75,
+    "elapsedMs": 2019.5585,
+    "utc": "2026-10-20T13:55:02.3423577+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 71,
+    "details": {
+      "index": 71,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 76,
+    "elapsedMs": 2019.5587,
+    "utc": "2026-10-20T13:55:02.3423579+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 72,
+    "details": {
+      "index": 72,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 77,
+    "elapsedMs": 2019.559,
+    "utc": "2026-10-20T13:55:02.3423582+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 73,
+    "details": {
+      "index": 73,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 78,
+    "elapsedMs": 2019.5592,
+    "utc": "2026-10-20T13:55:02.3423584+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 74,
+    "details": {
+      "index": 74,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 79,
+    "elapsedMs": 2019.5594,
+    "utc": "2026-10-20T13:55:02.3423587+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 75,
+    "details": {
+      "index": 75,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 80,
+    "elapsedMs": 2019.5597,
+    "utc": "2026-10-20T13:55:02.3423589+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 76,
+    "details": {
+      "index": 76,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 81,
+    "elapsedMs": 2019.5599,
+    "utc": "2026-10-20T13:55:02.3423591+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 77,
+    "details": {
+      "index": 77,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 82,
+    "elapsedMs": 2019.5602,
+    "utc": "2026-10-20T13:55:02.3423594+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 78,
+    "details": {
+      "index": 78,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 83,
+    "elapsedMs": 2019.5604,
+    "utc": "2026-10-20T13:55:02.3423596+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 79,
+    "details": {
+      "index": 79,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 84,
+    "elapsedMs": 2019.5606,
+    "utc": "2026-10-20T13:55:02.3423598+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 80,
+    "details": {
+      "index": 80,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 85,
+    "elapsedMs": 2019.5608,
+    "utc": "2026-10-20T13:55:02.3423601+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 81,
+    "details": {
+      "index": 81,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 86,
+    "elapsedMs": 2019.5611,
+    "utc": "2026-10-20T13:55:02.3423603+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 82,
+    "details": {
+      "index": 82,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 87,
+    "elapsedMs": 2019.5613,
+    "utc": "2026-10-20T13:55:02.3423605+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 83,
+    "details": {
+      "index": 83,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 88,
+    "elapsedMs": 2019.5615,
+    "utc": "2026-10-20T13:55:02.3423607+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 84,
+    "details": {
+      "index": 84,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 89,
+    "elapsedMs": 2019.5617,
+    "utc": "2026-10-20T13:55:02.342361+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 85,
+    "details": {
+      "index": 85,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 90,
+    "elapsedMs": 2019.562,
+    "utc": "2026-10-20T13:55:02.3423612+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 86,
+    "details": {
+      "index": 86,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 91,
+    "elapsedMs": 2019.5622,
+    "utc": "2026-10-20T13:55:02.3423614+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 87,
+    "details": {
+      "index": 87,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 92,
+    "elapsedMs": 2019.5625,
+    "utc": "2026-10-20T13:55:02.3423617+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 88,
+    "details": {
+      "index": 88,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 93,
+    "elapsedMs": 2019.5627,
+    "utc": "2026-10-20T13:55:02.3423619+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 89,
+    "details": {
+      "index": 89,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 94,
+    "elapsedMs": 2019.5629,
+    "utc": "2026-10-20T13:55:02.3423621+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 90,
+    "details": {
+      "index": 90,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 95,
+    "elapsedMs": 2019.5631,
+    "utc": "2026-10-20T13:55:02.3423624+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 91,
+    "details": {
+      "index": 91,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 96,
+    "elapsedMs": 2019.5634,
+    "utc": "2026-10-20T13:55:02.3423626+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 92,
+    "details": {
+      "index": 92,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 97,
+    "elapsedMs": 2019.5636,
+    "utc": "2026-10-20T13:55:02.3423628+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 93,
+    "details": {
+      "index": 93,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 98,
+    "elapsedMs": 2019.5638,
+    "utc": "2026-10-20T13:55:02.3423631+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 94,
+    "details": {
+      "index": 94,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 99,
+    "elapsedMs": 2019.5641,
+    "utc": "2026-10-20T13:55:02.3423633+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 95,
+    "details": {
+      "index": 95,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 100,
+    "elapsedMs": 2019.5643,
+    "utc": "2026-10-20T13:55:02.3423635+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 96,
+    "details": {
+      "index": 96,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 101,
+    "elapsedMs": 2019.5645,
+    "utc": "2026-10-20T13:55:02.3423638+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 97,
+    "details": {
+      "index": 97,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 102,
+    "elapsedMs": 2019.5648,
+    "utc": "2026-10-20T13:55:02.342364+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 98,
+    "details": {
+      "index": 98,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 103,
+    "elapsedMs": 2019.565,
+    "utc": "2026-10-20T13:55:02.3423642+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 99,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 104,
+    "elapsedMs": 2019.7108,
+    "utc": "2026-10-20T13:55:02.3425101+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 53,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 105,
+    "elapsedMs": 2019.8649,
+    "utc": "2026-10-20T13:55:02.3426642+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 53,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 106,
+    "elapsedMs": 2019.9363,
+    "utc": "2026-10-20T13:55:02.3427355+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 107,
+    "elapsedMs": 2019.9968,
+    "utc": "2026-10-20T13:55:02.342796+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 108,
+    "elapsedMs": 4537.3471,
+    "utc": "2026-10-20T13:55:04.8601465+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 109,
+    "elapsedMs": 4683.4794,
+    "utc": "2026-10-20T13:55:05.0062792+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 110,
+    "elapsedMs": 5125.5653,
+    "utc": "2026-10-20T13:55:05.4483647+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 111,
+    "elapsedMs": 5125.819,
+    "utc": "2026-10-20T13:55:05.4486183+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 112,
+    "elapsedMs": 5125.8388,
+    "utc": "2026-10-20T13:55:05.4486392+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 113,
+    "elapsedMs": 5128.5153,
+    "utc": "2026-10-20T13:55:05.4513146+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 114,
+    "elapsedMs": 5128.7248,
+    "utc": "2026-10-20T13:55:05.451524+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 115,
+    "elapsedMs": 5315.0573,
+    "utc": "2026-10-20T13:55:05.637857+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 116,
+    "elapsedMs": 5602.4289,
+    "utc": "2026-10-20T13:55:05.9252283+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 117,
+    "elapsedMs": 5602.6138,
+    "utc": "2026-10-20T13:55:05.9254131+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 118,
+    "elapsedMs": 5602.6257,
+    "utc": "2026-10-20T13:55:05.9254249+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 119,
+    "elapsedMs": 5602.64,
+    "utc": "2026-10-20T13:55:05.9254393+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 120,
+    "elapsedMs": 5602.6536,
+    "utc": "2026-10-20T13:55:05.9254528+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 121,
+    "elapsedMs": 5602.941,
+    "utc": "2026-10-20T13:55:05.9257403+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 122,
+    "elapsedMs": 5602.9735,
+    "utc": "2026-10-20T13:55:05.9257735+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 123,
+    "elapsedMs": 5603.1363,
+    "utc": "2026-10-20T13:55:05.9259356+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 124,
+    "elapsedMs": 5604.9929,
+    "utc": "2026-10-20T13:55:05.9277922+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 125,
+    "elapsedMs": 5605.0621,
+    "utc": "2026-10-20T13:55:05.9278613+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 126,
+    "elapsedMs": 5605.1616,
+    "utc": "2026-10-20T13:55:05.9279609+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 127,
+    "elapsedMs": 5605.182,
+    "utc": "2026-10-20T13:55:05.9279813+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 128,
+    "elapsedMs": 5605.1992,
+    "utc": "2026-10-20T13:55:05.9279984+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 4134,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 129,
+    "elapsedMs": 5607.7439,
+    "utc": "2026-10-20T13:55:05.9305431+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "event": "audio",
+      "audioBytes": 331776,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 130,
+    "elapsedMs": 5610.9524,
+    "utc": "2026-10-20T13:55:05.9337517+00:00",
+    "kind": "waveOutInit",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "SampleRate": 44100,
+      "BitsPerSample": 16,
+      "Channels": 1
+    }
+  },
+  {
+    "sequence": 131,
+    "elapsedMs": 5698.4127,
+    "utc": "2026-10-20T13:55:06.0212122+00:00",
+    "kind": "waveOutPlayEntry",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 132,
+    "elapsedMs": 5698.7178,
+    "utc": "2026-10-20T13:55:06.021517+00:00",
+    "kind": "waveOutPlayReturned",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 133,
+    "elapsedMs": 5699.1584,
+    "utc": "2026-10-20T13:55:06.0219577+00:00",
+    "kind": "actualPlaybackCallbackEntry",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 53,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 134,
+    "elapsedMs": 5699.2733,
+    "utc": "2026-10-20T13:55:06.0220725+00:00",
+    "kind": "nativePlaybackCallbackReturned",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 53,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 135,
+    "elapsedMs": 5699.5967,
+    "utc": "2026-10-20T13:55:06.0223959+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 53,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 136,
+    "elapsedMs": 5699.6025,
+    "utc": "2026-10-20T13:55:06.0224017+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 54,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 137,
+    "elapsedMs": 5699.6058,
+    "utc": "2026-10-20T13:55:06.022405+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 55,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 138,
+    "elapsedMs": 5699.6073,
+    "utc": "2026-10-20T13:55:06.0224065+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 56,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 139,
+    "elapsedMs": 5699.6078,
+    "utc": "2026-10-20T13:55:06.022407+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 57,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 140,
+    "elapsedMs": 5699.6084,
+    "utc": "2026-10-20T13:55:06.0224077+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 58,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 141,
+    "elapsedMs": 5699.6087,
+    "utc": "2026-10-20T13:55:06.0224079+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 59,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 142,
+    "elapsedMs": 5699.6089,
+    "utc": "2026-10-20T13:55:06.0224081+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 60,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 143,
+    "elapsedMs": 5699.6092,
+    "utc": "2026-10-20T13:55:06.0224084+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 61,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 144,
+    "elapsedMs": 5699.6094,
+    "utc": "2026-10-20T13:55:06.0224086+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 62,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 145,
+    "elapsedMs": 5699.6096,
+    "utc": "2026-10-20T13:55:06.0224089+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 63,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 146,
+    "elapsedMs": 5699.6105,
+    "utc": "2026-10-20T13:55:06.0224098+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 64,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 147,
+    "elapsedMs": 5699.6108,
+    "utc": "2026-10-20T13:55:06.02241+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 65,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 148,
+    "elapsedMs": 5699.611,
+    "utc": "2026-10-20T13:55:06.0224103+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 66,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 149,
+    "elapsedMs": 5699.612,
+    "utc": "2026-10-20T13:55:06.0224112+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 67,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 150,
+    "elapsedMs": 5699.6122,
+    "utc": "2026-10-20T13:55:06.0224115+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 68,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 151,
+    "elapsedMs": 5699.613,
+    "utc": "2026-10-20T13:55:06.0224122+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 69,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 152,
+    "elapsedMs": 5699.6132,
+    "utc": "2026-10-20T13:55:06.0224124+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 70,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 153,
+    "elapsedMs": 5699.6135,
+    "utc": "2026-10-20T13:55:06.0224127+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 71,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 154,
+    "elapsedMs": 5699.6137,
+    "utc": "2026-10-20T13:55:06.0224129+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 72,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 155,
+    "elapsedMs": 5699.6139,
+    "utc": "2026-10-20T13:55:06.0224132+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 73,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 156,
+    "elapsedMs": 5699.6145,
+    "utc": "2026-10-20T13:55:06.0224137+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 74,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 157,
+    "elapsedMs": 5699.6148,
+    "utc": "2026-10-20T13:55:06.022414+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 75,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 158,
+    "elapsedMs": 5699.615,
+    "utc": "2026-10-20T13:55:06.0224142+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 76,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 159,
+    "elapsedMs": 5699.6152,
+    "utc": "2026-10-20T13:55:06.0224144+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 77,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 160,
+    "elapsedMs": 5699.6155,
+    "utc": "2026-10-20T13:55:06.0224147+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 78,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 161,
+    "elapsedMs": 5699.6157,
+    "utc": "2026-10-20T13:55:06.0224149+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 79,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 162,
+    "elapsedMs": 5699.6163,
+    "utc": "2026-10-20T13:55:06.0224155+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 80,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 163,
+    "elapsedMs": 5699.6175,
+    "utc": "2026-10-20T13:55:06.0224168+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 81,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 164,
+    "elapsedMs": 5699.619,
+    "utc": "2026-10-20T13:55:06.0224182+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 82,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 165,
+    "elapsedMs": 5699.6246,
+    "utc": "2026-10-20T13:55:06.0224238+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 83,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 166,
+    "elapsedMs": 5699.6256,
+    "utc": "2026-10-20T13:55:06.0224248+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 84,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 167,
+    "elapsedMs": 5699.6259,
+    "utc": "2026-10-20T13:55:06.0224251+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 85,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 168,
+    "elapsedMs": 5699.6261,
+    "utc": "2026-10-20T13:55:06.0224253+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 86,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 169,
+    "elapsedMs": 5699.6263,
+    "utc": "2026-10-20T13:55:06.0224256+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 87,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 170,
+    "elapsedMs": 5699.6266,
+    "utc": "2026-10-20T13:55:06.0224258+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 88,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 171,
+    "elapsedMs": 5699.6268,
+    "utc": "2026-10-20T13:55:06.022426+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 89,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 172,
+    "elapsedMs": 5699.628,
+    "utc": "2026-10-20T13:55:06.0224272+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 90,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 173,
+    "elapsedMs": 5699.6283,
+    "utc": "2026-10-20T13:55:06.0224275+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 91,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 174,
+    "elapsedMs": 5699.6286,
+    "utc": "2026-10-20T13:55:06.0224278+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 92,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 175,
+    "elapsedMs": 5699.6288,
+    "utc": "2026-10-20T13:55:06.022428+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 93,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 176,
+    "elapsedMs": 5699.629,
+    "utc": "2026-10-20T13:55:06.0224283+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 94,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 177,
+    "elapsedMs": 5699.6293,
+    "utc": "2026-10-20T13:55:06.0224285+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 95,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 178,
+    "elapsedMs": 5699.6295,
+    "utc": "2026-10-20T13:55:06.0224288+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 96,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 179,
+    "elapsedMs": 5699.6298,
+    "utc": "2026-10-20T13:55:06.022429+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 97,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 180,
+    "elapsedMs": 5699.63,
+    "utc": "2026-10-20T13:55:06.0224293+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 98,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 181,
+    "elapsedMs": 5699.6303,
+    "utc": "2026-10-20T13:55:06.0224295+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 99,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 182,
+    "elapsedMs": 5699.6305,
+    "utc": "2026-10-20T13:55:06.0224297+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 100,
+    "details": {
+      "index": 100,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 183,
+    "elapsedMs": 5699.6308,
+    "utc": "2026-10-20T13:55:06.02243+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 101,
+    "details": {
+      "index": 101,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 184,
+    "elapsedMs": 5699.6311,
+    "utc": "2026-10-20T13:55:06.0224303+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 102,
+    "details": {
+      "index": 102,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 185,
+    "elapsedMs": 5699.6313,
+    "utc": "2026-10-20T13:55:06.0224305+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 103,
+    "details": {
+      "index": 103,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 186,
+    "elapsedMs": 5699.6316,
+    "utc": "2026-10-20T13:55:06.0224308+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 104,
+    "details": {
+      "index": 104,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 187,
+    "elapsedMs": 5699.6318,
+    "utc": "2026-10-20T13:55:06.022431+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 105,
+    "details": {
+      "index": 105,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 188,
+    "elapsedMs": 5699.632,
+    "utc": "2026-10-20T13:55:06.0224312+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 106,
+    "details": {
+      "index": 106,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 189,
+    "elapsedMs": 5699.6323,
+    "utc": "2026-10-20T13:55:06.0224315+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 107,
+    "details": {
+      "index": 107,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 190,
+    "elapsedMs": 5699.6325,
+    "utc": "2026-10-20T13:55:06.0224318+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 108,
+    "details": {
+      "index": 108,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 191,
+    "elapsedMs": 5699.6328,
+    "utc": "2026-10-20T13:55:06.022432+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 109,
+    "details": {
+      "index": 109,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 192,
+    "elapsedMs": 5699.633,
+    "utc": "2026-10-20T13:55:06.0224323+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 110,
+    "details": {
+      "index": 110,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 193,
+    "elapsedMs": 5699.6333,
+    "utc": "2026-10-20T13:55:06.0224325+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 111,
+    "details": {
+      "index": 111,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 194,
+    "elapsedMs": 5699.6336,
+    "utc": "2026-10-20T13:55:06.0224328+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 112,
+    "details": {
+      "index": 112,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 195,
+    "elapsedMs": 5699.6338,
+    "utc": "2026-10-20T13:55:06.022433+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 113,
+    "details": {
+      "index": 113,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 196,
+    "elapsedMs": 5699.634,
+    "utc": "2026-10-20T13:55:06.0224333+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 114,
+    "details": {
+      "index": 114,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 197,
+    "elapsedMs": 5699.6343,
+    "utc": "2026-10-20T13:55:06.0224335+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 115,
+    "details": {
+      "index": 115,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 198,
+    "elapsedMs": 5699.6345,
+    "utc": "2026-10-20T13:55:06.0224337+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 116,
+    "details": {
+      "index": 116,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 199,
+    "elapsedMs": 5699.6348,
+    "utc": "2026-10-20T13:55:06.022434+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 117,
+    "details": {
+      "index": 117,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 200,
+    "elapsedMs": 5699.635,
+    "utc": "2026-10-20T13:55:06.0224342+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 118,
+    "details": {
+      "index": 118,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 201,
+    "elapsedMs": 5699.6352,
+    "utc": "2026-10-20T13:55:06.0224345+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 119,
+    "details": {
+      "index": 119,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 202,
+    "elapsedMs": 5699.6432,
+    "utc": "2026-10-20T13:55:06.0224424+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 120,
+    "details": {
+      "index": 120,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 203,
+    "elapsedMs": 5699.6435,
+    "utc": "2026-10-20T13:55:06.0224427+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 121,
+    "details": {
+      "index": 121,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 204,
+    "elapsedMs": 5699.6437,
+    "utc": "2026-10-20T13:55:06.022443+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 122,
+    "details": {
+      "index": 122,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 205,
+    "elapsedMs": 5699.644,
+    "utc": "2026-10-20T13:55:06.0224432+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 123,
+    "details": {
+      "index": 123,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 206,
+    "elapsedMs": 5699.6442,
+    "utc": "2026-10-20T13:55:06.0224435+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 124,
+    "details": {
+      "index": 124,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 207,
+    "elapsedMs": 5699.6445,
+    "utc": "2026-10-20T13:55:06.0224437+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 125,
+    "details": {
+      "index": 125,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 208,
+    "elapsedMs": 5699.6447,
+    "utc": "2026-10-20T13:55:06.0224439+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 126,
+    "details": {
+      "index": 126,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 209,
+    "elapsedMs": 5699.6449,
+    "utc": "2026-10-20T13:55:06.0224441+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 127,
+    "details": {
+      "index": 127,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 210,
+    "elapsedMs": 5699.6451,
+    "utc": "2026-10-20T13:55:06.0224444+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 128,
+    "details": {
+      "index": 128,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 211,
+    "elapsedMs": 5699.6454,
+    "utc": "2026-10-20T13:55:06.0224446+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 129,
+    "details": {
+      "index": 129,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 212,
+    "elapsedMs": 5699.6456,
+    "utc": "2026-10-20T13:55:06.0224448+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 130,
+    "details": {
+      "index": 130,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 213,
+    "elapsedMs": 5699.6458,
+    "utc": "2026-10-20T13:55:06.0224451+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 131,
+    "details": {
+      "index": 131,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 214,
+    "elapsedMs": 5699.6461,
+    "utc": "2026-10-20T13:55:06.0224453+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 132,
+    "details": {
+      "index": 132,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 215,
+    "elapsedMs": 5699.6463,
+    "utc": "2026-10-20T13:55:06.0224455+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 133,
+    "details": {
+      "index": 133,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 216,
+    "elapsedMs": 5699.6465,
+    "utc": "2026-10-20T13:55:06.0224457+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 134,
+    "details": {
+      "index": 134,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 217,
+    "elapsedMs": 5699.6468,
+    "utc": "2026-10-20T13:55:06.022446+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 135,
+    "details": {
+      "index": 135,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 218,
+    "elapsedMs": 5699.647,
+    "utc": "2026-10-20T13:55:06.0224462+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 136,
+    "details": {
+      "index": 136,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 219,
+    "elapsedMs": 5699.6473,
+    "utc": "2026-10-20T13:55:06.0224465+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 137,
+    "details": {
+      "index": 137,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 220,
+    "elapsedMs": 5699.6475,
+    "utc": "2026-10-20T13:55:06.0224467+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 138,
+    "details": {
+      "index": 138,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 221,
+    "elapsedMs": 5699.6477,
+    "utc": "2026-10-20T13:55:06.022447+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 139,
+    "details": {
+      "index": 139,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 222,
+    "elapsedMs": 5699.648,
+    "utc": "2026-10-20T13:55:06.0224472+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 140,
+    "details": {
+      "index": 140,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 223,
+    "elapsedMs": 5699.6482,
+    "utc": "2026-10-20T13:55:06.0224474+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 141,
+    "details": {
+      "index": 141,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 224,
+    "elapsedMs": 5699.6484,
+    "utc": "2026-10-20T13:55:06.0224477+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 142,
+    "details": {
+      "index": 142,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 225,
+    "elapsedMs": 5699.6487,
+    "utc": "2026-10-20T13:55:06.0224479+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 143,
+    "details": {
+      "index": 143,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 226,
+    "elapsedMs": 5699.6489,
+    "utc": "2026-10-20T13:55:06.0224482+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 144,
+    "details": {
+      "index": 144,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 227,
+    "elapsedMs": 5699.6492,
+    "utc": "2026-10-20T13:55:06.0224484+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 145,
+    "details": {
+      "index": 145,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 228,
+    "elapsedMs": 5699.6494,
+    "utc": "2026-10-20T13:55:06.0224486+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 146,
+    "details": {
+      "index": 146,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 229,
+    "elapsedMs": 5699.6496,
+    "utc": "2026-10-20T13:55:06.0224489+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 147,
+    "details": {
+      "index": 147,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 230,
+    "elapsedMs": 5699.6499,
+    "utc": "2026-10-20T13:55:06.0224491+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 148,
+    "details": {
+      "index": 148,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 231,
+    "elapsedMs": 5699.6501,
+    "utc": "2026-10-20T13:55:06.0224493+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 149,
+    "details": {
+      "index": 149,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 232,
+    "elapsedMs": 5699.6504,
+    "utc": "2026-10-20T13:55:06.0224496+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 150,
+    "details": {
+      "index": 150,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 233,
+    "elapsedMs": 5699.6506,
+    "utc": "2026-10-20T13:55:06.0224498+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 151,
+    "details": {
+      "index": 151,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 234,
+    "elapsedMs": 5699.6508,
+    "utc": "2026-10-20T13:55:06.02245+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 152,
+    "details": {
+      "index": 152,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 235,
+    "elapsedMs": 5699.651,
+    "utc": "2026-10-20T13:55:06.0224503+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 153,
+    "details": {
+      "index": 153,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 236,
+    "elapsedMs": 5699.6513,
+    "utc": "2026-10-20T13:55:06.0224506+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 154,
+    "details": {
+      "index": 154,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 237,
+    "elapsedMs": 5699.6516,
+    "utc": "2026-10-20T13:55:06.0224508+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 155,
+    "details": {
+      "index": 155,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 238,
+    "elapsedMs": 5699.6518,
+    "utc": "2026-10-20T13:55:06.022451+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 156,
+    "details": {
+      "index": 156,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 239,
+    "elapsedMs": 5699.652,
+    "utc": "2026-10-20T13:55:06.0224513+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 157,
+    "details": {
+      "index": 157,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 240,
+    "elapsedMs": 5699.6522,
+    "utc": "2026-10-20T13:55:06.0224515+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 158,
+    "details": {
+      "index": 158,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 241,
+    "elapsedMs": 5699.6525,
+    "utc": "2026-10-20T13:55:06.0224517+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 159,
+    "details": {
+      "index": 159,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 242,
+    "elapsedMs": 5699.6527,
+    "utc": "2026-10-20T13:55:06.0224519+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 160,
+    "details": {
+      "index": 160,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 243,
+    "elapsedMs": 5699.653,
+    "utc": "2026-10-20T13:55:06.0224522+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 161,
+    "details": {
+      "index": 161,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 244,
+    "elapsedMs": 5699.6532,
+    "utc": "2026-10-20T13:55:06.0224525+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 162,
+    "details": {
+      "index": 162,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 245,
+    "elapsedMs": 5699.6535,
+    "utc": "2026-10-20T13:55:06.0224527+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 163,
+    "details": {
+      "index": 163,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 246,
+    "elapsedMs": 5699.6537,
+    "utc": "2026-10-20T13:55:06.022453+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 164,
+    "details": {
+      "index": 164,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 247,
+    "elapsedMs": 5699.654,
+    "utc": "2026-10-20T13:55:06.0224532+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 165,
+    "details": {
+      "index": 165,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 248,
+    "elapsedMs": 5699.6542,
+    "utc": "2026-10-20T13:55:06.0224534+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 166,
+    "details": {
+      "index": 166,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 249,
+    "elapsedMs": 5699.6544,
+    "utc": "2026-10-20T13:55:06.0224537+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 167,
+    "details": {
+      "index": 167,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 250,
+    "elapsedMs": 5699.6547,
+    "utc": "2026-10-20T13:55:06.0224539+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 168,
+    "details": {
+      "index": 168,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 251,
+    "elapsedMs": 5699.6549,
+    "utc": "2026-10-20T13:55:06.0224541+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 169,
+    "details": {
+      "index": 169,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 252,
+    "elapsedMs": 5699.6551,
+    "utc": "2026-10-20T13:55:06.0224544+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 170,
+    "details": {
+      "index": 170,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 253,
+    "elapsedMs": 5699.6554,
+    "utc": "2026-10-20T13:55:06.0224546+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 171,
+    "details": {
+      "index": 171,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 254,
+    "elapsedMs": 5699.6556,
+    "utc": "2026-10-20T13:55:06.0224549+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 172,
+    "details": {
+      "index": 172,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 255,
+    "elapsedMs": 5699.6559,
+    "utc": "2026-10-20T13:55:06.0224551+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 173,
+    "details": {
+      "index": 173,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 256,
+    "elapsedMs": 5699.6561,
+    "utc": "2026-10-20T13:55:06.0224553+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 174,
+    "details": {
+      "index": 174,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 257,
+    "elapsedMs": 5699.6644,
+    "utc": "2026-10-20T13:55:06.0224637+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 175,
+    "details": {
+      "index": 175,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 258,
+    "elapsedMs": 5699.6647,
+    "utc": "2026-10-20T13:55:06.0224639+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 176,
+    "details": {
+      "index": 176,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 259,
+    "elapsedMs": 5699.6649,
+    "utc": "2026-10-20T13:55:06.0224642+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 177,
+    "details": {
+      "index": 177,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 260,
+    "elapsedMs": 5699.6652,
+    "utc": "2026-10-20T13:55:06.0224644+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 178,
+    "details": {
+      "index": 178,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 261,
+    "elapsedMs": 5699.6654,
+    "utc": "2026-10-20T13:55:06.0224646+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 179,
+    "details": {
+      "index": 179,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 262,
+    "elapsedMs": 5699.6656,
+    "utc": "2026-10-20T13:55:06.0224649+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 180,
+    "details": {
+      "index": 180,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 263,
+    "elapsedMs": 5699.6658,
+    "utc": "2026-10-20T13:55:06.0224651+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 181,
+    "details": {
+      "index": 181,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 264,
+    "elapsedMs": 5699.6661,
+    "utc": "2026-10-20T13:55:06.0224653+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 182,
+    "details": {
+      "index": 182,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 265,
+    "elapsedMs": 5699.6664,
+    "utc": "2026-10-20T13:55:06.0224656+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 183,
+    "details": {
+      "index": 183,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 266,
+    "elapsedMs": 5699.6666,
+    "utc": "2026-10-20T13:55:06.0224658+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 184,
+    "details": {
+      "index": 184,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 267,
+    "elapsedMs": 5699.6668,
+    "utc": "2026-10-20T13:55:06.0224661+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 185,
+    "details": {
+      "index": 185,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 268,
+    "elapsedMs": 5699.6671,
+    "utc": "2026-10-20T13:55:06.0224663+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 186,
+    "details": {
+      "index": 186,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 269,
+    "elapsedMs": 5699.6673,
+    "utc": "2026-10-20T13:55:06.0224665+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 187,
+    "details": {
+      "index": 187,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 270,
+    "elapsedMs": 5699.6676,
+    "utc": "2026-10-20T13:55:06.0224668+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 188,
+    "details": {
+      "index": 188,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 271,
+    "elapsedMs": 5699.6678,
+    "utc": "2026-10-20T13:55:06.022467+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 189,
+    "details": {
+      "index": 189,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 272,
+    "elapsedMs": 5699.668,
+    "utc": "2026-10-20T13:55:06.0224673+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 190,
+    "details": {
+      "index": 190,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 273,
+    "elapsedMs": 5699.6683,
+    "utc": "2026-10-20T13:55:06.0224675+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 191,
+    "details": {
+      "index": 191,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 274,
+    "elapsedMs": 5699.6685,
+    "utc": "2026-10-20T13:55:06.0224677+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 192,
+    "details": {
+      "index": 192,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 275,
+    "elapsedMs": 5699.6688,
+    "utc": "2026-10-20T13:55:06.022468+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 193,
+    "details": {
+      "index": 193,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 276,
+    "elapsedMs": 5699.669,
+    "utc": "2026-10-20T13:55:06.0224682+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 194,
+    "details": {
+      "index": 194,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 277,
+    "elapsedMs": 5699.6692,
+    "utc": "2026-10-20T13:55:06.0224684+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 195,
+    "details": {
+      "index": 195,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 278,
+    "elapsedMs": 5699.6694,
+    "utc": "2026-10-20T13:55:06.0224687+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 196,
+    "details": {
+      "index": 196,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 279,
+    "elapsedMs": 5699.6697,
+    "utc": "2026-10-20T13:55:06.0224689+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 197,
+    "details": {
+      "index": 197,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 280,
+    "elapsedMs": 5699.6699,
+    "utc": "2026-10-20T13:55:06.0224691+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 198,
+    "details": {
+      "index": 198,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 281,
+    "elapsedMs": 5699.6701,
+    "utc": "2026-10-20T13:55:06.0224694+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 199,
+    "details": {
+      "index": 199,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 282,
+    "elapsedMs": 5699.6704,
+    "utc": "2026-10-20T13:55:06.0224696+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 200,
+    "details": {
+      "index": 200,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 283,
+    "elapsedMs": 5699.6707,
+    "utc": "2026-10-20T13:55:06.0224699+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 201,
+    "details": {
+      "index": 201,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 284,
+    "elapsedMs": 5699.6709,
+    "utc": "2026-10-20T13:55:06.0224701+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 202,
+    "details": {
+      "index": 202,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 285,
+    "elapsedMs": 5699.6711,
+    "utc": "2026-10-20T13:55:06.0224703+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 203,
+    "details": {
+      "index": 203,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 286,
+    "elapsedMs": 5699.6713,
+    "utc": "2026-10-20T13:55:06.0224706+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 204,
+    "details": {
+      "index": 204,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 287,
+    "elapsedMs": 5699.6716,
+    "utc": "2026-10-20T13:55:06.0224708+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 205,
+    "details": {
+      "index": 205,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 288,
+    "elapsedMs": 5699.6718,
+    "utc": "2026-10-20T13:55:06.022471+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 206,
+    "details": {
+      "index": 206,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 289,
+    "elapsedMs": 5699.672,
+    "utc": "2026-10-20T13:55:06.0224713+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 207,
+    "details": {
+      "index": 207,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 290,
+    "elapsedMs": 5699.6723,
+    "utc": "2026-10-20T13:55:06.0224715+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 208,
+    "details": {
+      "index": 208,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 291,
+    "elapsedMs": 5699.6725,
+    "utc": "2026-10-20T13:55:06.0224717+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 209,
+    "details": {
+      "index": 209,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 292,
+    "elapsedMs": 5699.6727,
+    "utc": "2026-10-20T13:55:06.022472+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 210,
+    "details": {
+      "index": 210,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 293,
+    "elapsedMs": 5699.673,
+    "utc": "2026-10-20T13:55:06.0224722+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 211,
+    "details": {
+      "index": 211,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 294,
+    "elapsedMs": 5699.6732,
+    "utc": "2026-10-20T13:55:06.0224725+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 212,
+    "details": {
+      "index": 212,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 295,
+    "elapsedMs": 5699.6735,
+    "utc": "2026-10-20T13:55:06.0224727+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 213,
+    "details": {
+      "index": 213,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 296,
+    "elapsedMs": 5699.6737,
+    "utc": "2026-10-20T13:55:06.0224729+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 214,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 297,
+    "elapsedMs": 5699.76,
+    "utc": "2026-10-20T13:55:06.0225593+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 162,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 298,
+    "elapsedMs": 5699.9408,
+    "utc": "2026-10-20T13:55:06.02274+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 162,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 299,
+    "elapsedMs": 5699.9509,
+    "utc": "2026-10-20T13:55:06.0227501+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 300,
+    "elapsedMs": 5699.9897,
+    "utc": "2026-10-20T13:55:06.022789+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 301,
+    "elapsedMs": 5699.9936,
+    "utc": "2026-10-20T13:55:06.0227928+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 5,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 302,
+    "elapsedMs": 5700.0221,
+    "utc": "2026-10-20T13:55:06.0228213+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 5,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": true
+    }
+  },
+  {
+    "sequence": 303,
+    "elapsedMs": 8166.9689,
+    "utc": "2026-10-20T13:55:08.4897682+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 304,
+    "elapsedMs": 8604.5533,
+    "utc": "2026-10-20T13:55:08.9273527+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 305,
+    "elapsedMs": 8604.5922,
+    "utc": "2026-10-20T13:55:08.9273915+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 306,
+    "elapsedMs": 8604.6131,
+    "utc": "2026-10-20T13:55:08.9274123+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 307,
+    "elapsedMs": 8806.0982,
+    "utc": "2026-10-20T13:55:09.1288976+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 308,
+    "elapsedMs": 8806.1402,
+    "utc": "2026-10-20T13:55:09.1289394+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 309,
+    "elapsedMs": 8806.1484,
+    "utc": "2026-10-20T13:55:09.1289477+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 310,
+    "elapsedMs": 9203.0278,
+    "utc": "2026-10-20T13:55:09.5258272+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 311,
+    "elapsedMs": 9203.0558,
+    "utc": "2026-10-20T13:55:09.525855+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 312,
+    "elapsedMs": 9203.3379,
+    "utc": "2026-10-20T13:55:09.5261372+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 313,
+    "elapsedMs": 9203.3782,
+    "utc": "2026-10-20T13:55:09.5261774+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 314,
+    "elapsedMs": 9203.5328,
+    "utc": "2026-10-20T13:55:09.5263321+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 315,
+    "elapsedMs": 9216.7593,
+    "utc": "2026-10-20T13:55:09.5395585+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 316,
+    "elapsedMs": 9236.9999,
+    "utc": "2026-10-20T13:55:09.5597993+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 317,
+    "elapsedMs": 9237.0244,
+    "utc": "2026-10-20T13:55:09.5598236+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 318,
+    "elapsedMs": 9237.0467,
+    "utc": "2026-10-20T13:55:09.559846+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 319,
+    "elapsedMs": 9264.2027,
+    "utc": "2026-10-20T13:55:09.587002+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 320,
+    "elapsedMs": 9264.2189,
+    "utc": "2026-10-20T13:55:09.5870181+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 321,
+    "elapsedMs": 9418.4317,
+    "utc": "2026-10-20T13:55:09.7412311+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 322,
+    "elapsedMs": 9425.8374,
+    "utc": "2026-10-20T13:55:09.7486368+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 5354,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 323,
+    "elapsedMs": 9426.0311,
+    "utc": "2026-10-20T13:55:09.7488303+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 316612,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 324,
+    "elapsedMs": 9749.4391,
+    "utc": "2026-10-20T13:55:10.0722385+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 325,
+    "elapsedMs": 9911.0182,
+    "utc": "2026-10-20T13:55:10.2338175+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 326,
+    "elapsedMs": 10140.7839,
+    "utc": "2026-10-20T13:55:10.4635832+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 327,
+    "elapsedMs": 10140.8131,
+    "utc": "2026-10-20T13:55:10.4636123+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 328,
+    "elapsedMs": 10167.7565,
+    "utc": "2026-10-20T13:55:10.4905559+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 329,
+    "elapsedMs": 10167.7891,
+    "utc": "2026-10-20T13:55:10.4905883+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 330,
+    "elapsedMs": 10261.2554,
+    "utc": "2026-10-20T13:55:10.5840547+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 331,
+    "elapsedMs": 10277.5017,
+    "utc": "2026-10-20T13:55:10.600301+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 332,
+    "elapsedMs": 10277.5229,
+    "utc": "2026-10-20T13:55:10.6003221+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 333,
+    "elapsedMs": 10326.7376,
+    "utc": "2026-10-20T13:55:10.649537+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 334,
+    "elapsedMs": 10326.7527,
+    "utc": "2026-10-20T13:55:10.6495519+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 335,
+    "elapsedMs": 10326.8359,
+    "utc": "2026-10-20T13:55:10.6496352+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 336,
+    "elapsedMs": 10326.8473,
+    "utc": "2026-10-20T13:55:10.6496465+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 337,
+    "elapsedMs": 10326.8567,
+    "utc": "2026-10-20T13:55:10.6496559+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 338,
+    "elapsedMs": 10387.6766,
+    "utc": "2026-10-20T13:55:10.710476+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 339,
+    "elapsedMs": 10387.6949,
+    "utc": "2026-10-20T13:55:10.7104941+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 340,
+    "elapsedMs": 10387.858,
+    "utc": "2026-10-20T13:55:10.7106572+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 341,
+    "elapsedMs": 10387.8709,
+    "utc": "2026-10-20T13:55:10.7106701+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 342,
+    "elapsedMs": 10388.0328,
+    "utc": "2026-10-20T13:55:10.7108321+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 343,
+    "elapsedMs": 10388.2155,
+    "utc": "2026-10-20T13:55:10.7110148+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 344,
+    "elapsedMs": 10388.2637,
+    "utc": "2026-10-20T13:55:10.7110629+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 345,
+    "elapsedMs": 10388.2927,
+    "utc": "2026-10-20T13:55:10.7110919+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 346,
+    "elapsedMs": 10388.3076,
+    "utc": "2026-10-20T13:55:10.7111068+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 347,
+    "elapsedMs": 10388.3241,
+    "utc": "2026-10-20T13:55:10.7111233+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 348,
+    "elapsedMs": 10388.4002,
+    "utc": "2026-10-20T13:55:10.7111995+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 1320,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 349,
+    "elapsedMs": 10388.5613,
+    "utc": "2026-10-20T13:55:10.7113607+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 394498,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 350,
+    "elapsedMs": 11871.8758,
+    "utc": "2026-10-20T13:55:12.1946751+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 351,
+    "elapsedMs": 11871.917,
+    "utc": "2026-10-20T13:55:12.1947162+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 352,
+    "elapsedMs": 11872.0993,
+    "utc": "2026-10-20T13:55:12.1948986+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 353,
+    "elapsedMs": 12243.2208,
+    "utc": "2026-10-20T13:55:12.5660201+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 354,
+    "elapsedMs": 12243.2523,
+    "utc": "2026-10-20T13:55:12.5660515+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 355,
+    "elapsedMs": 12243.2596,
+    "utc": "2026-10-20T13:55:12.5660588+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 356,
+    "elapsedMs": 12446.8976,
+    "utc": "2026-10-20T13:55:12.7696969+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 357,
+    "elapsedMs": 12446.9216,
+    "utc": "2026-10-20T13:55:12.7697209+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 358,
+    "elapsedMs": 12447.0153,
+    "utc": "2026-10-20T13:55:12.7698146+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 359,
+    "elapsedMs": 12447.0298,
+    "utc": "2026-10-20T13:55:12.7698291+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 360,
+    "elapsedMs": 12447.1733,
+    "utc": "2026-10-20T13:55:12.7699725+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 361,
+    "elapsedMs": 12447.1789,
+    "utc": "2026-10-20T13:55:12.7699781+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 362,
+    "elapsedMs": 12457.4583,
+    "utc": "2026-10-20T13:55:12.7802576+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 363,
+    "elapsedMs": 12487.8491,
+    "utc": "2026-10-20T13:55:12.8106484+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 364,
+    "elapsedMs": 12720.2444,
+    "utc": "2026-10-20T13:55:13.0430438+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 365,
+    "elapsedMs": 12720.28,
+    "utc": "2026-10-20T13:55:13.0430792+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 366,
+    "elapsedMs": 12720.4339,
+    "utc": "2026-10-20T13:55:13.0432332+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 367,
+    "elapsedMs": 12720.4407,
+    "utc": "2026-10-20T13:55:13.0432399+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 368,
+    "elapsedMs": 12720.5677,
+    "utc": "2026-10-20T13:55:13.043367+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 369,
+    "elapsedMs": 12720.5827,
+    "utc": "2026-10-20T13:55:13.0433819+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 370,
+    "elapsedMs": 12720.6869,
+    "utc": "2026-10-20T13:55:13.0434861+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 371,
+    "elapsedMs": 12720.7068,
+    "utc": "2026-10-20T13:55:13.0435061+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 372,
+    "elapsedMs": 12720.7154,
+    "utc": "2026-10-20T13:55:13.0435146+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 373,
+    "elapsedMs": 12720.7176,
+    "utc": "2026-10-20T13:55:13.0435168+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 8376,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 374,
+    "elapsedMs": 12720.8294,
+    "utc": "2026-10-20T13:55:13.0436288+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 385170,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 375,
+    "elapsedMs": 12754.1757,
+    "utc": "2026-10-20T13:55:13.076975+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 4,
+      "Count": 40,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 376,
+    "elapsedMs": 12754.2147,
+    "utc": "2026-10-20T13:55:13.077014+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "finish",
+      "audioBytes": 0,
+      "finishReason": "stop"
+    }
+  },
+  {
+    "sequence": 377,
+    "elapsedMs": 22641.0317,
+    "utc": "2026-10-20T13:55:22.963831+00:00",
+    "kind": "waveOutStop",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 378,
+    "elapsedMs": 22649.9759,
+    "utc": "2026-10-20T13:55:22.9727753+00:00",
+    "kind": "waveOutDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 379,
+    "elapsedMs": 22650.6523,
+    "utc": "2026-10-20T13:55:22.9734516+00:00",
+    "kind": "playerDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 380,
+    "elapsedMs": 22651.7429,
+    "utc": "2026-10-20T13:55:22.9745421+00:00",
+    "kind": "socketDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 381,
+    "elapsedMs": 22655.9859,
+    "utc": "2026-10-20T13:55:22.9787851+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Request",
+      "stageElapsedMs": 0
+    }
+  },
+  {
+    "sequence": 382,
+    "elapsedMs": 22655.9921,
+    "utc": "2026-10-20T13:55:22.9787913+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Connected",
+      "stageElapsedMs": 1948.7344
+    }
+  },
+  {
+    "sequence": 383,
+    "elapsedMs": 22655.9923,
+    "utc": "2026-10-20T13:55:22.9787915+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "PrefixSent",
+      "stageElapsedMs": 2007.9632
+    }
+  },
+  {
+    "sequence": 384,
+    "elapsedMs": 22655.9923,
+    "utc": "2026-10-20T13:55:22.9787916+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "FirstAudio",
+      "stageElapsedMs": 5595.8579
+    }
+  },
+  {
+    "sequence": 385,
+    "elapsedMs": 22655.9935,
+    "utc": "2026-10-20T13:55:22.9787927+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "FirstPcm",
+      "stageElapsedMs": 5598.383
+    }
+  },
+  {
+    "sequence": 386,
+    "elapsedMs": 22655.9935,
+    "utc": "2026-10-20T13:55:22.9787928+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "PlaybackStarted",
+      "stageElapsedMs": 5687.2041
+    }
+  },
+  {
+    "sequence": 387,
+    "elapsedMs": 22655.9936,
+    "utc": "2026-10-20T13:55:22.9787929+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Finish",
+      "stageElapsedMs": 12742.1673
+    }
+  },
+  {
+    "sequence": 388,
+    "elapsedMs": 22655.9937,
+    "utc": "2026-10-20T13:55:22.978793+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Drained",
+      "stageElapsedMs": 22628.4453
+    }
+  },
+  {
+    "sequence": 389,
+    "elapsedMs": 22656.2622,
+    "utc": "2026-10-20T13:55:22.9790614+00:00",
+    "kind": "nativeSessionCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "outcome": "completed",
+      "failureType": null
+    }
+  }
+]

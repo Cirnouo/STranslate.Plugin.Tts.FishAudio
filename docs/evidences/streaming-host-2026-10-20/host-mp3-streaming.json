@@ -1,0 +1,21 @@
+{
+  "observedUtc": "2026-10-20T14:16:30.985Z",
+  "startedUtc": "2026-10-20T14:13:24.171Z",
+  "hostVersion": "2.0.10",
+  "validationVersion": "1.1.2.6",
+  "format": "mp3",
+  "model": "s2.1-pro-free",
+  "testKeyEqualityChecked": true,
+  "text": "Hello. This is a streaming playback check.",
+  "logTimestampOffset": "+08:00",
+  "lines": [
+    "2026-10-20 22:13:32.997 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Request\" at 0 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Connected\" at 914.9364 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"PrefixSent\" at 960.2056 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"FirstAudio\" at 4791.0634 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Finish\" at 4792.1125 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"FirstPcm\" at 4802.9298 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"PlaybackStarted\" at 4885.8526 ms\r",
+    "2026-10-20 22:13:32.998 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Drained\" at 8615.3323 ms\r"
+  ]
+}

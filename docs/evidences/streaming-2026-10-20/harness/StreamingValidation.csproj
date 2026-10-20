@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>STranslate.Plugin.Tts.FishAudio.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultItems>true</EnableDefaultItems>
+    <ProductionPluginDir Condition="'$(ProductionPluginDir)' == ''">UNSET</ProductionPluginDir>
+    <ProductionDependencyDir Condition="'$(ProductionDependencyDir)' == ''">UNSET</ProductionDependencyDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="offline-safety-tests/**/*.cs" />
+    <Reference Include="STranslate.Plugin.Tts.FishAudio">
+      <HintPath>$(ProductionPluginDir)/STranslate.Plugin.Tts.FishAudio.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NAudio.Core">
+      <HintPath>$(ProductionDependencyDir)/NAudio.Core.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="NAudio.WinMM">
+      <HintPath>$(ProductionDependencyDir)/NAudio.WinMM.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="MessagePack">
+      <HintPath>$(ProductionDependencyDir)/MessagePack.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="STranslate.Plugin">
+      <HintPath>$(ProductionDependencyDir)/STranslate.Plugin.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Content Include="$(ProductionDependencyDir)/*.dll"
+             Exclude="$(ProductionDependencyDir)/STranslate.Plugin.Tts.FishAudio.dll;$(ProductionDependencyDir)/STranslate.Plugin.Tts.FishAudio.Tests.dll"
+             Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RequireProductionArtifacts" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(ProductionPluginDir)/STranslate.Plugin.Tts.FishAudio.dll')"
+           Text="Supply ProductionPluginDir containing the already-built Release plugin DLL." />
+    <Error Condition="!Exists('$(ProductionDependencyDir)/STranslate.Plugin.dll')"
+           Text="Supply ProductionDependencyDir containing the released testbin dependencies and host SDK." />
+  </Target>
+</Project>

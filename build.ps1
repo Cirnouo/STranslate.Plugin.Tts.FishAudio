@@ -185,7 +185,15 @@ try {
         [void]$packageEntryNames.Add($entry.FullName.Replace('\', '/'))
     }
     Write-Host ''
-    $requiredPackageFiles = @('plugin.json', "$ProjectName.dll", 'NAudio.Core.dll', 'NAudio.WinMM.dll')
+    $requiredPackageFiles = @(
+        'plugin.json',
+        "$ProjectName.dll",
+        'NAudio.Core.dll',
+        'NAudio.WinMM.dll',
+        'MessagePack.dll',
+        'MessagePack.Annotations.dll',
+        'Microsoft.NET.StringTools.dll'
+    )
     $missingPackageFiles = @($requiredPackageFiles | Where-Object { -not $packageEntryNames.Contains($_) })
     if ($missingPackageFiles.Count -gt 0) {
         throw "Missing required files in .spkg: $($missingPackageFiles -join ', ')"

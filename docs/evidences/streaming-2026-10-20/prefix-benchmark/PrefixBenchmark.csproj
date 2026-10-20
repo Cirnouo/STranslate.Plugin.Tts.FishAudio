@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>STranslate.Plugin.Tts.FishAudio.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TieredCompilation>false</TieredCompilation>
+    <ProductionPluginDir Condition="'$(ProductionPluginDir)' == ''">UNSET</ProductionPluginDir>
+    <ProductionDependencyDir Condition="'$(ProductionDependencyDir)' == ''">UNSET</ProductionDependencyDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="STranslate.Plugin.Tts.FishAudio">
+      <HintPath>$(ProductionPluginDir)/STranslate.Plugin.Tts.FishAudio.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Content Include="$(ProductionDependencyDir)/*.dll"
+      Exclude="$(ProductionDependencyDir)/STranslate.Plugin.Tts.FishAudio.dll;$(ProductionDependencyDir)/STranslate.Plugin.Tts.FishAudio.Tests.dll"
+      Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RequireProductionArtifacts" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(ProductionPluginDir)/STranslate.Plugin.Tts.FishAudio.dll')"
+      Text="Supply ProductionPluginDir containing the built production plugin DLL." />
+    <Error Condition="!Exists('$(ProductionDependencyDir)/STranslate.Plugin.dll')"
+      Text="Supply ProductionDependencyDir containing the full test runtime and host SDK." />
+  </Target>
+</Project>

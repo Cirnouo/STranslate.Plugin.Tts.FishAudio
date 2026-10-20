@@ -1,0 +1,30 @@
+{
+  "classification": "host-integration-failure",
+  "observedUtc": "2026-10-20T14:28:42.843Z",
+  "startedUtc": "2026-10-20T14:24:51.478Z",
+  "hostVersion": "2.0.10",
+  "validationVersion": "1.1.2.7",
+  "format": "pcm",
+  "model": "s2.1-pro-free",
+  "testKeyEqualityChecked": true,
+  "text": "Hello. This is a streaming playback check.",
+  "logTimestampOffset": "+08:00",
+  "outcome": "connection-timeout-before-connected; secondary UI-thread cleanup exception",
+  "lines": [
+    "2026-10-20 22:25:06.688 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Request\" at 0 ms\r",
+    "2026-10-20 22:25:06.691 [ERR] [STranslate.Plugin.Tts.FishAudio]: TTS request failed (TimeoutException)\r",
+    "System.InvalidOperationException: 调用线程无法访问此对象，因为另一个线程拥有该对象。\r",
+    "   at System.Windows.Threading.Dispatcher.<VerifyAccess>g__ThrowVerifyAccess|7_0()\r",
+    "   at System.Windows.Input.CanExecuteChangedEventManager.HandlerSink.OnCanExecuteChanged(Object sender, EventArgs e)\r",
+    "   at CommunityToolkit.Mvvm.Input.RelayCommand.NotifyCanExecuteChanged() in /_/src/CommunityToolkit.Mvvm/Input/RelayCommand.cs:line 65\r",
+    "   at STranslate.Plugin.Tts.FishAudio.ViewModel.SettingsViewModel.set_IsApiKeyInputLocked(Boolean value)\r",
+    "   at STranslate.Plugin.Tts.FishAudio.ViewModel.SettingsViewModel.<.ctor>b__215_0(Boolean value)\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Presentation.OperationActivityCounter.PublishObservableState()\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Presentation.OperationActivityCounter.PublishObservableState()\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Presentation.OperationActivityCounter.End()\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Presentation.CreditRefreshCoordinator.EndApiKeyOperation()\r",
+    "   at STranslate.Plugin.Tts.FishAudio.ViewModel.SettingsViewModel.EndApiKeyOperation()\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Main.PlayAudioAsync(String text, CancellationToken cancellationToken)\r",
+    "   at STranslate.Plugin.Tts.FishAudio.Main.PlayAudioAsync(String text, CancellationToken cancellationToken)\r"
+  ]
+}
