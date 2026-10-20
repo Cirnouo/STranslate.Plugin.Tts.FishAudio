@@ -1,0 +1,34 @@
+{
+  "classification": "host-integration-success",
+  "observedUtc": "2026-10-20T14:35:55.728Z",
+  "startedUtc": "2026-10-20T14:34:53.836Z",
+  "hostVersion": "2.0.10",
+  "validationVersion": "1.1.2.8",
+  "productionAssemblySha256": "bf191c2af6e87e93175cd3f3991053f22ed8846910d5fa3a98d2dbd2656e743c",
+  "format": "pcm",
+  "model": "s2.1-pro-free",
+  "testKeyEqualityChecked": true,
+  "text": "Hello. This is a streaming playback check.",
+  "logTimestampOffset": "+08:00",
+  "outcome": "completed-through-device-drain",
+  "settingsViewOpenedThenClosedBeforeCall": true,
+  "threadAccessExceptionObserved": false,
+  "lines": [
+    "2026-10-20 22:35:02.191 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Request\" at 0 ms\r",
+    "2026-10-20 22:35:02.191 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Connected\" at 700.2807 ms\r",
+    "2026-10-20 22:35:02.191 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"PrefixSent\" at 744.6888 ms\r",
+    "2026-10-20 22:35:02.191 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"FirstAudio\" at 4157.8937 ms\r",
+    "2026-10-20 22:35:02.192 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"FirstPcm\" at 4160.3296 ms\r",
+    "2026-10-20 22:35:02.192 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Finish\" at 4219.9019 ms\r",
+    "2026-10-20 22:35:02.192 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"PlaybackStarted\" at 4268.1376 ms\r",
+    "2026-10-20 22:35:02.192 [INF] [STranslate.Plugin.Tts.FishAudio]: Fish Audio streaming \"Drained\" at 8139.8631 ms\r"
+  ],
+  "settingsObservations": {
+    "keyClearedAndReenteredWhilePasswordBoxRetainedFocus": true,
+    "keySavedBeforeFocusChange": true,
+    "legacySchema2FormatBeforeManualSwitch": "mp3",
+    "retainedMp3Bitrate": 192,
+    "pcmFormatSurvivedHostRestart": true,
+    "bitrateControlDisabledForPcm": true
+  }
+}

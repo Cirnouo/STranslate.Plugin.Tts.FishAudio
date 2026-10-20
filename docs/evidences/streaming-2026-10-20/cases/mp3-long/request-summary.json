@@ -1,0 +1,56 @@
+{
+  "utc": "2026-10-20T13:56:28.1465142+00:00",
+  "method": "GET",
+  "endpoint": "wss://api.fish.audio/v1/tts/live",
+  "endpointParameters": {},
+  "headers": {
+    "Authorization": "[REDACTED]",
+    "model": "s2.1-pro-free"
+  },
+  "modelGuard": {
+    "exact": "s2.1-pro-free",
+    "strictlyBeforeUtc": "2026-12-01T00:00:00+00:00",
+    "checkedBeforeConnectAndEverySend": true
+  },
+  "deadlineUtc": "2026-10-20T13:58:28.1465142+00:00",
+  "format": "mp3",
+  "caseName": "long",
+  "text": "The morning light falls softly across the quiet room. A small clock marks the steady passage of time. Outside the window, a gentle breeze moves through the trees. A notebook rests on the table, ready for a new page.",
+  "textUtf16Length": 215,
+  "parameters": {
+    "sample_rate": 44100,
+    "Temperature": 0.7,
+    "TopP": 0.7,
+    "Normalize": false,
+    "Latency": "normal",
+    "ConditionOnPreviousChunks": true,
+    "Mp3Bitrate": 192,
+    "prosody": {
+      "Speed": 1,
+      "Volume": 0,
+      "NormalizeLoudness": true
+    },
+    "chunk_length": 100,
+    "voiceReference": "default"
+  },
+  "proxy": "system",
+  "retryCount": 0,
+  "productionAssembly": {
+    "name": "STranslate.Plugin.Tts.FishAudio",
+    "version": "1.0.0.0",
+    "bytes": 329216,
+    "sha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+  },
+  "audioAssembly": {
+    "name": "NAudio.WinMM",
+    "version": "2.3.0.0",
+    "bytes": 58368,
+    "sha256": "80807335ee64d5bb26a9de0d1f966a902b5adf32c53b853c8b871937d12b437b"
+  },
+  "harnessAssembly": {
+    "name": "STranslate.Plugin.Tts.FishAudio.Tests",
+    "version": "1.0.0.0",
+    "bytes": 79872,
+    "sha256": "4a4c5c48e20d220cb0d86a526cbea56d7633d4d32b1000df6aa249e2772bd963"
+  }
+}

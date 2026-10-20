@@ -1,0 +1,406 @@
+{
+  "schema": 1,
+  "classification": "production-streaming-evidence-with-separate-offline-benchmark",
+  "captureDateUtc": "2026-10-20",
+  "keyPublication": "No key retained; Authorization is fully redacted in recorded safe request summaries.",
+  "physicalListeningClaimed": false,
+  "hostUiAcceptance": {
+    "record": "../streaming-host-2026-10-20.md",
+    "accepted": "installed-host short-text MP3/PCM playback through device drain and the separately recorded settings observations",
+    "scopeLimit": "long-text tail gating and cancellation remain isolated production-harness evidence; no corresponding installed-host cases are claimed",
+    "historicalFailure": "original PCM connection timeout and secondary UI cleanup failure remain immutable; the timeout cause is unknown",
+    "records": [
+      {
+        "path": "../streaming-host-2026-10-20/host-mp3-streaming.json",
+        "sha256": "6aed28e1407ad1cdb4aa9f528807123286b76309c9501d394395cf898f44d943",
+        "validationVersion": "1.1.2.6",
+        "format": "mp3",
+        "outcome": "completed-through-device-drain"
+      },
+      {
+        "path": "../streaming-host-2026-10-20/host-pcm-first-attempt.json",
+        "sha256": "4e03360143264d7c7063291682e736bfd18436fc05d013eacc203dc0ccfcb08c",
+        "validationVersion": "1.1.2.7",
+        "format": "pcm",
+        "outcome": "connection-timeout-with-secondary-ui-cleanup-failure"
+      },
+      {
+        "path": "../streaming-host-2026-10-20/host-pcm-streaming.json",
+        "sha256": "5b5ad21f0fd4a385dcbcefefdbc612fb339471e261d23353e80cd1fb55ece98d",
+        "validationVersion": "1.1.2.8",
+        "format": "pcm",
+        "outcome": "completed-through-device-drain"
+      }
+    ]
+  },
+  "clockDomains": {
+    "observations": "native session activity stopwatch",
+    "timeline": "independent harness stopwatch"
+  },
+  "cases": [
+    {
+      "name": "pcm-long",
+      "classification": "production-live-capture",
+      "outcome": "completed",
+      "audioCompleteness": "successful-stop-and-device-drain",
+      "storedWebSocketMessages": "complete; no partial-message file",
+      "rawAudioBytes": 1428056,
+      "binaryAndAudioCaptureBytes": 2856821,
+      "directoryBytes": 2973738,
+      "productionAssemblySha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+    },
+    {
+      "name": "mp3-long",
+      "classification": "production-live-capture",
+      "outcome": "completed",
+      "audioCompleteness": "successful-stop-and-device-drain",
+      "storedWebSocketMessages": "complete; no partial-message file",
+      "rawAudioBytes": 399986,
+      "binaryAndAudioCaptureBytes": 800734,
+      "directoryBytes": 898387,
+      "productionAssemblySha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+    },
+    {
+      "name": "pcm-cancel",
+      "classification": "production-live-capture",
+      "outcome": "cancelled-after-playback",
+      "audioCompleteness": "intentional-prefix-only-cancellation",
+      "storedWebSocketMessages": "complete; no partial-message file",
+      "rawAudioBytes": 286720,
+      "binaryAndAudioCaptureBytes": 573789,
+      "directoryBytes": 621262,
+      "productionAssemblySha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+    }
+  ],
+  "offlineBenchmark": {
+    "classification": "offline-first-prefix-microbenchmark",
+    "virtualLengths": [
+      1000,
+      1000000,
+      1000000000
+    ],
+    "measuredSamples": 30000,
+    "wholeInputStringAllocated": false,
+    "productionAssemblySha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+  },
+  "fileCount": 52,
+  "totalBytesExcludingThisManifest": 5295514,
+  "inventoryExcludes": [
+    "manifest.json (this index)",
+    "generated bin/obj/__pycache__ directories"
+  ],
+  "files": [
+    {
+      "path": "cases/mp3-long/incoming-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 97996,
+      "sha256": "eae9fcab2f06f17efcbb0d80db579dcdfdb51f97213fab4f57ac270970146e1e"
+    },
+    {
+      "path": "cases/mp3-long/incoming-0001.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 88423,
+      "sha256": "a6198a90768bad89d1b3b6bb4feec256264ac764ebdfd5bee36e4005a58cdcc2"
+    },
+    {
+      "path": "cases/mp3-long/incoming-0002.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 105385,
+      "sha256": "a47ffc277eeaf1e775b3a95ee5d965242b24325124796620fc5efbe1d1ef7a3f"
+    },
+    {
+      "path": "cases/mp3-long/incoming-0003.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 106605,
+      "sha256": "d2edcdf5a5a64b505adbf6ec33c173cd095dcaba9a93651a08f8ba4648d73f89"
+    },
+    {
+      "path": "cases/mp3-long/incoming-0004.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 1765,
+      "sha256": "e042cd6b58687c6d744164c2dd5598f80b94ec6b8234d2bfc22199ff27683988"
+    },
+    {
+      "path": "cases/mp3-long/incoming-0005.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 40,
+      "sha256": "6d95a5127dbf2229775530de640f54e41963c037ff1b64dd7428dcd3a3d92377"
+    },
+    {
+      "path": "cases/mp3-long/observations.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 883,
+      "sha256": "0855f2585523b4184b93c3f1df4597665a664446398f2942eb23ca60420a6d6c"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 243,
+      "sha256": "6e5f3ec6a09583be7afd527c9e32676bad10bbda4bfd6b6577a51702677be9f3"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0001.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 72,
+      "sha256": "df4e61c1ea3a4f93f1965a0cc0cdc781dd4a9de0c8d9fcf89bcf22fbd7e2435f"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0002.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0003.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 181,
+      "sha256": "0fdf9811e3f6f2035dfb3a03d00b1fc4044151de4b2e23fa8a288a7f3d692bec"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0004.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "path": "cases/mp3-long/outgoing-0005.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 12,
+      "sha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75"
+    },
+    {
+      "path": "cases/mp3-long/raw-audio.mp3",
+      "classification": "production-live-audio-successful-session",
+      "bytes": 399986,
+      "sha256": "d09f22cd54de08ab7f518ee7d8f397b91eb7c543a39c973f881f245e0a3c49b6"
+    },
+    {
+      "path": "cases/mp3-long/request-summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 1772,
+      "sha256": "2cf5d66d7e6702238dc3b50a3f741c670a21c86b05da6b9fe983739068b47daf"
+    },
+    {
+      "path": "cases/mp3-long/summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 8297,
+      "sha256": "88f0cb9c069bc32fe30909ef5d586b326bbfd7efeabd8aa275979ed0458c7aeb"
+    },
+    {
+      "path": "cases/mp3-long/timeline.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 86701,
+      "sha256": "553c89a0fc08ec3980ca3bf55286fd8b9d46333b696daa0d81f5a0d23bb05d5e"
+    },
+    {
+      "path": "cases/pcm-cancel/incoming-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 286758,
+      "sha256": "e8ec10ff0224ca3cfbd2cabc7668b6486afab15ddde7d604267790994dc88738"
+    },
+    {
+      "path": "cases/pcm-cancel/observations.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 847,
+      "sha256": "87220db393b5b7e20782a3db4a0463f88d1ca07cbf2d153f40e320d3fd5f00d7"
+    },
+    {
+      "path": "cases/pcm-cancel/outgoing-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 226,
+      "sha256": "da1f45ecf7044682da99c85bae50e1fa42e680dd37c1ced803368a99057f8ad2"
+    },
+    {
+      "path": "cases/pcm-cancel/outgoing-0001.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 72,
+      "sha256": "df4e61c1ea3a4f93f1965a0cc0cdc781dd4a9de0c8d9fcf89bcf22fbd7e2435f"
+    },
+    {
+      "path": "cases/pcm-cancel/outgoing-0002.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "path": "cases/pcm-cancel/raw-audio.pcm",
+      "classification": "production-live-intentionally-cancelled-audio-prefix",
+      "bytes": 286720,
+      "sha256": "d09a6b83b18fc24915cced831447489bea41f6125deafff6b604026bc15fb8f4"
+    },
+    {
+      "path": "cases/pcm-cancel/request-summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 1774,
+      "sha256": "148a333ef77345d8a7b17640a6572b0a2b21b93d8b6c34128a9d6e4828a8d264"
+    },
+    {
+      "path": "cases/pcm-cancel/summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 5440,
+      "sha256": "8f72bbb3b1a6214140cba6e804af1b7d45d638be6948ad5678846747c32b7d9c"
+    },
+    {
+      "path": "cases/pcm-cancel/timeline.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 39412,
+      "sha256": "b018fba356645d1bf2499b046ca96535ec520ad179c14095f06ff56c27c0a64e"
+    },
+    {
+      "path": "cases/pcm-long/incoming-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 331814,
+      "sha256": "6c19e60f5f18eea24bfa63c633bed1c5ce41a5ee9fa45b1bbee993f873ef7147"
+    },
+    {
+      "path": "cases/pcm-long/incoming-0001.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 316650,
+      "sha256": "47eb9dadcb677397005a28aa4af4417fb5a4c19070b105284a8fea2c88946f9c"
+    },
+    {
+      "path": "cases/pcm-long/incoming-0002.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 394536,
+      "sha256": "0d09dda37bbbc0d7cc4f81e387f6a1135ac9ca966f297656bc0e6c5316e51914"
+    },
+    {
+      "path": "cases/pcm-long/incoming-0003.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 385208,
+      "sha256": "6d60427b85232af5e1bb7b3246d349f8c4bf8e478e5e055d19815f5834c2e078"
+    },
+    {
+      "path": "cases/pcm-long/incoming-0004.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 40,
+      "sha256": "cf8132ebde964e7dfbe3e871e1051f9f1ca2c6170d39ed2c054d519f77c548c0"
+    },
+    {
+      "path": "cases/pcm-long/observations.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 884,
+      "sha256": "b350493196541f984588945d2626e3126e97b0706e7d7276222204df5ea80d89"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0000.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 226,
+      "sha256": "da1f45ecf7044682da99c85bae50e1fa42e680dd37c1ced803368a99057f8ad2"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0001.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 72,
+      "sha256": "df4e61c1ea3a4f93f1965a0cc0cdc781dd4a9de0c8d9fcf89bcf22fbd7e2435f"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0002.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0003.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 181,
+      "sha256": "0fdf9811e3f6f2035dfb3a03d00b1fc4044151de4b2e23fa8a288a7f3d692bec"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0004.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "path": "cases/pcm-long/outgoing-0005.msgpack",
+      "classification": "production-live-complete-websocket-message",
+      "bytes": 12,
+      "sha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75"
+    },
+    {
+      "path": "cases/pcm-long/raw-audio.pcm",
+      "classification": "production-live-audio-successful-session",
+      "bytes": 1428056,
+      "sha256": "a8b65d728a2b6c0dc9efc0b83c2a2d7630facaa1f325d7eb88429b8c7ce8b877"
+    },
+    {
+      "path": "cases/pcm-long/request-summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 1772,
+      "sha256": "6883e24a8c9d96d947629e35fa4d791d6ea0896ada3d52d1aacdc0914fce99fb"
+    },
+    {
+      "path": "cases/pcm-long/summary.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 7948,
+      "sha256": "200e639a65c57ece23d6068247538614ad08344569b6db9d86224432ac282d00"
+    },
+    {
+      "path": "cases/pcm-long/timeline.json",
+      "classification": "production-live-sanitized-metadata",
+      "bytes": 106313,
+      "sha256": "6fcf760c61342938b51aa36387ea18c89dbcfa0187ccb20e7dae8a844a491983"
+    },
+    {
+      "path": "harness/Program.cs",
+      "classification": "production-validation-harness-source",
+      "bytes": 27008,
+      "sha256": "816ed3c3f506e6a58e72d53402abe73ae55cd8d22da42967602e2d8e826a954f"
+    },
+    {
+      "path": "harness/README.md",
+      "classification": "reproduction-instructions",
+      "bytes": 5285,
+      "sha256": "9f2667e7b7dad61cf5686c187938264b82d0b25c85381876ee206e38df43fe47"
+    },
+    {
+      "path": "harness/StreamingValidation.csproj",
+      "classification": "production-validation-harness-source",
+      "bytes": 2391,
+      "sha256": "66cda80160d2fb75950fa389ebc7a5f84b25c128b0149088849afd9390092162"
+    },
+    {
+      "path": "prefix-benchmark/PrefixBenchmark.csproj",
+      "classification": "offline-prefix-benchmark-source",
+      "bytes": 1661,
+      "sha256": "62a4c800d9ce811731f4e231228e279d873ce19969290919687cc9bdd74b157f"
+    },
+    {
+      "path": "prefix-benchmark/Program.cs",
+      "classification": "offline-prefix-benchmark-source",
+      "bytes": 7924,
+      "sha256": "e4be66fe1b77ef4d7cc1aa7c1e51d15560100c9801a188c12ec99d7d26171b09"
+    },
+    {
+      "path": "prefix-benchmark/README.md",
+      "classification": "reproduction-instructions",
+      "bytes": 3936,
+      "sha256": "8f3a95fad19690f3ad32c550f8eca38825e0028d928ebf0f077b07b0ea48525a"
+    },
+    {
+      "path": "prefix-benchmark/results.json",
+      "classification": "offline-prefix-benchmark-measurements",
+      "bytes": 5807,
+      "sha256": "b89047d69e9601ca5de62f3703b5fab81b98cda3159c19ea87302af654f49750"
+    },
+    {
+      "path": "prefix-benchmark/samples.csv",
+      "classification": "offline-prefix-benchmark-measurements",
+      "bytes": 716787,
+      "sha256": "c5fc3b59ae24c3c2ed1c97bdab7f9032730d3f0e6da2e1ba8e99c9fd6e9e3af5"
+    },
+    {
+      "path": "README.md",
+      "classification": "evidence-interpretation",
+      "bytes": 9082,
+      "sha256": "c7ba5c27b574d62d9202eca9d6375b753baaeb46e5891c6a9af2d41623bb950a"
+    },
+    {
+      "path": "verify.py",
+      "classification": "offline-integrity-verifier",
+      "bytes": 22246,
+      "sha256": "bb29ae56b6ddcbfc67641e484868b1bc455777b056cc83d9bdfc9fbc1a9d8cb8"
+    }
+  ]
+}

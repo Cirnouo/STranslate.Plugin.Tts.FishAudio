@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "classification": "offline-first-prefix-microbenchmark",
+  "outcome": "passed",
+  "beganUtc": "2026-10-20T14:13:09.8418491+00:00",
+  "completedUtc": "2026-10-20T14:13:09.9367521+00:00",
+  "runtime": ".NET 10.0.13",
+  "operatingSystem": "Windows",
+  "architecture": "X64",
+  "serverGc": false,
+  "stopwatchFrequency": 10000000,
+  "tieredCompilation": false,
+  "productionAssembly": {
+    "name": "STranslate.Plugin.Tts.FishAudio",
+    "bytes": 329216,
+    "sha256": "c02a1c36ef7ee6ef15e9419d3e815e605cb8d072a318f00d0c79cb8530ccc8d7"
+  },
+  "scope": "One actual production StreamingTextReader.ReadNext(100), with fresh reader/source setup excluded from primary timing and allocation and included in the secondary allocation metric.",
+  "source": {
+    "kind": "IStreamingTextSource virtual length",
+    "first100": "The morning light falls softly across the quiet room. A small clock marks the steady passage of time",
+    "expectedPrefix": "The morning light falls softly across the quiet room.",
+    "tailReadSentinelIndex": 100,
+    "sentinelSelfCheckPassed": true,
+    "wholeInputStringAllocated": false
+  },
+  "limitations": [
+    "The caller owns any original input string; this benchmark does not include its allocation or whole-input validation.",
+    "No network, decoder, queue, audio output, full-session memory, or device latency is measured.",
+    "Timing distributions describe one local process and are not a latency guarantee or a PCM/MP3 comparison."
+  ],
+  "networkCalls": 0,
+  "audioDeviceOperations": 0,
+  "environmentCredentialReads": 0,
+  "results": [
+    {
+      "virtualLengthUtf16": 1000,
+      "warmupIterations": 1000,
+      "measuredIterations": 10000,
+      "indexedReadsPerIteration": 100,
+      "highestIndexRead": 99,
+      "firstForbiddenIndex": 100,
+      "prefixUtf16Length": 53,
+      "prefixSha256": "66fe899272db9c70bdde6f0470fab6d2b5b1784e376fc907cd89fad6fb80c667",
+      "flushSafe": true,
+      "isFinal": false,
+      "readNextAllocatedBytes": {
+        "count": 10000,
+        "min": 600,
+        "median": 600,
+        "p90": 600,
+        "p95": 600,
+        "p99": 600,
+        "max": 600,
+        "mean": 600,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "setupPlusReadNextAllocatedBytes": {
+        "count": 10000,
+        "min": 912,
+        "median": 912,
+        "p90": 912,
+        "p95": 912,
+        "p99": 912,
+        "max": 912,
+        "mean": 912,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "readNextElapsedMicroseconds": {
+        "count": 10000,
+        "min": 1.7,
+        "median": 1.8,
+        "p90": 1.8,
+        "p95": 4.2,
+        "p99": 6.5,
+        "max": 16.9,
+        "mean": 2.012229999999696,
+        "standardDeviation": 0.9054840843990646,
+        "percentileMethod": "nearest-rank"
+      }
+    },
+    {
+      "virtualLengthUtf16": 1000000,
+      "warmupIterations": 1000,
+      "measuredIterations": 10000,
+      "indexedReadsPerIteration": 100,
+      "highestIndexRead": 99,
+      "firstForbiddenIndex": 100,
+      "prefixUtf16Length": 53,
+      "prefixSha256": "66fe899272db9c70bdde6f0470fab6d2b5b1784e376fc907cd89fad6fb80c667",
+      "flushSafe": true,
+      "isFinal": false,
+      "readNextAllocatedBytes": {
+        "count": 10000,
+        "min": 600,
+        "median": 600,
+        "p90": 600,
+        "p95": 600,
+        "p99": 600,
+        "max": 600,
+        "mean": 600,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "setupPlusReadNextAllocatedBytes": {
+        "count": 10000,
+        "min": 912,
+        "median": 912,
+        "p90": 912,
+        "p95": 912,
+        "p99": 912,
+        "max": 912,
+        "mean": 912,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "readNextElapsedMicroseconds": {
+        "count": 10000,
+        "min": 1.7,
+        "median": 1.7,
+        "p90": 1.8,
+        "p95": 2,
+        "p99": 4.1,
+        "max": 74.4,
+        "mean": 1.7976799999999116,
+        "standardDeviation": 0.8282056614150864,
+        "percentileMethod": "nearest-rank"
+      }
+    },
+    {
+      "virtualLengthUtf16": 1000000000,
+      "warmupIterations": 1000,
+      "measuredIterations": 10000,
+      "indexedReadsPerIteration": 100,
+      "highestIndexRead": 99,
+      "firstForbiddenIndex": 100,
+      "prefixUtf16Length": 53,
+      "prefixSha256": "66fe899272db9c70bdde6f0470fab6d2b5b1784e376fc907cd89fad6fb80c667",
+      "flushSafe": true,
+      "isFinal": false,
+      "readNextAllocatedBytes": {
+        "count": 10000,
+        "min": 600,
+        "median": 600,
+        "p90": 600,
+        "p95": 600,
+        "p99": 600,
+        "max": 600,
+        "mean": 600,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "setupPlusReadNextAllocatedBytes": {
+        "count": 10000,
+        "min": 912,
+        "median": 912,
+        "p90": 912,
+        "p95": 912,
+        "p99": 912,
+        "max": 912,
+        "mean": 912,
+        "standardDeviation": 0,
+        "percentileMethod": "nearest-rank"
+      },
+      "readNextElapsedMicroseconds": {
+        "count": 10000,
+        "min": 1.7,
+        "median": 1.7,
+        "p90": 1.8,
+        "p95": 2,
+        "p99": 2.1,
+        "max": 39.7,
+        "mean": 1.7751899999996448,
+        "standardDeviation": 0.41254510529153027,
+        "percentileMethod": "nearest-rank"
+      }
+    }
+  ],
+  "samples": {
+    "name": "samples.csv",
+    "bytes": 716787,
+    "sha256": "c5fc3b59ae24c3c2ed1c97bdab7f9032730d3f0e6da2e1ba8e99c9fd6e9e3af5"
+  }
+}

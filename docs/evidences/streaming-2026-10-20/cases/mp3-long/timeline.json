@@ -1,0 +1,3703 @@
+[
+  {
+    "sequence": 0,
+    "elapsedMs": 81.617,
+    "utc": "2026-10-20T13:56:28.2281317+00:00",
+    "kind": "connectAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 1,
+    "elapsedMs": 836.3324,
+    "utc": "2026-10-20T13:56:28.9828469+00:00",
+    "kind": "connectCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 2,
+    "elapsedMs": 896.0566,
+    "utc": "2026-10-20T13:56:29.0425714+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 3,
+    "elapsedMs": 896.9529,
+    "utc": "2026-10-20T13:56:29.0434674+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 4,
+    "elapsedMs": 897.6448,
+    "utc": "2026-10-20T13:56:29.0441591+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 0,
+    "details": {
+      "index": 0,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 5,
+    "elapsedMs": 898.111,
+    "utc": "2026-10-20T13:56:29.0446254+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 1,
+    "details": {
+      "index": 1,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 6,
+    "elapsedMs": 898.1144,
+    "utc": "2026-10-20T13:56:29.0446286+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 2,
+    "details": {
+      "index": 2,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 7,
+    "elapsedMs": 898.1147,
+    "utc": "2026-10-20T13:56:29.0446289+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 3,
+    "details": {
+      "index": 3,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 8,
+    "elapsedMs": 898.1149,
+    "utc": "2026-10-20T13:56:29.0446292+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 4,
+    "details": {
+      "index": 4,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 9,
+    "elapsedMs": 898.1159,
+    "utc": "2026-10-20T13:56:29.0446302+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 5,
+    "details": {
+      "index": 5,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 10,
+    "elapsedMs": 898.1162,
+    "utc": "2026-10-20T13:56:29.0446304+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 6,
+    "details": {
+      "index": 6,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 11,
+    "elapsedMs": 898.1173,
+    "utc": "2026-10-20T13:56:29.0446316+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 7,
+    "details": {
+      "index": 7,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 12,
+    "elapsedMs": 898.1176,
+    "utc": "2026-10-20T13:56:29.0446318+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 8,
+    "details": {
+      "index": 8,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 13,
+    "elapsedMs": 898.1178,
+    "utc": "2026-10-20T13:56:29.044632+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 9,
+    "details": {
+      "index": 9,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 14,
+    "elapsedMs": 898.118,
+    "utc": "2026-10-20T13:56:29.0446322+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 10,
+    "details": {
+      "index": 10,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 15,
+    "elapsedMs": 898.1186,
+    "utc": "2026-10-20T13:56:29.0446331+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 11,
+    "details": {
+      "index": 11,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 16,
+    "elapsedMs": 898.1191,
+    "utc": "2026-10-20T13:56:29.0446334+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 12,
+    "details": {
+      "index": 12,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 17,
+    "elapsedMs": 898.1195,
+    "utc": "2026-10-20T13:56:29.0446338+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 13,
+    "details": {
+      "index": 13,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 18,
+    "elapsedMs": 898.12,
+    "utc": "2026-10-20T13:56:29.0446343+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 14,
+    "details": {
+      "index": 14,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 19,
+    "elapsedMs": 898.1203,
+    "utc": "2026-10-20T13:56:29.0446345+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 15,
+    "details": {
+      "index": 15,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 20,
+    "elapsedMs": 898.1205,
+    "utc": "2026-10-20T13:56:29.0446348+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 16,
+    "details": {
+      "index": 16,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 21,
+    "elapsedMs": 898.1207,
+    "utc": "2026-10-20T13:56:29.044635+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 17,
+    "details": {
+      "index": 17,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 22,
+    "elapsedMs": 898.121,
+    "utc": "2026-10-20T13:56:29.0446352+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 18,
+    "details": {
+      "index": 18,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 23,
+    "elapsedMs": 898.1213,
+    "utc": "2026-10-20T13:56:29.0446355+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 19,
+    "details": {
+      "index": 19,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 24,
+    "elapsedMs": 898.1215,
+    "utc": "2026-10-20T13:56:29.0446357+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 20,
+    "details": {
+      "index": 20,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 25,
+    "elapsedMs": 898.1217,
+    "utc": "2026-10-20T13:56:29.0446359+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 21,
+    "details": {
+      "index": 21,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 26,
+    "elapsedMs": 898.1219,
+    "utc": "2026-10-20T13:56:29.0446365+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 22,
+    "details": {
+      "index": 22,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 27,
+    "elapsedMs": 898.1225,
+    "utc": "2026-10-20T13:56:29.0446367+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 23,
+    "details": {
+      "index": 23,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 28,
+    "elapsedMs": 898.1227,
+    "utc": "2026-10-20T13:56:29.044637+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 24,
+    "details": {
+      "index": 24,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 29,
+    "elapsedMs": 898.123,
+    "utc": "2026-10-20T13:56:29.0446373+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 25,
+    "details": {
+      "index": 25,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 30,
+    "elapsedMs": 898.1238,
+    "utc": "2026-10-20T13:56:29.044638+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 26,
+    "details": {
+      "index": 26,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 31,
+    "elapsedMs": 898.1257,
+    "utc": "2026-10-20T13:56:29.0446399+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 27,
+    "details": {
+      "index": 27,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 32,
+    "elapsedMs": 898.126,
+    "utc": "2026-10-20T13:56:29.0446402+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 28,
+    "details": {
+      "index": 28,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 33,
+    "elapsedMs": 898.1296,
+    "utc": "2026-10-20T13:56:29.0446438+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 29,
+    "details": {
+      "index": 29,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 34,
+    "elapsedMs": 898.13,
+    "utc": "2026-10-20T13:56:29.0446442+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 30,
+    "details": {
+      "index": 30,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 35,
+    "elapsedMs": 898.1302,
+    "utc": "2026-10-20T13:56:29.0446445+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 31,
+    "details": {
+      "index": 31,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 36,
+    "elapsedMs": 898.1305,
+    "utc": "2026-10-20T13:56:29.0446447+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 32,
+    "details": {
+      "index": 32,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 37,
+    "elapsedMs": 898.1307,
+    "utc": "2026-10-20T13:56:29.0446449+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 33,
+    "details": {
+      "index": 33,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 38,
+    "elapsedMs": 898.131,
+    "utc": "2026-10-20T13:56:29.0446452+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 34,
+    "details": {
+      "index": 34,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 39,
+    "elapsedMs": 898.1312,
+    "utc": "2026-10-20T13:56:29.0446454+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 35,
+    "details": {
+      "index": 35,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 40,
+    "elapsedMs": 898.1314,
+    "utc": "2026-10-20T13:56:29.0446457+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 36,
+    "details": {
+      "index": 36,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 41,
+    "elapsedMs": 898.1317,
+    "utc": "2026-10-20T13:56:29.0446459+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 37,
+    "details": {
+      "index": 37,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 42,
+    "elapsedMs": 898.1319,
+    "utc": "2026-10-20T13:56:29.0446461+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 38,
+    "details": {
+      "index": 38,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 43,
+    "elapsedMs": 898.1321,
+    "utc": "2026-10-20T13:56:29.0446464+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 39,
+    "details": {
+      "index": 39,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 44,
+    "elapsedMs": 898.1324,
+    "utc": "2026-10-20T13:56:29.0446466+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 40,
+    "details": {
+      "index": 40,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 45,
+    "elapsedMs": 898.1326,
+    "utc": "2026-10-20T13:56:29.0446468+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 41,
+    "details": {
+      "index": 41,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 46,
+    "elapsedMs": 898.1328,
+    "utc": "2026-10-20T13:56:29.0446471+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 42,
+    "details": {
+      "index": 42,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 47,
+    "elapsedMs": 898.1331,
+    "utc": "2026-10-20T13:56:29.0446473+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 43,
+    "details": {
+      "index": 43,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 48,
+    "elapsedMs": 898.1333,
+    "utc": "2026-10-20T13:56:29.0446475+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 44,
+    "details": {
+      "index": 44,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 49,
+    "elapsedMs": 898.1335,
+    "utc": "2026-10-20T13:56:29.0446478+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 45,
+    "details": {
+      "index": 45,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 50,
+    "elapsedMs": 898.1338,
+    "utc": "2026-10-20T13:56:29.044648+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 46,
+    "details": {
+      "index": 46,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 51,
+    "elapsedMs": 898.134,
+    "utc": "2026-10-20T13:56:29.0446483+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 47,
+    "details": {
+      "index": 47,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 52,
+    "elapsedMs": 898.1343,
+    "utc": "2026-10-20T13:56:29.0446485+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 48,
+    "details": {
+      "index": 48,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 53,
+    "elapsedMs": 898.1345,
+    "utc": "2026-10-20T13:56:29.0446488+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 49,
+    "details": {
+      "index": 49,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 54,
+    "elapsedMs": 898.1348,
+    "utc": "2026-10-20T13:56:29.044649+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 50,
+    "details": {
+      "index": 50,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 55,
+    "elapsedMs": 898.135,
+    "utc": "2026-10-20T13:56:29.0446492+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 51,
+    "details": {
+      "index": 51,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 56,
+    "elapsedMs": 898.1352,
+    "utc": "2026-10-20T13:56:29.0446495+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 52,
+    "details": {
+      "index": 52,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 57,
+    "elapsedMs": 898.1355,
+    "utc": "2026-10-20T13:56:29.0446497+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 53,
+    "details": {
+      "index": 53,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 58,
+    "elapsedMs": 898.1357,
+    "utc": "2026-10-20T13:56:29.04465+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 54,
+    "details": {
+      "index": 54,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 59,
+    "elapsedMs": 898.136,
+    "utc": "2026-10-20T13:56:29.0446502+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 55,
+    "details": {
+      "index": 55,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 60,
+    "elapsedMs": 898.1362,
+    "utc": "2026-10-20T13:56:29.0446505+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 56,
+    "details": {
+      "index": 56,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 61,
+    "elapsedMs": 898.1365,
+    "utc": "2026-10-20T13:56:29.0446507+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 57,
+    "details": {
+      "index": 57,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 62,
+    "elapsedMs": 898.1367,
+    "utc": "2026-10-20T13:56:29.0446509+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 58,
+    "details": {
+      "index": 58,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 63,
+    "elapsedMs": 898.1369,
+    "utc": "2026-10-20T13:56:29.0446511+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 59,
+    "details": {
+      "index": 59,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 64,
+    "elapsedMs": 898.1372,
+    "utc": "2026-10-20T13:56:29.0446514+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 60,
+    "details": {
+      "index": 60,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 65,
+    "elapsedMs": 898.1375,
+    "utc": "2026-10-20T13:56:29.0446517+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 61,
+    "details": {
+      "index": 61,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 66,
+    "elapsedMs": 898.1377,
+    "utc": "2026-10-20T13:56:29.044652+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 62,
+    "details": {
+      "index": 62,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 67,
+    "elapsedMs": 898.138,
+    "utc": "2026-10-20T13:56:29.0446522+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 63,
+    "details": {
+      "index": 63,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 68,
+    "elapsedMs": 898.1382,
+    "utc": "2026-10-20T13:56:29.0446525+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 64,
+    "details": {
+      "index": 64,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 69,
+    "elapsedMs": 898.1385,
+    "utc": "2026-10-20T13:56:29.0446527+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 65,
+    "details": {
+      "index": 65,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 70,
+    "elapsedMs": 898.1387,
+    "utc": "2026-10-20T13:56:29.0446529+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 66,
+    "details": {
+      "index": 66,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 71,
+    "elapsedMs": 898.1389,
+    "utc": "2026-10-20T13:56:29.0446531+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 67,
+    "details": {
+      "index": 67,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 72,
+    "elapsedMs": 898.1391,
+    "utc": "2026-10-20T13:56:29.0446534+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 68,
+    "details": {
+      "index": 68,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 73,
+    "elapsedMs": 898.1394,
+    "utc": "2026-10-20T13:56:29.0446536+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 69,
+    "details": {
+      "index": 69,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 74,
+    "elapsedMs": 898.1396,
+    "utc": "2026-10-20T13:56:29.0446539+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 70,
+    "details": {
+      "index": 70,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 75,
+    "elapsedMs": 898.1399,
+    "utc": "2026-10-20T13:56:29.0446541+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 71,
+    "details": {
+      "index": 71,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 76,
+    "elapsedMs": 898.1401,
+    "utc": "2026-10-20T13:56:29.0446543+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 72,
+    "details": {
+      "index": 72,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 77,
+    "elapsedMs": 898.1403,
+    "utc": "2026-10-20T13:56:29.0446546+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 73,
+    "details": {
+      "index": 73,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 78,
+    "elapsedMs": 898.1405,
+    "utc": "2026-10-20T13:56:29.0446548+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 74,
+    "details": {
+      "index": 74,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 79,
+    "elapsedMs": 898.1408,
+    "utc": "2026-10-20T13:56:29.044655+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 75,
+    "details": {
+      "index": 75,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 80,
+    "elapsedMs": 898.141,
+    "utc": "2026-10-20T13:56:29.0446552+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 76,
+    "details": {
+      "index": 76,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 81,
+    "elapsedMs": 898.1412,
+    "utc": "2026-10-20T13:56:29.0446555+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 77,
+    "details": {
+      "index": 77,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 82,
+    "elapsedMs": 898.1415,
+    "utc": "2026-10-20T13:56:29.0446557+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 78,
+    "details": {
+      "index": 78,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 83,
+    "elapsedMs": 898.1418,
+    "utc": "2026-10-20T13:56:29.044656+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 79,
+    "details": {
+      "index": 79,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 84,
+    "elapsedMs": 898.142,
+    "utc": "2026-10-20T13:56:29.0446563+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 80,
+    "details": {
+      "index": 80,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 85,
+    "elapsedMs": 898.1423,
+    "utc": "2026-10-20T13:56:29.0446565+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 81,
+    "details": {
+      "index": 81,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 86,
+    "elapsedMs": 898.1425,
+    "utc": "2026-10-20T13:56:29.0446567+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 82,
+    "details": {
+      "index": 82,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 87,
+    "elapsedMs": 898.1427,
+    "utc": "2026-10-20T13:56:29.044657+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 83,
+    "details": {
+      "index": 83,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 88,
+    "elapsedMs": 898.143,
+    "utc": "2026-10-20T13:56:29.0446572+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 84,
+    "details": {
+      "index": 84,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 89,
+    "elapsedMs": 898.1432,
+    "utc": "2026-10-20T13:56:29.0446574+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 85,
+    "details": {
+      "index": 85,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 90,
+    "elapsedMs": 898.1434,
+    "utc": "2026-10-20T13:56:29.0446576+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 86,
+    "details": {
+      "index": 86,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 91,
+    "elapsedMs": 898.1436,
+    "utc": "2026-10-20T13:56:29.0446579+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 87,
+    "details": {
+      "index": 87,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 92,
+    "elapsedMs": 898.1439,
+    "utc": "2026-10-20T13:56:29.0446581+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 88,
+    "details": {
+      "index": 88,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 93,
+    "elapsedMs": 898.1441,
+    "utc": "2026-10-20T13:56:29.0446583+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 89,
+    "details": {
+      "index": 89,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 94,
+    "elapsedMs": 898.1443,
+    "utc": "2026-10-20T13:56:29.0446586+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 90,
+    "details": {
+      "index": 90,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 95,
+    "elapsedMs": 898.1446,
+    "utc": "2026-10-20T13:56:29.0446588+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 91,
+    "details": {
+      "index": 91,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 96,
+    "elapsedMs": 898.1448,
+    "utc": "2026-10-20T13:56:29.044659+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 92,
+    "details": {
+      "index": 92,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 97,
+    "elapsedMs": 898.145,
+    "utc": "2026-10-20T13:56:29.0446593+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 93,
+    "details": {
+      "index": 93,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 98,
+    "elapsedMs": 898.1453,
+    "utc": "2026-10-20T13:56:29.0446595+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 94,
+    "details": {
+      "index": 94,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 99,
+    "elapsedMs": 898.1455,
+    "utc": "2026-10-20T13:56:29.0446597+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 95,
+    "details": {
+      "index": 95,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 100,
+    "elapsedMs": 898.1457,
+    "utc": "2026-10-20T13:56:29.04466+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 96,
+    "details": {
+      "index": 96,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 101,
+    "elapsedMs": 898.146,
+    "utc": "2026-10-20T13:56:29.0446602+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 97,
+    "details": {
+      "index": 97,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 102,
+    "elapsedMs": 898.1462,
+    "utc": "2026-10-20T13:56:29.0446604+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 98,
+    "details": {
+      "index": 98,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 103,
+    "elapsedMs": 898.1465,
+    "utc": "2026-10-20T13:56:29.0446607+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 99,
+      "beforeActualPlayback": true
+    }
+  },
+  {
+    "sequence": 104,
+    "elapsedMs": 898.2965,
+    "utc": "2026-10-20T13:56:29.0448107+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 53,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 105,
+    "elapsedMs": 898.4239,
+    "utc": "2026-10-20T13:56:29.0449382+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 53,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 106,
+    "elapsedMs": 898.4954,
+    "utc": "2026-10-20T13:56:29.0450097+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 107,
+    "elapsedMs": 898.5525,
+    "utc": "2026-10-20T13:56:29.0450667+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 108,
+    "elapsedMs": 3578.5423,
+    "utc": "2026-10-20T13:56:31.7250567+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 109,
+    "elapsedMs": 3858.7929,
+    "utc": "2026-10-20T13:56:32.0053074+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 110,
+    "elapsedMs": 3912.6815,
+    "utc": "2026-10-20T13:56:32.059196+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 111,
+    "elapsedMs": 3912.9246,
+    "utc": "2026-10-20T13:56:32.0594389+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 112,
+    "elapsedMs": 3912.9497,
+    "utc": "2026-10-20T13:56:32.0594639+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 113,
+    "elapsedMs": 3914.9318,
+    "utc": "2026-10-20T13:56:32.0614468+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16076,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 114,
+    "elapsedMs": 3917.5378,
+    "utc": "2026-10-20T13:56:32.0640521+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "event": "audio",
+      "audioBytes": 97958,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 115,
+    "elapsedMs": 3935.2271,
+    "utc": "2026-10-20T13:56:32.0817415+00:00",
+    "kind": "waveOutInit",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "SampleRate": 44100,
+      "BitsPerSample": 16,
+      "Channels": 1
+    }
+  },
+  {
+    "sequence": 116,
+    "elapsedMs": 4029.3193,
+    "utc": "2026-10-20T13:56:32.1758337+00:00",
+    "kind": "waveOutPlayEntry",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 117,
+    "elapsedMs": 4029.7128,
+    "utc": "2026-10-20T13:56:32.1762271+00:00",
+    "kind": "waveOutPlayReturned",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 118,
+    "elapsedMs": 4030.0645,
+    "utc": "2026-10-20T13:56:32.1765788+00:00",
+    "kind": "actualPlaybackCallbackEntry",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 53,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 119,
+    "elapsedMs": 4030.1749,
+    "utc": "2026-10-20T13:56:32.1766892+00:00",
+    "kind": "nativePlaybackCallbackReturned",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 53,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 120,
+    "elapsedMs": 4030.8792,
+    "utc": "2026-10-20T13:56:32.1773936+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 53,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 121,
+    "elapsedMs": 4030.8879,
+    "utc": "2026-10-20T13:56:32.1774022+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 54,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 122,
+    "elapsedMs": 4030.8905,
+    "utc": "2026-10-20T13:56:32.1774047+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 55,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 123,
+    "elapsedMs": 4030.8913,
+    "utc": "2026-10-20T13:56:32.1774056+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 56,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 124,
+    "elapsedMs": 4030.8922,
+    "utc": "2026-10-20T13:56:32.1774064+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 57,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 125,
+    "elapsedMs": 4030.8933,
+    "utc": "2026-10-20T13:56:32.1774075+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 58,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 126,
+    "elapsedMs": 4030.8939,
+    "utc": "2026-10-20T13:56:32.1774081+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 59,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 127,
+    "elapsedMs": 4030.8944,
+    "utc": "2026-10-20T13:56:32.1774086+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 60,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 128,
+    "elapsedMs": 4030.8948,
+    "utc": "2026-10-20T13:56:32.1774091+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 61,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 129,
+    "elapsedMs": 4030.8988,
+    "utc": "2026-10-20T13:56:32.1774131+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 62,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 130,
+    "elapsedMs": 4030.8993,
+    "utc": "2026-10-20T13:56:32.1774135+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 63,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 131,
+    "elapsedMs": 4030.9005,
+    "utc": "2026-10-20T13:56:32.1774148+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 64,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 132,
+    "elapsedMs": 4030.9012,
+    "utc": "2026-10-20T13:56:32.1774155+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 65,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 133,
+    "elapsedMs": 4030.9016,
+    "utc": "2026-10-20T13:56:32.1774159+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 66,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 134,
+    "elapsedMs": 4030.9027,
+    "utc": "2026-10-20T13:56:32.1774169+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 67,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 135,
+    "elapsedMs": 4030.9032,
+    "utc": "2026-10-20T13:56:32.1774175+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 68,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 136,
+    "elapsedMs": 4030.9044,
+    "utc": "2026-10-20T13:56:32.1774186+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 69,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 137,
+    "elapsedMs": 4030.9068,
+    "utc": "2026-10-20T13:56:32.1774211+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 70,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 138,
+    "elapsedMs": 4030.9092,
+    "utc": "2026-10-20T13:56:32.1774234+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 71,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 139,
+    "elapsedMs": 4030.9103,
+    "utc": "2026-10-20T13:56:32.1774246+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 72,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 140,
+    "elapsedMs": 4030.911,
+    "utc": "2026-10-20T13:56:32.1774252+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 73,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 141,
+    "elapsedMs": 4030.9114,
+    "utc": "2026-10-20T13:56:32.1774257+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 74,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 142,
+    "elapsedMs": 4030.9119,
+    "utc": "2026-10-20T13:56:32.1774262+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 75,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 143,
+    "elapsedMs": 4030.9124,
+    "utc": "2026-10-20T13:56:32.1774267+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 76,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 144,
+    "elapsedMs": 4030.9129,
+    "utc": "2026-10-20T13:56:32.1774272+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 77,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 145,
+    "elapsedMs": 4030.9135,
+    "utc": "2026-10-20T13:56:32.1774277+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 78,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 146,
+    "elapsedMs": 4030.9139,
+    "utc": "2026-10-20T13:56:32.1774282+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 79,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 147,
+    "elapsedMs": 4030.9144,
+    "utc": "2026-10-20T13:56:32.1774287+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 80,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 148,
+    "elapsedMs": 4030.916,
+    "utc": "2026-10-20T13:56:32.1774303+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 81,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 149,
+    "elapsedMs": 4030.9179,
+    "utc": "2026-10-20T13:56:32.1774322+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 82,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 150,
+    "elapsedMs": 4030.9248,
+    "utc": "2026-10-20T13:56:32.1774391+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 83,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 151,
+    "elapsedMs": 4030.9261,
+    "utc": "2026-10-20T13:56:32.1774404+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 84,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 152,
+    "elapsedMs": 4030.9266,
+    "utc": "2026-10-20T13:56:32.1774409+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 85,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 153,
+    "elapsedMs": 4030.9271,
+    "utc": "2026-10-20T13:56:32.1774413+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 86,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 154,
+    "elapsedMs": 4030.9277,
+    "utc": "2026-10-20T13:56:32.177442+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 87,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 155,
+    "elapsedMs": 4030.9282,
+    "utc": "2026-10-20T13:56:32.1774424+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 88,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 156,
+    "elapsedMs": 4030.9286,
+    "utc": "2026-10-20T13:56:32.1774429+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 89,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 157,
+    "elapsedMs": 4030.9303,
+    "utc": "2026-10-20T13:56:32.1774446+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 90,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 158,
+    "elapsedMs": 4030.9309,
+    "utc": "2026-10-20T13:56:32.1774451+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 91,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 159,
+    "elapsedMs": 4030.9314,
+    "utc": "2026-10-20T13:56:32.1774456+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 92,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 160,
+    "elapsedMs": 4030.9318,
+    "utc": "2026-10-20T13:56:32.1774461+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 93,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 161,
+    "elapsedMs": 4030.9324,
+    "utc": "2026-10-20T13:56:32.1774467+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 94,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 162,
+    "elapsedMs": 4030.9329,
+    "utc": "2026-10-20T13:56:32.1774472+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 95,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 163,
+    "elapsedMs": 4030.9334,
+    "utc": "2026-10-20T13:56:32.1774476+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 96,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 164,
+    "elapsedMs": 4030.9339,
+    "utc": "2026-10-20T13:56:32.1774482+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 97,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 165,
+    "elapsedMs": 4030.9344,
+    "utc": "2026-10-20T13:56:32.1774487+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 98,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 166,
+    "elapsedMs": 4030.935,
+    "utc": "2026-10-20T13:56:32.1774493+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 99,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 167,
+    "elapsedMs": 4030.9355,
+    "utc": "2026-10-20T13:56:32.1774497+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 100,
+    "details": {
+      "index": 100,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 168,
+    "elapsedMs": 4030.9361,
+    "utc": "2026-10-20T13:56:32.1774503+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 101,
+    "details": {
+      "index": 101,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 169,
+    "elapsedMs": 4030.9366,
+    "utc": "2026-10-20T13:56:32.1774508+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 102,
+    "details": {
+      "index": 102,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 170,
+    "elapsedMs": 4030.9371,
+    "utc": "2026-10-20T13:56:32.1774514+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 103,
+    "details": {
+      "index": 103,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 171,
+    "elapsedMs": 4030.9376,
+    "utc": "2026-10-20T13:56:32.1774519+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 104,
+    "details": {
+      "index": 104,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 172,
+    "elapsedMs": 4030.9381,
+    "utc": "2026-10-20T13:56:32.1774524+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 105,
+    "details": {
+      "index": 105,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 173,
+    "elapsedMs": 4030.9386,
+    "utc": "2026-10-20T13:56:32.1774529+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 106,
+    "details": {
+      "index": 106,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 174,
+    "elapsedMs": 4030.9391,
+    "utc": "2026-10-20T13:56:32.1774533+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 107,
+    "details": {
+      "index": 107,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 175,
+    "elapsedMs": 4030.9397,
+    "utc": "2026-10-20T13:56:32.177454+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 108,
+    "details": {
+      "index": 108,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 176,
+    "elapsedMs": 4030.9461,
+    "utc": "2026-10-20T13:56:32.1774604+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 109,
+    "details": {
+      "index": 109,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 177,
+    "elapsedMs": 4030.9468,
+    "utc": "2026-10-20T13:56:32.1774611+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 110,
+    "details": {
+      "index": 110,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 178,
+    "elapsedMs": 4030.9474,
+    "utc": "2026-10-20T13:56:32.1774617+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 111,
+    "details": {
+      "index": 111,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 179,
+    "elapsedMs": 4030.9479,
+    "utc": "2026-10-20T13:56:32.1774622+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 112,
+    "details": {
+      "index": 112,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 180,
+    "elapsedMs": 4030.9484,
+    "utc": "2026-10-20T13:56:32.1774626+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 113,
+    "details": {
+      "index": 113,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 181,
+    "elapsedMs": 4030.9488,
+    "utc": "2026-10-20T13:56:32.1774631+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 114,
+    "details": {
+      "index": 114,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 182,
+    "elapsedMs": 4030.9494,
+    "utc": "2026-10-20T13:56:32.1774637+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 115,
+    "details": {
+      "index": 115,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 183,
+    "elapsedMs": 4030.9499,
+    "utc": "2026-10-20T13:56:32.1774642+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 116,
+    "details": {
+      "index": 116,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 184,
+    "elapsedMs": 4030.9503,
+    "utc": "2026-10-20T13:56:32.1774646+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 117,
+    "details": {
+      "index": 117,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 185,
+    "elapsedMs": 4030.9508,
+    "utc": "2026-10-20T13:56:32.1774651+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 118,
+    "details": {
+      "index": 118,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 186,
+    "elapsedMs": 4030.9513,
+    "utc": "2026-10-20T13:56:32.1774656+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 119,
+    "details": {
+      "index": 119,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 187,
+    "elapsedMs": 4030.9519,
+    "utc": "2026-10-20T13:56:32.1774662+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 120,
+    "details": {
+      "index": 120,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 188,
+    "elapsedMs": 4030.9525,
+    "utc": "2026-10-20T13:56:32.1774667+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 121,
+    "details": {
+      "index": 121,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 189,
+    "elapsedMs": 4030.953,
+    "utc": "2026-10-20T13:56:32.1774672+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 122,
+    "details": {
+      "index": 122,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 190,
+    "elapsedMs": 4030.9534,
+    "utc": "2026-10-20T13:56:32.1774677+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 123,
+    "details": {
+      "index": 123,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 191,
+    "elapsedMs": 4030.9539,
+    "utc": "2026-10-20T13:56:32.1774682+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 124,
+    "details": {
+      "index": 124,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 192,
+    "elapsedMs": 4030.9545,
+    "utc": "2026-10-20T13:56:32.1774687+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 125,
+    "details": {
+      "index": 125,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 193,
+    "elapsedMs": 4030.955,
+    "utc": "2026-10-20T13:56:32.1774692+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 126,
+    "details": {
+      "index": 126,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 194,
+    "elapsedMs": 4030.9554,
+    "utc": "2026-10-20T13:56:32.1774697+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 127,
+    "details": {
+      "index": 127,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 195,
+    "elapsedMs": 4030.9559,
+    "utc": "2026-10-20T13:56:32.1774701+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 128,
+    "details": {
+      "index": 128,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 196,
+    "elapsedMs": 4030.9565,
+    "utc": "2026-10-20T13:56:32.1774708+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 129,
+    "details": {
+      "index": 129,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 197,
+    "elapsedMs": 4030.957,
+    "utc": "2026-10-20T13:56:32.1774713+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 130,
+    "details": {
+      "index": 130,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 198,
+    "elapsedMs": 4030.9575,
+    "utc": "2026-10-20T13:56:32.1774717+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 131,
+    "details": {
+      "index": 131,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 199,
+    "elapsedMs": 4030.9579,
+    "utc": "2026-10-20T13:56:32.1774722+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 132,
+    "details": {
+      "index": 132,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 200,
+    "elapsedMs": 4030.9584,
+    "utc": "2026-10-20T13:56:32.1774727+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 133,
+    "details": {
+      "index": 133,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 201,
+    "elapsedMs": 4030.959,
+    "utc": "2026-10-20T13:56:32.1774733+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 134,
+    "details": {
+      "index": 134,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 202,
+    "elapsedMs": 4030.9595,
+    "utc": "2026-10-20T13:56:32.1774738+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 135,
+    "details": {
+      "index": 135,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 203,
+    "elapsedMs": 4030.96,
+    "utc": "2026-10-20T13:56:32.1774742+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 136,
+    "details": {
+      "index": 136,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 204,
+    "elapsedMs": 4030.9605,
+    "utc": "2026-10-20T13:56:32.1774747+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 137,
+    "details": {
+      "index": 137,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 205,
+    "elapsedMs": 4030.961,
+    "utc": "2026-10-20T13:56:32.1774753+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 138,
+    "details": {
+      "index": 138,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 206,
+    "elapsedMs": 4030.9616,
+    "utc": "2026-10-20T13:56:32.1774758+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 139,
+    "details": {
+      "index": 139,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 207,
+    "elapsedMs": 4030.9621,
+    "utc": "2026-10-20T13:56:32.1774763+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 140,
+    "details": {
+      "index": 140,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 208,
+    "elapsedMs": 4030.9625,
+    "utc": "2026-10-20T13:56:32.1774768+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 141,
+    "details": {
+      "index": 141,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 209,
+    "elapsedMs": 4030.963,
+    "utc": "2026-10-20T13:56:32.1774772+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 142,
+    "details": {
+      "index": 142,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 210,
+    "elapsedMs": 4030.9635,
+    "utc": "2026-10-20T13:56:32.1774778+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 143,
+    "details": {
+      "index": 143,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 211,
+    "elapsedMs": 4030.9641,
+    "utc": "2026-10-20T13:56:32.1774783+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 144,
+    "details": {
+      "index": 144,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 212,
+    "elapsedMs": 4030.9646,
+    "utc": "2026-10-20T13:56:32.1774789+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 145,
+    "details": {
+      "index": 145,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 213,
+    "elapsedMs": 4030.965,
+    "utc": "2026-10-20T13:56:32.1774793+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 146,
+    "details": {
+      "index": 146,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 214,
+    "elapsedMs": 4030.9655,
+    "utc": "2026-10-20T13:56:32.1774797+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 147,
+    "details": {
+      "index": 147,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 215,
+    "elapsedMs": 4030.9661,
+    "utc": "2026-10-20T13:56:32.1774804+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 148,
+    "details": {
+      "index": 148,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 216,
+    "elapsedMs": 4030.9666,
+    "utc": "2026-10-20T13:56:32.1774808+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 149,
+    "details": {
+      "index": 149,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 217,
+    "elapsedMs": 4030.967,
+    "utc": "2026-10-20T13:56:32.1774813+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 150,
+    "details": {
+      "index": 150,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 218,
+    "elapsedMs": 4030.9675,
+    "utc": "2026-10-20T13:56:32.1774818+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 151,
+    "details": {
+      "index": 151,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 219,
+    "elapsedMs": 4030.968,
+    "utc": "2026-10-20T13:56:32.1774822+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 152,
+    "details": {
+      "index": 152,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 220,
+    "elapsedMs": 4030.9686,
+    "utc": "2026-10-20T13:56:32.1774829+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 153,
+    "details": {
+      "index": 153,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 221,
+    "elapsedMs": 4030.9691,
+    "utc": "2026-10-20T13:56:32.1774834+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 154,
+    "details": {
+      "index": 154,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 222,
+    "elapsedMs": 4030.9696,
+    "utc": "2026-10-20T13:56:32.1774838+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 155,
+    "details": {
+      "index": 155,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 223,
+    "elapsedMs": 4030.97,
+    "utc": "2026-10-20T13:56:32.1774843+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 156,
+    "details": {
+      "index": 156,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 224,
+    "elapsedMs": 4030.9705,
+    "utc": "2026-10-20T13:56:32.1774848+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 157,
+    "details": {
+      "index": 157,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 225,
+    "elapsedMs": 4030.9711,
+    "utc": "2026-10-20T13:56:32.1774854+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 158,
+    "details": {
+      "index": 158,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 226,
+    "elapsedMs": 4030.9716,
+    "utc": "2026-10-20T13:56:32.1774858+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 159,
+    "details": {
+      "index": 159,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 227,
+    "elapsedMs": 4030.972,
+    "utc": "2026-10-20T13:56:32.1774863+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 160,
+    "details": {
+      "index": 160,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 228,
+    "elapsedMs": 4030.9725,
+    "utc": "2026-10-20T13:56:32.1774867+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 161,
+    "details": {
+      "index": 161,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 229,
+    "elapsedMs": 4030.973,
+    "utc": "2026-10-20T13:56:32.1774873+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 162,
+    "details": {
+      "index": 162,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 230,
+    "elapsedMs": 4030.9736,
+    "utc": "2026-10-20T13:56:32.1774879+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 163,
+    "details": {
+      "index": 163,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 231,
+    "elapsedMs": 4030.9741,
+    "utc": "2026-10-20T13:56:32.1774884+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 164,
+    "details": {
+      "index": 164,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 232,
+    "elapsedMs": 4030.9746,
+    "utc": "2026-10-20T13:56:32.1774889+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 165,
+    "details": {
+      "index": 165,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 233,
+    "elapsedMs": 4030.9751,
+    "utc": "2026-10-20T13:56:32.1774894+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 166,
+    "details": {
+      "index": 166,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 234,
+    "elapsedMs": 4030.9757,
+    "utc": "2026-10-20T13:56:32.17749+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 167,
+    "details": {
+      "index": 167,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 235,
+    "elapsedMs": 4030.9762,
+    "utc": "2026-10-20T13:56:32.1774904+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 168,
+    "details": {
+      "index": 168,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 236,
+    "elapsedMs": 4030.9767,
+    "utc": "2026-10-20T13:56:32.1774909+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 169,
+    "details": {
+      "index": 169,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 237,
+    "elapsedMs": 4030.9771,
+    "utc": "2026-10-20T13:56:32.1774914+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 170,
+    "details": {
+      "index": 170,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 238,
+    "elapsedMs": 4030.9776,
+    "utc": "2026-10-20T13:56:32.1774919+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 171,
+    "details": {
+      "index": 171,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 239,
+    "elapsedMs": 4030.9782,
+    "utc": "2026-10-20T13:56:32.1774925+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 172,
+    "details": {
+      "index": 172,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 240,
+    "elapsedMs": 4030.9787,
+    "utc": "2026-10-20T13:56:32.1774929+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 173,
+    "details": {
+      "index": 173,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 241,
+    "elapsedMs": 4030.9791,
+    "utc": "2026-10-20T13:56:32.1774934+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 174,
+    "details": {
+      "index": 174,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 242,
+    "elapsedMs": 4030.9796,
+    "utc": "2026-10-20T13:56:32.1774939+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 175,
+    "details": {
+      "index": 175,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 243,
+    "elapsedMs": 4030.9801,
+    "utc": "2026-10-20T13:56:32.1774944+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 176,
+    "details": {
+      "index": 176,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 244,
+    "elapsedMs": 4030.9807,
+    "utc": "2026-10-20T13:56:32.177495+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 177,
+    "details": {
+      "index": 177,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 245,
+    "elapsedMs": 4030.9812,
+    "utc": "2026-10-20T13:56:32.1774955+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 178,
+    "details": {
+      "index": 178,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 246,
+    "elapsedMs": 4030.9817,
+    "utc": "2026-10-20T13:56:32.1774959+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 179,
+    "details": {
+      "index": 179,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 247,
+    "elapsedMs": 4030.9822,
+    "utc": "2026-10-20T13:56:32.1774964+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 180,
+    "details": {
+      "index": 180,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 248,
+    "elapsedMs": 4030.9826,
+    "utc": "2026-10-20T13:56:32.1774969+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 181,
+    "details": {
+      "index": 181,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 249,
+    "elapsedMs": 4030.9833,
+    "utc": "2026-10-20T13:56:32.1774975+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 182,
+    "details": {
+      "index": 182,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 250,
+    "elapsedMs": 4030.9837,
+    "utc": "2026-10-20T13:56:32.177498+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 183,
+    "details": {
+      "index": 183,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 251,
+    "elapsedMs": 4030.9842,
+    "utc": "2026-10-20T13:56:32.1774985+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 184,
+    "details": {
+      "index": 184,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 252,
+    "elapsedMs": 4030.9846,
+    "utc": "2026-10-20T13:56:32.1774989+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 185,
+    "details": {
+      "index": 185,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 253,
+    "elapsedMs": 4030.9852,
+    "utc": "2026-10-20T13:56:32.1774995+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 186,
+    "details": {
+      "index": 186,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 254,
+    "elapsedMs": 4030.9858,
+    "utc": "2026-10-20T13:56:32.1775001+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 187,
+    "details": {
+      "index": 187,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 255,
+    "elapsedMs": 4030.9863,
+    "utc": "2026-10-20T13:56:32.1775005+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 188,
+    "details": {
+      "index": 188,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 256,
+    "elapsedMs": 4030.9868,
+    "utc": "2026-10-20T13:56:32.177501+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 189,
+    "details": {
+      "index": 189,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 257,
+    "elapsedMs": 4030.993,
+    "utc": "2026-10-20T13:56:32.1775073+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 190,
+    "details": {
+      "index": 190,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 258,
+    "elapsedMs": 4030.9935,
+    "utc": "2026-10-20T13:56:32.1775078+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 191,
+    "details": {
+      "index": 191,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 259,
+    "elapsedMs": 4030.994,
+    "utc": "2026-10-20T13:56:32.1775083+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 192,
+    "details": {
+      "index": 192,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 260,
+    "elapsedMs": 4030.9945,
+    "utc": "2026-10-20T13:56:32.1775088+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 193,
+    "details": {
+      "index": 193,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 261,
+    "elapsedMs": 4030.9951,
+    "utc": "2026-10-20T13:56:32.1775094+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 194,
+    "details": {
+      "index": 194,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 262,
+    "elapsedMs": 4030.9956,
+    "utc": "2026-10-20T13:56:32.1775099+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 195,
+    "details": {
+      "index": 195,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 263,
+    "elapsedMs": 4030.9961,
+    "utc": "2026-10-20T13:56:32.1775104+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 196,
+    "details": {
+      "index": 196,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 264,
+    "elapsedMs": 4030.9966,
+    "utc": "2026-10-20T13:56:32.1775108+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 197,
+    "details": {
+      "index": 197,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 265,
+    "elapsedMs": 4030.997,
+    "utc": "2026-10-20T13:56:32.1775113+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 198,
+    "details": {
+      "index": 198,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 266,
+    "elapsedMs": 4030.9976,
+    "utc": "2026-10-20T13:56:32.1775119+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 199,
+    "details": {
+      "index": 199,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 267,
+    "elapsedMs": 4030.9981,
+    "utc": "2026-10-20T13:56:32.1775123+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 200,
+    "details": {
+      "index": 200,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 268,
+    "elapsedMs": 4030.9985,
+    "utc": "2026-10-20T13:56:32.1775128+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 201,
+    "details": {
+      "index": 201,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 269,
+    "elapsedMs": 4030.999,
+    "utc": "2026-10-20T13:56:32.1775133+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 202,
+    "details": {
+      "index": 202,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 270,
+    "elapsedMs": 4030.9995,
+    "utc": "2026-10-20T13:56:32.1775138+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 203,
+    "details": {
+      "index": 203,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 271,
+    "elapsedMs": 4031.0002,
+    "utc": "2026-10-20T13:56:32.1775144+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 204,
+    "details": {
+      "index": 204,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 272,
+    "elapsedMs": 4031.0007,
+    "utc": "2026-10-20T13:56:32.1775149+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 205,
+    "details": {
+      "index": 205,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 273,
+    "elapsedMs": 4031.0012,
+    "utc": "2026-10-20T13:56:32.1775154+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 206,
+    "details": {
+      "index": 206,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 274,
+    "elapsedMs": 4031.0016,
+    "utc": "2026-10-20T13:56:32.1775159+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 207,
+    "details": {
+      "index": 207,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 275,
+    "elapsedMs": 4031.0022,
+    "utc": "2026-10-20T13:56:32.1775165+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 208,
+    "details": {
+      "index": 208,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 276,
+    "elapsedMs": 4031.0027,
+    "utc": "2026-10-20T13:56:32.177517+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 209,
+    "details": {
+      "index": 209,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 277,
+    "elapsedMs": 4031.0032,
+    "utc": "2026-10-20T13:56:32.1775175+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 210,
+    "details": {
+      "index": 210,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 278,
+    "elapsedMs": 4031.0037,
+    "utc": "2026-10-20T13:56:32.1775179+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 211,
+    "details": {
+      "index": 211,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 279,
+    "elapsedMs": 4031.0041,
+    "utc": "2026-10-20T13:56:32.1775184+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 212,
+    "details": {
+      "index": 212,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 280,
+    "elapsedMs": 4031.0047,
+    "utc": "2026-10-20T13:56:32.177519+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 213,
+    "details": {
+      "index": 213,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 281,
+    "elapsedMs": 4031.0052,
+    "utc": "2026-10-20T13:56:32.1775195+00:00",
+    "kind": "sourceRead",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 214,
+      "beforeActualPlayback": false
+    }
+  },
+  {
+    "sequence": 282,
+    "elapsedMs": 4031.0945,
+    "utc": "2026-10-20T13:56:32.1776088+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 162,
+      "cumulativeTextUtf16": 53,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 283,
+    "elapsedMs": 4031.4959,
+    "utc": "2026-10-20T13:56:32.1780103+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 162,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 284,
+    "elapsedMs": 4031.54,
+    "utc": "2026-10-20T13:56:32.1780543+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 285,
+    "elapsedMs": 4031.7295,
+    "utc": "2026-10-20T13:56:32.1782438+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 286,
+    "elapsedMs": 4031.7657,
+    "utc": "2026-10-20T13:56:32.17828+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 5,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 287,
+    "elapsedMs": 4031.8146,
+    "utc": "2026-10-20T13:56:32.1783289+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "index": 5,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 215,
+      "textEvents": 2,
+      "stopCompleted": true
+    }
+  },
+  {
+    "sequence": 288,
+    "elapsedMs": 6333.4947,
+    "utc": "2026-10-20T13:56:34.480009+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 289,
+    "elapsedMs": 6484.3545,
+    "utc": "2026-10-20T13:56:34.6308689+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 290,
+    "elapsedMs": 6533.113,
+    "utc": "2026-10-20T13:56:34.6796274+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 291,
+    "elapsedMs": 6568.1088,
+    "utc": "2026-10-20T13:56:34.7146231+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 292,
+    "elapsedMs": 6819.8239,
+    "utc": "2026-10-20T13:56:34.9663382+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 293,
+    "elapsedMs": 6819.8635,
+    "utc": "2026-10-20T13:56:34.9663777+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 1,
+      "Count": 6503,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 294,
+    "elapsedMs": 6819.9501,
+    "utc": "2026-10-20T13:56:34.9664644+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 88385,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 295,
+    "elapsedMs": 8333.7633,
+    "utc": "2026-10-20T13:56:36.4802778+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 296,
+    "elapsedMs": 8683.608,
+    "utc": "2026-10-20T13:56:36.8301223+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 297,
+    "elapsedMs": 8683.6516,
+    "utc": "2026-10-20T13:56:36.8301658+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 298,
+    "elapsedMs": 8829.7133,
+    "utc": "2026-10-20T13:56:36.9762277+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 299,
+    "elapsedMs": 8829.7427,
+    "utc": "2026-10-20T13:56:36.9762569+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 300,
+    "elapsedMs": 8829.7574,
+    "utc": "2026-10-20T13:56:36.9762716+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 301,
+    "elapsedMs": 8829.7686,
+    "utc": "2026-10-20T13:56:36.9762828+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 2,
+      "Count": 7081,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 302,
+    "elapsedMs": 8829.8656,
+    "utc": "2026-10-20T13:56:36.9763798+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 105347,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 303,
+    "elapsedMs": 10078.9221,
+    "utc": "2026-10-20T13:56:38.2254364+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 304,
+    "elapsedMs": 10135.7213,
+    "utc": "2026-10-20T13:56:38.2822356+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 305,
+    "elapsedMs": 10257.6447,
+    "utc": "2026-10-20T13:56:38.404159+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 306,
+    "elapsedMs": 10268.4692,
+    "utc": "2026-10-20T13:56:38.4149835+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 307,
+    "elapsedMs": 10316.6401,
+    "utc": "2026-10-20T13:56:38.4631544+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 308,
+    "elapsedMs": 10316.682,
+    "utc": "2026-10-20T13:56:38.4631963+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 309,
+    "elapsedMs": 10316.6856,
+    "utc": "2026-10-20T13:56:38.4631999+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 3,
+      "Count": 8301,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 310,
+    "elapsedMs": 10316.7621,
+    "utc": "2026-10-20T13:56:38.4632763+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 106567,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 311,
+    "elapsedMs": 10316.8381,
+    "utc": "2026-10-20T13:56:38.4633523+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 4,
+      "Count": 1765,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 312,
+    "elapsedMs": 10317.0097,
+    "utc": "2026-10-20T13:56:38.4635239+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "audio",
+      "audioBytes": 1729,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 313,
+    "elapsedMs": 10317.029,
+    "utc": "2026-10-20T13:56:38.4635432+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "messageIndex": 5,
+      "Count": 40,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 314,
+    "elapsedMs": 10317.0357,
+    "utc": "2026-10-20T13:56:38.4635499+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "event": "finish",
+      "audioBytes": 0,
+      "finishReason": "stop"
+    }
+  },
+  {
+    "sequence": 315,
+    "elapsedMs": 21521.854,
+    "utc": "2026-10-20T13:56:49.6683684+00:00",
+    "kind": "waveOutStop",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 316,
+    "elapsedMs": 21535.5074,
+    "utc": "2026-10-20T13:56:49.6820216+00:00",
+    "kind": "waveOutDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 317,
+    "elapsedMs": 21536.1826,
+    "utc": "2026-10-20T13:56:49.6826969+00:00",
+    "kind": "playerDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 318,
+    "elapsedMs": 21536.9118,
+    "utc": "2026-10-20T13:56:49.683426+00:00",
+    "kind": "socketDisposed",
+    "sourceReadHighestIndex": 214,
+    "details": null
+  },
+  {
+    "sequence": 319,
+    "elapsedMs": 21541.5553,
+    "utc": "2026-10-20T13:56:49.6880696+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Request",
+      "stageElapsedMs": 0
+    }
+  },
+  {
+    "sequence": 320,
+    "elapsedMs": 21541.5748,
+    "utc": "2026-10-20T13:56:49.688089+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Connected",
+      "stageElapsedMs": 827.6898
+    }
+  },
+  {
+    "sequence": 321,
+    "elapsedMs": 21541.5757,
+    "utc": "2026-10-20T13:56:49.6880899+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "PrefixSent",
+      "stageElapsedMs": 889.6324
+    }
+  },
+  {
+    "sequence": 322,
+    "elapsedMs": 21541.5759,
+    "utc": "2026-10-20T13:56:49.6880901+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "FirstAudio",
+      "stageElapsedMs": 3908.7452
+    }
+  },
+  {
+    "sequence": 323,
+    "elapsedMs": 21541.5766,
+    "utc": "2026-10-20T13:56:49.6880908+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "FirstPcm",
+      "stageElapsedMs": 3925.4103
+    }
+  },
+  {
+    "sequence": 324,
+    "elapsedMs": 21541.5767,
+    "utc": "2026-10-20T13:56:49.688091+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "PlaybackStarted",
+      "stageElapsedMs": 4021.2191
+    }
+  },
+  {
+    "sequence": 325,
+    "elapsedMs": 21541.5769,
+    "utc": "2026-10-20T13:56:49.6880911+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Finish",
+      "stageElapsedMs": 10308.0964
+    }
+  },
+  {
+    "sequence": 326,
+    "elapsedMs": 21541.577,
+    "utc": "2026-10-20T13:56:49.6880912+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "stage": "Drained",
+      "stageElapsedMs": 21512.2896
+    }
+  },
+  {
+    "sequence": 327,
+    "elapsedMs": 21541.8505,
+    "utc": "2026-10-20T13:56:49.6883647+00:00",
+    "kind": "nativeSessionCompleted",
+    "sourceReadHighestIndex": 214,
+    "details": {
+      "outcome": "completed",
+      "failureType": null
+    }
+  }
+]
