@@ -1,0 +1,23 @@
+{
+  "method": "WS",
+  "url": "wss://api.fish.audio/v1/tts/live",
+  "headers": {
+    "model": "s2.1-pro-free",
+    "authorization": "[REDACTED]"
+  },
+  "start": {
+    "text": "",
+    "reference_id": "90e65eaaf50e4470b8e6d43ee6afd7d5",
+    "format": "pcm",
+    "sample_rate": 44100,
+    "latency": "balanced",
+    "chunk_length": 100
+  },
+  "prefix": "Hello.",
+  "tail": [
+    " Good day."
+  ],
+  "cancelAfterFirstAudio": true,
+  "tailGate": "first nonempty audio event",
+  "expectedAuthenticationFailure": false
+}

@@ -1,0 +1,73 @@
+{
+  "status": 206,
+  "version": "1.1",
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:26:40 GMT"
+    ],
+    "Connection": [
+      "keep-alive"
+    ],
+    "CF-Ray": [
+      "a4d7ab418a4a497b-YVR"
+    ],
+    "CF-Cache-Status": [
+      "HIT"
+    ],
+    "Age": [
+      "5071"
+    ],
+    "Cache-Control": [
+      "public, max-age=2678400"
+    ],
+    "ETag": [
+      "\u0022dff393222b2fc85b5ec99c0fed86fbc4\u0022"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Vary": [
+      "accept-encoding"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022HIT\u0022",
+      "cfEdge;dur=6,cfOrigin;dur=0"
+    ],
+    "Content-Type": [
+      "audio/mpeg"
+    ],
+    "Content-Length": [
+      "1024"
+    ],
+    "Content-Range": [
+      "bytes 0-1023/405420"
+    ],
+    "Content-Encoding": [
+      "aws-chunked"
+    ],
+    "Expires": [
+      "Fri, 20 Nov 2026 11:26:40 GMT"
+    ],
+    "Last-Modified": [
+      "Fri, 11 Jul 2025 02:00:26 GMT"
+    ]
+  }
+}

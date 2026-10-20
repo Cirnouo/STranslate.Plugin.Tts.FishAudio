@@ -1,0 +1,186 @@
+{
+  "data": [
+    {
+      "id": "fish-audio/s2.1-pro",
+      "canonical_slug": "fish-audio/s2.1-pro",
+      "name": "Fish Audio: S2.1 Pro",
+      "created": 1756684800,
+      "description": "Production-grade multilingual text-to-speech with voice cloning via reference voices.",
+      "architecture": {
+        "modality": "text-\u003Espeech",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "speech"
+        ]
+      },
+      "pricing": {
+        "prompt": "0.000015",
+        "completion": "0"
+      },
+      "context_length": null,
+      "default_parameters": null,
+      "per_request_limits": null,
+      "supported_parameters": [
+        "response_format",
+        "temperature",
+        "top_p",
+        "repetition_penalty"
+      ],
+      "supported_voices": null,
+      "links": {
+        "details": "https://fish.audio/"
+      },
+      "top_provider": {
+        "is_moderated": false
+      }
+    },
+    {
+      "id": "fish-audio/s2.1-pro-free",
+      "canonical_slug": "fish-audio/s2.1-pro-free",
+      "name": "Fish Audio: S2.1 Pro (free)",
+      "created": 1756684800,
+      "description": "Free variant of S2.1 Pro for testing and prototyping; no production latency guarantees.",
+      "architecture": {
+        "modality": "text-\u003Espeech",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "speech"
+        ]
+      },
+      "pricing": {
+        "prompt": "0",
+        "completion": "0"
+      },
+      "context_length": null,
+      "default_parameters": null,
+      "per_request_limits": null,
+      "supported_parameters": [
+        "response_format",
+        "temperature",
+        "top_p",
+        "repetition_penalty"
+      ],
+      "supported_voices": null,
+      "links": {
+        "details": "https://fish.audio/"
+      },
+      "top_provider": {
+        "is_moderated": false
+      }
+    },
+    {
+      "id": "fish-audio/s2-pro",
+      "canonical_slug": "fish-audio/s2-pro",
+      "name": "Fish Audio: S2 Pro",
+      "created": 1750291200,
+      "description": "Expressive text-to-speech for narration and multi-speaker dialogue.",
+      "architecture": {
+        "modality": "text-\u003Espeech",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "speech"
+        ]
+      },
+      "pricing": {
+        "prompt": "0.000015",
+        "completion": "0"
+      },
+      "context_length": null,
+      "default_parameters": null,
+      "per_request_limits": null,
+      "supported_parameters": [
+        "response_format",
+        "temperature",
+        "top_p",
+        "repetition_penalty"
+      ],
+      "supported_voices": null,
+      "links": {
+        "details": "https://fish.audio/"
+      },
+      "top_provider": {
+        "is_moderated": false
+      }
+    },
+    {
+      "id": "fish-audio/s1",
+      "canonical_slug": "fish-audio/s1",
+      "name": "Fish Audio: S1",
+      "created": 1743465600,
+      "description": "Multilingual text-to-speech with emotional expression controls.",
+      "architecture": {
+        "modality": "text-\u003Espeech",
+        "input_modalities": [
+          "text"
+        ],
+        "output_modalities": [
+          "speech"
+        ]
+      },
+      "pricing": {
+        "prompt": "0.000015",
+        "completion": "0"
+      },
+      "context_length": null,
+      "default_parameters": null,
+      "per_request_limits": null,
+      "supported_parameters": [
+        "response_format",
+        "temperature",
+        "top_p",
+        "repetition_penalty"
+      ],
+      "supported_voices": null,
+      "links": {
+        "details": "https://fish.audio/"
+      },
+      "top_provider": {
+        "is_moderated": false
+      }
+    },
+    {
+      "id": "fish-audio/transcribe-1",
+      "canonical_slug": "fish-audio/transcribe-1",
+      "name": "Fish Audio: Transcribe 1",
+      "created": 1750291200,
+      "description": "Speech-to-text with automatic language detection and per-segment timestamps.",
+      "architecture": {
+        "modality": "audio-\u003Etext",
+        "input_modalities": [
+          "audio"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      },
+      "pricing": {
+        "prompt": "0",
+        "completion": "0",
+        "audio": "0.0001"
+      },
+      "context_length": null,
+      "default_parameters": null,
+      "per_request_limits": null,
+      "supported_parameters": [
+        "response_format"
+      ],
+      "supported_voices": null,
+      "links": {
+        "details": "https://fish.audio/"
+      },
+      "top_provider": {
+        "is_moderated": false
+      }
+    }
+  ],
+  "links": {
+    "next": null
+  },
+  "total_count": 5
+}

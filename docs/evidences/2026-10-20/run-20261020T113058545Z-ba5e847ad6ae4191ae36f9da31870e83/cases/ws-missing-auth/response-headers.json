@@ -1,0 +1,60 @@
+{
+  "status": 401,
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:32:01 GMT"
+    ],
+    "Connection": [
+      "keep-alive"
+    ],
+    "X-Fish-Error-Code": [
+      "missing_api_key"
+    ],
+    "X-Fish-Error-Source": [
+      "gateway"
+    ],
+    "X-Fish-Trace-Id": [
+      "11ad81a18a2b4106739dd73f1f1dd323"
+    ],
+    "cf-cache-status": [
+      "DYNAMIC"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022DYNAMIC\u0022",
+      "cfEdge;dur=5,cfOrigin;dur=69"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "CF-RAY": [
+      "a4d7b3170c27dfdb-YVR"
+    ],
+    "Alt-Svc": [
+      "h3=\u0022:443\u0022"
+    ],
+    "Content-Type": [
+      "application/json"
+    ],
+    "Content-Length": [
+      "99"
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "status": 404,
+  "version": "1.1",
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:31:39 GMT"
+    ],
+    "Connection": [
+      "keep-alive"
+    ],
+    "x-cloud-trace-context": [
+      "ae880bfb63ca85d8e51a92c3c708887a"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "Alt-Svc": [
+      "h3=\u0022:443\u0022"
+    ],
+    "cf-cache-status": [
+      "DYNAMIC"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022DYNAMIC\u0022",
+      "cfEdge;dur=6,cfOrigin;dur=382"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "CF-RAY": [
+      "a4d7b286efd59bc6-YVR"
+    ],
+    "Content-Type": [
+      "application/json"
+    ],
+    "Content-Length": [
+      "42"
+    ]
+  }
+}

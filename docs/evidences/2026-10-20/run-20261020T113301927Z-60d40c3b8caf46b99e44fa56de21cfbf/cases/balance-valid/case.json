@@ -1,0 +1,32 @@
+{
+  "id": "balance-valid",
+  "endpoint": "balance",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:33:11.7001989+00:00",
+  "finishedUtc": "2026-10-20T11:33:12.219626+00:00",
+  "httpStatus": 200,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.json",
+    "rawBytes": 270,
+    "storedBytes": 281,
+    "rawSha256": "555d0aa8c240b3cf89f3dcde838817746b89770203c25623c9b970b43f60d65d",
+    "storedSha256": "dbb892f7d36e5bcc6542fcc285d537ee80a00223cb0ad05593f35c2c804242fc",
+    "sanitized": true,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "application/json"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "authenticationMode": "environment-key",
+    "privateWalletIdentifiersRedacted": true,
+    "bodyContainsSignedUrlFields": false,
+    "publicationRedactions": [
+      "wallet top-level _id and user_id; raw byte count/hash retained"
+    ]
+  }
+}

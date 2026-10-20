@@ -1,0 +1,11 @@
+{
+  "file": "received-0021.msgpack",
+  "rawBytes": 40,
+  "storedBytes": 40,
+  "rawSha256": "66caf0b12cbe4ef7f3a27e3d907107dc575b495ffa48428274e64c7006a52fb2",
+  "storedSha256": "66caf0b12cbe4ef7f3a27e3d907107dc575b495ffa48428274e64c7006a52fb2",
+  "sanitized": false,
+  "complete": true,
+  "readFailure": null,
+  "contentType": "application/msgpack"
+}

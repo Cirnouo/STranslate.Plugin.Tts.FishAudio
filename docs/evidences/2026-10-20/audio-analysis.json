@@ -1,0 +1,160 @@
+{
+  "method": "Offline byte interpretation, adjacent-sample statistics, ffprobe and full MP3 decode. No sound-device or subjective listening claim.",
+  "pcmConclusion": "Signed 16-bit little-endian at requested 44100 Hz mono is an engineering interpretation supported by markedly smoother adjacent samples; not an official signedness/endianness guarantee. Physical output validation belongs to runtime integration.",
+  "audio": [
+    {
+      "case": "http-mp3-zh",
+      "path": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6/cases/http-mp3-zh",
+      "format": "mp3",
+      "bytes": 20897,
+      "ffprobe": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1,
+          "duration": "1.306062",
+          "bit_rate": "128000"
+        }
+      ],
+      "fullDecodeToNullExitCode": 0
+    },
+    {
+      "case": "http-mp3-zh-repeat",
+      "path": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6/cases/http-mp3-zh-repeat",
+      "format": "mp3",
+      "bytes": 21732,
+      "ffprobe": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1,
+          "duration": "1.358250",
+          "bit_rate": "128000"
+        }
+      ],
+      "fullDecodeToNullExitCode": 0
+    },
+    {
+      "case": "http-pcm-en",
+      "path": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6/cases/http-pcm-en",
+      "format": "pcm",
+      "bytes": 102400,
+      "sampleCount": 51200,
+      "durationSecondsAt44100": 1.1609977324263039,
+      "signed16LittleEndian": {
+        "rms": 1338.725,
+        "rmsSuccessiveDifference": 230.97,
+        "peak": 10927,
+        "mean": -2.601
+      },
+      "signed16BigEndian": {
+        "rms": 18728.202,
+        "rmsSuccessiveDifference": 23696.148,
+        "peak": 32768,
+        "mean": -259.077
+      }
+    },
+    {
+      "case": "http-pcm-en-repeat",
+      "path": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6/cases/http-pcm-en-repeat",
+      "format": "pcm",
+      "bytes": 102400,
+      "sampleCount": 51200,
+      "durationSecondsAt44100": 1.1609977324263039,
+      "signed16LittleEndian": {
+        "rms": 1838.235,
+        "rmsSuccessiveDifference": 345.138,
+        "peak": 12559,
+        "mean": -2.923
+      },
+      "signed16BigEndian": {
+        "rms": 18763.54,
+        "rmsSuccessiveDifference": 25284.539,
+        "peak": 32768,
+        "mean": -27.125
+      }
+    },
+    {
+      "case": "ws-mp3",
+      "path": "run-20261020T113058545Z-ba5e847ad6ae4191ae36f9da31870e83/cases/ws-mp3",
+      "format": "mp3",
+      "bytes": 42630,
+      "ffprobe": [
+        {
+          "codec_name": "mp3",
+          "sample_rate": "44100",
+          "channels": 1,
+          "duration": "2.664375",
+          "bit_rate": "128000"
+        }
+      ],
+      "fullDecodeToNullExitCode": 0
+    },
+    {
+      "case": "ws-pcm",
+      "path": "run-20261020T113058545Z-ba5e847ad6ae4191ae36f9da31870e83/cases/ws-pcm",
+      "format": "pcm",
+      "bytes": 225280,
+      "sampleCount": 112640,
+      "durationSecondsAt44100": 2.5541950113378684,
+      "signed16LittleEndian": {
+        "rms": 1426.654,
+        "rmsSuccessiveDifference": 309.554,
+        "peak": 14903,
+        "mean": -2.939
+      },
+      "signed16BigEndian": {
+        "rms": 18676.806,
+        "rmsSuccessiveDifference": 24441.106,
+        "peak": 32768,
+        "mean": 46.536
+      }
+    },
+    {
+      "case": "ws-pcm-segmented",
+      "path": "run-20261020T113058545Z-ba5e847ad6ae4191ae36f9da31870e83/cases/ws-pcm-segmented",
+      "format": "pcm",
+      "bytes": 1850090,
+      "sampleCount": 925045,
+      "durationSecondsAt44100": 20.97607709750567,
+      "signed16LittleEndian": {
+        "rms": 1495.495,
+        "rmsSuccessiveDifference": 320.952,
+        "peak": 13679,
+        "mean": -2.955
+      },
+      "signed16BigEndian": {
+        "rms": 18532.528,
+        "rmsSuccessiveDifference": 25265.797,
+        "peak": 32768,
+        "mean": 2.902
+      }
+    }
+  ],
+  "nativeWebSocketTimings": [
+    {
+      "case": "ws-mp3",
+      "firstAudioMs": 2025.0351,
+      "firstTailSendMs": 2026.3523,
+      "stopSendMs": 2027.0305,
+      "finishMs": 3173.0122,
+      "orderedAudioBeforeTailAndStop": true
+    },
+    {
+      "case": "ws-pcm",
+      "firstAudioMs": 2223.7575,
+      "firstTailSendMs": 2225.7049,
+      "stopSendMs": 2226.3448,
+      "finishMs": 4083.6164,
+      "orderedAudioBeforeTailAndStop": true
+    },
+    {
+      "case": "ws-pcm-segmented",
+      "firstAudioMs": 1704.9864,
+      "firstTailSendMs": 1706.5144,
+      "stopSendMs": 1708.1054,
+      "finishMs": 12680.7187,
+      "orderedAudioBeforeTailAndStop": true
+    }
+  ]
+}

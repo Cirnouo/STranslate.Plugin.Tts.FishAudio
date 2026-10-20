@@ -24,3 +24,6 @@ AGENTS.md
 
 .sisyphus
 .scratch/
+
+# Transient evidence-index writer lock
+docs/evidences/**/.manifest.lock

@@ -1,0 +1,35 @@
+{
+  "id": "ws-pcm-segmented",
+  "endpoint": "ws-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:31:12.0199433\u002B00:00",
+  "finishedUtc": "2026-10-20T11:31:24.7122221\u002B00:00",
+  "httpStatus": 101,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "audio.bin",
+    "rawBytes": 1850090,
+    "storedBytes": 1850090,
+    "rawSha256": "878a477bb9e4513abc7c0512424e4aba4a560ffba7b568ddebf52e2d11ba96c8",
+    "storedSha256": "878a477bb9e4513abc7c0512424e4aba4a560ffba7b568ddebf52e2d11ba96c8",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/pcm"
+  },
+  "details": {
+    "finishReason": "stop",
+    "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+    "format": "pcm",
+    "sampleRate": 44100,
+    "receivedMessageBytes": 1850868,
+    "messageCount": 21,
+    "audioEventCount": 20,
+    "firstAudioGateOpened": true,
+    "tailWithheldUntilFirstAudio": true,
+    "tailTextEvents": 3
+  }
+}

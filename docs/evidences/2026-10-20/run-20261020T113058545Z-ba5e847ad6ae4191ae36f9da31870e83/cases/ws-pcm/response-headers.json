@@ -1,0 +1,57 @@
+{
+  "status": 101,
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:31:39 GMT"
+    ],
+    "Connection": [
+      "upgrade"
+    ],
+    "Sec-WebSocket-Accept": [
+      "5Cs6DEpbGtI1gQYirETs7Y/GeUw="
+    ],
+    "Upgrade": [
+      "websocket"
+    ],
+    "X-Fish-Trace-Id": [
+      "a7c0288ecebd544299c84d7ffa488f8a"
+    ],
+    "X-Fishaudio-Datacenter": [
+      "hongkong"
+    ],
+    "cf-cache-status": [
+      "DYNAMIC"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022DYNAMIC\u0022",
+      "cfEdge;dur=6,cfOrigin;dur=229"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "CF-RAY": [
+      "a4d7b28c3def981c-YVR"
+    ],
+    "Alt-Svc": [
+      "h3=\u0022:443\u0022"
+    ]
+  }
+}

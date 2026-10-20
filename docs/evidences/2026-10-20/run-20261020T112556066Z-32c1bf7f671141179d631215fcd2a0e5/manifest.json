@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-network-probes",
+  "isFixture": false,
+  "group": "public",
+  "startedUtc": "2026-10-20T11:25:56.0667094\u002B00:00",
+  "updatedUtc": "2026-10-20T11:26:07.6506137\u002B00:00",
+  "limits": {
+    "secondsPerCase": 120,
+    "maximumReceivedBytesPerCase": 8388608,
+    "concurrency": 1,
+    "automaticRetries": 0
+  },
+  "synthesis": {
+    "model": "s2.1-pro-free",
+    "cutoffUtc": "2026-12-01T00:00:00\u002B00:00",
+    "paidFallback": false
+  },
+  "cases": [
+    {
+      "id": "catalog-all",
+      "endpoint": "engine-catalog",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:25:56.1413659\u002B00:00",
+      "finishedUtc": "2026-10-20T11:25:56.9199288\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 3164,
+        "storedBytes": 4877,
+        "rawSha256": "b1bada4e721b1fa2c0508469d984fadbb3469ab5db5b50c793a34b45f97b9dc9",
+        "storedSha256": "e1aa436a3619e8f6e67fcdbff41085fc5bf2bddeb89bebe8faff69dc32925775",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json; charset=utf-8"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "catalog-speech",
+      "endpoint": "engine-catalog",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:25:56.9252131\u002B00:00",
+      "finishedUtc": "2026-10-20T11:25:57.2154265\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 2556,
+        "storedBytes": 3948,
+        "rawSha256": "580155c09f081ee88565c52a1dcc72308bd6c27da785fb63f56f7d1f597aef05",
+        "storedSha256": "1c273035f59cb51fc3a40544eda59f95a2be58f9451b3f675f83f3a1d5ca0add",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json; charset=utf-8"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "voices-anonymous",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:25:57.2179957\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:00.0898842\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 6522,
+        "storedBytes": 10413,
+        "rawSha256": "27fab720b986d86e40bec184dc56ef2240ac4050c62c1efc95379883d1100883",
+        "storedSha256": "cc343a69f533d9c6e9dd26b60b610a915fe3c7420744ac9d00d388da1d018c9f",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-voices-default",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:00.0951794\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:02.952445\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 10555,
+        "storedBytes": 17046,
+        "rawSha256": "9f0c7dfe6a51234daff0188bec1747c4023965c761c129b623b8b2096777167c",
+        "storedSha256": "2c773586d0963c745f5ede5b103c5a1715acbc70ae39cd5655e97a16204584ba",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-voices-search",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:02.9566602\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:03.6522497\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 5379,
+        "storedBytes": 7150,
+        "rawSha256": "fd4eb46275d4549e2910c7d8326b44201412b77614a5bc686c121a46cdf557fc",
+        "storedSha256": "876cec207da54e099f9f30668414234fdfa597afbba217b9edfc4b901cdb800e",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-voice-detail-1",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:03.6568991\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:03.990531\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 2134,
+        "storedBytes": 2198,
+        "rawSha256": "a1b6119d012b1561cf8c1f4202f873b89339351a7b76b7c64e4c7f97e9363277",
+        "storedSha256": "b012343ac76f27c7dcbdb1f11e0edcf6c2ba811fa93a96308f19e9047701ede9",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "public-voice-detail-2",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:03.9937989\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:04.5621136\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 3097,
+        "storedBytes": 5157,
+        "rawSha256": "426ae218d287585ce727f10576a5f6321d90a2aa223db1cdcdedd0c98dd03b75",
+        "storedSha256": "c23ef5dd42432b0e52ff2be3788fbc4f11e74fbe86650b4ac01827e5f645c0d3",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "public-voice-detail-missing",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:04.5654715\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:04.9572565\u002B00:00",
+      "httpStatus": 404,
+      "outcome": "expected-http-error",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 42,
+        "storedBytes": 54,
+        "rawSha256": "bbe1dd636b7d9fdc97ec314bd9ccb73f63d059bb2021f2a75179bfb3b46b49c2",
+        "storedSha256": "eb9258f1ffe9b67a85ab4920fc3c4f81ee366d2057d2491fee17f345710d1cc3",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": true,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-sample-full",
+      "endpoint": "preview-assets",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:04.9614136\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:06.2821648\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.bin",
+        "rawBytes": 405420,
+        "storedBytes": 405420,
+        "rawSha256": "c730e4c467f8dcf465acca9e426ea6349137e3302ff65e648f66dc2a63e3301f",
+        "storedSha256": "c730e4c467f8dcf465acca9e426ea6349137e3302ff65e648f66dc2a63e3301f",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/mpeg"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-sample-range",
+      "endpoint": "preview-assets",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:06.284834\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:06.5179982\u002B00:00",
+      "httpStatus": 206,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.bin",
+        "rawBytes": 1024,
+        "storedBytes": 1024,
+        "rawSha256": "743da998785f8b5430eddc2e0bd76b6c6b5112eed843b4dfdd67d192a18fe183",
+        "storedSha256": "743da998785f8b5430eddc2e0bd76b6c6b5112eed843b4dfdd67d192a18fe183",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/mpeg"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "public-cover-full",
+      "endpoint": "preview-assets",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:26:06.5211336\u002B00:00",
+      "finishedUtc": "2026-10-20T11:26:07.6435569\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.bin",
+        "rawBytes": 22986,
+        "storedBytes": 22986,
+        "rawSha256": "41e6915dfacf60c6011824544931afb5dac7963073c9af143e56c57929576a4c",
+        "storedSha256": "41e6915dfacf60c6011824544931afb5dac7963073c9af143e56c57929576a4c",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "image/jpeg"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "bodyContainsSignedUrlFields": false
+      }
+    }
+  ]
+}

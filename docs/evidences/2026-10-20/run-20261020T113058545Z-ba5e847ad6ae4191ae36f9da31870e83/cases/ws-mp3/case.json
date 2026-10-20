@@ -1,0 +1,35 @@
+{
+  "id": "ws-mp3",
+  "endpoint": "ws-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:31:08.837739\u002B00:00",
+  "finishedUtc": "2026-10-20T11:31:12.0166973\u002B00:00",
+  "httpStatus": 101,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "audio.bin",
+    "rawBytes": 42630,
+    "storedBytes": 42630,
+    "rawSha256": "9dfe81ff26f128fe54a350cbaeb69d7f181172d1222a9b1ae51382df149b2876",
+    "storedSha256": "9dfe81ff26f128fe54a350cbaeb69d7f181172d1222a9b1ae51382df149b2876",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/mp3"
+  },
+  "details": {
+    "finishReason": "stop",
+    "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+    "format": "mp3",
+    "sampleRate": 44100,
+    "receivedMessageBytes": 42922,
+    "messageCount": 8,
+    "audioEventCount": 7,
+    "firstAudioGateOpened": true,
+    "tailWithheldUntilFirstAudio": true,
+    "tailTextEvents": 1
+  }
+}

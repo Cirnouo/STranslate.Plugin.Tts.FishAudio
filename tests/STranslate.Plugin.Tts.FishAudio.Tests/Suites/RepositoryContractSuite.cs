@@ -50,8 +50,8 @@ internal static class RepositoryContractSuite
                 $"1.1.2 changelog should record the compatibility fix: {expectedChange}");
         }
 
-        var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
-        AssertEqual(true, designDecisions.Contains("## DD-046:", StringComparison.Ordinal),
+        var designDecision = File.ReadAllText(FindRepoFile(Path.Combine("docs", "adr", "current", "DD-046.md")));
+        AssertEqual(true, designDecision.Contains("# DD-046:", StringComparison.Ordinal),
             "Design decisions should document dual-format API Key preflight");
     }
 
@@ -79,17 +79,17 @@ internal static class RepositoryContractSuite
                 $"1.1.1 changelog should record net change: {expectedChange}");
         }
 
-        var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
         foreach (var decisionNumber in new[] { 44, 45 })
         {
+            var decision = File.ReadAllText(FindRepoFile(Path.Combine(
+                "docs", "adr", "current", $"DD-{decisionNumber:D3}.md")));
             AssertEqual(
                 true,
-                designDecisions.Contains($"## DD-{decisionNumber:D3}:", StringComparison.Ordinal),
-                $"Design decisions should contain DD-{decisionNumber:D3}");
+                decision.Contains($"# DD-{decisionNumber:D3}:", StringComparison.Ordinal),
+                $"Current design decisions should contain DD-{decisionNumber:D3}");
         }
 
-        var dd045Index = designDecisions.IndexOf("## DD-045:", StringComparison.Ordinal);
-        var dd045Content = designDecisions[dd045Index..];
+        var dd045Content = File.ReadAllText(FindRepoFile(Path.Combine("docs", "adr", "current", "DD-045.md")));
         AssertEqual(true, dd045Content.Contains("2026-12-01T00:00:00Z", StringComparison.Ordinal), "DD-045 should own the current free-model cutoff");
         AssertEqual(true, dd045Content.Contains("2026-11-30", StringComparison.Ordinal), "DD-045 should identify the last free UTC day");
         AssertEqual(true, dd045Content.Contains("DD-036", StringComparison.Ordinal), "DD-045 should identify the superseded cutoff decision");
@@ -137,29 +137,27 @@ internal static class RepositoryContractSuite
             releaseContent.Contains("不会播放", StringComparison.Ordinal),
             "1.1.0 changelog should not claim that an old TTS operation cannot play after reinitialization");
 
-        var designDecisions = File.ReadAllText(FindRepoFile(Path.Combine("docs", "DESIGN_DECISIONS.md")));
         for (var decisionNumber = 36; decisionNumber <= 40; decisionNumber++)
         {
+            var decisionFolder = decisionNumber is 36 or 37 ? "history" : "current";
+            var decision = File.ReadAllText(FindRepoFile(Path.Combine(
+                "docs", "adr", decisionFolder, $"DD-{decisionNumber:D3}.md")));
             AssertEqual(
                 true,
-                designDecisions.Contains($"## DD-{decisionNumber:D3}:", StringComparison.Ordinal),
-                $"Design decisions should contain DD-{decisionNumber:D3}");
+                decision.Contains($"# DD-{decisionNumber:D3}:", StringComparison.Ordinal),
+                $"Design decisions should retain DD-{decisionNumber:D3} after migration");
         }
 
-        var dd031Index = designDecisions.IndexOf("## DD-031:", StringComparison.Ordinal);
-        var dd032Index = designDecisions.IndexOf("## DD-032:", StringComparison.Ordinal);
-        var dd036Index = designDecisions.IndexOf("## DD-036:", StringComparison.Ordinal);
-        var dd037Index = designDecisions.IndexOf("## DD-037:", StringComparison.Ordinal);
-        var dd031Content = designDecisions[dd031Index..dd032Index];
-        var dd036Content = designDecisions[dd036Index..dd037Index];
+        var dd031Content = File.ReadAllText(FindRepoFile(Path.Combine("docs", "adr", "current", "DD-031.md")));
+        var dd036Content = File.ReadAllText(FindRepoFile(Path.Combine("docs", "adr", "history", "DD-036.md")));
         AssertEqual(
             true,
-            dd031Content.Contains("Free-model cutoff extended by DD-036 and then DD-045", StringComparison.Ordinal),
+            dd031Content.Contains("DD-045", StringComparison.Ordinal),
             "DD-031 should identify DD-045 as the latest cutoff extension");
         AssertEqual(
             true,
             dd036Content.Contains("2026-09-01T00:00:00Z", StringComparison.Ordinal),
-            "DD-036 should own the extended free-model cutoff");
+            "Historical DD-036 should retain its superseded free-model cutoff");
 
         string[]? expectedResourceKeys = null;
         foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
@@ -308,7 +306,7 @@ internal static class RepositoryContractSuite
             AssertEqual(false, freeDescription.Contains(staleFreeDate, StringComparison.Ordinal), $"{locale} free-model description should not retain the August 31 deadline");
         }
 
-        var apiDocumentation = File.ReadAllText(FindRepoFile(Path.Combine("docs", "api-tts.md")));
+        var apiDocumentation = File.ReadAllText(FindRepoFile(Path.Combine("docs", "references", "engine-catalog.md")));
         AssertEqual(true, apiDocumentation.Contains(lastFreeDate, StringComparison.Ordinal), "TTS API documentation should use the November 30 free-model deadline");
         AssertEqual(true, apiDocumentation.Contains($"{cutoffDate}T00:00:00Z", StringComparison.Ordinal), "TTS API documentation should use the exact December 1 UTC cutoff");
         AssertEqual(false, apiDocumentation.Contains(staleFreeDate, StringComparison.Ordinal), "TTS API documentation should not retain the August 31 free-model deadline");

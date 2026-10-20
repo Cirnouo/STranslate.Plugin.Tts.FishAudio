@@ -1,0 +1,28 @@
+{
+  "id": "http-mp3-zh",
+  "endpoint": "http-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:30:40.0891337\u002B00:00",
+  "finishedUtc": "2026-10-20T11:30:41.203835\u002B00:00",
+  "httpStatus": 200,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.bin",
+    "rawBytes": 20897,
+    "storedBytes": 20897,
+    "rawSha256": "9aef815a9b367fa96401dda7b9cabf452dca409b9e693a6d4de8332c4cd6967e",
+    "storedSha256": "9aef815a9b367fa96401dda7b9cabf452dca409b9e693a6d4de8332c4cd6967e",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/mpeg"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "authenticationMode": "environment-key",
+    "bodyContainsSignedUrlFields": false
+  }
+}

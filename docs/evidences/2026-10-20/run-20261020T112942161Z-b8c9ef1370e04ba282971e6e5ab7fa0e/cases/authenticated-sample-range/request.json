@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "url": "https://platform.r2.fish.audio/task/265105e4556b4c0f906b0f426de988da.mp3",
+  "headers": {
+    "Range": [
+      "bytes=0-1023"
+    ]
+  },
+  "body": null,
+  "source": "URL returned by the voice API (relative covers use the documented CDN base)"
+}

@@ -1,0 +1,28 @@
+{
+  "id": "http-mp3-zh-repeat",
+  "endpoint": "http-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:30:41.2077563\u002B00:00",
+  "finishedUtc": "2026-10-20T11:30:42.4799655\u002B00:00",
+  "httpStatus": 200,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.bin",
+    "rawBytes": 21732,
+    "storedBytes": 21732,
+    "rawSha256": "db01dbd6d4dda3e5db911eb80189b55430988323d7210ce9dc969f4b76b61082",
+    "storedSha256": "db01dbd6d4dda3e5db911eb80189b55430988323d7210ce9dc969f4b76b61082",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/mpeg"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "authenticationMode": "environment-key",
+    "bodyContainsSignedUrlFields": false
+  }
+}

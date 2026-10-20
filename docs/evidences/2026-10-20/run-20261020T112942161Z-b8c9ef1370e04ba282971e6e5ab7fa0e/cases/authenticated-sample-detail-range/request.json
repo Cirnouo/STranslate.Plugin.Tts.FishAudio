@@ -1,0 +1,11 @@
+{
+  "method": "GET",
+  "url": "https://c97f3361a1c971323738e24f451a0225.r2.cloudflarestorage.com/fish-platform-data/task/18f869208a9742c78c56f063f70b3472.mp3",
+  "headers": {
+    "Range": [
+      "bytes=0-1023"
+    ]
+  },
+  "body": null,
+  "source": "URL returned by the voice API (relative covers use the documented CDN base)"
+}

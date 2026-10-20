@@ -1,0 +1,60 @@
+{
+  "_id": "90e65eaaf50e4470b8e6d43ee6afd7d5",
+  "type": "tts",
+  "title": "Super Smash Bros. 4/Ultimate Announcer",
+  "description": "A powerful and authoritative middle-aged male voice with a dramatic, cinematic quality. It features a deep, resonant tone perfectly suited for gaming announcers or high-energy sports commentary.",
+  "cover_image": "coverimage/90e65eaaf50e4470b8e6d43ee6afd7d5",
+  "train_mode": "fast",
+  "state": "trained",
+  "tags": [
+    "male",
+    "old",
+    "character-voice",
+    "entertainment",
+    "deep",
+    "energetic",
+    "authoritative",
+    "dramatic",
+    "announcer",
+    "gaming",
+    "cinematic"
+  ],
+  "samples": [
+    {
+      "title": "Default Sample",
+      "text": "Choose your fighter! Mario! Link! Samus! Battle mode: Team Smash! Three stock match! Ready... GO! Player One... DEFEATED! Player Two... WINS! Game Set! This battle\u0027s winner is... BLUE TEAM! New record!",
+      "task_id": "265105e4556b4c0f906b0f426de988da",
+      "audio": "https://c97f3361a1c971323738e24f451a0225.r2.cloudflarestorage.com/fish-platform-data/task/265105e4556b4c0f906b0f426de988da.mp3"
+    }
+  ],
+  "created_at": "2025-07-11T02:00:27.005000Z",
+  "updated_at": "2026-05-03T09:01:41.624000Z",
+  "languages": [
+    "en"
+  ],
+  "visibility": "public",
+  "lock_visibility": false,
+  "dmca_taken_down": false,
+  "takedown_category": null,
+  "default_text": "Choose your fighter! Mario! Link! Samus! Battle mode: Team Smash! Three stock match! Ready... GO! Player One... DEFEATED! Player Two... WINS! Game Set! This battle\u0027s winner is... BLUE TEAM! New record!",
+  "source": null,
+  "licensed": false,
+  "pvc_release_state": null,
+  "pvc_notice_period_months": null,
+  "pvc_released_at": null,
+  "pvc_retire_requested_at": null,
+  "pvc_retire_effective_at": null,
+  "quality": null,
+  "like_count": 31151,
+  "mark_count": 7344,
+  "shared_count": 14560,
+  "task_count": 19819572,
+  "unliked": false,
+  "liked": false,
+  "marked": false,
+  "author": {
+    "_id": "4fc33e0b0d314efca22a5dcabebaa526",
+    "nickname": "Club RM Studios Latinoam\u00E9rica",
+    "avatar": "avatars/4fc33e0b0d314efca22a5dcabebaa526"
+  }
+}

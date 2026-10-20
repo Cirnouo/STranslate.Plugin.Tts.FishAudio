@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "https://api.fish.audio/model?page_size=3\u0026page_number=1\u0026sort_by=score",
+  "headers": {},
+  "body": null,
+  "source": "documented API route"
+}

@@ -1,0 +1,4 @@
+{
+  "status": 401,
+  "message": "this route requires an api-key or Authorization: Bearer [REDACTED] key\u003E header"
+}

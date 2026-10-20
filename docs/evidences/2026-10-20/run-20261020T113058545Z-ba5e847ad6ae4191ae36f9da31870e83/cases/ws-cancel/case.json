@@ -1,0 +1,35 @@
+{
+  "id": "ws-cancel",
+  "endpoint": "ws-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:31:24.7150807\u002B00:00",
+  "finishedUtc": "2026-10-20T11:31:26.7687487\u002B00:00",
+  "httpStatus": 101,
+  "outcome": "cancelled-by-case",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "audio.bin",
+    "rawBytes": 40960,
+    "storedBytes": 40960,
+    "rawSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+    "storedSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+    "sanitized": false,
+    "complete": false,
+    "readFailure": null,
+    "contentType": "audio/pcm"
+  },
+  "details": {
+    "clientCancellationException": "TaskCanceledException",
+    "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+    "format": "pcm",
+    "sampleRate": 44100,
+    "receivedMessageBytes": 40996,
+    "messageCount": 2,
+    "audioEventCount": 1,
+    "firstAudioGateOpened": true,
+    "tailWithheldUntilFirstAudio": true,
+    "tailTextEvents": 1
+  }
+}

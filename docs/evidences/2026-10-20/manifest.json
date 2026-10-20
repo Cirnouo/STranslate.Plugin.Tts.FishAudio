@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "runs": [
+    {
+      "directory": "run-20261020T112556066Z-32c1bf7f671141179d631215fcd2a0e5",
+      "manifest": "run-20261020T112556066Z-32c1bf7f671141179d631215fcd2a0e5/manifest.json",
+      "startedUtc": "2026-10-20T11:25:56.0667094\u002B00:00",
+      "group": "public"
+    },
+    {
+      "directory": "run-20261020T112942161Z-b8c9ef1370e04ba282971e6e5ab7fa0e",
+      "manifest": "run-20261020T112942161Z-b8c9ef1370e04ba282971e6e5ab7fa0e/manifest.json",
+      "startedUtc": "2026-10-20T11:29:42.161108\u002B00:00",
+      "group": "authenticated"
+    },
+    {
+      "directory": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6",
+      "manifest": "run-20261020T113028751Z-1a8010d96eee470688478546b4ca8ea6/manifest.json",
+      "startedUtc": "2026-10-20T11:30:28.7512914\u002B00:00",
+      "group": "http-tts"
+    },
+    {
+      "directory": "run-20261020T113058545Z-ba5e847ad6ae4191ae36f9da31870e83",
+      "manifest": "run-20261020T113058545Z-ba5e847ad6ae4191ae36f9da31870e83/manifest.json",
+      "startedUtc": "2026-10-20T11:30:58.5455297\u002B00:00",
+      "group": "ws-tts"
+    },
+    {
+      "directory": "run-20261020T113301927Z-60d40c3b8caf46b99e44fa56de21cfbf",
+      "manifest": "run-20261020T113301927Z-60d40c3b8caf46b99e44fa56de21cfbf/manifest.json",
+      "startedUtc": "2026-10-20T11:33:01.9277626\u002B00:00",
+      "group": "authenticated"
+    }
+  ]
+}

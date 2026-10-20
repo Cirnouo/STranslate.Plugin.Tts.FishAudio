@@ -26,3 +26,6 @@ jobs:
       - name: Build, test, and verify package
         shell: pwsh
         run: .\build.ps1 -Release -Clean -Test
+      - name: Verify API probe safety and evidence capture offline
+        shell: pwsh
+        run: dotnet run --project tools/FishAudioProbe -c Release -- --self-test

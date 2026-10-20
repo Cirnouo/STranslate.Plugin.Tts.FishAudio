@@ -1,0 +1,64 @@
+{
+  "status": 200,
+  "version": "1.1",
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:31:13 GMT"
+    ],
+    "Transfer-Encoding": [
+      "chunked"
+    ],
+    "Connection": [
+      "keep-alive"
+    ],
+    "ratelimit-current-concurrency": [
+      "0"
+    ],
+    "ratelimit-limit-concurrency": [
+      "5"
+    ],
+    "x-fish-trace-id": [
+      "9e0b17cde524ce3f69bcbb31f6995c86"
+    ],
+    "x-fishaudio-datacenter": [
+      "hongkong"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "cf-cache-status": [
+      "DYNAMIC"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022DYNAMIC\u0022",
+      "cfEdge;dur=27,cfOrigin;dur=421"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "CF-RAY": [
+      "a4d7b1e87febd95b-YVR"
+    ],
+    "Alt-Svc": [
+      "h3=\u0022:443\u0022"
+    ],
+    "Content-Type": [
+      "audio/pcm"
+    ]
+  }
+}

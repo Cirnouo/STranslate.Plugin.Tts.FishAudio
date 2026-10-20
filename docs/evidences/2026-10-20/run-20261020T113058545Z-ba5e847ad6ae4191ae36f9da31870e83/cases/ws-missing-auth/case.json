@@ -1,0 +1,35 @@
+{
+  "id": "ws-missing-auth",
+  "endpoint": "ws-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:31:26.7715776\u002B00:00",
+  "finishedUtc": "2026-10-20T11:31:27.4631483\u002B00:00",
+  "httpStatus": 401,
+  "outcome": "expected-http-error",
+  "failure": "WebSocketException",
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "audio.bin",
+    "rawBytes": 0,
+    "storedBytes": 0,
+    "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sanitized": false,
+    "complete": false,
+    "readFailure": "WebSocketException",
+    "contentType": "audio/pcm"
+  },
+  "details": {
+    "error": "The server returned status code \u0027401\u0027 when status code \u0027101\u0027 was expected.",
+    "handshakeBodyCapture": "captured",
+    "format": "pcm",
+    "sampleRate": 44100,
+    "receivedMessageBytes": 0,
+    "messageCount": 0,
+    "audioEventCount": 0,
+    "firstAudioGateOpened": false,
+    "tailWithheldUntilFirstAudio": true,
+    "tailTextEvents": 1
+  }
+}

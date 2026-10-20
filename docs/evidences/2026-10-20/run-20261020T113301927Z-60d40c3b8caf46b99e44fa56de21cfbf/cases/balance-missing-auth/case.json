@@ -1,0 +1,29 @@
+{
+  "id": "balance-missing-auth",
+  "endpoint": "balance",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:33:12.7499012\u002B00:00",
+  "finishedUtc": "2026-10-20T11:33:13.0717283\u002B00:00",
+  "httpStatus": 401,
+  "outcome": "expected-http-error",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.json",
+    "rawBytes": 42,
+    "storedBytes": 42,
+    "rawSha256": "f05dfa72a1d5e7c8b55f9367c3bb19b3d466b5cb5191076236d35dca19d268d4",
+    "storedSha256": "f05dfa72a1d5e7c8b55f9367c3bb19b3d466b5cb5191076236d35dca19d268d4",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "text/plain; charset=utf-8"
+  },
+  "details": {
+    "expectedHttpFailure": true,
+    "authenticationMode": "none",
+    "privateWalletIdentifiersRedacted": true,
+    "bodyContainsSignedUrlFields": false
+  }
+}
