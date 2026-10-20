@@ -18,7 +18,7 @@ using static TestAssertions;
 internal static class InitializationLifecycleSuite
 {
     internal static Task ReinitializedSettingsViewUsesNewContextAndSettingsAsync() =>
-        RunOnStaThreadAsync(() =>
+        RunOnStaThreadAsync(async () =>
     {
         using var network = OverrideNetworkAvailability(true);
         var oldSettings = new Settings { ApiKey = AppliedKey };
@@ -46,7 +46,7 @@ internal static class InitializationLifecycleSuite
         var newContextProxy = (ContextProxy)(object)newContext;
 
         plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         var reusedSettingsView = plugin.GetSettingUI();
 
@@ -57,7 +57,7 @@ internal static class InitializationLifecycleSuite
         AssertEqual("78.90", newViewModel.UserCredit, "The replacement ViewModel should display the second initialization balance");
 
         releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
-        oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
         AssertEqual("78.90", newViewModel.UserCredit, "The first initialization result should not overwrite the replacement ViewModel");
 
         const string editedNewKey = "ffffffffffffffffffffffffffffffff";

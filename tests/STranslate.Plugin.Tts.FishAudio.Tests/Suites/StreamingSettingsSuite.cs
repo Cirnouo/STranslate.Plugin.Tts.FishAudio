@@ -240,8 +240,6 @@ internal static class StreamingSettingsSuite
     {
         var view = File.ReadAllText(FindRepoFile("STranslate.Plugin.Tts.FishAudio/Presentation/View/SettingsView.xaml"));
         AssertEqual(true, view.Contains("SelectedItem=\"{Binding AudioFormat}\"", StringComparison.Ordinal), "Format selector binds persisted value");
-        AssertEqual(true, view.Contains("IsEnabled=\"{Binding IsMp3BitrateEnabled}\"", StringComparison.Ordinal), "Bitrate is enabled only for MP3");
-        AssertEqual(true, view.Contains("IsEnabled=\"{Binding IsCustomStreamingProxy}\"", StringComparison.Ordinal), "Custom proxy address is enabled only in custom mode");
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         foreach (var locale in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
         {

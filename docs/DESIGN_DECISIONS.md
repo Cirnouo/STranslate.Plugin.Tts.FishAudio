@@ -215,3 +215,7 @@ Moved to [current DD-052](adr/current/DD-052.md).
 ## DD-053: Preserve MP3 compatibility and make native streaming routing explicit
 
 Moved to [current DD-053](adr/current/DD-053.md).
+
+## DD-054: Persist favorite IDs separately and share browsing caches
+
+Moved to [current DD-054](adr/current/DD-054.md).

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Presentation;
@@ -166,7 +167,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial bool IsSearching { get; set; }
 
     [ObservableProperty]
-    public partial bool IsSearchMode { get; set; }
+    [NotifyPropertyChangedFor(nameof(IsSearchMode))]
+    [NotifyPropertyChangedFor(nameof(IsByIdMode))]
+    [NotifyPropertyChangedFor(nameof(IsFavoritesMode))]
+    public partial VoiceBrowseMode BrowseMode { get; set; }
+
+    public bool IsSearchMode => BrowseMode == VoiceBrowseMode.Search;
+    public bool IsByIdMode => BrowseMode == VoiceBrowseMode.ById;
+    public bool IsFavoritesMode => BrowseMode == VoiceBrowseMode.Favorites;
 
     [ObservableProperty]
     public partial List<VoiceSearchItem> SearchResults { get; set; }
@@ -281,11 +289,15 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         DateTimeOffset? nowUtc = null,
         Func<IPreviewAudioPlayer>? previewAudioPlayerFactory = null,
         StartupCreditRefreshCycle? startupCreditRefreshCycle = null,
-        SettingsWriteLease? settingsWriteLease = null)
+        SettingsWriteLease? settingsWriteLease = null,
+        VoiceMetadataCache? voiceMetadataCache = null,
+        FavoriteVoiceStore? favoriteVoiceStore = null)
     {
         _context = context;
         _settings = settings;
         _settingsWriteLease = settingsWriteLease;
+        _voiceMetadataCache = voiceMetadataCache ?? new VoiceMetadataCache();
+        _favoriteStore = favoriteVoiceStore ?? new FavoriteVoiceStore(context.MetaData?.PluginSettingsDirectoryPath);
         _creditRefreshCoordinator = new CreditRefreshCoordinator(
             context,
             settings,
@@ -327,22 +339,24 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             resolveCoverImageUrl: ResolveCoverImageUrl,
             syncPreviewStateToResults: SyncPreviewStateToResults,
             setVoiceIdWithoutSaving: SetVoiceIdWithoutSaving,
-            persistSelectedVoice: cached => UpdateSettingsAndSave(settings =>
+            persistSelectedVoice: (voiceId, cached) => UpdateSettingsAndSave(settings =>
             {
-                settings.VoiceId = VoiceId;
+                settings.VoiceId = voiceId;
                 settings.CachedVoice = cached;
             }),
             applyCachedVoice: ApplyCachedVoice,
             setVoiceIdError: value => VoiceIdError = value,
             setSubmittingVoiceId: value => IsSubmittingVoiceId = value,
-            isFacadeDisposed: () => _isDisposed);
+            isFacadeDisposed: () => _isDisposed,
+            setByIdResult: item => ByIdResults = item is null ? [] : [item],
+            metadataCache: _voiceMetadataCache);
         _previewRefreshCoordinator = new PreviewRefreshCoordinator(
             context: context,
             getCachedVoiceId: () => CachedVoiceId,
             getCachedVoiceSampleUrl: () => CachedVoiceSampleUrl,
             getVoiceId: () => VoiceId,
             getSettingsVoiceId: () => _settings.VoiceId,
-            getSearchResults: () => SearchResults,
+            getSearchResults: GetVoiceCards,
             getPreviewingVoiceId: () => _previewPlayback.PreviewingVoiceId,
             stopPreview: _previewPlayback.Stop,
             togglePreview: _previewPlayback.Toggle,
@@ -351,7 +365,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             resolveCoverImageUrl: ResolveCoverImageUrl,
             isFacadeDisposed: () => _isDisposed,
             applyPreparingState: ApplyPreviewPreparingState,
-            runOnUiThread: RunOnUiThread);
+            runOnUiThread: RunOnUiThread,
+            metadataCache: _voiceMetadataCache);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -377,12 +392,14 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         SearchPage = 1;
         PageInput = "1";
         VoiceIdInput = "";
-        IsSearchMode = true;
+        BrowseMode = VoiceBrowseMode.Search;
+        ReloadFavorites();
         CoverImageCacheSizeText = _coverImageCacheDisplay.GetFormattedCacheSize();
 
         ApplyCachedVoice(settings.CachedVoice);
 
         PropertyChanged += OnPropertyChanged;
+        _voiceMetadataCache.MetadataUpdated += OnVoiceMetadataUpdated;
         if (startupCreditRefreshCycle is not null)
             AttachStartupCreditRefresh(startupCreditRefreshCycle);
     }
@@ -503,13 +520,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void SwitchToSearch()
     {
-        IsSearchMode = true;
+        BrowseMode = VoiceBrowseMode.Search;
     }
 
     [RelayCommand]
     private void SwitchToById()
     {
-        IsSearchMode = false;
+        BrowseMode = VoiceBrowseMode.ById;
     }
 
     // ── 声音搜索命令 ──
@@ -584,7 +601,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
         _previewStateItems.Clear();
 
-        foreach (var item in SearchResults)
+        foreach (var item in GetVoiceCards())
         {
             item.IsBeingPreviewed = PreviewingVoiceId is not null && item.Id == PreviewingVoiceId;
             item.IsPreparingPreview = PreparingPreviewVoiceId is not null && item.Id == PreparingPreviewVoiceId;
@@ -661,7 +678,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         RefreshCoverImageCacheSize();
 
-        foreach (var item in SearchResults)
+        foreach (var item in GetVoiceCards())
             item.CoverUrl = FishAudioApi.BuildCoverUrl(item.CoverImage);
 
         if (!string.IsNullOrEmpty(CachedVoiceId) && _settings.CachedVoice is not null)
@@ -728,8 +745,18 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         switch (e.PropertyName)
         {
             case nameof(SearchResults):
+            case nameof(ByIdResults):
+            case nameof(FavoriteResults):
                 _previewRefreshCoordinator.OnSearchResultsChanged();
+                SyncFavoriteState();
                 SyncPreviewStateToResults();
+                return;
+            case nameof(VoiceIdInput):
+                _voiceDiscoveryCoordinator.InvalidateVoiceIdInput();
+                return;
+            case nameof(BrowseMode):
+                if (!IsFavoritesMode)
+                    CancelFavoritePageLoad();
                 return;
             case nameof(ApiKey):
                 updateSettings = settings => settings.ApiKey = ApiKey;
@@ -804,7 +831,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
-        _isDisposed = true;
+        lock (_favoritesPersistenceGate)
+            _isDisposed = true;
+        CancelFavoritePageLoad();
+        _voiceMetadataCache.MetadataUpdated -= OnVoiceMetadataUpdated;
+        _favoriteStore.Dispose();
         _creditRefreshCoordinator.InvalidateStartupCreditRefresh();
         PropertyChanged -= OnPropertyChanged;
         _voiceDiscoveryCoordinator.InvalidateOperations();

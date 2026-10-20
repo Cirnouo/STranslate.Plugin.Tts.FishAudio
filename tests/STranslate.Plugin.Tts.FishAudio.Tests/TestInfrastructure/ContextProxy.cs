@@ -96,7 +96,8 @@ public class ContextProxy : DispatchProxy
         IHttpService? httpService = null,
         IAudioPlayer? audioPlayer = null,
         ILogger? logger = null,
-        string? pluginCacheDirectoryPath = null)
+        string? pluginCacheDirectoryPath = null,
+        string? pluginSettingsDirectoryPath = null)
     {
         var context = DispatchProxy.Create<IPluginContext, ContextProxy>();
         var proxy = (ContextProxy)(object)context;
@@ -105,16 +106,18 @@ public class ContextProxy : DispatchProxy
         proxy.HttpService = httpService;
         proxy.AudioPlayer = audioPlayer;
         proxy.Logger = logger ?? new TestLogger();
-        if (pluginCacheDirectoryPath is not null)
-            proxy.MetaData = CreatePluginMetaData(pluginCacheDirectoryPath);
+        if (pluginCacheDirectoryPath is not null || pluginSettingsDirectoryPath is not null)
+            proxy.MetaData = CreatePluginMetaData(pluginCacheDirectoryPath, pluginSettingsDirectoryPath);
         return context;
     }
 
-    internal static object CreatePluginMetaData(string pluginCacheDirectoryPath)
+    internal static object CreatePluginMetaData(string? pluginCacheDirectoryPath, string? pluginSettingsDirectoryPath = null)
     {
         var metadataType = typeof(IPluginContext).GetProperty("MetaData")!.PropertyType;
         var metadata = Activator.CreateInstance(metadataType)!;
         metadataType.GetProperty("PluginCacheDirectoryPath")!.SetValue(metadata, pluginCacheDirectoryPath);
+        if (pluginSettingsDirectoryPath is not null)
+            metadataType.GetProperty("PluginSettingsDirectoryPath")!.SetValue(metadata, pluginSettingsDirectoryPath);
         return metadata;
     }
 }

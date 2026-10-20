@@ -3,6 +3,8 @@
 Choose verification that exercises the changed contract. The repository uses an executable regression runner, not a test-discovery framework: new regression scenarios must be invoked by its Program entry point. Keep normal tests deterministic and offline; do not make a credential or provider availability a prerequisite for CI.
 
 - Use fake network/storage/audio boundaries for request shape, cancellation, timeouts, stale results and failure cleanup. Use fixed local fixtures when real decoding is relevant.
+- Test asynchronous preview ownership separately from shared Voice ID state: removing the originating card must invalidate its work even when another card has the same ID, and local collection persistence/rebuild must preserve selection until an explicit Apply.
+- Run WPF fixtures that share process-global theme resources on one STA Dispatcher with a dispatcher synchronization context; preserve real background-thread completion and command-listener checks.
 - For documentation moves, validate local targets, preserved anchors and the existing repository assertions affected by the move. Do not add large sets of source/text assertions that merely mirror the documents.
 - For behavioral changes, test meaningful before/after cases and affected compatibility paths. Repeat or broaden checks when the final changes, a failure or an unresolved risk justify it.
 - Build/package validation must inspect the package produced by the current sources and configuration, including required dependencies and resource files. A leftover package is not evidence of a successful current build.

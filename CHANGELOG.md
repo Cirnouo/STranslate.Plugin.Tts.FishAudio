@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### 新增
+- 新增位于搜索和 ID 标签右侧的「收藏声音」页，支持星标收藏、六项分页、页码输入及独立收起／展开；仅在插件持久数据目录保存声音 ID，搜索、ID 查询和收藏共用有界内存信息缓存及现有封面图片缓存；重启后按需加载声音信息，取消收藏立即更新列表和页数。
 - 搜索结果增加可收起／展开的控件，收起后保留搜索词、结果、页码和已选声音，支持键盘操作及五种语言提示。
 
 ### 修复
@@ -16,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - 修复搜索结果与已选声音两个试听入口：通过宿主 HTTP 下载公开 sample，再以内存流本地播放，沿用宿主代理；限制下载时长和大小，停止、切换和关闭后不会被迟到结果重新播放（[#2](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/2)）。
 
 ### 变更
+- PCM 模式隐藏整个 MP3 比特率设置卡片，切回 MP3 恢复原值；朗读网络设置独立分组并使用简洁标签，自定义代理地址仅在自定义模式显示。
+- ID 查询确认后仅展示单张声音卡片，可试听、收藏并点击「应用」切换声音；查询本身保留原已选声音，三个浏览页统一使用五角星矢量收藏按钮。
 - 升级 STranslate.Plugin SDK 至 1.0.15，适配新增音频数据接口，保留现有朗读入口。
 - 正式朗读改为原生 WebSocket MessagePack 流式合成与本地增量播放；首段按需读取并在播放启动后继续发送长文本，支持 PCM/MP3，不自动重试或回退模型、HTTP/SSE。
 - 设置升级至 SchemaVersion=2：新配置默认 PCM，旧版配置保留 MP3 兼容与有效比特率；新增独立流式代理设置（系统、直连、自定义），REST 查询与试听继续使用宿主 HTTP。

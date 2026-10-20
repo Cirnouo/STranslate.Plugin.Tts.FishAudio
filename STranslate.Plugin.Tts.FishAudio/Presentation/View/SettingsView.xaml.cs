@@ -49,6 +49,12 @@ public partial class SettingsView : UserControl
             vm.CommitPageInputCommand.Execute(null);
     }
 
+    private void FavoritePageInputBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModel.SettingsViewModel vm && vm.CommitFavoritePageInputCommand.CanExecute(null))
+            vm.CommitFavoritePageInputCommand.Execute(null);
+    }
+
     private void S21ProFreePromoCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is DependencyObject source && HasInteractiveAncestor(source))

@@ -1,4 +1,5 @@
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
@@ -11,6 +12,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private const int SearchPageSize = 6;
 
     private readonly IPluginContext _context;
+    private readonly VoiceMetadataCache _metadataCache;
     private readonly Func<string> _getSearchQuery;
     private readonly Func<string> _getPageInput;
     private readonly Func<string> _getVoiceIdInput;
@@ -22,7 +24,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private readonly Func<string, string, int, Action<string>?, string> _resolveCoverImageUrl;
     private readonly Action _syncPreviewStateToResults;
     private readonly Action<string> _setVoiceIdWithoutSaving;
-    private readonly Func<CachedVoiceInfo, bool> _persistSelectedVoice;
+    private readonly Func<string, CachedVoiceInfo, bool> _persistSelectedVoice;
+    private readonly Action<VoiceSearchItem?> _setByIdResult;
     private readonly Action<CachedVoiceInfo?> _applyCachedVoice;
     private readonly Action<string?> _setVoiceIdError;
     private readonly Action<bool> _setSubmittingVoiceId;
@@ -49,13 +52,16 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
         Action syncPreviewStateToResults,
         Action<string> setVoiceIdWithoutSaving,
-        Func<CachedVoiceInfo, bool> persistSelectedVoice,
+        Func<string, CachedVoiceInfo, bool> persistSelectedVoice,
         Action<CachedVoiceInfo?> applyCachedVoice,
         Action<string?> setVoiceIdError,
         Action<bool> setSubmittingVoiceId,
-        Func<bool> isFacadeDisposed)
+        Func<bool> isFacadeDisposed,
+        Action<VoiceSearchItem?>? setByIdResult = null,
+        VoiceMetadataCache? metadataCache = null)
     {
         _context = context;
+        _metadataCache = metadataCache ?? new VoiceMetadataCache();
         _getSearchQuery = getSearchQuery;
         _getPageInput = getPageInput;
         _getVoiceIdInput = getVoiceIdInput;
@@ -68,6 +74,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         _syncPreviewStateToResults = syncPreviewStateToResults;
         _setVoiceIdWithoutSaving = setVoiceIdWithoutSaving;
         _persistSelectedVoice = persistSelectedVoice;
+        _setByIdResult = setByIdResult ?? (_ => { });
         _applyCachedVoice = applyCachedVoice;
         _setVoiceIdError = setVoiceIdError;
         _setSubmittingVoiceId = setSubmittingVoiceId;
@@ -104,10 +111,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal void SelectVoice(VoiceSearchItem? item)
     {
-        if (item is null)
+        if (item is null || !item.HasMetadata || !SettingsValidation.IsValidVoiceIdFormat(item.Id) || _isDisposed || _isFacadeDisposed())
             return;
-
-        _setVoiceIdWithoutSaving(item.Id);
 
         var cached = new CachedVoiceInfo
         {
@@ -118,14 +123,18 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             TaskCount = item.TaskCount,
             SampleAudioUrl = item.SampleAudioUrl,
         };
-        if (!_persistSelectedVoice(cached))
+        if (!_persistSelectedVoice(item.Id, cached))
             return;
 
+        _setVoiceIdWithoutSaving(item.Id);
         _applyCachedVoice(cached);
     }
 
     internal async Task SubmitVoiceIdAsync()
     {
+        if (_isDisposed || _isFacadeDisposed())
+            return;
+        InvalidateVoiceIdInput();
         var trimmed = _getVoiceIdInput().Trim();
         if (string.IsNullOrEmpty(trimmed))
         {
@@ -145,6 +154,11 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
         try
         {
+            if (_metadataCache.TryGet(trimmed, out var cachedMetadata))
+            {
+                _setByIdResult(MapMetadata(cachedMetadata));
+                return;
+            }
             var model = await FishAudioApi.GetModelAsync(_context, SearchApiToken, trimmed, cts.Token);
 
             if (!IsCurrentVoiceIdOperation(operationId))
@@ -156,13 +170,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
                 return;
             }
 
-            _setVoiceIdWithoutSaving(trimmed);
-
-            var cached = CreateCachedVoiceInfo(model);
-            if (!_persistSelectedVoice(cached))
-                return;
-
-            _applyCachedVoice(cached);
+            var result = MapSearchResult(model, trimmed);
+            _setByIdResult(result);
             _setVoiceIdError(null);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
@@ -180,6 +189,16 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             CompleteVoiceIdOperation(cts);
             cts.Dispose();
         }
+    }
+
+    internal void InvalidateVoiceIdInput()
+    {
+        Interlocked.Increment(ref _voiceIdOperationId);
+        var cancellation = _voiceIdCancellationTokenSource;
+        _voiceIdCancellationTokenSource = null;
+        _setSubmittingVoiceId(false);
+        _setByIdResult(null);
+        cancellation?.Cancel();
     }
 
     internal static CachedVoiceInfo CreateCachedVoiceInfo(ModelEntity model) => new()
@@ -226,7 +245,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             _setHasSearched(true);
             if (!IsCurrentSearchOperation(operationId))
                 return;
-            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(MapSearchResult).ToList();
+            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(model => MapSearchResult(model)).ToList();
             if (!IsCurrentSearchOperation(operationId))
                 return;
             _setSearchResults(results);
@@ -252,17 +271,24 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private static bool IsSelectableVoice(ModelEntity model) =>
         string.IsNullOrWhiteSpace(model.Type) || string.Equals(model.Type, "tts", StringComparison.OrdinalIgnoreCase);
 
-    private VoiceSearchItem MapSearchResult(ModelEntity model)
+    private VoiceSearchItem MapSearchResult(ModelEntity model, string? voiceId = null)
+    {
+        var metadata = VoiceMetadata.FromModel(model, voiceId);
+        _metadataCache.Put(metadata);
+        return MapMetadata(metadata);
+    }
+
+    private VoiceSearchItem MapMetadata(VoiceMetadata metadata)
     {
         var item = new VoiceSearchItem
         {
-            Id = model.Id,
-            Title = model.Title,
-            Description = model.Description,
-            AuthorName = model.Author?.Nickname ?? "",
-            TaskCount = model.TaskCount,
-            SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
-            CoverImage = model.CoverImage,
+            Id = metadata.VoiceId,
+            Title = metadata.Title,
+            Description = metadata.Description,
+            AuthorName = metadata.AuthorName,
+            TaskCount = metadata.TaskCount,
+            SampleAudioUrl = metadata.SampleAudioUrl,
+            CoverImage = metadata.CoverImage,
         };
         item.CoverUrl = _resolveCoverImageUrl(item.Id, item.CoverImage, 64, url => item.CoverUrl = url);
         return item;

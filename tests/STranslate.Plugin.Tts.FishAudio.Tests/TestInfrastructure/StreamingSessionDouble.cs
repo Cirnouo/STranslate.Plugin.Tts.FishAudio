@@ -17,7 +17,7 @@ internal sealed class StreamingSessionDouble : IStreamingTtsSession
         Text = text;
         using var registration = cancellationToken.Register(() => CancellationObserved = true);
         Entered.TrySetResult();
-        await Handler(request, text, cancellationToken);
+        await Handler(request, text, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose() => ++DisposeCount;

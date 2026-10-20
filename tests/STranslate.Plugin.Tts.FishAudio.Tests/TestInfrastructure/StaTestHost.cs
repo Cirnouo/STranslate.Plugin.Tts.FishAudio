@@ -1,33 +1,55 @@
-using STranslate.Plugin;
-using STranslate.Plugin.Tts.FishAudio;
-using STranslate.Plugin.Tts.FishAudio.Configuration;
-using STranslate.Plugin.Tts.FishAudio.Model;
-using STranslate.Plugin.Tts.FishAudio.ViewModel;
-using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Reflection;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Windows.Threading;
 
 internal static class StaTestHost
 {
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(5);
+    private static readonly Lazy<Task<Dispatcher>> SharedDispatcher = new(StartDispatcher);
+
     internal static async Task RunOnStaThreadAsync(Action action)
     {
-        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dispatcher = await SharedDispatcher.Value.WaitAsync(TestTimeout);
+        if (dispatcher.CheckAccess())
+        {
+            action();
+            return;
+        }
+        await dispatcher.InvokeAsync(action).Task.WaitAsync(TestTimeout);
+    }
+
+    internal static async Task RunOnStaThreadAsync(Func<Task> action)
+    {
+        var dispatcher = await SharedDispatcher.Value.WaitAsync(TestTimeout);
+        if (dispatcher.CheckAccess())
+        {
+            await action();
+            return;
+        }
+        await dispatcher.InvokeAsync(action).Task.Unwrap().WaitAsync(TestTimeout);
+    }
+
+    private static Task<Dispatcher> StartDispatcher()
+    {
+        var completion = new TaskCompletionSource<Dispatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() =>
         {
             try
             {
-                action();
-                completion.SetResult();
+                var dispatcher = Dispatcher.CurrentDispatcher;
+                SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(dispatcher));
+                completion.SetResult(dispatcher);
+                Dispatcher.Run();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                completion.SetException(ex);
+                completion.TrySetException(exception);
             }
-        });
+        })
+        {
+            IsBackground = true,
+            Name = "Fish Audio regression UI",
+        };
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        await completion.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        return completion.Task;
     }
 }
