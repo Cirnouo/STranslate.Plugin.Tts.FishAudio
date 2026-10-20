@@ -21,8 +21,13 @@ using static TestAssertions;
 
 internal static class SettingsLayoutSuite
 {
-    internal static Task InlineNumericInteractionsAsync() => RunOnStaThreadAsync(() =>
-        InlineNumericEditorSuite.Run(CreateThemedView, Layout));
+    internal static async Task InlineNumericInteractionsAsync()
+    {
+        // Every locale retains the same shared STA and five-second action
+        // deadline. CI must not fit six complete UI fixtures into one action.
+        foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
+            await RunOnStaThreadAsync(() => InlineNumericEditorSuite.RunForCulture(CreateThemedView, Layout, language, culture));
+    }
 
     // The host theme caches dispatcher-bound resources, so render these
     // compiled-view cases on one STA, as they are used in the application.
