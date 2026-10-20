@@ -370,6 +370,22 @@
                         </TextBox.InputBindings>
                     </TextBox>
                 </DockPanel>
+                <Expander x:Name="VoiceSearchResultsExpander" IsExpanded="True"
+                          Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchResults}"
+                          Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
+                    <Expander.Style>
+                        <Style TargetType="Expander">
+                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ExpandSearchResults}" />
+                            <Setter Property="AutomationProperties.HelpText" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ExpandSearchResults}" />
+                            <Style.Triggers>
+                                <Trigger Property="IsExpanded" Value="True">
+                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CollapseSearchResults}" />
+                                    <Setter Property="AutomationProperties.HelpText" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CollapseSearchResults}" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Expander.Style>
+                    <ikw:SimpleStackPanel Spacing="8">
                 <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas"
                            Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
                     <Run Text="{Binding SearchResultCountText, Mode=OneWay}" />
@@ -510,6 +526,8 @@
                         </StackPanel>
                     </Button>
                 </Grid>
+                    </ikw:SimpleStackPanel>
+                </Expander>
             </ikw:SimpleStackPanel>
 
             <!-- 通过 ID 面板 -->

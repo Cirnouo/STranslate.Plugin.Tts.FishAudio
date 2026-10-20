@@ -98,4 +98,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">ボイス ID の形式が正しくありません</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">ボイスが見つかりません</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">検索結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">検索結果を展開</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">検索結果を折りたたむ</sys:String>
 </ResourceDictionary>
