@@ -1,0 +1,29 @@
+{
+  "id": "authenticated-sample-detail-range",
+  "endpoint": "preview-assets",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:29:50.8832921\u002B00:00",
+  "finishedUtc": "2026-10-20T11:29:51.1985456\u002B00:00",
+  "httpStatus": 206,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": true,
+  "body": {
+    "file": "body.bin",
+    "rawBytes": 1024,
+    "storedBytes": 1024,
+    "rawSha256": "b73fafc305c84561219f01d50c23cf5c19e442ae6842e199c10b29e970f4cc1a",
+    "storedSha256": "b73fafc305c84561219f01d50c23cf5c19e442ae6842e199c10b29e970f4cc1a",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/mpeg"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "authenticationMode": "none",
+    "bodyContainsSignedUrlFields": false,
+    "assetSource": "latest voice-detail sample"
+  }
+}

@@ -1,0 +1,336 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-network-probes",
+  "isFixture": false,
+  "group": "ws-tts",
+  "startedUtc": "2026-10-20T11:30:58.5455297\u002B00:00",
+  "updatedUtc": "2026-10-20T11:31:27.46867\u002B00:00",
+  "limits": {
+    "secondsPerCase": 120,
+    "maximumReceivedBytesPerCase": 8388608,
+    "concurrency": 1,
+    "automaticRetries": 0
+  },
+  "synthesis": {
+    "model": "s2.1-pro-free",
+    "cutoffUtc": "2026-12-01T00:00:00\u002B00:00",
+    "paidFallback": false
+  },
+  "cases": [
+    {
+      "id": "synthesis-discovery-voices-default",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:30:58.6239405\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:02.1794423\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 10555,
+        "storedBytes": 17046,
+        "rawSha256": "32ed653cba944b6bc510b76531b3ebf648004ba1d63f524bb334aec5221e5216",
+        "storedSha256": "04bfc68eb9d8699a0bd0aa2279ab3ef3d6e42e2e9c756c8a3cb51f144f7444a9",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "synthesis-discovery-voices-search",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:02.1885714\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:02.9390641\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 5379,
+        "storedBytes": 7150,
+        "rawSha256": "abc1b17ff15ee5ebd54d9dd9a2de83f659bd7679a58ac818c24aa26e3c5791ab",
+        "storedSha256": "bb92318f78073c0835175be50a1959626c82f5f35e48ebd981e071fbb33b0478",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "synthesis-discovery-voice-detail-1",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:02.9453496\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:03.6354663\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 2134,
+        "storedBytes": 2198,
+        "rawSha256": "ca3c2df30be1e8ce5ab1e7ed760172e6596b03bcde65a16a1ac3cae4e5843e0a",
+        "storedSha256": "2c0fd7c2a84491689477ad878f768168d6a309c93f231cf5947ac6f274bd18e5",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "synthesis-discovery-voice-detail-2",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:03.639075\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:04.1163347\u002B00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 3097,
+        "storedBytes": 5157,
+        "rawSha256": "adb87307e5fab699b9833cc3cf89b4a4b7ca503abc367221844a5ddff0a7b6d7",
+        "storedSha256": "601a561744af76e3815e84f6d865ca1020dae74aef252d9cfd4906ebc4429d65",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "synthesis-discovery-voice-detail-missing",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:04.1194599\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:04.7140341\u002B00:00",
+      "httpStatus": 404,
+      "outcome": "expected-http-error",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 42,
+        "storedBytes": 54,
+        "rawSha256": "bbe1dd636b7d9fdc97ec314bd9ccb73f63d059bb2021f2a75179bfb3b46b49c2",
+        "storedSha256": "eb9258f1ffe9b67a85ab4920fc3c4f81ee366d2057d2491fee17f345710d1cc3",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": true,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "ws-pcm",
+      "endpoint": "ws-tts",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:04.7363383\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:08.8339469\u002B00:00",
+      "httpStatus": 101,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "audio.bin",
+        "rawBytes": 225280,
+        "storedBytes": 225280,
+        "rawSha256": "4d4dcf1f1ea259b792dae0fa3b655f0efa4981ef4e57961e2ebd1b7b3252af5d",
+        "storedSha256": "4d4dcf1f1ea259b792dae0fa3b655f0efa4981ef4e57961e2ebd1b7b3252af5d",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/pcm"
+      },
+      "details": {
+        "finishReason": "stop",
+        "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+        "format": "pcm",
+        "sampleRate": 44100,
+        "receivedMessageBytes": 225536,
+        "messageCount": 7,
+        "audioEventCount": 6,
+        "firstAudioGateOpened": true,
+        "tailWithheldUntilFirstAudio": true,
+        "tailTextEvents": 1
+      }
+    },
+    {
+      "id": "ws-mp3",
+      "endpoint": "ws-tts",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:08.837739\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:12.0166973\u002B00:00",
+      "httpStatus": 101,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "audio.bin",
+        "rawBytes": 42630,
+        "storedBytes": 42630,
+        "rawSha256": "9dfe81ff26f128fe54a350cbaeb69d7f181172d1222a9b1ae51382df149b2876",
+        "storedSha256": "9dfe81ff26f128fe54a350cbaeb69d7f181172d1222a9b1ae51382df149b2876",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/mp3"
+      },
+      "details": {
+        "finishReason": "stop",
+        "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+        "format": "mp3",
+        "sampleRate": 44100,
+        "receivedMessageBytes": 42922,
+        "messageCount": 8,
+        "audioEventCount": 7,
+        "firstAudioGateOpened": true,
+        "tailWithheldUntilFirstAudio": true,
+        "tailTextEvents": 1
+      }
+    },
+    {
+      "id": "ws-pcm-segmented",
+      "endpoint": "ws-tts",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:12.0199433\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:24.7122221\u002B00:00",
+      "httpStatus": 101,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "audio.bin",
+        "rawBytes": 1850090,
+        "storedBytes": 1850090,
+        "rawSha256": "878a477bb9e4513abc7c0512424e4aba4a560ffba7b568ddebf52e2d11ba96c8",
+        "storedSha256": "878a477bb9e4513abc7c0512424e4aba4a560ffba7b568ddebf52e2d11ba96c8",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/pcm"
+      },
+      "details": {
+        "finishReason": "stop",
+        "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+        "format": "pcm",
+        "sampleRate": 44100,
+        "receivedMessageBytes": 1850868,
+        "messageCount": 21,
+        "audioEventCount": 20,
+        "firstAudioGateOpened": true,
+        "tailWithheldUntilFirstAudio": true,
+        "tailTextEvents": 3
+      }
+    },
+    {
+      "id": "ws-cancel",
+      "endpoint": "ws-tts",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:24.7150807\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:26.7687487\u002B00:00",
+      "httpStatus": 101,
+      "outcome": "cancelled-by-case",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "audio.bin",
+        "rawBytes": 40960,
+        "storedBytes": 40960,
+        "rawSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+        "storedSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+        "sanitized": false,
+        "complete": false,
+        "readFailure": null,
+        "contentType": "audio/pcm"
+      },
+      "details": {
+        "clientCancellationException": "TaskCanceledException",
+        "handshakeBodyCapture": "not-applicable-after-successful-upgrade",
+        "format": "pcm",
+        "sampleRate": 44100,
+        "receivedMessageBytes": 40996,
+        "messageCount": 2,
+        "audioEventCount": 1,
+        "firstAudioGateOpened": true,
+        "tailWithheldUntilFirstAudio": true,
+        "tailTextEvents": 1
+      }
+    },
+    {
+      "id": "ws-missing-auth",
+      "endpoint": "ws-tts",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:31:26.7715776\u002B00:00",
+      "finishedUtc": "2026-10-20T11:31:27.4631483\u002B00:00",
+      "httpStatus": 401,
+      "outcome": "expected-http-error",
+      "failure": "WebSocketException",
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "audio.bin",
+        "rawBytes": 0,
+        "storedBytes": 0,
+        "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "storedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "sanitized": false,
+        "complete": false,
+        "readFailure": "WebSocketException",
+        "contentType": "audio/pcm"
+      },
+      "details": {
+        "error": "The server returned status code \u0027401\u0027 when status code \u0027101\u0027 was expected.",
+        "handshakeBodyCapture": "captured",
+        "format": "pcm",
+        "sampleRate": 44100,
+        "receivedMessageBytes": 0,
+        "messageCount": 0,
+        "audioEventCount": 0,
+        "firstAudioGateOpened": false,
+        "tailWithheldUntilFirstAudio": true,
+        "tailTextEvents": 1
+      }
+    }
+  ]
+}

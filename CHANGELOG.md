@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### 工程
 - 为 Pull Request 和 main 分支增加 Windows 构建、回归测试及安装包验证；版本标签继续独立触发发布。
+- 增加严格限制免费模型的独立 API 探针、官方接口研究及可追溯的真实响应，CI 离线验证调用保护与证据采集。
 
 ## [1.1.2] - 2026-10-01
 

@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "https://api.fish.audio/wallet/self/api-credit",
+  "headers": {},
+  "body": null,
+  "source": "documented API route"
+}

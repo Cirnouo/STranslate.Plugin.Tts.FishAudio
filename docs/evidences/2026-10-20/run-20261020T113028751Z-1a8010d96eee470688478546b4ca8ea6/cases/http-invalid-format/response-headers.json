@@ -1,0 +1,64 @@
+{
+  "status": 400,
+  "version": "1.1",
+  "headers": {
+    "Date": [
+      "Tue, 20 Oct 2026 11:31:17 GMT"
+    ],
+    "Connection": [
+      "keep-alive"
+    ],
+    "ratelimit-current-concurrency": [
+      "0"
+    ],
+    "ratelimit-limit-concurrency": [
+      "5"
+    ],
+    "x-fish-trace-id": [
+      "dc057c172935bf6f9d4ccb0d05d929c5"
+    ],
+    "x-fishaudio-datacenter": [
+      "hongkong"
+    ],
+    "cf-cache-status": [
+      "DYNAMIC"
+    ],
+    "X-XSS-Protection": [
+      "1; mode=block"
+    ],
+    "Strict-Transport-Security": [
+      "max-age=2592000"
+    ],
+    "Server-Timing": [
+      "cfCacheStatus;desc=\u0022DYNAMIC\u0022",
+      "cfEdge;dur=3,cfOrigin;dur=186"
+    ],
+    "Expect-CT": [
+      "max-age=86400, enforce"
+    ],
+    "Referrer-Policy": [
+      "same-origin"
+    ],
+    "X-Content-Type-Options": [
+      "nosniff"
+    ],
+    "X-Frame-Options": [
+      "SAMEORIGIN"
+    ],
+    "Server": [
+      "cloudflare"
+    ],
+    "CF-RAY": [
+      "a4d7b1ffb93bd95b-YVR"
+    ],
+    "Alt-Svc": [
+      "h3=\u0022:443\u0022"
+    ],
+    "Content-Type": [
+      "application/json"
+    ],
+    "Content-Length": [
+      "169"
+    ]
+  }
+}

@@ -1,0 +1,330 @@
+{
+  "max_offset": 1000,
+  "accessible_upper_bound": 1000,
+  "window_limited": true,
+  "total_is_exact": false,
+  "total": 1000,
+  "items": [
+    {
+      "_id": "90e65eaaf50e4470b8e6d43ee6afd7d5",
+      "type": "tts",
+      "title": "Super Smash Bros. 4/Ultimate Announcer",
+      "description": "A powerful and authoritative middle-aged male voice with a dramatic, cinematic quality. It features a deep, resonant tone perfectly suited for gaming announcers or high-energy sports commentary.",
+      "cover_image": "coverimage/90e65eaaf50e4470b8e6d43ee6afd7d5",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "old",
+        "character-voice",
+        "entertainment",
+        "deep",
+        "energetic",
+        "authoritative",
+        "dramatic",
+        "announcer",
+        "gaming",
+        "cinematic"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "Choose your fighter! Mario! Link! Samus! Battle mode: Team Smash! Three stock match! Ready... GO! Player One... DEFEATED! Player Two... WINS! Game Set! This battle\u0027s winner is... BLUE TEAM! New record!",
+          "task_id": "265105e4556b4c0f906b0f426de988da",
+          "audio": "https://platform.r2.fish.audio/task/265105e4556b4c0f906b0f426de988da.mp3"
+        }
+      ],
+      "created_at": "2025-07-11T02:00:27.005000Z",
+      "updated_at": "2026-05-03T09:01:41.624000Z",
+      "languages": [
+        "en"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "Choose your fighter! Mario! Link! Samus! Battle mode: Team Smash! Three stock match! Ready... GO! Player One... DEFEATED! Player Two... WINS! Game Set! This battle\u0027s winner is... BLUE TEAM! New record!",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 31151,
+      "mark_count": 7344,
+      "shared_count": 14560,
+      "task_count": 19820011,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "4fc33e0b0d314efca22a5dcabebaa526",
+        "nickname": "Club RM Studios Latinoam\u00E9rica",
+        "avatar": "avatars/4fc33e0b0d314efca22a5dcabebaa526"
+      }
+    },
+    {
+      "_id": "2a1036d645634680b3cc69aeeb60375b",
+      "type": "tts",
+      "title": "\u0421\u043F\u043E\u043A\u043E\u0439\u043D\u044B\u0439 \u0436\u0435\u043D\u0441\u043A\u0438\u0439 \u0433\u043E\u043B\u043E\u0441",
+      "description": "\u0421\u043F\u043E\u043A\u043E\u0439\u043D\u044B\u0439, \u0440\u0430\u0437\u043C\u0435\u0440\u0435\u043D\u043D\u044B\u0439 \u0436\u0435\u043D\u0441\u043A\u0438\u0439 \u0433\u043E\u043B\u043E\u0441, \u0438\u0434\u0435\u0430\u043B\u044C\u043D\u043E \u043F\u043E\u0434\u0445\u043E\u0434\u044F\u0449\u0438\u0439 \u0434\u043B\u044F \u043F\u043E\u0432\u0435\u0441\u0442\u0432\u043E\u0432\u0430\u043D\u0438\u044F \u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0443\u044E\u0442\u043D\u043E\u0439 \u0430\u0442\u043C\u043E\u0441\u0444\u0435\u0440\u044B.",
+      "cover_image": "coverimage/2a1036d645634680b3cc69aeeb60375b",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "female",
+        "old",
+        "narration",
+        "entertainment",
+        "medium",
+        "calm",
+        "measured",
+        "smooth",
+        "clear",
+        "expressive",
+        "storytelling",
+        "narrative",
+        "friendly",
+        "neutral-tone"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "\u0414\u0438\u043C\u0430\u0448 \u043B\u044E\u0431\u0438\u043B \u0441\u0432\u043E\u044E \u0410\u043B\u044C\u043C\u0438\u043D\u0443 \u0431\u043E\u043B\u044C\u0448\u0435 \u0432\u0441\u0435\u0445 \u043D\u0430 \u0441\u0432\u0435\u0442\u0435, \u043D\u0435 \u0441\u043C\u043E\u0442\u0440\u044F \u043D\u0430 \u0442\u043E \u0447\u0442\u043E \u043E\u043D\u0430 \u0431\u044B\u043B\u0430 \u0442\u0449\u0435\u0441\u043B\u0430\u0432\u043D\u0430, \u044D\u0433\u043E\u0438\u0441\u0442\u0438\u0447\u043D\u0430 \u0438 \u043A\u0430\u043F\u0440\u0438\u0437\u043D\u0430.\n\u041D\u043E \u0432 \u0442\u0435 \u043C\u043E\u043C\u0435\u043D\u0442\u044B \u043A\u043E\u0433\u0434\u0430 \u0435\u0433\u043E \u0434\u0435\u0432\u0443\u0448\u043A\u0435 \u0431\u044B\u043B\u043E \u043D\u0435 \u043B\u0435\u0433\u043A\u043E, \u0414\u0438\u043C\u0430\u0448 \u043B\u044E\u0431\u0438\u043B \u0435\u0435 \u0447\u0443\u0442\u044C \u0447\u0443\u0442\u044C \u0441\u0438\u043B\u044C\u043D\u0435\u0435\u00BB",
+          "task_id": "18f869208a9742c78c56f063f70b3472",
+          "audio": "https://platform.r2.fish.audio/task/18f869208a9742c78c56f063f70b3472.mp3"
+        }
+      ],
+      "created_at": "2026-06-25T18:03:49.255000Z",
+      "updated_at": "2026-06-25T18:03:49.254000Z",
+      "languages": [
+        "ru"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "\u0410\u0434\u0434\u0438 \u043B\u0435\u0442 \u043E\u0447\u0435\u043D\u044C \u0441\u0438\u043B\u044C\u043D\u043E \u043B\u044E\u0431\u0438\u043B \u0441\u0432\u043E\u044E \u0434\u0435\u0432\u0443\u0448\u043A\u0443. \u041D\u0435\u0441\u043C\u043E\u0442\u0440\u044F \u043D\u0430 \u0442\u043E, \u0447\u0442\u043E \u043E\u043D\u0430 \u0431\u044B\u043B\u0430 \u043A\u0430\u043F\u0440\u0438\u0437\u043D\u043E\u0439, \u043E\u043D \u0434\u0435\u043B\u0430\u043B \u0432\u0441\u0435, \u0447\u0442\u043E\u0431\u044B \u0441\u0434\u0435\u043B\u0430\u0442\u044C \u0435\u0435 \u0441\u0447\u0430\u0441\u0442\u043B\u0438\u0432\u043E\u0439. \u0416\u0430\u043D \u0421\u0430\u0439\u044F, \u0432 \u0441\u0432\u043E\u044E \u043E\u0447\u0435\u0440\u0435\u0434\u044C, \u0432\u0441\u0435\u0433\u0434\u0430 \u0431\u044B\u043B\u0430 \u0440\u0443\u043A\u0430 \u043E\u0431 \u0440\u0443\u043A\u0443 \u0441 \u043D\u0438\u043C. \u041A\u0443\u0434\u0430 \u043E\u043D, \u0442\u0443\u0434\u0430 \u0438 \u043E\u043D\u0430.",
+      "source": "web_preflight",
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": {
+        "audios": [
+          {
+            "filename": "v14044g50000d8uf9jfog65ktl83vbog.mp4",
+            "duration_ms": 20735.419501133787,
+            "language": "ru",
+            "quality": {
+              "truncated": 1.8858672774513252e-06,
+              "multi_speaker": 0.2065853625535965,
+              "background_noise": 0.9999709129333496,
+              "long_silence": 0.39084121584892273,
+              "low_volume": 7.3647514753361065e-09,
+              "high_reverb": 0.8507741093635559,
+              "ai_voice": 2.785576953101554e-06,
+              "normal": 0.0001660870766500011,
+              "sound_effect": 0.009129246696829796
+            },
+            "quality_passed": false,
+            "quality_reason": "Audio quality issue detected: background noise."
+          }
+        ],
+        "created_at": "2026-06-25T18:03:49.254000Z",
+        "updated_at": "2026-06-25T18:03:49.254000Z"
+      },
+      "like_count": 12974,
+      "mark_count": 846,
+      "shared_count": 6919,
+      "task_count": 3269533,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "6c574e6b661e41f69d0642dc4579eade",
+        "nickname": "\u0410\u043B\u044C\u043C\u0438\u043D\u0430 \u041A\u0430\u0437\u044B\u0445\u0430\u043D\u043E\u0432\u0430",
+        "avatar": "avatars/6c574e6b661e41f69d0642dc4579eade.jpg"
+      }
+    },
+    {
+      "_id": "8d2c17a9b26d4d83888ea67a1ee565b2",
+      "type": "tts",
+      "title": "Valentino Narraci\u00F3n Biblica Fer",
+      "description": "A mature and authoritative male voice with a calm, spiritual tone. It is well-suited for religious narration, educational content, and professional storytelling in Spanish.",
+      "cover_image": "coverimage/8d2c17a9b26d4d83888ea67a1ee565b2",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "old",
+        "narration",
+        "calm",
+        "serious",
+        "authoritative",
+        "professional",
+        "clear",
+        "Spanish"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "Hermanos m\u00EDos, recordemos las palabras del Se\u00F1or en estos tiempos dif\u00EDciles. Como dice la Escritura, la fe mueve monta\u00F1as, y el amor de Dios nos gu\u00EDa en cada paso del camino. Mantengamos firme nuestra confianza en Su divina providencia.",
+          "task_id": "59ce7df6935c42249759327ddf70f37b",
+          "audio": "https://platform.r2.fish.audio/task/59ce7df6935c42249759327ddf70f37b.mp3"
+        }
+      ],
+      "created_at": "2025-03-13T08:11:10.326000Z",
+      "updated_at": "2026-05-03T09:01:41.437000Z",
+      "languages": [
+        "es"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "Hermanos m\u00EDos, recordemos las palabras del Se\u00F1or en estos tiempos dif\u00EDciles. Como dice la Escritura, la fe mueve monta\u00F1as, y el amor de Dios nos gu\u00EDa en cada paso del camino. Mantengamos firme nuestra confianza en Su divina providencia.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 12020,
+      "mark_count": 6120,
+      "shared_count": 5316,
+      "task_count": 2185413,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "1b82fb6a329c4462b67aa9ee0a42046f",
+        "nickname": "Fernando Caicedo",
+        "avatar": "avatars/1b82fb6a329c4462b67aa9ee0a42046f.jpg"
+      }
+    },
+    {
+      "_id": "dfa5b230c8054f429e434f4a6e9bbdec",
+      "type": "tts",
+      "title": "Farid Dieck",
+      "description": "A warm and reflective male voice with a calm, storytelling tone, speaking in Spanish. It features a measured pace and an expressive quality suitable for narrative or philosophical content.",
+      "cover_image": "coverimage/dfa5b230c8054f429e434f4a6e9bbdec",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "middle-aged",
+        "narration",
+        "warm",
+        "calm",
+        "measured",
+        "expressive",
+        "storytelling",
+        "Spanish"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "\u00BFAlguna vez te preguntaste por qu\u00E9 la Bella Durmiente no despert\u00F3 antes? Porque a veces el verdadero sue\u00F1o no es f\u00EDsico, sino emocional. La princesa no dorm\u00EDa por una maldici\u00F3n, dorm\u00EDa porque nadie la hab\u00EDa ense\u00F1ado a vivir despierta. A veces el despertar m\u00E1s dif\u00EDcil es el del alma.",
+          "task_id": "b065d4843a5e43d89bfdf1bc060bcf05",
+          "audio": "https://platform.r2.fish.audio/task/b065d4843a5e43d89bfdf1bc060bcf05.mp3"
+        }
+      ],
+      "created_at": "2025-05-20T10:39:15.361000Z",
+      "updated_at": "2026-05-03T09:01:41.447000Z",
+      "languages": [
+        "es"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "\u00BFAlguna vez te preguntaste por qu\u00E9 la Bella Durmiente no despert\u00F3 antes? Porque a veces el verdadero sue\u00F1o no es f\u00EDsico, sino emocional. La princesa no dorm\u00EDa por una maldici\u00F3n, dorm\u00EDa porque nadie la hab\u00EDa ense\u00F1ado a vivir despierta. A veces el despertar m\u00E1s dif\u00EDcil es el del alma.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 22222,
+      "mark_count": 8344,
+      "shared_count": 11169,
+      "task_count": 2180051,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "b053000c8edb45f19c84faf255d50626",
+        "nickname": "Abyss",
+        "avatar": "avatars/b053000c8edb45f19c84faf255d50626.jpg"
+      }
+    },
+    {
+      "_id": "0a690dbeb3984a9f88cd39353880775f",
+      "type": "tts",
+      "title": "\u041C\u0435\u043B\u043B\u0441\u0442\u0440\u043E\u0439",
+      "description": "A young male voice with high energy and a confident, informal tone, speaking Russian at a fast and dynamic pace. It is highly expressive and well-suited for social media or entertainment contexts.",
+      "cover_image": "coverimage/0a690dbeb3984a9f88cd39353880775f",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "middle-aged",
+        "social-media",
+        "entertainment",
+        "energetic",
+        "confident",
+        "dynamic",
+        "fast",
+        "Russian"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "\u041A\u043E\u0440\u043E\u0447\u0435, \u044F \u0432\u0430\u043C \u0442\u0430\u043A \u0441\u043A\u0430\u0436\u0443, \u0431\u043B\u044F\u0434\u044C. \u0421\u0435\u0439\u0447\u0430\u0441 \u0442\u0430\u043A\u0430\u044F \u0442\u0435\u043C\u0430 \u043F\u043E\u0448\u043B\u0430, \u0447\u0442\u043E \u0432\u0441\u0435 \u044D\u0442\u0438 \u043B\u043E\u0445\u0438 \u043F\u044B\u0442\u0430\u044E\u0442\u0441\u044F \u0447\u0442\u043E-\u0442\u043E \u0434\u043E\u043A\u0430\u0437\u0430\u0442\u044C. \u0410 \u044F \u043F\u0440\u043E\u0441\u0442\u043E \u0431\u0435\u0440\u0443 \u0438 \u0434\u0435\u043B\u0430\u044E, \u043D\u0430\u0445\u0443\u0439. \u041E\u0442\u043A\u0440\u044B\u043B \u0442\u0440\u0438 \u043D\u043E\u0432\u044B\u0445 \u043F\u0440\u043E\u0435\u043A\u0442\u0430, \u0431\u0430\u0431\u043A\u0438 \u0441\u0430\u043C\u0438 \u0442\u0435\u043A\u0443\u0442. \u041F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u044F \u0437\u043D\u0430\u044E, \u043A\u0430\u043A \u044D\u0442\u0430 \u0441\u0438\u0441\u0442\u0435\u043C\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442.",
+          "task_id": "84df1682f0e34ce5babf4bb494a1fa5d",
+          "audio": "https://platform.r2.fish.audio/task/84df1682f0e34ce5babf4bb494a1fa5d.mp3"
+        }
+      ],
+      "created_at": "2025-11-03T18:58:13.458000Z",
+      "updated_at": "2026-05-03T09:01:39.935000Z",
+      "languages": [
+        "ru"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "\u041A\u043E\u0440\u043E\u0447\u0435, \u044F \u0432\u0430\u043C \u0442\u0430\u043A \u0441\u043A\u0430\u0436\u0443, \u0431\u043B\u044F\u0434\u044C. \u0421\u0435\u0439\u0447\u0430\u0441 \u0442\u0430\u043A\u0430\u044F \u0442\u0435\u043C\u0430 \u043F\u043E\u0448\u043B\u0430, \u0447\u0442\u043E \u0432\u0441\u0435 \u044D\u0442\u0438 \u043B\u043E\u0445\u0438 \u043F\u044B\u0442\u0430\u044E\u0442\u0441\u044F \u0447\u0442\u043E-\u0442\u043E \u0434\u043E\u043A\u0430\u0437\u0430\u0442\u044C. \u0410 \u044F \u043F\u0440\u043E\u0441\u0442\u043E \u0431\u0435\u0440\u0443 \u0438 \u0434\u0435\u043B\u0430\u044E, \u043D\u0430\u0445\u0443\u0439. \u041E\u0442\u043A\u0440\u044B\u043B \u0442\u0440\u0438 \u043D\u043E\u0432\u044B\u0445 \u043F\u0440\u043E\u0435\u043A\u0442\u0430, \u0431\u0430\u0431\u043A\u0438 \u0441\u0430\u043C\u0438 \u0442\u0435\u043A\u0443\u0442. \u041F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u044F \u0437\u043D\u0430\u044E, \u043A\u0430\u043A \u044D\u0442\u0430 \u0441\u0438\u0441\u0442\u0435\u043C\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 9675,
+      "mark_count": 1490,
+      "shared_count": 8211,
+      "task_count": 3948107,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "6af3249b6c8e4356b04c22f3764f9b03",
+        "nickname": "\u0421\u043A\u0443\u0444",
+        "avatar": "avatars/6af3249b6c8e4356b04c22f3764f9b03.jpg"
+      }
+    }
+  ],
+  "has_more": true
+}

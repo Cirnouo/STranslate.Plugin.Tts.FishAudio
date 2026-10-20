@@ -1,0 +1,19 @@
+{
+  "method": "POST",
+  "url": "https://api.fish.audio/v1/tts",
+  "headers": {
+    "Authorization": "[REDACTED]",
+    "model": [
+      "s2.1-pro-free"
+    ]
+  },
+  "body": {
+    "text": "Hello.",
+    "reference_id": "90e65eaaf50e4470b8e6d43ee6afd7d5",
+    "format": "pcm",
+    "sample_rate": 44100,
+    "latency": "balanced",
+    "chunk_length": 100
+  },
+  "source": "documented API route"
+}

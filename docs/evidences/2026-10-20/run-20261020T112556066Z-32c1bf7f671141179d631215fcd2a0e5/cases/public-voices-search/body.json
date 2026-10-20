@@ -1,0 +1,184 @@
+{
+  "max_offset": 1000,
+  "accessible_upper_bound": 200,
+  "window_limited": false,
+  "total_is_exact": true,
+  "total": 200,
+  "items": [
+    {
+      "_id": "2b123a520d8946839a339de6768508d9",
+      "type": "tts",
+      "title": "English",
+      "description": "",
+      "cover_image": "coverimage/2b123a520d8946839a339de6768508d9",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "middle-aged"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "Just got off the phone with a client, you know, interesting situation. They\u0027re looking to invest in some rental properties, had about $500,000 to work with. We went through their options, looked at the market conditions, really solid consultation overall.",
+          "task_id": "667b2d823af5453c83c8dbb923f71752",
+          "audio": "https://platform.r2.fish.audio/task/667b2d823af5453c83c8dbb923f71752.mp3"
+        }
+      ],
+      "created_at": "2025-08-14T15:09:17.513000Z",
+      "updated_at": "2026-05-03T06:16:41.664000Z",
+      "languages": [
+        "en"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "Just got off the phone with a client, you know, interesting situation. They\u0027re looking to invest in some rental properties, had about $500,000 to work with. We went through their options, looked at the market conditions, really solid consultation overall.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 1,
+      "mark_count": 5,
+      "shared_count": 4,
+      "task_count": 5538,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "9755db06af8941afb3cb424ae4365b42",
+        "nickname": "Freddie Gon",
+        "avatar": "avatars/9755db06af8941afb3cb424ae4365b42.jpg"
+      }
+    },
+    {
+      "_id": "4e98cb85add94eb49136600ae4dab0de",
+      "type": "tts",
+      "title": "Jax (TADC) - English",
+      "description": "Sarcastic, bold and slightly nasal voice from The Amazing Digital Circus. Differs in fast speech, high tone and mocking tone. Ideal for comedic remarks and snarky replacements.",
+      "cover_image": "coverimage/4e98cb85add94eb49136600ae4dab0de",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "middle-aged",
+        "energetic",
+        "character",
+        "character-voice",
+        "entertainment",
+        "playful",
+        "animated",
+        "gaming",
+        "Mischievous"
+      ],
+      "samples": [
+        {
+          "title": "Default Sample",
+          "text": "Hey, looks like someone\u0027s found my little surprise in the cafeteria. Don\u0027t worry, it\u0027s probably not deadly... probably. Oh, speaking of which, has anyone seen Old King? He was mumbling about parallel dimensions again. Eh, he\u0027ll turn up eventually. Maybe.",
+          "task_id": "657ec29d9efd422b993849854d7c222e",
+          "audio": "https://platform.r2.fish.audio/task/657ec29d9efd422b993849854d7c222e.mp3"
+        }
+      ],
+      "created_at": "2026-01-02T15:21:11.850000Z",
+      "updated_at": "2026-05-03T09:01:10.418000Z",
+      "languages": [
+        "en"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "Hey, looks like someone\u0027s found my little surprise in the cafeteria. Don\u0027t worry, it\u0027s probably not deadly... probably. Oh, speaking of which, has anyone seen Old King? He was mumbling about parallel dimensions again. Eh, he\u0027ll turn up eventually. Maybe.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 67,
+      "mark_count": 47,
+      "shared_count": 13,
+      "task_count": 36884,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "a7cee563a78a4dc680be3281418dfc25",
+        "nickname": "xicehep162",
+        "avatar": ""
+      }
+    },
+    {
+      "_id": "5ecfe7af665448bc9adc53047b7ed3cd",
+      "type": "tts",
+      "title": "Gojo Satoru English Dub",
+      "description": "Follow RoyDMedia on Tiktok",
+      "cover_image": "coverimage/5ecfe7af665448bc9adc53047b7ed3cd",
+      "train_mode": "fast",
+      "state": "trained",
+      "tags": [
+        "male",
+        "young",
+        "character-voice",
+        "social-media",
+        "authoritative",
+        "confident",
+        "energetic",
+        "anime",
+        "Commanding"
+      ],
+      "samples": [
+        {
+          "title": "Yo Tenkai, Lets follow RoyDMedia on Tiktok",
+          "text": "Im Gojo Satoru and I command you to follow RoyDMedia on Tiktok",
+          "task_id": "36bf18ee35c24ae481d850a65594ad79",
+          "audio": "https://platform.r2.fish.audio/task/36bf18ee35c24ae481d850a65594ad79.mp3"
+        },
+        {
+          "title": "Oh, you really think you can challenge me? ",
+          "text": "Oh, you really think you can challenge me? That\u0027s adorable. See, being the strongest means I don\u0027t even need to try against weaklings like you. But hey, if you want a lesson in humility, I\u0027m always happy to teach.",
+          "task_id": "9347019f679141ce8c299d09fe0414ef",
+          "audio": "https://platform.r2.fish.audio/task/9347019f679141ce8c299d09fe0414ef.mp3"
+        }
+      ],
+      "created_at": "2025-03-10T08:06:17.568000Z",
+      "updated_at": "2026-05-03T09:01:38.941000Z",
+      "languages": [
+        "en"
+      ],
+      "visibility": "public",
+      "lock_visibility": false,
+      "dmca_taken_down": false,
+      "takedown_category": null,
+      "default_text": "Oh, you really think you can challenge me? That\u0027s adorable. See, being the strongest means I don\u0027t even need to try against weaklings like you. But hey, if you want a lesson in humility, I\u0027m always happy to teach.",
+      "source": null,
+      "licensed": false,
+      "pvc_release_state": null,
+      "pvc_notice_period_months": null,
+      "pvc_released_at": null,
+      "pvc_retire_requested_at": null,
+      "pvc_retire_effective_at": null,
+      "quality": null,
+      "like_count": 373,
+      "mark_count": 403,
+      "shared_count": 67,
+      "task_count": 162504,
+      "unliked": false,
+      "liked": false,
+      "marked": false,
+      "author": {
+        "_id": "e3b0b64655c74e059c1e412e9daf40ab",
+        "nickname": "ROYDMEDIA",
+        "avatar": "avatars/e3b0b64655c74e059c1e412e9daf40ab.jpg"
+      }
+    }
+  ],
+  "has_more": true
+}

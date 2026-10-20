@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-network-probes",
+  "isFixture": false,
+  "group": "authenticated",
+  "startedUtc": "2026-10-20T11:33:01.9277626+00:00",
+  "updatedUtc": "2026-10-20T11:33:13.4740493+00:00",
+  "limits": {
+    "secondsPerCase": 120,
+    "maximumReceivedBytesPerCase": 8388608,
+    "concurrency": 1,
+    "automaticRetries": 0
+  },
+  "synthesis": {
+    "model": "s2.1-pro-free",
+    "cutoffUtc": "2026-12-01T00:00:00+00:00",
+    "paidFallback": false
+  },
+  "cases": [
+    {
+      "id": "authenticated-voices-default",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:02.001194+00:00",
+      "finishedUtc": "2026-10-20T11:33:05.63453+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 10555,
+        "storedBytes": 17046,
+        "rawSha256": "cb0ecdf6263a9e6dd94db7c89442bc39faacee56412637ac2d831c078f56c9d0",
+        "storedSha256": "896df712e0b90545c6ec57b849563c266a4e7e58b88ccace829d18f7f7dab3ce",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "authenticated-voices-page-2",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:05.6431126+00:00",
+      "finishedUtc": "2026-10-20T11:33:10.1046698+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 6085,
+        "storedBytes": 9292,
+        "rawSha256": "ea1ff7d134cf1d99aa21d2aa1fa8e1d15a4bba82e064f93fa6d1ffe6ddc15b51",
+        "storedSha256": "d07da2af61207d19f6f56c97d00c762c330123d2f949eaf32d16447d7479166d",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "authenticated-voices-no-result",
+      "endpoint": "voices",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:10.1078686+00:00",
+      "finishedUtc": "2026-10-20T11:33:10.7255317+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 129,
+        "storedBytes": 166,
+        "rawSha256": "40760429a25ac5bca0a65a8cf1345da288455c18bec85ebf05bf868b43b20d9a",
+        "storedSha256": "32d71bed2224fee0f486cc0116647b7685187736b0610579dde61509a60fce24",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "authenticated-voice-detail-1",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:10.7298723+00:00",
+      "finishedUtc": "2026-10-20T11:33:11.2336534+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 2134,
+        "storedBytes": 2198,
+        "rawSha256": "ca3c2df30be1e8ce5ab1e7ed760172e6596b03bcde65a16a1ac3cae4e5843e0a",
+        "storedSha256": "2c0fd7c2a84491689477ad878f768168d6a309c93f231cf5947ac6f274bd18e5",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "authenticated-voice-detail-2",
+      "endpoint": "voice-detail",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:11.2369784+00:00",
+      "finishedUtc": "2026-10-20T11:33:11.6952045+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 3097,
+        "storedBytes": 5157,
+        "rawSha256": "adb87307e5fab699b9833cc3cf89b4a4b7ca503abc367221844a5ddff0a7b6d7",
+        "storedSha256": "601a561744af76e3815e84f6d865ca1020dae74aef252d9cfd4906ebc4429d65",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "bodyContainsSignedUrlFields": true
+      }
+    },
+    {
+      "id": "balance-valid",
+      "endpoint": "balance",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:11.7001989+00:00",
+      "finishedUtc": "2026-10-20T11:33:12.219626+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 270,
+        "storedBytes": 281,
+        "rawSha256": "555d0aa8c240b3cf89f3dcde838817746b89770203c25623c9b970b43f60d65d",
+        "storedSha256": "dbb892f7d36e5bcc6542fcc285d537ee80a00223cb0ad05593f35c2c804242fc",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "privateWalletIdentifiersRedacted": true,
+        "bodyContainsSignedUrlFields": false,
+        "publicationRedactions": [
+          "wallet top-level _id and user_id; raw byte count/hash retained"
+        ]
+      }
+    },
+    {
+      "id": "balance-repeat",
+      "endpoint": "balance",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:12.2236381+00:00",
+      "finishedUtc": "2026-10-20T11:33:12.7468032+00:00",
+      "httpStatus": 200,
+      "outcome": "success",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 270,
+        "storedBytes": 281,
+        "rawSha256": "555d0aa8c240b3cf89f3dcde838817746b89770203c25623c9b970b43f60d65d",
+        "storedSha256": "dbb892f7d36e5bcc6542fcc285d537ee80a00223cb0ad05593f35c2c804242fc",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": false,
+        "authenticationMode": "environment-key",
+        "privateWalletIdentifiersRedacted": true,
+        "bodyContainsSignedUrlFields": false,
+        "publicationRedactions": [
+          "wallet top-level _id and user_id; raw byte count/hash retained"
+        ]
+      }
+    },
+    {
+      "id": "balance-missing-auth",
+      "endpoint": "balance",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:12.7499012+00:00",
+      "finishedUtc": "2026-10-20T11:33:13.0717283+00:00",
+      "httpStatus": 401,
+      "outcome": "expected-http-error",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 42,
+        "storedBytes": 42,
+        "rawSha256": "f05dfa72a1d5e7c8b55f9367c3bb19b3d466b5cb5191076236d35dca19d268d4",
+        "storedSha256": "f05dfa72a1d5e7c8b55f9367c3bb19b3d466b5cb5191076236d35dca19d268d4",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "text/plain; charset=utf-8"
+      },
+      "details": {
+        "expectedHttpFailure": true,
+        "authenticationMode": "none",
+        "privateWalletIdentifiersRedacted": true,
+        "bodyContainsSignedUrlFields": false
+      }
+    },
+    {
+      "id": "balance-invalid-auth",
+      "endpoint": "balance",
+      "isFixture": false,
+      "requestSent": true,
+      "startedUtc": "2026-10-20T11:33:13.0761997+00:00",
+      "finishedUtc": "2026-10-20T11:33:13.4683273+00:00",
+      "httpStatus": 401,
+      "outcome": "expected-http-error",
+      "failure": null,
+      "sourceUrlCredentialsRedacted": false,
+      "body": {
+        "file": "body.json",
+        "rawBytes": 40,
+        "storedBytes": 52,
+        "rawSha256": "03a259ca0a19c9188b062ea5c23c3794413aaf6426b1c2db7c76e483dfc547df",
+        "storedSha256": "56e189230d855e6403568f122e33cd44468d94f6b8c99f44428e2ecdfaef16a3",
+        "sanitized": true,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/json"
+      },
+      "details": {
+        "expectedHttpFailure": true,
+        "authenticationMode": "environment-key",
+        "privateWalletIdentifiersRedacted": true,
+        "bodyContainsSignedUrlFields": false
+      }
+    }
+  ]
+}

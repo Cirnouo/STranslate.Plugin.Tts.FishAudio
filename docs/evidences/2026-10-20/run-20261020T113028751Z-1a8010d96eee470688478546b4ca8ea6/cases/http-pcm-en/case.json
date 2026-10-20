@@ -1,0 +1,28 @@
+{
+  "id": "http-pcm-en",
+  "endpoint": "http-tts",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:30:36.3281415\u002B00:00",
+  "finishedUtc": "2026-10-20T11:30:38.7556043\u002B00:00",
+  "httpStatus": 200,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.bin",
+    "rawBytes": 102400,
+    "storedBytes": 102400,
+    "rawSha256": "8cf7c7c814c39fc4f61a32eb36cc5ab10f6e5396b3fdd4f44a5d54302d41e6b8",
+    "storedSha256": "8cf7c7c814c39fc4f61a32eb36cc5ab10f6e5396b3fdd4f44a5d54302d41e6b8",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "audio/pcm"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "authenticationMode": "environment-key",
+    "bodyContainsSignedUrlFields": false
+  }
+}

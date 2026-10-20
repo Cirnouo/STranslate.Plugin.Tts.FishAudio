@@ -1,0 +1,143 @@
+[
+  {
+    "order": 1,
+    "utc": "2026-10-20T11:31:25.5932002\u002B00:00",
+    "elapsedMs": 875.9473,
+    "direction": "connection",
+    "event": "open",
+    "details": null
+  },
+  {
+    "order": 2,
+    "utc": "2026-10-20T11:31:25.5980471\u002B00:00",
+    "elapsedMs": 880.7941,
+    "direction": "send",
+    "event": "start",
+    "details": {
+      "file": "sent-0001.msgpack",
+      "bytes": 138,
+      "sha256": "f7a71393b35418a4e2257ff2e83d51b4929ab20f0481622026b7eac81f8f895a"
+    }
+  },
+  {
+    "order": 3,
+    "utc": "2026-10-20T11:31:25.5985885\u002B00:00",
+    "elapsedMs": 881.3354,
+    "direction": "send",
+    "event": "text",
+    "details": {
+      "file": "sent-0002.msgpack",
+      "bytes": 24,
+      "sha256": "8b5b31ee7c69f12651a63fd6440d6730f6d0c7868a5758ab096dd0e305f3d8aa"
+    }
+  },
+  {
+    "order": 4,
+    "utc": "2026-10-20T11:31:25.5991006\u002B00:00",
+    "elapsedMs": 881.8475,
+    "direction": "send",
+    "event": "flush",
+    "details": {
+      "file": "sent-0003.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    }
+  },
+  {
+    "order": 5,
+    "utc": "2026-10-20T11:31:26.7135813\u002B00:00",
+    "elapsedMs": 1996.3285,
+    "direction": "receive",
+    "event": "fragment",
+    "details": {
+      "file": "received-0001.msgpack",
+      "bytes": 16384,
+      "endOfMessage": false,
+      "type": "Binary"
+    }
+  },
+  {
+    "order": 6,
+    "utc": "2026-10-20T11:31:26.7602691\u002B00:00",
+    "elapsedMs": 2043.0162,
+    "direction": "receive",
+    "event": "fragment",
+    "details": {
+      "file": "received-0001.msgpack",
+      "bytes": 16384,
+      "endOfMessage": false,
+      "type": "Binary"
+    }
+  },
+  {
+    "order": 7,
+    "utc": "2026-10-20T11:31:26.7602842\u002B00:00",
+    "elapsedMs": 2043.031,
+    "direction": "receive",
+    "event": "fragment",
+    "details": {
+      "file": "received-0001.msgpack",
+      "bytes": 8228,
+      "endOfMessage": true,
+      "type": "Binary"
+    }
+  },
+  {
+    "order": 8,
+    "utc": "2026-10-20T11:31:26.7624777\u002B00:00",
+    "elapsedMs": 2045.2248,
+    "direction": "receive",
+    "event": "audio",
+    "details": {
+      "frame": {
+        "file": "received-0001.msgpack",
+        "rawBytes": 40996,
+        "storedBytes": 40996,
+        "rawSha256": "6fe4c8a5fe1f4e97623766767756dfdda2dff1f3d1ebbf1da2750e294be22940",
+        "storedSha256": "6fe4c8a5fe1f4e97623766767756dfdda2dff1f3d1ebbf1da2750e294be22940",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "application/msgpack"
+      }
+    }
+  },
+  {
+    "order": 9,
+    "utc": "2026-10-20T11:31:26.763094\u002B00:00",
+    "elapsedMs": 2045.8409,
+    "direction": "audio",
+    "event": "audio-mapping",
+    "details": {
+      "message": "received-0001.msgpack",
+      "audio": {
+        "file": "audio-0001.bin",
+        "rawBytes": 40960,
+        "storedBytes": 40960,
+        "rawSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+        "storedSha256": "19cdd7af0f71f1fd640773f7f30192c782a2517bba06c658ec5a15f857a81ae8",
+        "sanitized": false,
+        "complete": true,
+        "readFailure": null,
+        "contentType": "audio/pcm"
+      },
+      "audioIndex": 1
+    }
+  },
+  {
+    "order": 10,
+    "utc": "2026-10-20T11:31:26.7631371\u002B00:00",
+    "elapsedMs": 2045.8844,
+    "direction": "local",
+    "event": "first-audio-gate-open",
+    "details": null
+  },
+  {
+    "order": 11,
+    "utc": "2026-10-20T11:31:26.7631399\u002B00:00",
+    "elapsedMs": 2045.8867,
+    "direction": "local",
+    "event": "cancel-requested",
+    "details": null
+  }
+]

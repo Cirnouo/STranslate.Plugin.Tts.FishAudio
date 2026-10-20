@@ -1,0 +1,27 @@
+{
+  "id": "public-cover-full",
+  "endpoint": "preview-assets",
+  "isFixture": false,
+  "requestSent": true,
+  "startedUtc": "2026-10-20T11:26:06.5211336\u002B00:00",
+  "finishedUtc": "2026-10-20T11:26:07.6435569\u002B00:00",
+  "httpStatus": 200,
+  "outcome": "success",
+  "failure": null,
+  "sourceUrlCredentialsRedacted": false,
+  "body": {
+    "file": "body.bin",
+    "rawBytes": 22986,
+    "storedBytes": 22986,
+    "rawSha256": "41e6915dfacf60c6011824544931afb5dac7963073c9af143e56c57929576a4c",
+    "storedSha256": "41e6915dfacf60c6011824544931afb5dac7963073c9af143e56c57929576a4c",
+    "sanitized": false,
+    "complete": true,
+    "readFailure": null,
+    "contentType": "image/jpeg"
+  },
+  "details": {
+    "expectedHttpFailure": false,
+    "bodyContainsSignedUrlFields": false
+  }
+}

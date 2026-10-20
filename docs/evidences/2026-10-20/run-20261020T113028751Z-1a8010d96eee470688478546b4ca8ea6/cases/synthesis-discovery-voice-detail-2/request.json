@@ -1,0 +1,9 @@
+{
+  "method": "GET",
+  "url": "https://api.fish.audio/model/2a1036d645634680b3cc69aeeb60375b",
+  "headers": {
+    "Authorization": "[REDACTED]"
+  },
+  "body": null,
+  "source": "documented API route"
+}

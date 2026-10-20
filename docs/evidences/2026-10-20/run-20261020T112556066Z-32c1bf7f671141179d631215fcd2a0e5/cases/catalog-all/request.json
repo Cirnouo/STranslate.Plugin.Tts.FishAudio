@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "https://api.fish.audio/compat/v1/models",
+  "headers": {},
+  "body": null,
+  "source": "documented API route"
+}

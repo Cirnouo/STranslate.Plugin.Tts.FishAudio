@@ -1,0 +1,7 @@
+{
+  "method": "GET",
+  "url": "https://public-platform.r2.fish.audio/coverimage/90e65eaaf50e4470b8e6d43ee6afd7d5",
+  "headers": {},
+  "body": null,
+  "source": "URL returned by the voice API (relative covers use the documented CDN base)"
+}
