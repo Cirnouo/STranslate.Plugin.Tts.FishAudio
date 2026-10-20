@@ -200,4 +200,8 @@ await CoverImageCacheSuite.ClearCoverImageCacheCommandTimesOutAndRestoresButtonA
 await CoverImageCacheSuite.LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync();
 CoverImageCacheSuite.ClearCacheButtonUsesLocalizedTextAndBusySpinner();
 
+await FavoriteStorageCacheSuite.SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync();
+await FavoriteStorageCacheSuite.LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync();
+FavoriteStorageCacheSuite.MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl();
+
 Console.WriteLine("Fish Audio plugin regression tests passed.");

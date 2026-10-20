@@ -6,7 +6,7 @@ namespace STranslate.Plugin.Tts.FishAudio.Configuration;
 public static class SettingsValidation
 {
     private static readonly Regex ApiKeyRegex = new(@"\A(?:[0-9a-f]{32}|sk-fish-[A-Za-z0-9_-]{43})\z", RegexOptions.Compiled);
-    private static readonly Regex HexId32Regex = new(@"^[0-9a-f]{32}$", RegexOptions.Compiled);
+    private static readonly Regex HexId32Regex = new(@"\A[0-9a-f]{32}\z", RegexOptions.Compiled);
 
     public static bool IsValidApiKeyFormat(string key) => !string.IsNullOrEmpty(key) && ApiKeyRegex.IsMatch(key);
 
