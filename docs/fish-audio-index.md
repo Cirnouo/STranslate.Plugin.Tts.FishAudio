@@ -1,58 +1,15 @@
-# Fish Audio
+# Fish Audio documentation index
 
-> Canonical documentation index for Fish Audio APIs, SDKs, models, voice cloning, real-time streaming, and self-hosting. This custom index prioritizes the lowest-noise, highest-value entry points for AI agents.
+Start with this repository's [API reference index](references/README.md), [real response evidence](evidences/2026-10-20/manifest.json), and [reusable probe](../tools/FishAudioProbe/README.md).
 
-## Start Here
+The plugin's official primary sources are:
 
-- [Agent Quickstart](https://docs.fish.audio/developer-guide/resources/agent-quickstart.md): Minimal-noise entry point for AI agents with retrieval order, canonical URLs, and task routing.
-- [Quick Start](https://docs.fish.audio/developer-guide/getting-started/quickstart.md): Generate your first AI voice with Fish Audio in under 5 minutes.
-- [AI Coding Agents](https://docs.fish.audio/developer-guide/resources/coding-agents.md): Connect AI coding assistants to Fish Audio documentation via MCP for real-time API guidance.
+- [Voice list](https://docs.fish.audio/api-reference/endpoint/model/list-models) and [voice detail](https://docs.fish.audio/api-reference/endpoint/model/get-model).
+- [API credit](https://docs.fish.audio/api-reference/endpoint/wallet/get-api-credit).
+- [Native HTTP TTS](https://docs.fish.audio/api-reference/endpoint/openapi-v1/text-to-speech) and [ordinary WS TTS](https://docs.fish.audio/api-reference/endpoint/websocket/tts-live).
+- [Native OpenAPI schema](https://docs.fish.audio/api-reference/openapi.json).
+- [Compatibility model catalog guide](https://docs.fish.audio/developer-guide/compat/migrate-from-openrouter).
+- [Streaming guidance](https://docs.fish.audio/features/realtime-streaming), [Drama 3](https://docs.fish.audio/features/text-to-speech/drama-3), and [pricing/rate limits](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits).
+- [Free S2.1 Pro API offer](https://fish.audio/blog/s2-1-pro-free-api/) and [official Python SDK](https://github.com/fishaudio/fish-audio-python).
 
-## API Specs
-
-- [OpenAPI](https://docs.fish.audio/api-reference/openapi.json): REST API schema for text-to-speech, speech-to-text, wallet, and voice model endpoints.
-- [AsyncAPI](https://docs.fish.audio/api-reference/asyncapi.yml): WebSocket schema for real-time text-to-speech streaming.
-
-## Core REST API
-
-- [API Introduction](https://docs.fish.audio/api-reference/introduction.md): How to use the Fish Audio API.
-- [Text to Speech Endpoint](https://docs.fish.audio/api-reference/endpoint/openapi-v1/text-to-speech.md): Convert text to speech.
-- [Speech to Text Endpoint](https://docs.fish.audio/api-reference/endpoint/openapi-v1/speech-to-text.md): Transcribe audio to text.
-- [List Models](https://docs.fish.audio/api-reference/endpoint/model/list-models.md): Get a list of all models.
-- [Create Model](https://docs.fish.audio/api-reference/endpoint/model/create-model.md): Create a new voice model.
-- [Get Model](https://docs.fish.audio/api-reference/endpoint/model/get-model.md): Get details of a specific model.
-- [Update Model](https://docs.fish.audio/api-reference/endpoint/model/update-model.md): Update an existing model.
-- [Delete Model](https://docs.fish.audio/api-reference/endpoint/model/delete-model.md): Delete an existing model.
-- [WebSocket TTS Streaming](https://docs.fish.audio/api-reference/endpoint/websocket/tts-live.md): Real-time text-to-speech streaming via WebSocket.
-
-## SDKs
-
-- [Python SDK Overview](https://docs.fish.audio/developer-guide/sdk-guide/python/overview.md): Official Python SDK overview and setup.
-- [Python Authentication](https://docs.fish.audio/developer-guide/sdk-guide/python/authentication.md): Configure API authentication for the Fish Audio Python SDK.
-- [Python Text-to-Speech](https://docs.fish.audio/developer-guide/sdk-guide/python/text-to-speech.md): Generate natural-sounding speech with the Fish Audio Python SDK.
-- [Python Voice Cloning](https://docs.fish.audio/developer-guide/sdk-guide/python/voice-cloning.md): Clone voices and create custom voice models with the Fish Audio Python SDK.
-- [Python WebSocket Streaming](https://docs.fish.audio/developer-guide/sdk-guide/python/websocket.md): Stream text-to-speech in real-time with WebSocket connections.
-- [JavaScript Installation](https://docs.fish.audio/developer-guide/sdk-guide/javascript/installation.md): Install and set up the Fish Audio JavaScript SDK.
-- [JavaScript Authentication](https://docs.fish.audio/developer-guide/sdk-guide/javascript/authentication.md): Manage API keys and client setup in the Fish Audio JavaScript SDK.
-- [JavaScript Text-to-Speech](https://docs.fish.audio/developer-guide/sdk-guide/javascript/text-to-speech.md): Convert text to natural speech with Fish Audio JavaScript SDK.
-- [JavaScript Voice Cloning](https://docs.fish.audio/developer-guide/sdk-guide/javascript/voice-cloning.md): Clone voices using reference audio with Fish Audio JavaScript SDK.
-- [JavaScript WebSocket](https://docs.fish.audio/developer-guide/sdk-guide/javascript/websocket.md): Real-time streaming with Fish Audio JavaScript SDK.
-
-## Product Guides
-
-- [Text to Speech Guide](https://docs.fish.audio/developer-guide/core-features/text-to-speech.md): Convert text to natural-sounding speech with Fish Audio.
-- [Speech to Text Guide](https://docs.fish.audio/developer-guide/core-features/speech-to-text.md): Convert audio recordings into accurate text transcriptions.
-- [Creating Voice Models](https://docs.fish.audio/developer-guide/core-features/creating-models.md): Learn how to create custom voice models with Fish Audio.
-- [Emotion Control](https://docs.fish.audio/developer-guide/core-features/emotions.md): Add natural emotions and expressions to your AI-generated speech.
-- [Fine-grained Control](https://docs.fish.audio/developer-guide/core-features/fine-grained-control.md): Advanced control over speech generation.
-- [Voice Cloning Best Practices](https://docs.fish.audio/developer-guide/best-practices/voice-cloning.md): Improve voice cloning quality and consistency.
-- [Real-time Voice Streaming](https://docs.fish.audio/developer-guide/best-practices/real-time-streaming.md): Stream voice generation in real time for interactive applications.
-
-## Operational Docs
-
-- [Models Overview](https://docs.fish.audio/developer-guide/models-pricing/models-overview.md): Explore Fish Audio's voice generation models and their capabilities.
-- [Choosing a Model](https://docs.fish.audio/developer-guide/models-pricing/choosing-a-model.md): Select the right Fish Audio model for your use case and requirements.
-- [Pricing And Rate Limits](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits.md): Understand pricing, usage costs, and API rate limits.
-- [Model Deprecations](https://docs.fish.audio/developer-guide/models-pricing/deprecations.md): Track deprecated models and migration timelines.
-- [Migration Guide](https://docs.fish.audio/developer-guide/resources/migration.md): Switch from ElevenLabs, OpenAI, or other TTS providers to Fish Audio.
-- [Changelog](https://docs.fish.audio/developer-guide/getting-started/changelog.md): Complete release history and version updates for Fish Audio products.
+Timestamp APIs and account-management features are future reading only, as explained in the bounded reference index. This index deliberately follows plugin needs rather than mirroring every platform endpoint.

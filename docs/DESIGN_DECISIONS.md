@@ -1,452 +1,189 @@
 # Design Decisions
 
-Architecture Decision Records (ADR) for STranslate.Plugin.Tts.FishAudio.
-Each entry records a behavior, its motivation, and which code it affects.
+This file is a migration index. Decision content now lives in the [ADR register](adr/README.md), with [current records](adr/current/) and [historical records](adr/history/) classified by replacement relationships. Use the [current specs](specs/README.md) for implemented behavior and the [documentation policy](policies/documentation.md) when maintaining these records.
 
----
+The original DD numbers and heading anchors below are retained so old links continue to land on a forwarding entry. Do not append decision bodies to this index or reuse a number. Current DD-046 is the API Key compatibility decision; unmerged streaming experiments are not part of this baseline.
 
 ## DD-001: Silent credit refresh on startup
 
-**Status:** Superseded by DD-030 for current API Key behavior and DD-039 for startup credit refresh.
-**Date:** 2026-04-27
-**Context:** When the plugin initializes, it validates the saved API Key by calling `GetCreditAsync`. Showing error UI during startup would surprise users who haven't interacted with the plugin yet.
-**Decision:** The startup credit check does not show error snackbars or latency text, but when it succeeds it does surface the applied state: credit balance plus the localized "verified and applied" status. If the key is invalid, the user discovers it when they interact with a feature that requires it.
-**Affects:** `Main.Init()`, `SettingsViewModel` constructor, `ApplyPendingCreditAsync`, `FetchCreditAsync` `showError`/`showLatency` params.
-
----
+Moved to [historical DD-001](adr/history/DD-001.md).
 
 ## DD-002: API Key format validation before API call
 
-**Status:** API Key format and shared-regex relationship superseded by DD-046.
-**Date:** 2026-05-06
-**Context:** Fish Audio API Keys follow the MD5 hex format: exactly 32 lowercase hex characters `[0-9a-f]{32}`. Calling the credit API with an obviously invalid key wastes a network round-trip and may confuse users with a generic error.
-**Decision:** Validate 32-hex format client-side first. Only call the API when the format passes. Display a specific "format incorrect" message for malformed inputs. This applies to both API Key (`Settings.IsValidApiKeyFormat`) and Voice ID (`Settings.IsValidVoiceIdFormat`) — they share the same regex (`^[0-9a-f]{32}$`).
-**Affects:** `Settings.IsValidApiKeyFormat()`, `Settings.IsValidVoiceIdFormat()`, `SettingsViewModel.ConfirmApiKeyAsync()`, `SettingsViewModel.SubmitVoiceIdAsync()`.
-
----
+Moved to [historical DD-002](adr/history/DD-002.md).
 
 ## DD-003: API Key persistence — confirm-button-only
 
-**Status:** Superseded by DD-030.
-**Date:** 2026-05-06
-**Context:** If an incorrect API Key is persisted, the plugin will attempt to use it on next launch and fail silently. Users might not realize their key is bad.
-**Decision:** API Key is persisted exclusively through the confirm button click. On success → write key to config and save. On any failure (empty, bad format, API rejection) → write empty string to config and save. `Dispose` does not touch `_settings.ApiKey`. If the user edits the key but never clicks confirm, the previously persisted value (from the last successful confirm, or empty) is retained.
-**Affects:** `SettingsViewModel.ConfirmApiKeyAsync()`, `SettingsViewModel.OnPropertyChanged()` (does not persist), `SettingsViewModel.Dispose()` (does not touch API Key).
-
----
+Moved to [historical DD-003](adr/history/DD-003.md).
 
 ## DD-004: Voice search and voice-by-ID use dummy API Key when user key is invalid
 
-**Date:** 2026-05-06
-**Context:** Fish Audio's model list (`GET /model`) and model detail (`GET /model/{id}`) endpoints do not require a valid API Key. Users should be able to browse and preview voices even before entering their key.
-**Decision:** Pass `"dummy"` as the Authorization bearer token for search and get-model calls. These endpoints do not require a valid API Key, and this avoids coupling browsing behavior to TTS/credit preflight state.
-**Affects:** `SettingsViewModel.EffectiveApiKeyForSearch`, `ExecuteSearchAsync()`, `SubmitVoiceIdAsync()`.
-
----
+Moved to [current DD-004](adr/current/DD-004.md).
 
 ## DD-005: Auto-save on property change
 
-**Date:** 2026-04-27 (extended 2026-06-26)
-**Context:** Users expect slider, toggle, and text setting changes to persist immediately without a "Save" button. API Key no longer has a separate confirm/apply lifecycle (see DD-030).
-**Decision:** `OnPropertyChanged` writes settings properties, including `ApiKey`, to `_settings` and calls `SaveSettingStorage` immediately.
-**Affects:** `SettingsViewModel.OnPropertyChanged()`.
-
----
+Moved to [current DD-005](adr/current/DD-005.md).
 
 ## DD-006: Latency text is shown temporarily after manual refresh
 
-**Date:** 2026-05-06
-**Context:** The API latency value (`XXX ms`) is only meaningful right after a refresh. Leaving it visible permanently may mislead users into thinking it's a live indicator.
-**Decision:** After a manual credit refresh, show the latency text for 4 seconds, then auto-hide it. A `DispatcherTimer` handles the timeout. Startup credit checks do not show latency at all (see DD-001).
-**Affects:** `SettingsViewModel.StartLatencyHideTimer()`, `FetchCreditAsync` `showLatency` param.
-
----
+Moved to [current DD-006](adr/current/DD-006.md).
 
 ## DD-007: Config migration for renamed fields
 
-**Date:** 2026-05-06
-**Context:** v1.0.2 renamed `Settings.ReferenceId` to `VoiceId` and `CachedModel` to `CachedVoice`. Users upgrading from v1.0.x have configs with the old field names.
-**Decision:** Keep nullable "shim" properties (`ReferenceId`, `CachedModel`) in `Settings`. The JSON deserializer populates them from old configs. `Settings.Migrate()` copies values to the new fields, nulls the old ones, and `Main.Init()` calls it once on load, then saves.
-**Affects:** `Settings.cs` (shim properties, `NeedsMigration`, `Migrate()`), `Main.Init()`.
-
----
+Moved to [historical DD-007](adr/history/DD-007.md).
 
 ## DD-008: Preview state keyed by voice ID, not by UI card
 
-**Date:** 2026-05-06
-**Context:** The same voice can appear in both the display area (selected voice) and the search results list simultaneously. If preview state were bound to a specific UI card, switching pages or tabs would desync the play/pause button state.
-**Decision:** Preview state (`PreviewingVoiceId`, `PreviewProgress`) is stored in the ViewModel and keyed by voice ID. `UpdatePreviewState()` and `SyncPreviewStateToResults()` propagate the state to all VoiceSearchItems that match the current previewing voice ID. The display area's `IsDisplayVoicePreviewing` is also derived from the same voice ID comparison.
-**Affects:** `SettingsViewModel` preview system, `VoiceSearchItem.IsBeingPreviewed`/`PreviewProgress`.
-
----
+Moved to [current DD-008](adr/current/DD-008.md).
 
 ## DD-009: `condition_on_previous_chunks` and `mp3_bitrate` as user-configurable settings
 
-**Date:** 2026-05-06
-**Context:** `mp3_bitrate` affects audio quality vs. file size tradeoff. `condition_on_previous_chunks` affects voice consistency across long texts. Different use cases benefit from different values.
-**Decision:** Expose both as configurable settings. `Mp3Bitrate` defaults to 192 (high quality), options: 64/128/192. `ConditionOnPreviousChunks` defaults to `true` (enabled). Both are sent in the TTS request body.
-**Affects:** `Settings.cs`, `SettingsViewModel`, `FishAudioApi.PostTtsAsync()`, `SettingsView.xaml`.
-
----
+Moved to [current DD-009](adr/current/DD-009.md).
 
 ## DD-010: Random voice when VoiceId is empty
 
-**Date:** 2026-04-27
-**Context:** When no `reference_id` is sent in the TTS request, Fish Audio uses a random/default voice. This still costs credit (deducted asynchronously, ~60s delay).
-**Decision:** When `VoiceId` is empty, show a localized "Random Voice" title in the display area instead of blank. `FishAudioApi.PostTtsAsync` omits `reference_id` from the body entirely (does not send empty string).
-**Affects:** `SettingsViewModel.ApplyCachedVoice()`, `FishAudioApi.PostTtsAsync()`.
-
----
+Moved to [current DD-010](adr/current/DD-010.md).
 
 ## DD-011: TextBox focus behavior — click blank space to unfocus
 
-**Date:** 2026-05-06
-**Context:** WPF TextBoxes do not lose focus when clicking blank space (unlike HTML inputs). This means the page input TextBox keeps focus after typing, preventing `LostFocus` bindings from firing.
-**Decision:** Add a `PreviewMouseLeftButtonDown` handler on the UserControl root. Only clear focus when a TextBox currently holds keyboard focus AND the click target is not inside any interactive control (TextBox, PasswordBox, ButtonBase, ComboBox, Slider, Thumb). This prevents interfering with ComboBox selection and other controls. Page input also supports Enter key to commit immediately via `InputBindings`.
-**Affects:** `SettingsView.xaml.cs` (`HasInteractiveAncestor`), page input TextBox `InputBindings`.
-
----
+Moved to [current DD-011](adr/current/DD-011.md).
 
 ## DD-012: API Key commit on validation success
 
-**Status:** Superseded by DD-030.
-**Date:** 2026-05-06
-**Context:** `OnPropertyChanged` no longer auto-saves `ApiKey` to `_settings` (see DD-005). But `Main.PlayAudioAsync` checks `Settings.ApiKey` (the `_settings` object) to guard TTS calls. Without committing the key on validation, `_settings.ApiKey` remains empty/stale.
-**Decision:** `ConfirmApiKeyAsync` is the sole writer of `_settings.ApiKey`. On valid result → write key and save. On invalid result → write empty and save. `Dispose` does not touch `_settings.ApiKey` (see DD-003).
-**Affects:** `SettingsViewModel.ConfirmApiKeyAsync()`.
-
----
+Moved to [historical DD-012](adr/history/DD-012.md).
 
 ## DD-013: API Key validation via explicit confirm button, simplified state
 
-**Status:** Superseded by DD-030.
-**Date:** 2026-05-06
-**Context:** Auto-validation on text change caused spurious API calls due to WPF LostFocus behavior. The original 5-state `ApiKeyState` enum was only consumed as a binary "valid vs. not valid" distinction — the intermediate states were transient error messages.
-**Decision:** Replace `ApiKeyState` enum with a single `bool IsApiKeyValid` and a transient `bool IsValidatingApiKey` (for button disable). Validation only runs when the user clicks the confirm button (checkmark icon). Editing the API Key draft does not clear the applied status by itself; the confirm action clears the old applied balance/status and then revalidates the submitted draft. Format errors are shown inline via `ApiKeyStatusText`; API errors are shown via snackbar (same as refresh button). The confirm button does not display latency — only the refresh button does.
-**Affects:** `SettingsViewModel.ConfirmApiKeyCommand`, `IsApiKeyValid`, `IsValidatingApiKey`, `OnPropertyChanged` ApiKey handler.
-
----
+Moved to [historical DD-013](adr/history/DD-013.md).
 
 ## DD-014: Pagination centering with Grid layout
 
-**Date:** 2026-05-06
-**Context:** The search pagination used a `DockPanel` with Prev docked left and Next docked right. When boundary buttons collapsed (Prev on page 1, Next on last page), the remaining Fill area changed size, causing the center "page / total" control to shift horizontally.
-**Decision:** Replace `DockPanel` with a 3-column `Grid` using `*` / `Auto` / `*` sizing. The two `*` columns split remaining space equally, guaranteeing the center `Auto` column stays at the midpoint regardless of Prev/Next visibility.
-**Affects:** `SettingsView.xaml` pagination section.
-
----
+Moved to [current DD-014](adr/current/DD-014.md).
 
 ## DD-015: Preview stop icon instead of pause
 
-**Date:** 2026-05-06
-**Context:** The preview button showed a pause icon (&#xE769;, double bars) when audio was playing. However, the actual behavior is stop (audio restarts from the beginning on next play), not pause (which would resume from the current position).
-**Decision:** Replace the pause glyph with a filled square (Border element) to match the actual stop behavior. Both display area and search result preview buttons use a Grid containing a play TextBlock icon and a stop Border, toggled via DataTrigger on preview state.
-**Affects:** `SettingsView.xaml` display area preview button, search result DataTemplate preview button.
-
----
+Moved to [current DD-015](adr/current/DD-015.md).
 
 ## DD-016: Voice ID format validation before API call
 
-**Status:** Shared-regex relationship superseded by DD-046; Voice ID format remains unchanged.
-**Date:** 2026-05-06
-**Context:** Voice IDs follow the same 32-hex format as API Keys. Calling `GET /model/{id}` with a malformed ID always returns 404, wasting a network round-trip.
-**Decision:** Check `Settings.IsValidVoiceIdFormat(id)` before calling `GetModelAsync`. On format failure, show localized "Voice ID format incorrect" error inline (`VoiceIdError`) and skip the API call. The regex is shared with `IsValidApiKeyFormat` — both use `HexId32Regex`.
-**Affects:** `SettingsViewModel.SubmitVoiceIdAsync()`, `Settings.IsValidVoiceIdFormat()`.
-
----
+Moved to [current DD-016](adr/current/DD-016.md).
 
 ## DD-017: Page input — LostFocus commit and numeric-only restriction
 
-**Date:** 2026-05-06
-**Context:** The page input TextBox only committed on Enter key. Users who typed a page number and clicked elsewhere expected the navigation to happen, but the value was silently discarded. The TextBox also accepted non-digit characters, which always failed validation.
-**Decision:** Add a `LostFocus` handler that invokes `CommitPageInputCommand` (same as Enter). Add a `PreviewTextInput` handler that rejects non-digit characters. `CommitPageInputCommand` already handles out-of-range values by reverting to the current page.
-**Affects:** `SettingsView.xaml` PageInputBox, `SettingsView.xaml.cs` (`PageInputBox_PreviewTextInput`, `PageInputBox_LostFocus`).
-
----
+Moved to [current DD-017](adr/current/DD-017.md).
 
 ## DD-018: Persistent UI text must use DynamicResource, not GetTranslation
 
-**Date:** 2026-05-06
-**Context:** STranslate supports runtime language switching. `DynamicResource` bindings in XAML auto-update when the resource dictionary changes, but strings obtained via `_context.GetTranslation()` or `Application.Current.TryFindResource()` in value converters are captured at call time and become stale. This caused two bugs: the "Random Voice" title and the latency mode display names (Quality First / Balanced / Low Latency) did not update when the language changed.
-**Decision:** All user-visible text that persists on screen must use `DynamicResource` in XAML. For conditional text (e.g., "Random Voice" shown only when `CachedVoiceId` is null), use `DataTrigger` + `DynamicResource`. For enum-to-display mappings (e.g., latency mode "normal" → "Quality First"), use `DataTrigger` per value with `DynamicResource` instead of a value converter. Transient text (error messages, snackbar) may use `GetTranslation()` since it's re-triggered on user action.
-**Affects:** `SettingsView.xaml` (voice title, latency ComboBox). Removed `LatencyDisplayConverter.cs`.
-
----
+Moved to [current DD-018](adr/current/DD-018.md).
 
 ## DD-019: Enter key commits focused settings inputs
 
-**Date:** 2026-05-06 (extended 2026-06-26)
-**Context:** The settings page uses several input boxes with adjacent confirm buttons. Users expect Enter to execute the same action while focus remains in the input.
-**Decision:** Add Enter `KeyBinding`s to inputs that still have explicit actions: voice search runs `SearchVoicesCommand`, voice ID runs `SubmitVoiceIdCommand`, and page input keeps `CommitPageInputCommand`. API Key no longer has a confirm/apply command, so Enter does not trigger validation there.
-**Affects:** `SettingsView.xaml` input bindings.
-
----
+Moved to [current DD-019](adr/current/DD-019.md).
 
 ## DD-020: API Key validation status is an inline state, not raw text
 
-**Status:** Superseded by DD-030.
-**Date:** 2026-05-06
-**Context:** Showing a red `"..."` while waiting for the credit API response looked like an error and did not explain what was happening. After success, the balance changed, but the success state was not explicit enough.
-**Decision:** Track API Key validation display state separately from the error message. Waiting uses a neutral inline "waiting for response" message, success uses a green checkmark and localized "verified and applied" message, and format/empty errors remain red inline text. Persistent waiting/success text comes from XAML `DynamicResource`; transient error text may still come from `GetTranslation()`. Startup validation success uses the same status so users can confirm the applied key loaded from config.
-**Affects:** `SettingsViewModel.ApiKeyStatusKind`, `ConfirmApiKeyAsync()`, `SettingsView.xaml`, language resource dictionaries.
-
----
+Moved to [historical DD-020](adr/history/DD-020.md).
 
 ## DD-021: Voice tab initial height is stabilized
 
-**Date:** 2026-05-06
-**Context:** Before any search or by-ID submission, both voice selection tabs only show one input row, but their surrounding layout produced slightly different vertical spacing. Switching tabs made the following "Model" section move, which felt unstable.
-**Decision:** Place both tab panels in a shared fixed-minimum-height container so their initial one-row states occupy the same vertical layout space. Search results, result count, errors, and pagination still expand the area only when they have real content.
-**Affects:** `SettingsView.xaml` voice selection tab panels.
-
----
+Moved to [current DD-021](adr/current/DD-021.md).
 
 ## DD-022: Draft API Key edits do not clear applied account state
 
-**Status:** Superseded by DD-030.
-**Date:** 2026-05-07
-**Context:** Users expect the currently applied API Key balance/status to remain visible while they edit a new draft in the input box. Clearing the balance on focus or blur makes the UI look like it lost the applied configuration even though no submit happened.
-**Decision:** API Key draft edits are inert until the user explicitly confirms. The applied balance/status remains visible while editing, and only the submit path clears the old applied state before revalidating the draft. This keeps the visible account info tied to the last applied key instead of the transient input.
-**Affects:** `SettingsViewModel.OnPropertyChanged(ApiKey)`, `ConfirmApiKeyAsync()`, `ApplyPendingCreditAsync()`, `FetchCreditAsync()`.
-
----
+Moved to [historical DD-022](adr/history/DD-022.md).
 
 ## DD-023: Build script includes an optional regression test step
 
-**Date:** 2026-05-07
-**Context:** The repository already has a small executable regression test project under `tests/`, but the main build script did not expose a single command that ran both the package build and the regression checks in one pass.
-**Decision:** Add a `-Test` switch to `build.ps1`. When supplied, the script still performs the normal build/package/`.spkg` verification flow, then runs the regression test project with the same build configuration. This keeps the default build unchanged while giving contributors one documented command for build plus regression verification.
-**Affects:** `build.ps1`, `README.md`, localized README files, `CLAUDE.md`, `AGENTS.md`, `.claude/rules/completion-workflow.md`.
-
----
+Moved to [current DD-023](adr/current/DD-023.md).
 
 ## DD-024: Cover image cache uses the plugin cache directory
 
-**Date:** 2026-05-07
-**Context:** Fish Audio search results return `cover_image` paths from a public CDN. Loading the same voices repeatedly re-fetches the same cover images, while STranslate exposes `PluginCacheDirectoryPath` for files that can be recreated and removed with the plugin cache.
-**Decision:** Cache cover images under `PluginCacheDirectoryPath\cover_images` as `<voiceId>.jpg`. The cache scans existing files into an in-memory voice ID index for fast lookup. On a hit, the UI uses the local file URI; on a miss, it shows the CDN URL immediately and creates the cache in the background. The settings page shows cache size with adaptive units and clears only the `cover_images` cache.
-**Affects:** `CoverImageCacheService`, `SettingsViewModel`, `SettingsView.xaml`, language resources, README files.
-
----
+Moved to [current DD-024](adr/current/DD-024.md).
 
 ## DD-025: Cache cleanup is an explicit text action
 
-**Date:** 2026-05-07
-**Context:** The cache cleanup action was initially shown as a trash icon-only button. In practice, that reduced discoverability because users had to infer that the icon cleared the plugin's cover image cache.
-**Decision:** Show cache cleanup as a normal localized text button using `STranslate_Plugin_Tts_FishAudio_ClearCache` via `DynamicResource`. The command and cache behavior stay unchanged; only the visible affordance changes from icon-only to explicit text.
-**Affects:** `SettingsView.xaml`, settings view regression tests, README files.
-
----
+Moved to [current DD-025](adr/current/DD-025.md).
 
 ## DD-026: Cover image cache size is measured from disk
 
-**Date:** 2026-05-07
-**Context:** Cache cleanup is best-effort. If a `.jpg` file under `cover_images` is temporarily locked or recreated outside the in-memory index, showing the cached byte counter can report `0 B` while files still exist on disk.
-**Decision:** Calculate displayed cache usage by rescanning actual `cover_images/*.jpg` files and rebuilding the in-memory voice ID index on each size query. Cleanup still attempts to delete all files in the cache directory, then refreshes the index from disk so any remaining `.jpg` files keep contributing to the displayed usage.
-**Affects:** `CoverImageCacheService`, cover image cache regression tests, README files.
-
----
+Moved to [current DD-026](adr/current/DD-026.md).
 
 ## DD-027: Cache cleanup has a busy state with timeout recovery
 
-**Date:** 2026-05-07
-**Context:** Clearing `cover_images` can take visible time when files are locked or storage is slow. Without a processing state, repeated clicks can queue duplicate cleanup work; with a naive disabled state, a stuck cleanup path could leave the button unusable.
-**Decision:** Run cache cleanup in the background, expose `IsClearingCoverImageCache`, and disable the command while active. The button shows a rotating circular busy indicator. If cleanup does not complete within 10 seconds, restore the button and show a localized retry message; late completion from the old cleanup may refresh cache size but must not unlock a newer cleanup operation.
-**Affects:** `SettingsViewModel`, `SettingsView.xaml`, language resources, settings view regression tests, README files.
-
----
+Moved to [current DD-027](adr/current/DD-027.md).
 
 ## DD-028: GitHub Actions publishes tagged releases from the matching changelog section
 
-**Date:** 2026-05-07
-**Context:** The repository needs a repeatable release path that builds and tests the Windows package, then publishes a GitHub Release with notes limited to the version being shipped.
-**Decision:** Trigger the release workflow on pushed `v*` tags, run `build.ps1 -Release -Clean -Test`, extract only the matching `CHANGELOG.md` section into a temporary release notes file, publish the root `.spkg` with `softprops/action-gh-release`, and use the tag name itself as the GitHub Release title. The command was updated by DD-043 when the build CLI adopted a single Release switch.
-**Affects:** `.github/workflows/dotnet.yml`, `CHANGELOG.md`, `CLAUDE.md`, `AGENTS.md`.
-
----
+Moved to [current DD-028](adr/current/DD-028.md).
 
 ## DD-029: README documentation follows the user setup workflow
 
-**Date:** 2026-05-07
-**Context:** The previous README files were concise but did not guide new users through installation, API Key setup, credit purchase, voice selection, and per-setting behavior in the order they encounter the plugin.
-**Decision:** Structure all user-facing README files around Quick Start, Configuration, Emotion Markup, FAQ, and Build sections. The Simplified Chinese README is the source structure, and the four localized README files mirror it. All README files share the same screenshots stored under `docs/images`; root README uses `docs/images/...`, while localized README files under `docs/` use `images/...`.
-**Affects:** `README.md`, `docs/README_*.md`, `docs/images`.
-
----
+Moved to [current DD-029](adr/current/DD-029.md).
 
 ## DD-030: API Key saves immediately with request-time preflight
 
-**Status:** Startup credit behavior extended by DD-039; API Key format extended by DD-046.
-**Date:** 2026-06-26
-**Context:** The explicit API Key confirmation flow added latency and persistent validation state that users had to understand before TTS would work. The current requirement is to roll that behavior back while still avoiding obvious failed requests and preserving clear failure messages.
-**Decision:** API Key input changes write to settings immediately and are saved like other settings. Startup does not set any applied/verified validation state; DD-039 adds a non-blocking balance refresh without reintroducing that state. TTS, startup/manual credit refresh, and silent post-TTS credit refresh all use the same preflight: local network availability, API Key empty check, and strict 32-lowercase-hex format check. Only when preflight passes does the plugin call Fish Audio. Request timeout failures show a localized timeout message for user-triggered actions; startup and silent refresh failures only log. TTS and credit refresh lock the API Key input while requests are active, using a counter so overlapping operations cannot unlock early. Voice search and by-ID lookup continue to use the `"dummy"` token because those endpoints do not require a valid API Key.
-**Residual Risk:** API Keys remain stored in the existing plaintext settings storage for this batch. Encrypting or migrating stored credentials is accepted as a future hardening task, not part of this behavior fix.
-**Affects:** `FishAudioRequestPolicy`, `Main.Init()`, `Main.PlayAudioAsync()`, `SettingsViewModel.OnPropertyChanged()`, `SettingsViewModel.RefreshCreditAsync()`, `SettingsView.xaml`, language resources.
-
----
+Moved to [current DD-030](adr/current/DD-030.md).
 
 ## DD-031: Temporary s2.1-pro-free model policy and startup normalization
 
-**Status:** Free-model cutoff extended by DD-036 and then DD-045; remaining decisions stay active.
-**Date:** 2026-06-26
-**Context:** Fish Audio introduced `s2.1-pro-free` as a temporary free API model alongside `s2.1-pro`. The free model must disappear automatically after the promotional period, and old local settings can contain stale or out-of-range values after upgrades.
-**Decision:** Centralize synthesis model policy in `Configuration/FishAudioModelPolicy`. Before `2026-07-24T00:00:00Z`, available models are `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, and `s1`, with `s2.1-pro-free` as the default. At and after the cutoff, hide `s2.1-pro-free` and use `s2.1-pro` as the default. Startup first normalizes settings using local UTC, then runs a bounded online UTC check through TimeAPI.io; if that fails, local UTC remains authoritative for that launch. Startup normalization repairs structured values with clear defaults, including model, latency, MP3 bitrate, and numeric ranges, but does not clear API Key or Voice ID text. `normalize_loudness` is sent only for `s2.1-pro-free`, `s2.1-pro`, and `s2-pro`; for `s1`, the setting remains visible but disabled and the request omits the parameter. The promo card uses the local `s2-pro-free-promo.webp` resource with a fixed 1024:540 placeholder so loading does not shift the settings layout. Clicking the card selects the free model and scrolls to the synthesis model card without dismissing the promo; only the close button persists dismissal. Startup also refreshes selected voice metadata with the dummy token when `VoiceId` is present and valid, preserving cached voice data on failure.
-**Affects:** `Configuration/FishAudioModelPolicy`, `Runtime/FishAudioClock`, `Main.Init()`, `FishAudioApi.PostTtsAsync()`, `Settings`, `SettingsViewModel`, `SettingsView.xaml`, language resources, README files.
-
----
+Moved to [current DD-031](adr/current/DD-031.md).
 
 ## DD-032: Context conditioning copy clarifies request-local scope
 
-**Date:** 2026-06-26
-**Context:** The previous user-facing description said context conditioning used "previous audio" or "previous chunks", which could be read as previously generated, separate audio files instead of chunks inside the current synthesis request.
-**Decision:** Keep the `condition_on_previous_chunks` behavior unchanged, but update UI and README copy to explicitly say it uses only earlier chunks from the same synthesis audio and does not reference previously generated audio. API endpoint docs use the same request-local wording.
-**Affects:** language resources, `README.md`, localized README files, `docs/api-tts.md`.
-
----
+Moved to [current DD-032](adr/current/DD-032.md).
 
 ## DD-033: Slider tooltips and context copy match visible settings intent
 
-**Date:** 2026-06-27
-**Context:** WPF slider drag tooltips rounded numeric values to integers while the adjacent setting values displayed decimals. The context-conditioning copy also emphasized request-local scope but no longer explained that the feature helps preserve voice consistency.
-**Decision:** Set each numeric slider's `AutoToolTipPrecision` to the same decimal precision used by its adjacent value label. Keep context-conditioning behavior unchanged, but update UI and README copy to say it uses earlier chunks from the same synthesis to maintain voice consistency and does not reference previously generated audio. Localized READMEs mirror the current Simplified Chinese README structure and use the same visible control names as the plugin resources.
-**Affects:** `SettingsView.xaml`, language resources, README files, regression tests.
-
----
+Moved to [current DD-033](adr/current/DD-033.md).
 
 ## DD-034: SettingsViewModel delegates preview playback and cover cache display
 
-**Date:** 2026-06-27
-**Context:** `SettingsViewModel` had accumulated WPF preview playback, cover image cache display, cache cleanup timeout handling, request orchestration, settings persistence, and binding state. That made review fixes risky because unrelated behavior lived in one large class, while XAML bindings and command names must remain stable for the settings view.
-**Decision:** Keep `SettingsViewModel` as the binding surface and settings coordinator, but move preview playback into `PreviewPlaybackController` and cover image cache display/cleanup orchestration into `CoverImageCacheDisplayManager`. The preview controller owns `MediaPlayer`, timer lifecycle, preview URL validation, and progress callbacks. The cover cache display manager wraps `CoverImageCacheService`, cache size formatting, clear timeout recovery, and late-completion refresh callbacks. Existing XAML property and command names remain unchanged. The obsolete `pendingCreditTask` constructor parameter is removed from all call sites.
-**Affects:** `SettingsViewModel`, `PreviewPlaybackController`, `CoverImageCacheDisplayManager`, settings view regression tests.
-
----
+Moved to [current DD-034](adr/current/DD-034.md).
 
 ## DD-035: Voice lookup and media cache hardening
 
-**Date:** 2026-06-27
-**Context:** Code review found several paths where external requests could run too long, complete after their owning UI was disposed, or accept media URLs/responses too broadly. Fish Audio model detail returns HTTP 404 for missing voices, but other lookup failures need to remain distinguishable for users and diagnostics.
-**Decision:** Voice search, by-ID lookup, and startup selected-voice refresh use 15 second request timeouts. `GetModelAsync` maps only HTTP 404 to the localized voice-not-found state; timeout, network, and JSON/null response failures remain request failures. Search/by-ID requests are cancellable, and new requests or ViewModel disposal cancel and invalidate older operations so late successful completions cannot mutate UI or saved settings. Startup refresh owns a cancellation token that is canceled on plugin disposal, and cancellation is quiet.
-
-Preview playback validates sample audio URLs before opening `MediaPlayer`, allowing only HTTPS `platform.r2.fish.audio` and `*.r2.cloudflarestorage.com` URLs. Cover image cache downloads use a 10 second timeout, stream through a 256 KiB + 1 byte read bound, cache only non-empty JPEG/PNG/GIF/WebP-looking responses of at most 256 KiB, and leave the UI on the remote CDN URL when a response is empty, canceled, timed out, oversized, or non-image.
-**Affects:** `FishAudioApi`, `Main`, `SettingsViewModel`, `PreviewAudioUrlPolicy`, `PreviewPlaybackController`, `CoverImageCacheService`, `CoverImageCacheDisplayManager`, regression tests.
-
----
+Moved to [current DD-035](adr/current/DD-035.md).
 
 ## DD-036: Free model availability follows the extended UTC cutoff
 
-**Status:** Superseded by DD-045.
-**Date:** 2026-07-23
-**Context:** Fish Audio extended the original `s2.1-pro-free` promotion, which had ended at `2026-07-24T00:00:00Z`, through the full UTC day of August 31. The runtime policy, model descriptions, README files, and API notes must all switch at the same instant so the plugin does not hide a still-available model or advertise it after expiry.
-**Decision:** Keep the cutoff centralized in `Configuration/FishAudioModelPolicy` and move it to `2026-09-01T00:00:00Z`. Every instant before the cutoff, including the final tick of `2026-08-31` UTC, retains `s2.1-pro-free` in the available model list and uses it as the default; at and after the cutoff the plugin hides it and defaults to `s2.1-pro`. User-facing copy describes August 31 as fully available in UTC, while the changelog records the extension from July 24 to August 31.
-**Affects:** `Configuration/FishAudioModelPolicy`, language resources, README files, `docs/api-tts.md`, changelog, regression tests.
-
----
+Moved to [historical DD-036](adr/history/DD-036.md).
 
 ## DD-037: Selected voice preview refreshes expiring sample URLs
 
-**Status:** Superseded by DD-040.
-**Date:** 2026-07-23
-**Context:** Model detail sample URLs are signed R2 URLs that expire after about one hour, while selected voice metadata can remain cached much longer. Playing the cached selected-voice URL directly can therefore fail even though a fresh detail response contains a valid sample; search result samples are public CDN URLs and do not need this refresh.
-**Decision:** Keep the existing `ToggleDisplayPreviewCommand` XAML binding but make the selected-voice command asynchronous. A start action checks local network availability, captures the selected Voice ID and old sample URL, and calls Get Model with the `dummy` token and the shared 15 second model timeout. A current successful response replaces every `CachedVoice` field, saves through `SettingsStore`, synchronizes visible settings state, validates the latest sample URL, checks network again, and then starts playback. A refresh failure, 404, or timeout is logged without a user-facing refresh error and falls back to the captured old URL; a successful response without a valid sample is authoritative, is saved, and shows `Preview_Unavailable` without falling back. Search result preview never calls model detail but performs the same start-time network check.
-
-`PreviewPlaybackController` depends on an internal player abstraction backed by WPF `MediaPlayer` and reports asynchronous media failures to `SettingsViewModel`. The ViewModel shows the existing network-unavailable message if connectivity has been lost, otherwise `Preview_PlaybackFailed`. Selected voice changes, a repeated stop click, newer preview requests, and Dispose cancel and invalidate pending refresh operations; responses that arrive after invalidation cannot update settings/UI or start playback. Preview URL validation remains limited to the existing Fish Audio/R2 HTTPS allowlist.
-**Affects:** `SettingsViewModel`, `PreviewPlaybackController`, `PreviewRefreshCoordinator`, language resources, regression tests.
-
----
+Moved to [historical DD-037](adr/history/DD-037.md).
 
 ## DD-038: Versioned settings are interpreted and guarded by the plugin
 
-**Date:** 2026-07-23
-**Context:** The host owns settings file location, atomic replacement, and `.bak` recovery, but its normal generic deserialization could not reliably distinguish every unversioned v1.0.x shape, duplicate properties, unknown fields, or a schema written by a newer plugin. Keeping legacy shim properties on the current `Settings` type also made property-order precedence and canonical cleanup implicit.
-**Decision:** Move settings types into the focused `Configuration` namespace and annotate `Settings` with a `System.Text.Json` converter. Canonical JSON writes `SchemaVersion` first and currently uses version 1; a missing or wrong-type version is treated as legacy version 0. The single 0→1 migration initializes defaults and salvages valid fields independently, preferring valid `VoiceId`/`CachedVoice` values over `ReferenceId`/`CachedModel` regardless of order and falling back to valid legacy values only when the current field has the wrong JSON type. Supported schemas are canonically saved after migration, normalization, unknown/deleted-property cleanup, wrong-type recovery, or duplicate ordinary fields. Duplicate `SchemaVersion` and future schemas parse compatible current fields in memory but make settings read-only, so every `SettingsStore.Save` logs and skips the host save. `SettingsStore` remains the only production entry point for host load/save, preserving host atomic write and backup behavior without plugin raw file I/O. `SettingsNormalizer` owns structured defaults, finite ranges, and nearest-step snapping with `MidpointRounding.AwayFromZero`; malformed string API Keys and Voice IDs remain unchanged.
-**Affects:** `Configuration/Settings`, `CachedVoiceInfo`, `SettingsSchema`, `SettingsJsonConverter`, `SettingsMigrator`, `SettingsNormalizer`, `SettingsValidation`, `SettingsStore`, `Main`, `SettingsViewModel`, regression tests.
-
----
+Moved to [current DD-038](adr/current/DD-038.md).
 
 ## DD-039: Startup credit refresh is a non-blocking initialization cycle
 
-**Status:** API Key format extended by DD-046; initialization and lock behavior remain unchanged.
-**Date:** 2026-07-23
-**Context:** After API Key confirmation was removed, the account row stayed blank until the user manually refreshed it. Restoring a startup balance request must not block plugin initialization, reintroduce validation state, expose API Keys in logs, or let a late response from an old initialization overwrite current settings UI.
-**Decision:** After `SettingsStore.Load()` finishes migration and normalization, `Main.Init()` creates a credit refresh cycle that snapshots the API Key and starts alongside the existing online UTC/selected-voice startup work. The cycle reuses the shared network, non-empty, and strict 32-lowercase-hex preflight plus the existing 15 second credit timeout. Preflight failures and request failures never show a snackbar; they only write safe logs that omit the API Key, and startup credit never displays latency.
-
-`SettingsViewModel` attaches to the current initialization cycle when it exists or when the settings page is created later. A completed successful result is applied immediately. A pending result participates in the existing counted API Key lock, disables paste/manual refresh, and releases the lock on completion. API Key and credit activity use separate `OperationActivityCounter` instances with one shared gate that updates counts and desired-state versions while electing a single publisher, eliminating cross-counter lock ordering. The publisher invokes observable setters outside the gate, then rechecks the version and desired state under the gate and repeats until they converge. This prevents a reentrant newer operation from being overwritten by an older completion without deadlocking when property or command callbacks synchronously wait for another thread; unmatched completion calls stop at zero. If a setter throws after a newer desired version is pending, the elected publisher first attempts to publish that latest state and then rethrows the original exception with its dispatch information. A second publication failure stops recovery, clears publisher ownership for the next operation, and reports both exceptions rather than retrying indefinitely. A result is applied only while the ViewModel is alive, its API Key still equals the request snapshot, the attached cycle is still current, and that cycle remains active. Publishing a replacement state atomically invalidates the previous cycle before the old ViewModel is disposed, closing the publication-to-disposal window without waiting for either balance request; Key edits and Dispose also invalidate older results.
-
-`Main` represents each initialization as one generation-tagged record containing its identity, settings revision, Settings write lease, Context, detached runtime Settings, audio player, optional ViewModel, startup cancellation source, credit cycle, and pending startup task. Reinitialization declares the requested generation before waiting on a separate transition gate, rechecks that ticket before touching host storage, keeps the previous complete record active while replacement settings and any required ViewModel are prepared outside the state gate, then atomically publishes the complete replacement; an overtaken preparation never calls `SettingsStore.Load()` or its canonical save. A concurrent lazy settings-ViewModel construction also has to cross the transition gate before publication, so it either publishes before replacement preparation begins or retries against the published replacement instead of creating post-commit work inside the transition. Cancellation, ViewModel disposal, settings-view `DataContext` publication, and all other blocking or callback-capable work also run outside the state gate.
-
-`SettingsStore` owns one gate for every host Load, Save, lease transition, runtime mutation, and commit. Before replacement Load, `Main` retires the current write lease under that gate, which lets an already-entered save finish before Load and makes every later save carrying the old lease skip safely. Leased Load clones the host-owned storage object into a detached runtime `Settings`, normalizes only that clone, and grants it a fresh lease even if the host returns the same storage instance. After every required replacement ViewModel constructs successfully, Commit copies the detached runtime values back into the captured host object and performs any canonical save; a failed Load or pre-commit ViewModel construction therefore restores the previous lease without mutating or saving the host snapshot. Every production `SettingsViewModel` and startup metadata update validates its captured lease and applies changes to another detached candidate. The update may atomically decline that candidate before host I/O; otherwise Store copies it to the host object and publishes it into runtime Settings only after the host save succeeds. A declined update leaves both snapshots unchanged, while a thrown update or save restores the host snapshot and leaves runtime unchanged. Successful publication leaves only the replacement lease active, and Dispose retires the current lease. Main's transition lock is always acquired before the SettingsStore gate, and host I/O never runs under the state gate.
-
-Startup metadata waits until its record is published and resolves the ViewModel by that record's identity, so stale or unpublished work cannot attach to another cycle. Online model normalization and selected-voice cache replacement first reserve a new current-state settings revision under the Store and state gates without mutating runtime Settings. Their commit then acquires the transition gate, revalidates initialization identity, Settings instance, write lease, and revision under the state gate, and asks `SettingsStore` to stage the mutation and host save only after releasing the state gate. The model-policy candidate always accepts after invoking normalization, even when a concurrent user edit already selected a valid paid model and normalization therefore changes no value; this still rotates the publication credential and applies the post-cutoff available-model and promo state without replacing the user's choice. Selected-voice refresh alone uses conditional decline: it captures the requested Voice ID before its HTTP call, and its candidate update proceeds only if the candidate still carries that exact ID, otherwise it performs no save/runtime publication and rolls back the reserved revision. After a successful save, UI application runs outside Main gates but rechecks on the UI thread that both the visible and runtime Voice IDs still match the request, so a later selection or clear wins the final save-to-display window. A successful commit rotates the current `InitializationState` record—the lazy ViewModel publication credential—before releasing the transition gate, so every candidate that captured settings before runtime publication fails its reference CAS and retries from committed settings even when it started after revision reservation. A failed, declined, or thrown update/save leaves runtime and host values unchanged and rolls the reserved revision back without issuing a successful publication credential, so TTS, the existing ViewModel, persistence, and later saves remain consistent. Transition-gate acquisition order decides the winner: a replacement that enters first retires the old lease before Load, while an already-authorized startup save that enters first completes even if a newer generation was declared while it was waiting. ViewModel application remains outside both Main gates. Retiring a ViewModel never performs a final settings save because every editable property already auto-saves. The previous ViewModel is disposed before its cancellation callback can release a pending credit result. A TTS operation captures Context, Settings, ViewModel, and audio player together from one record at method entry, including while replacement settings are still loading, so it cannot combine dependencies from different cycles or transfer playback, error UI, lock release, or post-TTS silent refresh to the replacement; disposed ViewModels ignore silent refresh requests. The account description remains visible at all times: empty `UserCredit` uses the localized `Credit_NotLoaded` `DynamicResource`, while a successful response keeps the existing balance plus dollar-sign display.
-**Affects:** `Main`, `StartupCreditRefreshCycle`, `OperationActivityCounter`, `SettingsViewModel`, `SettingsView.xaml`, language resources, regression tests, `CLAUDE.md`, `AGENTS.md`.
-
----
+Moved to [current DD-039](adr/current/DD-039.md).
 
 ## DD-040: Preview refresh is driven by signed URL expiry
 
-**Date:** 2026-07-23
-**Context:** Refreshing selected-voice details before every preview wastes a request while its signed sample URL is still valid. Search responses can also contain signed R2 URLs in practice, so a search page left open for an hour can retain an expired preview URL even though earlier documentation treated list samples as permanent public CDN links.
-**Decision:** Inspect allowed preview URLs for case-insensitive `X-Amz-Date` and `X-Amz-Expires` parameters. Unsigned URLs remain directly reusable. A signed URL enters its refresh window 30 seconds before `signed-at + expires`; missing, duplicate, malformed, negative, or overflowing signature timing values conservatively require refresh. Both selected-voice and search-result preview commands use the existing `dummy` token and 15 second model timeout only inside that window, then validate both the refreshed URL allowlist and its remaining lifetime before playback.
-
-A selected-voice refresh replaces and saves the complete `CachedVoice` as before. A search-result refresh does not write settings; it updates that observable result's title, description, author, task count, cover source/display URL, and sample URL in place so the card changes immediately. A successful response without a usable sample remains authoritative and shows `Preview_Unavailable`. Refresh failure never falls back to a URL already known to be expiring: offline state uses the network-unavailable message and other failures use `Preview_RefreshFailed`.
-
-Selected and search refreshes share one target-aware cancellation gate. Repeating the same pending preview cancels it without restarting, while another preview target supersedes it. Voice changes, replaced search results, newer previews, and Dispose invalidate late responses so they cannot update metadata, save settings, or start playback.
-**Affects:** `PreviewAudioUrlPolicy`, `SettingsViewModel`, `VoiceSearchItem`, `PreviewRefreshCoordinator`, language resources, API documentation, regression tests.
-
----
+Moved to [current DD-040](adr/current/DD-040.md).
 
 ## DD-041: Fish Audio plugin uses a compatibility-preserving hybrid architecture
 
-**Date:** 2026-07-24
-**Context:** The plugin's settings schema, initialization state machine, API calls, cache I/O, preview playback, and XAML facade had accumulated in a small number of large files. The implementation needs clearer ownership boundaries without changing the host persistence contract, public namespaces, bindings, HTTP protocol, or observable behavior.
-**Decision:** Keep `Configuration` as the complete settings schema, migration, normalization, model policy, and host persistence boundary. Place Fish Audio HTTP behavior and request policy under `FishAudio`, initialization generations and lease/publication coordination under `Lifecycle`, clock selection under `Runtime`, and cover-image I/O under `Caching`. Keep `Main` as the `ITtsPlugin` entry, composition root, and TTS flow. Keep `SettingsViewModel` as the stable XAML facade while delegating credit, voice discovery, preview refresh, playback, and cover-cache display to focused internal collaborators. Move test infrastructure and the 129 existing regression scenarios into behavior-oriented suites without renaming or reordering those scenarios.
-
-The dependency direction is inward: `Main` composes `Lifecycle`, `Configuration`, and `Presentation`; presentation workflows consume `Configuration`, `FishAudio`, `Caching`, and `Runtime`; Fish Audio and cache services do not depend on WPF presentation types; and all settings writes continue through the lease-aware facade and `SettingsStore` rather than creating a second persistence boundary. Physical files may move, but public types, members, namespaces, `x:Class` values, XAML binding names, resource keys, JSON fields, HTTP endpoints, and package identity remain unchanged.
-
-The rejected alternatives were a full rewrite and adding interfaces for every single implementation. Both would expand the change surface and make concurrency and compatibility review harder without improving the required contracts. The hybrid structure therefore favors mechanical moves plus narrow internal collaborators, with the existing executable test runner retained.
-**Affects:** `Main`, `Configuration`, `FishAudio`, `Lifecycle`, `Runtime`, `Caching`, `Presentation`, `SettingsViewModel`, `SettingsView.xaml`, regression suites, `AGENTS.md`, `CLAUDE.md`, changelog.
-
----
+Moved to [current DD-041](adr/current/DD-041.md).
 
 ## DD-042: Build cleanup timing is selected by command mode
 
-**Date:** 2026-07-24
-**Context:** The build script only cleaned a configuration-dependent subset of outputs when `-Clean` was supplied. Ordinary builds could reuse stale repository, plugin, or test intermediates, while contributors had no single mode that left only the copied distributable package after a successful build.
-**Decision:** Maintain one explicit cleanup list containing repository `bin`, `obj`, and `.artifacts`; plugin-project `bin`, `obj`, and `.artifacts`; and test-project `obj` and `bin`. An ordinary build invokes that cleanup before the first `dotnet` command and retains intermediates produced by the current build. `-Clean` defers the same cleanup until the build, package verification, and optional regression tests finish, runs it from `finally` on both success and failure, preserves the failing `dotnet` exit code, and leaves any copied repository-root `.spkg` untouched. `-CleanOnly` applies the same list and exits without building. Cleanup no longer depends on `-Test` or the MSBuild `OutputPath`.
-**Affects:** `build.ps1`, build-script regression tests, README files, `AGENTS.md`, `CLAUDE.md`, changelog.
-
----
+Moved to [current DD-042](adr/current/DD-042.md).
 
 ## DD-043: Release is the build script's only configuration switch
 
-**Date:** 2026-07-24
-**Context:** Contributors normally need only the default Debug build or the complete Release verification workflow. Exposing the general `-Configuration Debug|Release` parameter made routine commands longer and allowed an unnecessary explicit Debug form, while release documentation and automation could drift between argument orderings.
-**Decision:** Remove `-Configuration` and expose one `-Release` switch. Omitting it always selects Debug; supplying it selects Release and relies on the SDK's automatic Release packaging. Because that SDK recursively packages the complete `OutputPath`, isolate Release output under `.artifacts\Release` so a post-build `-Clean` workflow cannot package stale `.artifacts\Debug` content. Mark `.\build.ps1 -Release -Clean -Test` as the single recommended release command in all README variants, local contributor instructions, and GitHub Actions. Keep `[Unreleased]` as the empty next-development heading and consolidate every not-yet-published net change into the dated v1.1.0 changelog section before tagging.
-**Affects:** `build.ps1`, plugin project file, `.github/workflows/dotnet.yml`, build and repository contract tests, README files, `CHANGELOG.md`, `AGENTS.md`, `CLAUDE.md`.
-
----
+Moved to [current DD-043](adr/current/DD-043.md).
 
 ## DD-044: README build guidance stays task-oriented
 
-**Date:** 2026-07-24
-**Context:** The README build section repeated the implementation-level cleanup directory list and failure-path behavior already maintained in contributor documentation and tests. The free-model tip also repeated the detailed UTC boundary stated in the model table.
-**Decision:** Keep README build guidance focused on runnable commands, the default Debug selection, `-CleanOnly`, and the repository-root package location; omit the internal cleanup-directory and failure-path explanation. Keep the free-model tip concise by stating the calendar date without the parenthetical UTC all-day note, while the detailed model table remains the source for exact UTC availability boundaries. Apply the same information hierarchy to all translated README files.
-**Affects:** README files, changelog.
-
----
+Moved to [current DD-044](adr/current/DD-044.md).
 
 ## DD-045: Free model availability is extended through November 2026
 
-**Date:** 2026-09-01
-**Context:** Fish Audio extended the `s2.1-pro-free` promotion beyond the August 31 deadline recorded by DD-036 through the full UTC day of November 30. The centralized runtime cutoff, five localized model descriptions, README files, API notes, and release metadata must move together so the plugin neither hides an available model nor advertises it after expiry.
-**Decision:** Keep the cutoff centralized in `Configuration/FishAudioModelPolicy` and move it to `2026-12-01T00:00:00Z`. Every instant before the cutoff, including the final tick of `2026-11-30` UTC, retains `s2.1-pro-free` in the available model list and uses it as the default; at and after the cutoff the plugin hides it and defaults to `s2.1-pro`. README tips state the concise November 30 calendar date, while model tables, localized model descriptions, and API documentation retain the exact UTC boundary. DD-036 remains historical and is superseded only for the cutoff date.
-**Affects:** `Configuration/FishAudioModelPolicy`, language resources, README files, `docs/api-tts.md`, changelog, regression tests.
-
----
+Moved to [current DD-045](adr/current/DD-045.md).
 
 ## DD-046: API Key preflight accepts legacy and prefixed keys
 
-**Date:** 2026-10-01
-**Context:** Newly created Fish Audio API Keys use a `sk-fish-` prefix followed by 43 characters from `A-Z`, `a-z`, `0-9`, `-`, and `_`, while existing 32-lowercase-hex keys remain usable. The shared legacy regex rejected these new keys before any request, causing [issue #1](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/1). The fixed suffix length is based on two observed examples and the agreed compatibility requirement, rather than a published provider guarantee.
-**Decision:** Give `SettingsValidation.IsValidApiKeyFormat(string key)` its own compiled, case-sensitive regex: `\A(?:[0-9a-f]{32}|sk-fish-[A-Za-z0-9_-]{43})\z`. Null and empty inputs return false. Absolute anchors reject leading, trailing, or embedded whitespace, including terminal newlines. Validate the string shape without decoding its contents or changing the supplied value. `IsValidVoiceIdFormat` retains the existing 32-lowercase-hex regex. TTS, startup credit refresh, manual credit refresh, and silent credit refresh keep the shared network → empty → format preflight, unchanged Bearer forwarding, request locks, and interactive/silent failure policies. Existing settings and paste normalization require no migration.
-**Affects:** `Configuration/SettingsValidation`, API Key compatibility regression tests, DD-002, DD-016, DD-030, DD-039.
+Moved to [current DD-046](adr/current/DD-046.md).

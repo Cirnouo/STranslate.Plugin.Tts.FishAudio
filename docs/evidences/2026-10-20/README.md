@@ -32,6 +32,8 @@ API keys, Authorization/cookies, proxy credentials, sensitive query parameters, 
 
 Every case links its sanitized request, response headers, body, capture completeness and outcome. A successful HTTP status alone does not mean the response body was captured completely. WS raw fragments/messages have explicit completeness metadata. Verify the stored hashes against the published bytes; raw hashes describe the pre-redaction bytes and cannot reconstruct removed credentials.
 
+The repository marks evidence as `-text` in `.gitattributes` to preserve captured bytes across LF/CRLF settings. A fresh checkout with `core.autocrlf=true` was analyzed successfully, in addition to checking the original capture directory.
+
 ## Case index
 
 | Case | Endpoint group | Status | Outcome | Bytes stored |
