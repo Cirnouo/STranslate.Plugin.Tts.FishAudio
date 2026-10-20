@@ -12,16 +12,12 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     private readonly IPluginContext _context;
     private readonly Func<string> _getSearchQuery;
-    private readonly Func<int> _getSearchPage;
-    private readonly Func<int> _getSearchTotalPages;
     private readonly Func<string> _getPageInput;
     private readonly Func<string> _getVoiceIdInput;
     private readonly Action<bool> _setSearching;
-    private readonly Action<int> _setSearchPage;
+    private readonly Action<VoiceSearchPagination> _setSearchPagination;
     private readonly Action<string> _setPageInput;
     private readonly Action<bool> _setHasSearched;
-    private readonly Action<int> _setSearchResultCount;
-    private readonly Action<int> _setSearchTotalPages;
     private readonly Action<List<VoiceSearchItem>> _setSearchResults;
     private readonly Func<string, string, int, Action<string>?, string> _resolveCoverImageUrl;
     private readonly Action _syncPreviewStateToResults;
@@ -36,20 +32,19 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private bool _isDisposed;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private CancellationTokenSource? _voiceIdCancellationTokenSource;
+    private VoiceSearchPagination _pagination = VoiceSearchPagination.Initial;
+    private string _committedSearchQuery = "";
+    private int _highestVisitedPage = 1;
 
     internal VoiceDiscoveryCoordinator(
         IPluginContext context,
         Func<string> getSearchQuery,
-        Func<int> getSearchPage,
-        Func<int> getSearchTotalPages,
         Func<string> getPageInput,
         Func<string> getVoiceIdInput,
         Action<bool> setSearching,
-        Action<int> setSearchPage,
+        Action<VoiceSearchPagination> setSearchPagination,
         Action<string> setPageInput,
         Action<bool> setHasSearched,
-        Action<int> setSearchResultCount,
-        Action<int> setSearchTotalPages,
         Action<List<VoiceSearchItem>> setSearchResults,
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
         Action syncPreviewStateToResults,
@@ -62,16 +57,12 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     {
         _context = context;
         _getSearchQuery = getSearchQuery;
-        _getSearchPage = getSearchPage;
-        _getSearchTotalPages = getSearchTotalPages;
         _getPageInput = getPageInput;
         _getVoiceIdInput = getVoiceIdInput;
         _setSearching = setSearching;
-        _setSearchPage = setSearchPage;
+        _setSearchPagination = setSearchPagination;
         _setPageInput = setPageInput;
         _setHasSearched = setHasSearched;
-        _setSearchResultCount = setSearchResultCount;
-        _setSearchTotalPages = setSearchTotalPages;
         _setSearchResults = setSearchResults;
         _resolveCoverImageUrl = resolveCoverImageUrl;
         _syncPreviewStateToResults = syncPreviewStateToResults;
@@ -83,35 +74,31 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         _isFacadeDisposed = isFacadeDisposed;
     }
 
-    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, resetOnEmptyResponse: true);
+    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _getSearchQuery(), resetOnEmptyResponse: true);
 
     internal async Task NextPageAsync()
     {
-        var searchPage = _getSearchPage();
-        if (searchPage < _getSearchTotalPages())
-            await ExecuteSearchAsync(searchPage + 1);
+        if (_pagination.HasNextPage)
+            await ExecuteSearchAsync(_pagination.Page + 1, _committedSearchQuery);
     }
 
     internal async Task PrevPageAsync()
     {
-        var searchPage = _getSearchPage();
-        if (searchPage > 1)
-            await ExecuteSearchAsync(searchPage - 1);
+        if (_pagination.Page > 1)
+            await ExecuteSearchAsync(_pagination.Page - 1, _committedSearchQuery);
     }
 
     internal async Task CommitPageInputAsync()
     {
-        var searchPage = _getSearchPage();
         if (int.TryParse(_getPageInput(), out var requestedPage)
-            && requestedPage >= 1
-            && requestedPage <= _getSearchTotalPages()
-            && requestedPage != searchPage)
+            && _pagination.CanRequestPage(requestedPage, _highestVisitedPage)
+            && requestedPage != _pagination.Page)
         {
-            await ExecuteSearchAsync(requestedPage);
+            await ExecuteSearchAsync(requestedPage, _committedSearchQuery);
         }
         else
         {
-            _setPageInput(searchPage.ToString());
+            _setPageInput(_pagination.Page.ToString());
         }
     }
 
@@ -163,7 +150,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             if (!IsCurrentVoiceIdOperation(operationId))
                 return;
 
-            if (model is null)
+            if (model is null || !IsSelectableVoice(model))
             {
                 _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_Voice_NotFound"));
                 return;
@@ -205,14 +192,14 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
-    private async Task ExecuteSearchAsync(int requestedPage, bool resetOnEmptyResponse = false)
+    private async Task ExecuteSearchAsync(int requestedPage, string query, bool resetOnEmptyResponse = false)
     {
         var operationId = BeginSearchOperation(out var cts);
         _setSearching(true);
         try
         {
             var response = await FishAudioApi.SearchModelsAsync(
-                _context, SearchApiToken, _getSearchQuery(), SearchPageSize, requestedPage, cts.Token);
+                _context, SearchApiToken, query, SearchPageSize, requestedPage, cts.Token);
 
             if (!IsCurrentSearchOperation(operationId))
                 return;
@@ -221,21 +208,27 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             {
                 if (resetOnEmptyResponse)
                 {
-                    _setSearchPage(1);
+                    _pagination = new VoiceSearchPagination(1, 0, true, 1, false, false);
+                    _committedSearchQuery = query;
+                    _highestVisitedPage = 1;
+                    _setSearchPagination(_pagination);
                     _setPageInput("1");
                     _setSearchResults([]);
-                    _setSearchTotalPages(1);
-                    _setSearchResultCount(0);
                 }
                 return;
             }
 
-            _setSearchPage(requestedPage);
+            _pagination = VoiceSearchPagination.FromResponse(response, requestedPage, SearchPageSize);
+            _committedSearchQuery = query;
+            _highestVisitedPage = resetOnEmptyResponse ? requestedPage : Math.Max(_highestVisitedPage, requestedPage);
+            _setSearchPagination(_pagination);
             _setPageInput(requestedPage.ToString());
             _setHasSearched(true);
-            _setSearchResultCount(response.Total);
-            _setSearchTotalPages(Math.Max(1, (int)Math.Ceiling(response.Total / (double)SearchPageSize)));
-            var results = response.Items.Select(MapSearchResult).ToList();
+            if (!IsCurrentSearchOperation(operationId))
+                return;
+            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(MapSearchResult).ToList();
+            if (!IsCurrentSearchOperation(operationId))
+                return;
             _setSearchResults(results);
             _syncPreviewStateToResults();
         }
@@ -255,6 +248,9 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             cts.Dispose();
         }
     }
+
+    private static bool IsSelectableVoice(ModelEntity model) =>
+        string.IsNullOrWhiteSpace(model.Type) || string.Equals(model.Type, "tts", StringComparison.OrdinalIgnoreCase);
 
     private VoiceSearchItem MapSearchResult(ModelEntity model)
     {

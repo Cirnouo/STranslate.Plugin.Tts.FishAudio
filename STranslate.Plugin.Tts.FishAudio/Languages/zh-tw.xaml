@@ -33,6 +33,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">清除</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">熱度</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount">個結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">總量可能為估算值，頁數僅表示目前可存取的上限。縮小搜尋範圍可尋找更多聲音。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">沒有匹配的聲音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">上一頁</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">下一頁</sys:String>

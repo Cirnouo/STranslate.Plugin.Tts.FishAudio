@@ -48,14 +48,22 @@ public sealed class TestPreviewAudioPlayer : IPreviewAudioPlayer
     public TimeSpan? Duration { get; set; }
     public TimeSpan Position { get; set; }
     public double Volume { get; set; }
-    public Uri? LastOpenedUri { get; private set; }
+    public Stream? LastOpenedStream { get; private set; }
+    public byte[]? LastOpenedBytes { get; private set; }
+    public Action? OnOpen { get; set; }
+    public Action? OnPlay { get; set; }
     public int PlayCallCount { get; private set; }
     public int StopCallCount { get; private set; }
     public int DisposeCallCount { get; private set; }
 
-    public void Open(Uri source) => LastOpenedUri = source;
+    public void Open(Stream source)
+    {
+        LastOpenedStream = source;
+        LastOpenedBytes = (source as MemoryStream)?.ToArray();
+        OnOpen?.Invoke();
+    }
 
-    public void Play() => PlayCallCount++;
+    public void Play() { PlayCallCount++; OnPlay?.Invoke(); }
 
     public void Stop() => StopCallCount++;
 

@@ -36,6 +36,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">清除</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">热度</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount">个结果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">总量可能为估算值，页数仅表示当前可访问上限。缩小搜索范围可查找更多声音。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">没有匹配的声音</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">上一页</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">下一页</sys:String>

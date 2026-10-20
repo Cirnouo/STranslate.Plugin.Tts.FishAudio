@@ -6,13 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 修复
+- 修复搜索结果与已选声音两个试听入口：通过宿主 HTTP 下载公开 sample，再以内存流本地播放，沿用宿主代理；限制下载时长和大小，停止、切换和关闭后不会被迟到结果重新播放（[#2](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/2)）。
+
 ### 变更
 - 升级 STranslate.Plugin SDK 至 1.0.15，适配新增音频数据接口，保留现有朗读入口。
+- 声音搜索适配可访问窗口、近似总量与 `has_more`，区分可访问页数和报告总量；保留旧响应兼容，筛除明确非 TTS 类型并防止旧请求覆盖新分页。
 
 ### 工程
 - 为 Pull Request 和 main 分支增加 Windows 构建、回归测试及安装包验证；版本标签继续独立触发发布。
 - 增加严格限制免费模型的独立 API 探针、官方接口研究及可追溯的真实响应，CI 离线验证调用保护与证据采集。
 - 按政策、当前领域规格、独立 ADR 和术语表重组维护文档；保留旧决策链接的迁移入口。
+- 安装包显式携带试听所需的 NAudio 运行时，缺少必要程序集时构建失败。
 
 ## [1.1.2] - 2026-10-01
 

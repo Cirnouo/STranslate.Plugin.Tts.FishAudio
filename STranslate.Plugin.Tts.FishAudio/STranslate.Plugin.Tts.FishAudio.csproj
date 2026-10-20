@@ -53,10 +53,33 @@
 
     <ItemGroup>
         <PackageReference Include="STranslate.Plugin" Version="1.0.15" />
+        <PackageReference Include="NAudio.Core" Version="2.3.0" />
+        <PackageReference Include="NAudio.WinMM" Version="2.3.0" />
     </ItemGroup>
 
     <ItemGroup>
         <InternalsVisibleTo Include="STranslate.Plugin.Tts.FishAudio.Tests" />
     </ItemGroup>
+
+    <!-- A plugin library does not copy every NuGet runtime asset by default. Keep
+         host SDK/UI dependencies shared, and copy only the two preview runtimes.
+         Use resolved runtime assets so NuGet chooses the compatible framework. -->
+    <Target Name="IncludePreviewRuntimeDependencies"
+            AfterTargets="ResolveLockFileCopyLocalFiles"
+            Condition="'$(DesignTimeBuild)' != 'true'">
+        <ItemGroup>
+            <_FishAudioPreviewCoreRuntime Include="@(RuntimeCopyLocalItems)"
+                Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'NAudio.Core' and '%(RuntimeCopyLocalItems.Filename)' == 'NAudio.Core' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
+            <_FishAudioPreviewWinMMRuntime Include="@(RuntimeCopyLocalItems)"
+                Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'NAudio.WinMM' and '%(RuntimeCopyLocalItems.Filename)' == 'NAudio.WinMM' and '%(RuntimeCopyLocalItems.Extension)' == '.dll'" />
+        </ItemGroup>
+        <Error Condition="'@(_FishAudioPreviewCoreRuntime->Count())' != '1' or '@(_FishAudioPreviewWinMMRuntime->Count())' != '1'"
+               Text="Preview runtime resolution must provide exactly NAudio.Core.dll and NAudio.WinMM.dll before packaging." />
+        <ItemGroup>
+            <ReferenceCopyLocalPaths Include="@(_FishAudioPreviewCoreRuntime);@(_FishAudioPreviewWinMMRuntime)"
+                                     Exclude="@(ReferenceCopyLocalPaths)"
+                                     KeepDuplicates="false" />
+        </ItemGroup>
+    </Target>
 
 </Project>
