@@ -33,6 +33,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">クリア</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">人気度</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount">件の結果</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">総件数は概算の場合があり、ページ数は現在アクセス可能な上限です。検索条件を絞ると、ほかの音声を探せます。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">一致するボイスがありません</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">前へ</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">次へ</sys:String>

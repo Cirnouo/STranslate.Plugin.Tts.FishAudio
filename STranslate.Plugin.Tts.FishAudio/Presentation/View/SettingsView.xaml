@@ -333,9 +333,12 @@
                 </DockPanel>
                 <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontFamily="Consolas"
                            Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
-                    <Run Text="{Binding SearchResultCount, Mode=OneWay}" />
+                    <Run Text="{Binding SearchResultCountText, Mode=OneWay}" />
                     <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_ResultCount}" />
                 </TextBlock>
+                <TextBlock FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                           Visibility="{Binding SearchHasUncertainExtent, Converter={StaticResource BtvConverter}}"
+                           Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchWindowHint}" />
                 <ItemsControl ItemsSource="{Binding SearchResults}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -434,7 +437,7 @@
                         <TextBlock VerticalAlignment="Center" Margin="4,0,0,0" FontSize="12"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                             <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_PageOf}" />
-                            <Run Text="{Binding SearchTotalPages, Mode=OneWay}" />
+                            <Run Text="{Binding SearchPageLimitText, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
                     <Button Grid.Column="2" HorizontalAlignment="Right" Command="{Binding NextPageCommand}" Padding="8,4"

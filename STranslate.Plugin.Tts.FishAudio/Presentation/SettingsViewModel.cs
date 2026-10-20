@@ -166,12 +166,26 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     public partial int SearchResultCount { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowNextPage))]
+    [NotifyPropertyChangedFor(nameof(ShowPagination))]
+    public partial bool SearchHasNextPage { get; set; }
+
+    [ObservableProperty]
+    public partial string SearchResultCountText { get; set; } = "?";
+
+    [ObservableProperty]
+    public partial string SearchPageLimitText { get; set; } = "?";
+
+    [ObservableProperty]
+    public partial bool SearchHasUncertainExtent { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowPagination))]
     public partial bool HasSearched { get; set; }
 
     public bool ShowPrevPage => SearchPage > 1;
-    public bool ShowNextPage => SearchPage < SearchTotalPages;
-    public bool ShowPagination => HasSearched && SearchTotalPages > 1;
+    public bool ShowNextPage => SearchHasNextPage;
+    public bool ShowPagination => HasSearched && (SearchPage > 1 || SearchHasNextPage || SearchTotalPages > 1);
 
     // ── 通过 ID 选择 ──
 
@@ -271,16 +285,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _voiceDiscoveryCoordinator = new VoiceDiscoveryCoordinator(
             context: context,
             getSearchQuery: () => SearchQuery,
-            getSearchPage: () => SearchPage,
-            getSearchTotalPages: () => SearchTotalPages,
             getPageInput: () => PageInput,
             getVoiceIdInput: () => VoiceIdInput,
             setSearching: value => IsSearching = value,
-            setSearchPage: value => SearchPage = value,
+            setSearchPagination: ApplySearchPagination,
             setPageInput: value => PageInput = value,
             setHasSearched: value => HasSearched = value,
-            setSearchResultCount: value => SearchResultCount = value,
-            setSearchTotalPages: value => SearchTotalPages = value,
             setSearchResults: value => SearchResults = value,
             resolveCoverImageUrl: ResolveCoverImageUrl,
             syncPreviewStateToResults: SyncPreviewStateToResults,
@@ -657,6 +667,25 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             action();
         else
             dispatcher.BeginInvoke(action);
+    }
+
+    private void ApplySearchPagination(VoiceSearchPagination pagination)
+    {
+        SearchPage = pagination.Page;
+        SearchTotalPages = pagination.LastAccessiblePage
+            ?? (pagination.HasNextPage ? checked(pagination.Page + 1) : pagination.Page);
+        SearchResultCount = pagination.ReportedTotal ?? 0;
+        SearchResultCountText = pagination.ReportedTotal is { } total
+            ? (pagination.IsTotalExact ? total.ToString() : $"≈{total}")
+            : "?";
+        var exactPageCount = pagination.IsTotalExact && !pagination.IsWindowLimited
+            && pagination.ReportedTotal is { } exactTotal
+            && pagination.LastAccessiblePage == Math.Max(1, ((long)exactTotal + 5) / 6);
+        SearchPageLimitText = pagination.LastAccessiblePage is { } lastPage
+            ? (exactPageCount ? lastPage.ToString() : $"≤{lastPage}")
+            : "?";
+        SearchHasUncertainExtent = !exactPageCount;
+        SearchHasNextPage = pagination.HasNextPage;
     }
 
     // ── 属性变更 → 自动保存 ──

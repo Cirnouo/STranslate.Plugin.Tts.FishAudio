@@ -2,7 +2,7 @@
 
 These records explain decisions in the current plugin and the designs they replaced. Current/history classification is semantic: an old decision can remain current, while a recent superseded design belongs in history. Numbers are permanent; new records must not reuse an existing DD number.
 
-The baseline reviewed during this migration is v1.1.2 behavior with SDK 1.0.15 and offline validation. Formal TTS still uses complete-buffer HTTP MP3 and previews still use WPF MediaPlayer. An unmerged experiment is not a current ADR. In particular, DD-046 here records API Key compatibility, not experimental streaming playback.
+The baseline reviewed during this migration is v1.1.2 behavior with SDK 1.0.15 and offline validation. Formal TTS still uses complete-buffer HTTP MP3 and previews still use WPF MediaPlayer. Current Unreleased voice discovery uses server-window-aware pagination (DD-048). An unmerged experiment is not a current ADR. In particular, DD-046 here records API Key compatibility, not experimental streaming playback.
 
 Each migrated record retains its original rationale, identifies successors and states the current interpretation when applicable. Historical file/type names in the recorded rationale are provenance; the implementation-basis links and current specs locate today's owners. No record establishes a successful live TTS or physical audio measurement.
 
@@ -67,3 +67,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-044 | [README build guidance stays task-oriented](current/DD-044.md) | Current |
 | DD-045 | [Free model availability is extended through November 2026](current/DD-045.md) | Current |
 | DD-046 | [API Key preflight accepts legacy and prefixed keys](current/DD-046.md) | Current |
+| DD-048 | [Keep voice totals separate from accessible pagination](current/DD-048.md) | Current |

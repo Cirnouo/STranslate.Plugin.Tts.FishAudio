@@ -5,7 +5,22 @@ namespace STranslate.Plugin.Tts.FishAudio.Model;
 public class ModelListResponse
 {
     [JsonPropertyName("total")]
-    public int Total { get; set; }
+    public int? Total { get; set; }
+
+    [JsonPropertyName("has_more")]
+    public bool? HasMore { get; set; }
+
+    [JsonPropertyName("max_offset")]
+    public int? MaxOffset { get; set; }
+
+    [JsonPropertyName("accessible_upper_bound")]
+    public int? AccessibleUpperBound { get; set; }
+
+    [JsonPropertyName("window_limited")]
+    public bool? WindowLimited { get; set; }
+
+    [JsonPropertyName("total_is_exact")]
+    public bool? TotalIsExact { get; set; }
 
     [JsonPropertyName("items")]
     public List<ModelEntity> Items { get; set; } = [];
@@ -15,6 +30,9 @@ public class ModelEntity
 {
     [JsonPropertyName("_id")]
     public string Id { get; set; } = "";
+
+    [JsonPropertyName("type")]
+    public string? Type { get; set; }
 
     [JsonPropertyName("title")]
     public string Title { get; set; } = "";

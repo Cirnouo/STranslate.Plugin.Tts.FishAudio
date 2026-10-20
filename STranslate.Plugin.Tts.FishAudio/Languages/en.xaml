@@ -33,6 +33,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">Clear</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">Popularity</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount"> results</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">Totals may be estimates; the page count is an accessible upper bound. Narrow your search to find more voices.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">No matching voices</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">Prev</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">Next</sys:String>

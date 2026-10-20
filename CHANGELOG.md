@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### 变更
 - 升级 STranslate.Plugin SDK 至 1.0.15，适配新增音频数据接口，保留现有朗读入口。
+- 声音搜索适配可访问窗口、近似总量与 `has_more`，区分可访问页数和报告总量；保留旧响应兼容，筛除明确非 TTS 类型并防止旧请求覆盖新分页。
 
 ### 工程
 - 为 Pull Request 和 main 分支增加 Windows 构建、回归测试及安装包验证；版本标签继续独立触发发布。
