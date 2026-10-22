@@ -2,6 +2,7 @@ using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.View;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -12,16 +13,30 @@ using static TestAssertions;
 
 internal static class SettingsInputBindingSuite
 {
-    internal static Task ApiKeyPasswordInputPersistsBeforeFocusLeavesAsync() =>
-        RunOnStaThreadAsync(() =>
+    internal static async Task ApiKeyPasswordInputPersistsBeforeFocusLeavesAsync()
+    {
+        SettingsView view = null!;
+        var phase = Stopwatch.StartNew();
+        Console.WriteLine("[settings-input] View construction queued.");
+        await RunOnStaThreadAsync(() =>
         {
+            Console.WriteLine($"[settings-input] View construction entered after {phase.ElapsedMilliseconds}ms.");
+            view = new SettingsView();
+        });
+        Console.WriteLine($"[settings-input] View construction completed after {phase.ElapsedMilliseconds}ms.");
+
+        phase.Restart();
+        Console.WriteLine("[settings-input] Binding assertions queued.");
+        await RunOnStaThreadAsync(() =>
+        {
+            Console.WriteLine($"[settings-input] Binding assertions entered after {phase.ElapsedMilliseconds}ms.");
             var settings = new Settings { ApiKey = AppliedKey };
             var context = CreateContext(settings: settings);
             var storage = (ContextProxy)(object)context;
             string? savedApiKey = null;
             storage.SaveSettings = value => savedApiKey = value.ApiKey;
             using var viewModel = new SettingsViewModel(context, settings);
-            var view = new SettingsView { DataContext = viewModel };
+            view.DataContext = viewModel;
             DrainBindings();
 
             var passwordBox = Descendants(view).OfType<PasswordBox>().Single(box =>
@@ -46,6 +61,8 @@ internal static class SettingsInputBindingSuite
                 AssertEqual(savesBeforeEdit + 1, storage.SaveCount, "Each password edit must save once without a focus change");
             }
         });
+        Console.WriteLine($"[settings-input] Binding assertions completed after {phase.ElapsedMilliseconds}ms.");
+    }
 
     private static void DrainBindings() =>
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
