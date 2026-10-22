@@ -517,18 +517,31 @@ internal static class StreamingPlaybackSuite
         using var cancel = new CancellationTokenSource();
         var activity = new StreamingActivity(clock);
         var callbacks = 0;
-        var play = player.PlayAsync(input.Chunks, "pcm", () => Interlocked.Increment(ref callbacks), activity, cancel.Token);
-        input.Send([1, 2]);
-        await UntilAsync(() => activity.FirstPlayablePcm.IsCompleted, "first complete PCM sample");
-        Equal(0, output.PlayCount, "Two bytes must wait for startup timer");
-        clock.Advance(TimeSpan.FromMilliseconds(99));
-        await SettleAsync();
-        Equal(0, output.PlayCount, "Startup must not run before 100ms");
-        clock.Advance(TimeSpan.FromMilliseconds(1));
-        await UntilAsync(() => output.PlayCount == 1, "100ms startup with blocked input");
-        Equal(1, callbacks, "Startup notification occurs exactly once");
-        cancel.Cancel();
-        await CancelledAsync(play);
+        var playbackStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var play = player.PlayAsync(input.Chunks, "pcm", () =>
+        {
+            Interlocked.Increment(ref callbacks);
+            playbackStarted.TrySetResult();
+        }, activity, cancel.Token);
+        try
+        {
+            input.Send([1, 2]);
+            await UntilAsync(() => activity.FirstPlayablePcm.IsCompleted, "first complete PCM sample");
+            Equal(0, Volatile.Read(ref output.PlayCount), "Two bytes must wait for startup timer");
+            clock.Advance(TimeSpan.FromMilliseconds(99));
+            await SettleAsync();
+            Equal(0, Volatile.Read(ref output.PlayCount), "Startup must not run before 100ms");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            // PlayCount can be visible before Play returns and the player publishes startup.
+            await playbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            Equal(1, Volatile.Read(ref output.PlayCount), "100ms startup with blocked input plays once");
+        }
+        finally
+        {
+            cancel.Cancel();
+            await CancelledAsync(play);
+        }
+        Equal(1, Volatile.Read(ref callbacks), "Startup notification occurs exactly once");
     }
 
     private static async Task UntilAsync(Func<bool> predicate, string reason)
