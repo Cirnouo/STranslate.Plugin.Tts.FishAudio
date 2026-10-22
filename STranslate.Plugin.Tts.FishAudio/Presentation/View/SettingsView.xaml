@@ -22,6 +22,25 @@
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
         <conv:ProgressToDashOffsetConverter x:Key="ProgressToDashOffsetConverter" />
         <BooleanToVisibilityConverter x:Key="BtvConverter" />
+        <Style x:Key="VoiceTitleButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="BareIconButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Width" Value="32" />
             <Setter Property="Height" Value="32" />
@@ -40,7 +59,10 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="BareIconSurface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <view:InkCenteredGlyph Glyph="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                                   FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -133,7 +155,7 @@
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                     CornerRadius="6">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
                         <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
                                 Background="Transparent" BorderThickness="0"
                                 Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -207,8 +229,8 @@
                                     </Style>
                                 </Button.Style>
                                 <Grid>
-                                    <TextBlock x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Text="&#xE768;" />
+                                    <view:InkCenteredGlyph x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
                                     <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
                                             HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                 </Grid>
@@ -239,7 +261,11 @@
                         </Ellipse.Fill>
                     </Ellipse>
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
-                        <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                        <Button Style="{StaticResource VoiceTitleButtonStyle}"
+                                Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding Id}">
+                            <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                        </Button>
                         <TextBlock Text="{Binding Description}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
                                    TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
@@ -423,7 +449,7 @@
             CornerRadius="8"
             Padding="12">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
                     <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
                             Background="Transparent" BorderThickness="0"
                             Command="{Binding ToggleSelectedVoiceFavoriteCommand}"
@@ -511,11 +537,11 @@
                                 </Style>
                             </Button.Style>
                             <Grid>
-                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                <view:InkCenteredGlyph FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="&#xE768;" />
+                                    <view:InkCenteredGlyph.Style>
+                                        <Style TargetType="view:InkCenteredGlyph">
+                                            <Setter Property="Glyph" Value="&#xE768;" />
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
@@ -523,8 +549,8 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                    </view:InkCenteredGlyph.Style>
+                                </view:InkCenteredGlyph>
                                 <Border Width="10" Height="10" CornerRadius="1" Background="White"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
@@ -546,20 +572,23 @@
                     </Ellipse.Fill>
                 </Ellipse>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
-                    <TextBlock FontWeight="Medium" FontSize="14">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
-                                <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
-                                        <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <Button Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
+                            CommandParameter="{Binding CachedVoiceId}">
+                        <TextBlock FontWeight="Medium" FontSize="14">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
+                                    <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
+                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        </Button>
                     <TextBlock Text="{Binding CachedVoiceDescription}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" MaxHeight="36"
@@ -581,8 +610,30 @@
         <!-- 选项卡栏 -->
         <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Margin="0,4,0,0">
             <StackPanel Orientation="Horizontal">
-                <Button BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
+                <Button x:Name="SearchTabButton" BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
                         Command="{Binding SwitchToSearchCommand}">
+                    <Button.Resources>
+                        <DrawingBrush x:Key="ButtonBackgroundPressed" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=SearchTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".16">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                        <DrawingBrush x:Key="ButtonBackgroundPointerOver" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=SearchTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".08">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Button.Resources>
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Background" Value="Transparent" />
@@ -595,9 +646,9 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{Binding Foreground, ElementName=SearchTabLabel}"
                                    VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Search}"
+                        <TextBlock x:Name="SearchTabLabel" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Search}"
                                    VerticalAlignment="Center" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -612,8 +663,30 @@
                         </TextBlock>
                     </StackPanel>
                 </Button>
-                <Button BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
+                <Button x:Name="ByIdTabButton" BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
                         Command="{Binding SwitchToByIdCommand}">
+                    <Button.Resources>
+                        <DrawingBrush x:Key="ButtonBackgroundPressed" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=ByIdTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".16">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                        <DrawingBrush x:Key="ButtonBackgroundPointerOver" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=ByIdTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".08">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Button.Resources>
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Background" Value="Transparent" />
@@ -626,9 +699,9 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                        <TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{Binding Foreground, ElementName=ByIdTabLabel}"
                                    VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_ById}"
+                        <TextBlock x:Name="ByIdTabLabel" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_ById}"
                                    VerticalAlignment="Center" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -643,8 +716,30 @@
                         </TextBlock>
                     </StackPanel>
                 </Button>
-                <Button BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
+                <Button x:Name="FavoritesTabButton" BorderThickness="0" Padding="8,6" Margin="0,0,2,0"
                         Command="{Binding SwitchToFavoritesCommand}">
+                    <Button.Resources>
+                        <DrawingBrush x:Key="ButtonBackgroundPressed" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=FavoritesTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".16">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                        <DrawingBrush x:Key="ButtonBackgroundPointerOver" Viewbox="0,0,1,1" ViewboxUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="{Binding Background, ElementName=FavoritesTabButton}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    <DrawingGroup Opacity=".08">
+                                        <GeometryDrawing Brush="{DynamicResource TextFillColorPrimaryBrush}" Geometry="M0,0 H1 V1 H0 Z" />
+                                    </DrawingGroup>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Button.Resources>
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
                             <Setter Property="Background" Value="Transparent" />
@@ -657,9 +752,9 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                        <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{Binding Foreground, ElementName=FavoritesTabLabel}"
                                    VerticalAlignment="Center" Margin="0,0,4,0" />
-                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Favorites}" VerticalAlignment="Center" FontSize="13">
+                        <TextBlock x:Name="FavoritesTabLabel" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Favorites}" VerticalAlignment="Center" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -778,7 +873,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Grid>
-                        <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,4,40,4" MaxLength="32"
+                        <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,40,6" MaxLength="32"
                                  PreviewTextInput="VoiceIdInput_PreviewTextInput" DataObject.Pasting="VoiceIdInput_Pasting"
                                  ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder}"
                                  Text="{Binding VoiceIdInput, UpdateSourceTrigger=PropertyChanged}">
@@ -809,6 +904,15 @@
             </ikw:SimpleStackPanel>
             <ikw:SimpleStackPanel Spacing="8" Visibility="{Binding IsFavoritesMode, Converter={StaticResource BtvConverter}}">
                 <DockPanel LastChildFill="True">
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding FavoriteCount}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DockPanel.Style>
                     <ToggleButton x:Name="FavoriteVoicesToggle" DockPanel.Dock="Right" IsChecked="True" IsThreeState="False">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton" BasedOn="{StaticResource ResultToggleStyle}">
@@ -829,8 +933,6 @@
                         <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_ResultCount}" />
                     </TextBlock>
                 </DockPanel>
-                <ikw:SimpleStackPanel x:Name="FavoriteVoicesBody" Spacing="8"
-                                      Visibility="{Binding IsChecked, ElementName=FavoriteVoicesToggle, Converter={StaticResource BtvConverter}}">
                     <TextBlock Text="{Binding FavoritesError}" FontSize="12" TextWrapping="Wrap"
                                Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                Visibility="{Binding FavoritesError, Converter={StaticResource StringToVisibilityConverter}}" />
@@ -851,6 +953,8 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                <ikw:SimpleStackPanel x:Name="FavoriteVoicesBody" Spacing="8"
+                                      Visibility="{Binding IsChecked, ElementName=FavoriteVoicesToggle, Converter={StaticResource BtvConverter}}">
                     <ItemsControl ItemsSource="{Binding FavoriteResults}" ItemTemplate="{StaticResource VoiceCardTemplate}" />
                 <Grid Visibility="{Binding ShowFavoritePagination, Converter={StaticResource BtvConverter}}">
                     <Grid.ColumnDefinitions>

@@ -9,3 +9,9 @@
 [Streaming acceptance in STranslate 2.0.10](streaming-host-2026-10-20.md) records installed-host short-text MP3/PCM completion, immediate key persistence, format/bitrate preservation, and PCM persistence across restart. It preserves the earlier PCM connection timeout and secondary WPF cleanup failure separately from the corrected client's successful later run.
 
 [Favorites and settings-layout acceptance](favorites-host-2026-10-20.md) records ID-only persistence across host restart, lookup versus Apply, paging/removal, independent count-row fold controls, hidden PCM bitrate and native card alignment. Public sample observations and cache/file checks retain their measurement limits.
+
+[Input and navigation follow-up](favorites-controls-host-2026-10-22.md) records the installed-host input constraints, numeric editing and stable navigation layout, with separate native-control regression boundaries.
+
+[Settings interaction follow-up](settings-interactions-host-2026-10-22.md) records real title-copy notifications, collapsed last-favorite removal, resting numeric wheel adjustment and editing-state page scrolling, distinguishing host observations from theme fixtures.
+
+[Voice glyph follow-up](voice-glyph-host-2026-10-22.md) records outline/raster verification and installed-host visual checks for the reported high Cross, including the failed first test attempt and corrected coverage.

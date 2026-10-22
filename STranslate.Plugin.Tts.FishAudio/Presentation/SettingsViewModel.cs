@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
@@ -28,6 +29,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private readonly CoverImageCacheDisplayManager _coverImageCacheDisplay;
     private readonly CreditRefreshCoordinator _creditRefreshCoordinator;
     private readonly VoiceDiscoveryCoordinator _voiceDiscoveryCoordinator;
+    private readonly Action<string> _copyVoiceIdToClipboard;
 
     private const int ClearCoverImageCacheTimeoutSeconds = 10;
     private static readonly TimeSpan CoverImageDownloadTimeout = TimeSpan.FromSeconds(10);
@@ -277,11 +279,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         StartupCreditRefreshCycle? startupCreditRefreshCycle = null,
         SettingsWriteLease? settingsWriteLease = null,
         VoiceMetadataCache? voiceMetadataCache = null,
-        FavoriteVoiceStore? favoriteVoiceStore = null)
+        FavoriteVoiceStore? favoriteVoiceStore = null,
+        Action<string>? copyVoiceIdToClipboard = null)
     {
         _context = context;
         _settings = settings;
         _settingsWriteLease = settingsWriteLease;
+        _copyVoiceIdToClipboard = copyVoiceIdToClipboard ?? Clipboard.SetText;
         _voiceMetadataCache = voiceMetadataCache ?? new VoiceMetadataCache();
         _favoriteStore = favoriteVoiceStore ?? new FavoriteVoiceStore(context.MetaData?.PluginSettingsDirectoryPath);
         _creditRefreshCoordinator = new CreditRefreshCoordinator(
@@ -406,6 +410,24 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         var text = Clipboard.GetText();
         if (SettingsValidation.IsValidVoiceIdPaste(text))
             VoiceIdInput = text;
+    }
+
+    private bool CanCopyVoiceId(string? voiceId) => !_isDisposed && SettingsValidation.IsValidVoiceIdFormat(voiceId ?? "");
+
+    [RelayCommand(CanExecute = nameof(CanCopyVoiceId))]
+    private void CopyVoiceId(string? voiceId)
+    {
+        if (!CanCopyVoiceId(voiceId)) return;
+        try
+        {
+            _copyVoiceIdToClipboard(voiceId!);
+            _context.Snackbar.ShowSuccess(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success"));
+        }
+        catch (Exception exception)
+        {
+            _context.Logger.LogError(exception, "Failed to copy voice ID to the clipboard.");
+            _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed"));
+        }
     }
 
     // ── 账户命令 ──

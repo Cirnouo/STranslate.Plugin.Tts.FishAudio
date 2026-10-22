@@ -117,4 +117,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">收藏儲存失敗，請重試。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">正在載入聲音資訊…</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">無法讀取收藏聲音檔案。既有收藏會保留；檔案恢復可讀後才能修改收藏。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">複製聲音 ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">聲音 ID 已複製</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">無法複製聲音 ID，請重試。</sys:String>
 </ResourceDictionary>

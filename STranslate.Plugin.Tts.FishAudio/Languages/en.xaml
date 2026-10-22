@@ -117,4 +117,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Could not save favorites. Please try again.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Loading voice details…</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Could not read the favorites file. Existing favorites are preserved; changes are unavailable until the file can be read.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Copy voice ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Voice ID copied</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Could not copy the voice ID. Please try again.</sys:String>
 </ResourceDictionary>

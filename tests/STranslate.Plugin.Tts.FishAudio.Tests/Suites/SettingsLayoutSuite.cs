@@ -373,9 +373,12 @@ internal static class SettingsLayoutSuite
         AssertEqual(action, button.ToolTip, "The icon must expose its localized tooltip");
         AssertEqual(Colors.Transparent, ((SolidColorBrush)button.Background).Color, "Idle actions must have a transparent background");
         AssertEqual(new Thickness(0), button.BorderThickness, "Idle actions must have no surrounding border");
-        var circle = VisualDescendants(button).OfType<Border>().FirstOrDefault(border =>
-            border.Child is ContentPresenter && border.CornerRadius.TopLeft >= button.Height / 2);
+        var circle = (Border?)button.Template.FindName("BareIconSurface", button);
         AssertNotNull(circle, "The resolved action template must provide a round hover and focus surface");
+        AssertEqual(true, circle!.CornerRadius.TopLeft >= button.Height / 2, "The native action surface must remain circular");
+        AssertEqual(true, circle.Child is InkCenteredGlyph, "The round action surface must contain the native glyph renderer");
+        AssertEqual(glyph, ((InkCenteredGlyph)circle.Child).Glyph, "The resolved template must render the exact action symbol");
+        AssertEqual(false, ((InkCenteredGlyph)circle.Child).IsHitTestVisible, "The glyph must preserve the surrounding button hit target");
         AssertEqual(Colors.Transparent, ((SolidColorBrush)circle!.Background).Color, "The resolved idle template must show only the glyph");
         AssertEqual(new Thickness(0), circle.BorderThickness, "The resolved idle template must not draw a box");
         AssertEqual<Style?>(null, button.FocusVisualStyle, "The action must use its circular focus indicator without a rectangular focus adorner");

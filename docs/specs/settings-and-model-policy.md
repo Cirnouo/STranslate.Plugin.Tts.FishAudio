@@ -44,3 +44,9 @@ Audio-format settings use the same native SettingsCard header icon, header, desc
 These are current application rules, not independent evidence of provider billing eligibility. Apply the [zero-cost testing policy](../policies/api-evidence.md) before any real synthesis.
 
 Verification: [favorite/streaming integration suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/FavoriteSettingsIntegrationSuite.cs), [favorites suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/FavoriteVoicesSuite.cs), [streaming settings suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/StreamingSettingsSuite.cs), [settings storage suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/SettingsStorageSuite.cs), [API Key compatibility suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/ApiKeyCompatibilitySuite.cs), [presentation suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/PresentationContractSuite.cs). Rationale: [DD-038](../adr/current/DD-038.md), [DD-045](../adr/current/DD-045.md), [DD-046](../adr/current/DD-046.md), [DD-053](../adr/current/DD-053.md).
+
+## Numeric wheel interaction
+
+Only the resting numeric text handles vertical mouse wheel input. One complete wheel notch adjusts Speed, Temperature and top_p by 0.01, and Volume by 0.1; decimal rounding follows the displayed precision and the result is clamped to the existing bounds. A handled gesture updates the bound slider and normal auto-save, while preventing page scroll even at a bound. Partial-notch input accumulates only while hovering that text and resets on leaving or entering edit mode.
+
+The editing TextBox, units, slider and surrounding card do not use this numeric-text wheel route. In particular, clicking into the editor disables wheel adjustment and leaves the ordinary page wheel route unhandled. Existing draft syntax, focus-loss/Enter commit and Escape cancellation remain unchanged.

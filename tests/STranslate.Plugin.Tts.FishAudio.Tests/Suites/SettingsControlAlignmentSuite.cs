@@ -176,9 +176,9 @@ internal static class SettingsControlAlignmentSuite
         var action = row.Children.OfType<Button>().Last();
         var center = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), row).Y;
         NearInk(center, InkCenter(star, row), $"{state}: the visible star drawing must center on the preview ring");
-        var actionGlyph = Visuals(action).OfType<TextBlock>().Single();
+        var actionGlyph = Visuals(action).OfType<InkCenteredGlyph>().Single();
         NearInk(center, InkCenter(actionGlyph, row), $"{state}: the visible Tick/Cross glyph must center on the preview ring");
-        var playGlyph = Visuals(preview).OfType<TextBlock>().Single();
+        var playGlyph = Visuals(preview).OfType<InkCenteredGlyph>().Single();
         if (IsShown(playGlyph))
             NearInk(center, InkCenter(playGlyph, row), $"{state}: the visible Play glyph must center on the preview ring");
         foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Background is SolidColorBrush brush && brush.Color == Colors.White))

@@ -1,3 +1,23 @@
+if (args.Contains("--voice-card-ink-tests"))
+{
+    await VoiceCardInkSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-ink-tests") + 1));
+    return;
+}
+
+if (args.Contains("--settings-layout-tests"))
+{
+    await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
+    Console.WriteLine("Compiled settings layout tests passed.");
+    return;
+}
+
+if (args.Contains("--settings-input-tests"))
+{
+    await SettingsInputInteractionSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--settings-input-tests") + 1));
+    Console.WriteLine("Settings input interaction tests passed.");
+    return;
+}
+
 if (args.Contains("--settings-control-tests"))
 {
     await SettingsControlAlignmentSuite.RunAllAsync();
@@ -247,5 +267,7 @@ await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayload
 
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
+await VoiceCardInkSuite.RunAsync();
 
+await SettingsInputInteractionSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
