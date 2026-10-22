@@ -92,13 +92,13 @@ internal sealed class WaveOutStreamingAudioOutput : IStreamingAudioOutput
         }
     }
 
-    private static WaveOutEvent CreateWaveOut()
+    internal static WaveOutEvent CreateWaveOut()
     {
         var context = SynchronizationContext.Current;
         try
         {
             SynchronizationContext.SetSynchronizationContext(null);
-            return new WaveOutEvent { DesiredLatency = 100, NumberOfBuffers = 2 };
+            return new WaveOutEvent { DesiredLatency = 200, NumberOfBuffers = 4 };
         }
         finally { SynchronizationContext.SetSynchronizationContext(context); }
     }

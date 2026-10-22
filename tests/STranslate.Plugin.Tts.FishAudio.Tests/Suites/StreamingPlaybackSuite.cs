@@ -6,6 +6,7 @@ internal static class StreamingPlaybackSuite
 {
     internal static async Task RunAllAsync()
     {
+        WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers();
         await StartsShortPcmAfter100MillisecondsWhileNextChunkBlocksAsync();
         await StartsAt250MillisecondsWithoutWaitingForTimerAsync();
         await CarriesSinglePcmBytesAndRejectsOddTailAsync();
@@ -27,6 +28,27 @@ internal static class StreamingPlaybackSuite
         await InputCleanupCannotReplaceDecoderFailureAsync();
         await SynchronousLargeInputStartsBeforeFurtherProductionAsync();
         await CancellationCallbackCannotReplacePlaybackFailureAsync();
+    }
+
+    internal static void WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers()
+    {
+        var originalContext = SynchronizationContext.Current;
+        var callerContext = new SynchronizationContext();
+        try
+        {
+            SynchronizationContext.SetSynchronizationContext(callerContext);
+            // Construction configures NAudio only; Init is never called, so no device opens.
+            using var output = WaveOutStreamingAudioOutput.CreateWaveOut();
+            Equal(200, output.DesiredLatency, "Output queue provides measured scheduling headroom");
+            Equal(4, output.NumberOfBuffers, "Output queue uses four buffers");
+            var perBufferMilliseconds = (output.DesiredLatency + output.NumberOfBuffers - 1) / output.NumberOfBuffers;
+            Equal(50, perBufferMilliseconds, "Increasing queue headroom preserves the refill interval");
+            Equal(4410, new WaveFormat(44100, 16, 1).ConvertLatencyToByteSize(perBufferMilliseconds),
+                "Each device buffer preserves 50ms of aligned PCM");
+            Equal(PlaybackState.Stopped, output.PlaybackState, "Configuration inspection never starts output");
+            Equal(true, ReferenceEquals(callerContext, SynchronizationContext.Current), "Output construction restores the caller context");
+        }
+        finally { SynchronizationContext.SetSynchronizationContext(originalContext); }
     }
 
     internal static async Task CancellationCallbackCannotReplacePlaybackFailureAsync()
