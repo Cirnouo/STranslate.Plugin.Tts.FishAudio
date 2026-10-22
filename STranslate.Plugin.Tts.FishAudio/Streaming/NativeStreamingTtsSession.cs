@@ -109,8 +109,6 @@ internal sealed class NativeStreamingTtsSession : IStreamingTtsSession
         ValidateModel(request);
         if (request.AudioFormat is not "pcm" and not "mp3")
             throw new InvalidOperationException("The Fish Audio streaming audio format is unsupported.");
-        if (!SettingsValidation.IsValidStreamingProxyConfiguration(request.ProxyMode, request.ProxyAddress))
-            throw new InvalidOperationException("Fish Audio streaming proxy configuration is invalid.");
     }
 
     private void ValidateModel(SynthesisRequest request)

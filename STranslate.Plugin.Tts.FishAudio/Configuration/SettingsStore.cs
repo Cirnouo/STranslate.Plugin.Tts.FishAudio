@@ -179,6 +179,19 @@ public static class SettingsStore
         }
     }
 
+    internal static bool TryExecuteWithWriteLease(Settings settings, SettingsWriteLease writeLease, Action persist)
+    {
+        // This is the persistence gate, not the short settings snapshot lock.
+        // Retirement either wins before the external file transaction or waits for an authorized one.
+        lock (Gate)
+        {
+            if (!writeLease.IsValid || settings.ActiveWriteLease != writeLease.Value)
+                return false;
+            persist();
+            return true;
+        }
+    }
+
     internal static void Restore(
         Settings? previousSettings,
         SettingsWriteLease previousWriteLease,
@@ -258,8 +271,6 @@ public static class SettingsStore
         target.Normalize = source.Normalize;
         target.AudioFormat = source.AudioFormat;
         target.Mp3Bitrate = source.Mp3Bitrate;
-        target.StreamingProxyMode = source.StreamingProxyMode;
-        target.StreamingProxyAddress = source.StreamingProxyAddress;
         target.ConditionOnPreviousChunks = source.ConditionOnPreviousChunks;
         target.CachedVoice = source.CachedVoice is null
             ? null

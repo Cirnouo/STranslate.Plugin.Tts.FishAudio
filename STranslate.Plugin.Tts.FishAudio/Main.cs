@@ -1,4 +1,5 @@
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Lifecycle;
 using STranslate.Plugin.Tts.FishAudio.Presentation;
@@ -14,25 +15,18 @@ public class Main : ITtsPlugin
 {
     private readonly PluginInitializationCoordinator _initializationCoordinator;
     private readonly Func<IStreamingTtsSession>? _streamingSessionFactory;
+    private readonly VoiceMetadataCache _voiceMetadataCache = new();
     private readonly object _playbackGate = new();
     private ActivePlayback? _activePlayback;
     private bool _disposed;
 
     public Main()
-        : this(static (context, settings, settingsWriteLease, startupCreditRefreshCycle) =>
-            new SettingsViewModel(
-                context,
-                settings,
-                clearCoverImageCacheAsync: null,
-                clearCoverImageCacheTimeout: null,
-                previewAudioPlayerFactory: null,
-                startupCreditRefreshCycle: startupCreditRefreshCycle,
-                settingsWriteLease: settingsWriteLease))
+        : this(null)
     {
     }
 
     internal Main(
-        Func<IPluginContext, Settings, SettingsWriteLease, StartupCreditRefreshCycle, SettingsViewModel> viewModelFactory,
+        Func<IPluginContext, Settings, SettingsWriteLease, StartupCreditRefreshCycle, SettingsViewModel>? viewModelFactory,
         Action? startupSettingsRevisionPublished = null,
         Action<long>? initializationGenerationDeclared = null,
         Action<long>? initializationPublished = null,
@@ -40,7 +34,9 @@ public class Main : ITtsPlugin
     {
         _streamingSessionFactory = streamingSessionFactory;
         _initializationCoordinator = new PluginInitializationCoordinator(
-            viewModelFactory,
+            viewModelFactory ?? ((context, settings, lease, creditCycle) => new SettingsViewModel(
+                context, settings, null, null, startupCreditRefreshCycle: creditCycle,
+                settingsWriteLease: lease, voiceMetadataCache: _voiceMetadataCache)),
             startupSettingsRevisionPublished,
             initializationGenerationDeclared,
             initializationPublished);
@@ -95,13 +91,6 @@ public class Main : ITtsPlugin
         }
 
         var request = new SynthesisRequest(operation.Settings);
-        if (!SettingsValidation.IsValidStreamingProxyConfiguration(request.ProxyMode, request.ProxyAddress))
-        {
-            operation.Context.Snackbar.ShowError(operation.Context.GetTranslation(
-                "STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid"));
-            return;
-        }
-
         using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, operation.LifetimeToken);
         var active = new ActivePlayback(cancellation);
         ActivePlayback? previous;

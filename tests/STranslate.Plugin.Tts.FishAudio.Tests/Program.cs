@@ -1,17 +1,31 @@
+if (args.Contains("--settings-control-tests"))
+{
+    await SettingsControlAlignmentSuite.RunAllAsync();
+    await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
+    Console.WriteLine("Settings control alignment tests passed.");
+    return;
+}
+
+if (args.Contains("--inline-numeric-tests"))
+{
+    await SettingsLayoutSuite.InlineNumericInteractionsAsync();
+    Console.WriteLine("Inline numeric regression tests passed.");
+    return;
+}
+
 await StreamingEntrySuite.FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAsync();
 await StreamingEntrySuite.SnapshotStaysImmutableWhileSettingsAreEditedAsync();
 await StreamingEntrySuite.SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync();
 await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
-await StreamingEntrySuite.InvalidProxyAndTransportFailuresDoNotExposeCredentialsAsync();
-StreamingSettingsSuite.MissingConfigurationLoadsPcmAndSystemProxy();
+await StreamingEntrySuite.TransportFailuresDoNotExposeCredentialsAsync();
+StreamingSettingsSuite.MissingConfigurationLoadsPcm();
 StreamingSettingsSuite.LegacyFormatsMigrateAndCurrentDefaultsUsePcm();
 StreamingSettingsSuite.FutureAndDuplicateSchemasRemainReadOnly();
 StreamingSettingsSuite.InvalidStreamingFieldTypesDefaultIndependently();
 StreamingSettingsSuite.NewFieldsRoundTripAndSnapshotsPreserveAllSettings();
 StreamingSettingsSuite.LeaseCommitAndRollbackPreserveStreamingSettings();
-StreamingSettingsSuite.ProxyValidationAndNormalizationKeepCredentialsAndModeIntent();
 StreamingSettingsSuite.ModelOrderDefaultsAndSavedChoicesStayIndependent();
-StreamingSettingsSuite.ViewModelFormatProxyAndModelTogglesPreserveSettings();
+StreamingSettingsSuite.ViewModelFormatAndModelTogglesPreserveSettings();
 StreamingSettingsSuite.StreamingSettingsUiResourcesAreComplete();
 await StreamingPlaybackSuite.RunAllAsync();
 await StreamingTextSuite.FirstWindowIsLazyAndCutsOrdinaryLongSentencesAsync();
@@ -23,7 +37,6 @@ await StreamingSessionSuite.ShortInputStopsWithoutWaitingForPlaybackAsync();
 await StreamingSessionSuite.ProtocolRejectsMalformedOversizeAndMissingFinishAsync();
 await StreamingSessionSuite.FragmentedAudioUsesOwnedBoundedOrderedBlocksAsync();
 await StreamingSessionSuite.ModelAndRequestSnapshotAreExactBeforeConnectAsync();
-await StreamingSessionSuite.ProxyModesSeparateCredentialsFromAddressAsync();
 await StreamingSessionSuite.CancellationAndFaultsAbortEveryWorkerAsync();
 await StreamingSessionSuite.ConnectFirstPcmAndIdleUseIndependentDeadlinesAsync();
 await StreamingSessionSuite.IdleExcludesUnionOfActualQueueAndPcmPressureAsync();
@@ -129,6 +142,25 @@ await CreditRefreshSuite.ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsyn
 await CreditRefreshSuite.ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync();
 await CreditRefreshSuite.ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync();
 await CreditRefreshSuite.SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync();
+await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
+FavoriteSettingsIntegrationSuite.IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched();
+FavoriteSettingsIntegrationSuite.LegacySettingsAndFavoriteIdsRestartIndependently();
+FavoriteVoicesSuite.FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication();
+await FavoriteVoicesSuite.ByIdLookupKeepsSelectedVoiceUntilApplyAsync();
+FavoriteVoicesSuite.FavoriteMetadataMigratesBoundsAndRoundTrips();
+FavoriteVoicesSuite.FavoritesSyncAcrossCardsPersistAndClampPages();
+FavoriteVoicesSuite.FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases();
+await FavoriteVoicesSuite.ByIdReplacementAndInputEditsRejectLateResultsAsync();
+await FavoriteVoicesSuite.FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync();
+await FavoriteVoicesSuite.UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync();
+FavoriteVoicesSuite.SharedCardsAndFavoriteResourcesArePackaged();
+await FavoriteStorageCacheSuite.SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync();
+await FavoriteStorageCacheSuite.LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync();
+FavoriteStorageCacheSuite.MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl();
+FavoriteStorageCacheSuite.BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata();
+await FavoriteStorageCacheSuite.FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync();
+await FavoriteStorageCacheSuite.PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync();
+await FavoriteStorageCacheSuite.SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync();
 await VoiceDiscoverySuite.SearchAndByIdUseDummyTokenAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
@@ -199,5 +231,21 @@ await CoverImageCacheSuite.ClearCoverImageCacheCommandTracksBusyStateAsync();
 await CoverImageCacheSuite.ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync();
 await CoverImageCacheSuite.LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync();
 CoverImageCacheSuite.ClearCacheButtonUsesLocalizedTextAndBusySpinner();
+
+SystemProxyAndSelectedFavoritesSuite.RetiredProxyInputsAreDiscardedAndSocketUsesSystemProxy();
+await SystemProxyAndSelectedFavoritesSuite.RetiredProxyInputsCannotBlockFormalReadingAsync();
+SystemProxyAndSelectedFavoritesSuite.SelectedFavoriteTracksApplyClearBrowseMutationsAndFailedWrites();
+VoiceSelectionToggleSuite.MatchingCardsToggleSelectionWithoutChangingFavoriteIds();
+VoiceSelectionToggleSuite.RemovedOriginsCannotApplyOrClearMatchingCurrentCards();
+VoiceSelectionToggleSuite.FailedSelectionWritesKeepAppliedIdentityAndStars();
+await VoiceSelectionToggleSuite.MatchingByIdQueriesInspectWithoutCancelingSelectionAsync();
+
+TopPCompatibilitySuite.ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero();
+TopPCompatibilitySuite.OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips();
+TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection();
+await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync();
+
+await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
+await SettingsControlAlignmentSuite.RunAllAsync();
 
 Console.WriteLine("Fish Audio plugin regression tests passed.");

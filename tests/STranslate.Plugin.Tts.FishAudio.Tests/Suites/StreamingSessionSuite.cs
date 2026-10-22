@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.WebSockets;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -112,31 +111,6 @@ internal static class StreamingSessionSuite
             if (format == "mp3") AssertEqual(128, bitrate.GetInt32(), "The captured snapshot cannot observe later mutation");
             AssertEqual(FishAudioModelPolicy.SupportsNormalizeLoudness(model), body.GetProperty("prosody").TryGetProperty("normalize_loudness", out _), "Prosody must use explicit model capability");
         }
-    }
-
-    internal static Task ProxyModesSeparateCredentialsFromAddressAsync()
-    {
-        AssertEqual(System.Net.Http.HttpClient.DefaultProxy, FishAudioSocket.CreateProxy("system", ""), "System mode must inherit system proxy");
-        AssertEqual<IWebProxy?>(null, FishAudioSocket.CreateProxy("direct", ""), "Direct mode must bypass proxy");
-        foreach (var scheme in new[] { "http", "https", "socks5" })
-        {
-            var proxy = (WebProxy)FishAudioSocket.CreateProxy("custom", $"{scheme}://user%40name:p%3Ass@localhost:8080")!;
-            AssertEqual("", proxy.Address!.UserInfo, "Proxy address cannot retain user information");
-            var credentials = proxy.Credentials!.GetCredential(proxy.Address, "Basic")!;
-            AssertEqual("user@name", credentials.UserName, "Proxy username must decode separately");
-            AssertEqual("p:ss", credentials.Password, "Proxy password must decode separately");
-        }
-        foreach (var address in new[] { "", "http://localhost", "http://localhost:8080/path", "http://localhost:8080/?secret=value", "ftp://localhost:8080" })
-        {
-            try { FishAudioSocket.CreateProxy("custom", address); }
-            catch (InvalidOperationException ex)
-            {
-                AssertEqual("Fish Audio streaming proxy configuration is invalid.", ex.Message, "Invalid proxy input must fail without echoing its address");
-                continue;
-            }
-            throw new InvalidOperationException("Invalid proxy input was silently accepted.");
-        }
-        return Task.CompletedTask;
     }
 
     internal static async Task CancellationAndFaultsAbortEveryWorkerAsync()

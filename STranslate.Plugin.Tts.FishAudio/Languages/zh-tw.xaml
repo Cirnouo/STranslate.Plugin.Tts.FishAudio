@@ -55,7 +55,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">音量</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">音量偏移 (dB)，正值增大、負值減小</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">響度歸一化</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">支援 s2-pro、s2.1-pro 和 s2.1-pro-free</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">支援 S2 系列模型</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">輸出格式</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 位元率 (kbps)</sys:String>
@@ -101,15 +101,20 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">搜尋結果</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">展開搜尋結果</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">收起搜尋結果</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">PCM 無需 MP3 解碼即可快速開始播放。MP3 在較慢的網路上可能更合適。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy">串流合成代理</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Description">僅用於 WebSocket 語音合成。帳戶、聲音搜尋和試聽請求使用宿主應用程式的網路設定。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_System">系統代理</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Direct">直接連線</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Custom">自訂代理</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Address">自訂代理位址</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_StreamingProxy_Invalid">請輸入含主機和明確連接埠的 http、https 或 socks5 代理 URL，不含路徑、查詢參數或片段；可包含使用者名稱和密碼。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">MP3 可能較適合較慢的網路。</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">串流朗讀失敗，請檢查網路、代理設定和模型服務狀態。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">語音合成失敗，請檢查系統網路連線與模型服務狀態。</sys:String>
 
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">收藏夾</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">套用</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">收藏聲音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">取消收藏</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">尚未收藏聲音。點擊聲音卡片上的星號即可收藏。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">展開收藏聲音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">收合收藏聲音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">最多可收藏 300 個聲音，請先取消一個收藏再新增。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">目前無法修改收藏。請檢查收藏聲音檔案後重試。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">收藏儲存失敗，請重試。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">正在載入聲音資訊…</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">無法讀取收藏聲音檔案。既有收藏會保留；檔案恢復可讀後才能修改收藏。</sys:String>
 </ResourceDictionary>

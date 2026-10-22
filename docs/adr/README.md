@@ -77,3 +77,9 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-051 | [Prepare a lazy readable prefix and gate the tail on output start](current/DD-051.md) | Current |
 | DD-052 | [Decode incrementally into a bounded PCM ring with an independent pump](current/DD-052.md) | Current |
 | DD-053 | [Preserve MP3 compatibility and make native streaming routing explicit](current/DD-053.md) | Current |
+| DD-054 | [Persist favorite IDs separately and share browsing caches](current/DD-054.md) | Current |
+| DD-055 | [Use the system proxy without plugin network settings](current/DD-055.md) | Current |
+| DD-056 | [Share selection state across every voice card](current/DD-056.md) | Current |
+| DD-057 | [Keep nucleus sampling above zero as a client compatibility rule](current/DD-057.md) | Current |
+| DD-058 | [Separate slider interaction steps from precise numeric editing](current/DD-058.md) | Current |
+| DD-059 | [Validate complete input drafts before accepting edits](current/DD-059.md) | Current |

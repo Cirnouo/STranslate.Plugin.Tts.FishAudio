@@ -15,15 +15,44 @@ public partial class SettingsView : UserControl
     public SettingsView()
     {
         InitializeComponent();
-        PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
+        PreviewMouseDown += OnPreviewMouseDown;
     }
 
-    private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
+        if (e.OriginalSource is DependencyObject clicked)
+        {
+            foreach (var editor in FindNumericEditors(this))
+                if (editor.IsEditing && !HasAncestor(clicked, editor))
+                    editor.CommitEdit();
+        }
         if (Keyboard.FocusedElement is not TextBox) return;
         if (e.OriginalSource is not DependencyObject source) return;
         if (HasInteractiveAncestor(source)) return;
         Keyboard.ClearFocus();
+    }
+
+    private static bool HasAncestor(DependencyObject source, DependencyObject ancestor)
+    {
+        for (DependencyObject? current = source; current is not null; current = ParentOf(current))
+            if (ReferenceEquals(current, ancestor)) return true;
+        return false;
+    }
+
+    private static DependencyObject? ParentOf(DependencyObject source) => source switch
+    {
+        ContentElement content => ContentOperations.GetParent(content) ?? (content as FrameworkContentElement)?.Parent,
+        Visual or System.Windows.Media.Media3D.Visual3D => VisualTreeHelper.GetParent(source),
+        _ => LogicalTreeHelper.GetParent(source),
+    };
+
+    private static IEnumerable<InlineNumericEditor> FindNumericEditors(DependencyObject root)
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            if (child is InlineNumericEditor editor) yield return editor;
+            else foreach (var descendant in FindNumericEditors(child)) yield return descendant;
+        }
     }
 
     private static bool HasInteractiveAncestor(DependencyObject obj)
@@ -33,10 +62,28 @@ public partial class SettingsView : UserControl
         {
             if (current is TextBox or PasswordBox or ButtonBase or ComboBox or Slider or Thumb)
                 return true;
-            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            current = ParentOf(current);
         }
         return false;
     }
+
+    private void VoiceIdInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is TextBox input)
+            e.Handled = !Configuration.SettingsValidation.IsValidVoiceIdDraft(ReplaceSelection(input, e.Text));
+    }
+
+    private void VoiceIdInput_Pasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (sender is not TextBox input || !e.DataObject.GetDataPresent(DataFormats.UnicodeText)
+            || e.DataObject.GetData(DataFormats.UnicodeText) is not string text
+            || !Configuration.SettingsValidation.IsValidVoiceIdPaste(text)
+            || !Configuration.SettingsValidation.IsValidVoiceIdDraft(ReplaceSelection(input, text)))
+            e.CancelCommand();
+    }
+
+    private static string ReplaceSelection(TextBox input, string replacement) =>
+        input.Text.Remove(input.SelectionStart, input.SelectionLength).Insert(input.SelectionStart, replacement);
 
     private void PageInputBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
@@ -47,6 +94,12 @@ public partial class SettingsView : UserControl
     {
         if (DataContext is ViewModel.SettingsViewModel vm && vm.CommitPageInputCommand.CanExecute(null))
             vm.CommitPageInputCommand.Execute(null);
+    }
+
+    private void FavoritePageInputBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is ViewModel.SettingsViewModel vm && vm.CommitFavoritePageInputCommand.CanExecute(null))
+            vm.CommitFavoritePageInputCommand.Execute(null);
     }
 
     private void S21ProFreePromoCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)

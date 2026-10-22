@@ -8,7 +8,8 @@ Use these terms consistently in code reviews, specifications, API references and
 | Voice ID | The identifier of a Voice. The plugin stores it as `Settings.VoiceId`. | It is independent of the API Key. |
 | TTS model | The synthesis engine selected by the `model` HTTP header, such as `s2-pro`. | UI discussions should say “TTS model” when “model” could mean a Voice. |
 | Provider model entity | A voice metadata object returned by Fish Audio's `/model` endpoints. | `ModelEntity` and related DTO names follow the provider and remain valid code identifiers. |
-| Selected voice | The voice identity and cached metadata shown in the settings selection area. | A search result can describe the same Voice without being the selected object. |
+| Selected voice | The applied Voice ID and cached metadata shown in the settings selection area. | A card is applied when its ID matches that selection; matching cards still have distinct originating object identities for asynchronous ownership. |
+| Favorite voice | A locally bookmarked Voice ID persisted independently of settings metadata. | Display metadata comes from the same in-memory cache used by search; bookmarking does not select the voice, store audio bytes or modify a provider account. |
 | Voice sample / preview | Provider-supplied sample audio played while browsing voices. | Preview playback does not synthesize the user's text. |
 | Random/default voice | The provider's voice choice when the plugin omits `reference_id`. | Omission is not evidence of free synthesis or stable identity across requests. |
 | API Key | A credential used for authenticated synthesis and credit operations. | Local shape validation is not authentication or entitlement verification. |
@@ -35,6 +36,8 @@ Use these terms consistently in code reviews, specifications, API references and
 | Audio cache | Plugin-managed audio bytes reusable across separate play operations. | CachedVoice metadata/sample URL and the cover-image cache are not audio caches; one play's disposed memory buffer is not reusable caching. |
 | Initialization generation | One declared plugin initialization attempt. | A later generation can overtake an earlier attempt before publication. |
 | Settings write lease | The credential that authorizes a specific runtime settings generation to save through the host. | Having a reference to Settings does not authorize an obsolete generation to persist it. |
+| Input draft | A temporary editable string before committing a domain value. | Lexical constraints permit partial entry; commit still checks the complete identifier or numeric bounds. Invalid paste must not be silently truncated into another value. |
+| Inline numeric editor | A numeric text label that temporarily becomes an input within the same bounds. | Its draft is separate from the committed setting, and its decimal precision is independent of a slider's interaction step. |
 | Current ADR | A decision with an active implementation or maintenance constraint, possibly amended by another record. | Classification is based on supersession, not date. |
 | Historical ADR | A replaced design retained to explain why behavior changed. | Its recorded rationale is not a current implementation requirement. |
 

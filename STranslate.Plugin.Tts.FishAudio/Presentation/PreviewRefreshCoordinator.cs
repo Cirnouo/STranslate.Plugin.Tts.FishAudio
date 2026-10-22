@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
+using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.Runtime;
@@ -33,6 +34,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     private readonly Action<Action> _runOnUiThread;
     private readonly PreviewAudioDownloader _downloader;
     private readonly TimeProvider _timeProvider;
+    private readonly Action<VoiceSearchItem> _cardRefreshed;
+    private readonly VoiceMetadataCache _metadataCache;
     private readonly object _displayPreviewOperationGate = new();
     private long _displayPreviewOperationId;
     private bool _isDisposed;
@@ -47,7 +50,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         Func<Func<Settings, bool>, bool> updateSettingsAndSave, Action<CachedVoiceInfo?> applyCachedVoice,
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
         Func<bool> isFacadeDisposed, TimeProvider? timeProvider = null,
-        Action<string?>? applyPreparingState = null, Action<Action>? runOnUiThread = null)
+        Action<string?>? applyPreparingState = null, Action<Action>? runOnUiThread = null,
+        Action<VoiceSearchItem>? cardRefreshed = null, VoiceMetadataCache? metadataCache = null)
     {
         _context = context;
         _getCachedVoiceId = getCachedVoiceId;
@@ -66,6 +70,8 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         _runOnUiThread = runOnUiThread ?? (action => action());
         _downloader = new PreviewAudioDownloader(context.HttpService);
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _cardRefreshed = cardRefreshed ?? (_ => { });
+        _metadataCache = metadataCache ?? new VoiceMetadataCache();
     }
 
     internal Task ToggleDisplayPreviewAsync()
@@ -163,10 +169,13 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
                 ShowError(PreviewRefreshFailedKey);
                 return null;
             }
+            // URL expiry/403/404 recovery deliberately bypasses the metadata TTL cache.
+            _metadataCache.Put(VoiceMetadata.FromModel(model, target.VoiceId));
             string? url;
             if (target.SearchItem is { } item)
             {
                 ApplyRefreshedSearchItem(item, model);
+                _cardRefreshed(item);
                 url = item.SampleAudioUrl;
             }
             else

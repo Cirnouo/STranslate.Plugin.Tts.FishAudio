@@ -11,12 +11,17 @@ using static TestAssertions;
 internal static class OperationActivityDispatcherSuite
 {
     internal static Task PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync() =>
-        RunOnStaThreadAsync(() =>
+        RunOnStaThreadAsync(async () =>
         {
             using var network = OverrideNetworkAvailability(false);
             var dispatcher = Dispatcher.CurrentDispatcher;
             var previousInvoker = SettingsViewModel.UiThreadInvokerOverride;
-            SettingsViewModel.UiThreadInvokerOverride = action => Dispatch(dispatcher, action);
+            var workerPublicationCount = 0;
+            SettingsViewModel.UiThreadInvokerOverride = action =>
+            {
+                if (!dispatcher.CheckAccess()) Interlocked.Increment(ref workerPublicationCount);
+                Dispatch(dispatcher, action);
+            };
             try
             {
                 foreach (var cancel in new[] { false, true })
@@ -36,7 +41,7 @@ internal static class OperationActivityDispatcherSuite
                     using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
                     plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel),
                         snackbar: snackbar, logger: logger));
-                    plugin.PendingStartupTask.GetAwaiter().GetResult();
+                    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
                     var viewModel = plugin.GetOrCreateSettingsViewModel();
                     // A real WPF command listener retains its owning dispatcher even
                     // after the settings window is no longer visible.
@@ -46,6 +51,7 @@ internal static class OperationActivityDispatcherSuite
                     network.Set(true);
                     var playback = plugin.PlayAudioAsync("Offline dispatcher regression", caller.Token);
                     AssertEqual(false, pasteButton.IsEnabled, "Beginning playback must disable the bound paste command");
+                    var publicationsBeforeRetirement = Volatile.Read(ref workerPublicationCount);
                     if (cancel) Task.Run(caller.Cancel).GetAwaiter().GetResult();
                     else release.TrySetResult();
 
@@ -66,6 +72,12 @@ internal static class OperationActivityDispatcherSuite
                             "The original connection timeout must retain its localized error");
                         AssertEqual(true, logger.Contains("TimeoutException"), "The original timeout classification must be logged");
                     }
+                    AssertEqual(true, Volatile.Read(ref workerPublicationCount) > publicationsBeforeRetirement,
+                        "Completed worker retirement must have posted its UI publication before the dispatcher is drained");
+                    AssertEqual(true, viewModel.IsApiKeyInputLocked,
+                        "The completed background operation must leave the UI lock unchanged until its queued publication runs");
+                    AssertEqual(false, pasteButton.IsEnabled,
+                        "The bound command must remain disabled while final retirement publication is still queued");
                     Drain(dispatcher);
                     AssertEqual(false, viewModel.IsApiKeyInputLocked, "The final operation must unlock after UI publication");
                     AssertEqual(true, pasteButton.IsEnabled, "The bound WPF command must observe final retirement");

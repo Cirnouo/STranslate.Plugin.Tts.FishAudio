@@ -4,9 +4,9 @@ Status: current Unreleased implementation, SDK 1.0.15. [Main](../../STranslate.P
 
 ## Entry and operation ownership
 
-Formal TTS rejects blank text, then performs network → non-empty API Key → API Key shape preflight. Accepted shapes are 32 lowercase hex characters or `sk-fish-` plus 43 ASCII letters/digits/underscore/hyphen. The supplied key is forwarded unchanged as a Bearer credential. Shape validation does not authenticate it, and no remote validation request or applied-key state precedes synthesis. Invalid custom streaming proxy configuration fails before creating the session.
+Formal TTS rejects blank text, then performs network → non-empty API Key → API Key shape preflight. Accepted shapes are 32 lowercase hex characters or `sk-fish-` plus 43 ASCII letters/digits/underscore/hyphen. The supplied key is forwarded unchanged as a Bearer credential. Shape validation does not authenticate it, and no remote validation request or applied-key state precedes synthesis. Native streaming uses the system proxy without plugin proxy settings.
 
-An operation captures its initialization's Context, detached Settings snapshot, optional ViewModel and lifetime token before its first await. Its immutable `SynthesisRequest` class holds exactly that request's values, including the API Key and proxy configuration. Later settings edits cannot change a running session. Snapshot capture uses the short settings-object publication lock, so a host load blocked on the persistence gate does not block capture of the last published initialization. See [lifecycle](architecture-and-lifecycle.md).
+An operation captures its initialization's Context, detached Settings snapshot, optional ViewModel and lifetime token before its first await. Its immutable `SynthesisRequest` class holds exactly that request's synthesis values, including the API Key; it contains no proxy mode or address. Later settings edits cannot change a running session. Snapshot capture uses the short settings-object publication lock, so a host load blocked on the persistence gate does not block capture of the last published initialization. See [lifecycle](architecture-and-lifecycle.md).
 
 Only one formal playback may own output at a time. A newer accepted operation cancels its predecessor and waits for the predecessor's completion, including cleanup, before creating its own session. A third overlapping call cannot overtake that retirement chain. Caller cancellation, supersession, initialization retirement and plugin disposal interrupt the owned session. Intentional cancellation propagates as `TaskCanceledException`, which the host treats as quiet stop; it does not produce a generic error snackbar.
 
@@ -20,7 +20,7 @@ The current path is one authenticated native `wss://api.fish.audio/v1/tts/live` 
 
 See the [session contract](streaming-session.md), [text contract](streaming-text.md) and [audio contract](streaming-playback.md) for wire messages, bounds, deadlines, markup limits and completion semantics. There is no synthesis retry, model fallback, HTTP fallback, SSE path or connection reuse. The retained HTTP request builder supports tests/reference compatibility; it is not the formal playback route.
 
-Failures publish a fixed localized streaming failure or timeout message. Logs contain stage/elapsed software observations and safe exception type names. They do not include exception contents, provider error text, the API Key, request text or configured proxy address/credentials. These software milestones do not establish audible first-word latency.
+Failures publish a fixed localized streaming failure or timeout message. Logs contain stage/elapsed software observations and safe exception type names. They do not include exception contents, provider error text, the API Key, request text or network credentials. These software milestones do not establish audible first-word latency.
 
 ## Credit and evidence
 

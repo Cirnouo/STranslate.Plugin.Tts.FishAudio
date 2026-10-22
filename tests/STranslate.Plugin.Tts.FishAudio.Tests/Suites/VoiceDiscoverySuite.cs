@@ -39,6 +39,8 @@ internal static class VoiceDiscoverySuite
 
         headers = AssertHeaders(http.LastGetOptions, "Voice by-ID lookup should send Authorization headers");
         AssertEqual("Bearer dummy", headers["Authorization"], "Voice by-ID lookup should use the dummy token by default");
+        AssertEqual(1, viewModel.ByIdResults.Count, "Public By-ID lookup should expose one card for inspection");
+        AssertEqual("", settings.VoiceId, "Public metadata lookup should leave selection to Apply");
     }
 
     internal static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync()
@@ -204,6 +206,7 @@ internal static class VoiceDiscoverySuite
         await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
 
         AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
+        AssertEqual(0, viewModel.ByIdResults.Count, "By-ID completion after disposal must not publish an Apply card");
         AssertEqual(originalVoiceId, settings.VoiceId, "By-ID completion after dispose should not update saved voice ID");
         AssertEqual("Existing Voice", settings.CachedVoice?.Title, "By-ID completion after dispose should not update cached voice");
         AssertEqual(0, proxy.SaveCount, "Dispose and late by-ID completion should not issue redundant or stale saves");
@@ -462,6 +465,7 @@ internal static class VoiceDiscoverySuite
             http.GetResponseJson = JsonSerializer.Serialize(new { _id = viewModel.VoiceIdInput, type, title = "Not a voice" });
             await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
             AssertEqual(originalVoiceId, settings.VoiceId, "An explicit non-TTS model must not replace the saved voice");
+            AssertEqual(0, viewModel.ByIdResults.Count, "An explicit non-TTS model must not expose an Apply card");
             AssertEqual("STranslate_Plugin_Tts_FishAudio_Voice_NotFound", viewModel.VoiceIdError,
                 "An explicit non-TTS model should be reported as unavailable for voice selection");
         }
@@ -539,7 +543,7 @@ internal static class VoiceDiscoverySuite
             },
             syncPreviewStateToResults: () => events.Add("sync"),
             setVoiceIdWithoutSaving: _ => { },
-            persistSelectedVoice: _ => true,
+            persistSelectedVoice: (_, _) => true,
             applyCachedVoice: _ => { },
             setVoiceIdError: _ => { },
             setSubmittingVoiceId: _ => { },

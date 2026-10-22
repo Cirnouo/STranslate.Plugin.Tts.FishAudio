@@ -9,14 +9,12 @@ internal sealed class SynthesisRequest(Settings settings)
     internal string VoiceId { get; } = settings.VoiceId;
     internal string Model { get; } = settings.SelectedModel;
     internal string AudioFormat { get; } = settings.AudioFormat;
-    internal string ProxyMode { get; } = settings.StreamingProxyMode;
-    internal string ProxyAddress { get; } = settings.StreamingProxyAddress;
     internal int Mp3Bitrate { get; } = settings.Mp3Bitrate;
     internal double Speed { get; } = settings.Speed;
     internal double Volume { get; } = settings.Volume;
     internal bool NormalizeLoudness { get; } = settings.NormalizeLoudness;
     internal double Temperature { get; } = settings.Temperature;
-    internal double TopP { get; } = settings.TopP;
+    internal double TopP { get; } = SettingsNormalizer.NormalizeTopP(settings.TopP);
     internal bool Normalize { get; } = settings.Normalize;
     internal string Latency { get; } = settings.Latency;
     internal bool ConditionOnPreviousChunks { get; } = settings.ConditionOnPreviousChunks;

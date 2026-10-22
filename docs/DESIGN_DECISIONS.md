@@ -215,3 +215,27 @@ Moved to [current DD-052](adr/current/DD-052.md).
 ## DD-053: Preserve MP3 compatibility and make native streaming routing explicit
 
 Moved to [current DD-053](adr/current/DD-053.md).
+
+## DD-054: Persist favorite IDs separately and share browsing caches
+
+Moved to [current DD-054](adr/current/DD-054.md).
+
+## DD-055: Use the system proxy without plugin network settings
+
+Moved to [current DD-055](adr/current/DD-055.md).
+
+## DD-056: Share selection state across every voice card
+
+Moved to [current DD-056](adr/current/DD-056.md).
+
+## DD-057: Keep nucleus sampling above zero as a client compatibility rule
+
+Moved to [current DD-057](adr/current/DD-057.md).
+
+## DD-058: Separate slider interaction steps from precise numeric editing
+
+Moved to [current DD-058](adr/current/DD-058.md).
+
+## DD-059: Validate complete input drafts before accepting edits
+
+Moved to [current DD-059](adr/current/DD-059.md).

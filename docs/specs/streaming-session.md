@@ -41,7 +41,7 @@ The first worker failure is retained, aborts the socket and cancels sibling work
 
 ## Routing and observations
 
-REST metadata, credit and sample downloads use host `IHttpService`. The native socket uses .NET `ClientWebSocket` with `system` (`HttpClient.DefaultProxy`), `direct` (no proxy) or a validated custom HTTP/HTTPS/SOCKS5 proxy. Host HTTP proxy settings are not automatically a native WebSocket proxy contract. Custom URI credentials are removed from the transport proxy URI and supplied as `NetworkCredential`. See [settings](settings-and-model-policy.md).
+REST metadata, credit and sample downloads use host `IHttpService`. The native socket always uses .NET `ClientWebSocket` with the system proxy (`HttpClient.DefaultProxy`); the plugin provides no proxy controls or custom credentials. Host-specific HTTP overrides are not automatically a native WebSocket proxy contract. Former proxy settings are ignored and removed on ordinary canonical saves. See [settings](settings-and-model-policy.md) and [DD-055](../adr/current/DD-055.md).
 
 Observations record monotonic request-relative elapsed time for Request, Connected, PrefixSent, FirstAudio, FirstPcm, PlaybackStarted, Finish and Drained. Observer failures cannot alter playback. Log fields describe software boundaries only. The [dated probe](../evidences/2026-10-20/README.md) gates its tail on network audio; production gates on successful output start, so those measurements are not interchangeable.
 
