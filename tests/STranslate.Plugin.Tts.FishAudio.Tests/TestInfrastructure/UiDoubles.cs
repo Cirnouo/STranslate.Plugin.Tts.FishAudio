@@ -13,6 +13,8 @@ public sealed class TestSnackbar : ISnackbar
 {
     public string? LastError { get; private set; }
     public string? LastWarning { get; private set; }
+    public string? LastSuccess { get; private set; }
+    public int SuccessCount { get; private set; }
 
     public void Show(string message, Severity severity, int duration, string? actionLabel, Action? action)
     {
@@ -20,6 +22,8 @@ public sealed class TestSnackbar : ISnackbar
 
     public void ShowSuccess(string message, int duration)
     {
+        LastSuccess = message;
+        SuccessCount++;
     }
 
     public void ShowError(string message, int duration)
@@ -40,6 +44,8 @@ public sealed class TestSnackbar : ISnackbar
     {
         LastError = null;
         LastWarning = null;
+        LastSuccess = null;
+        SuccessCount = 0;
     }
 }
 

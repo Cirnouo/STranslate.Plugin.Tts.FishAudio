@@ -11,7 +11,8 @@
         <Button x:Name="DisplayButton" Width="58" Height="32" MinWidth="0" MinHeight="0"
                 Padding="0" BorderThickness="0" Background="Transparent" BorderBrush="Transparent"
                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                Foreground="{DynamicResource TextFillColorPrimaryBrush}" Click="DisplayButton_Click">
+                Foreground="{DynamicResource TextFillColorPrimaryBrush}" Click="DisplayButton_Click"
+                PreviewMouseWheel="DisplayButton_PreviewMouseWheel" MouseLeave="DisplayButton_MouseLeave">
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="4">

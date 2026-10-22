@@ -1,3 +1,10 @@
+if (args.Contains("--settings-input-tests"))
+{
+    await SettingsInputInteractionSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--settings-input-tests") + 1));
+    Console.WriteLine("Settings input interaction tests passed.");
+    return;
+}
+
 if (args.Contains("--settings-control-tests"))
 {
     await SettingsControlAlignmentSuite.RunAllAsync();
@@ -248,4 +255,5 @@ await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayload
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
 
+await SettingsInputInteractionSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
