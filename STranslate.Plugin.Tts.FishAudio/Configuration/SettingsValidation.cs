@@ -12,6 +12,10 @@ public static class SettingsValidation
 
     public static bool IsValidVoiceIdFormat(string id) => HexId32Regex.IsMatch(id);
 
+    internal static bool IsValidVoiceIdDraft(string text) => text.Length <= 32 && text.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+
+    internal static bool IsValidVoiceIdPaste(string text) => text.Length > 0 && IsValidVoiceIdDraft(text);
+
     internal static bool TryGetString(JsonElement element, out string value)
     {
         if (element.ValueKind == JsonValueKind.String)

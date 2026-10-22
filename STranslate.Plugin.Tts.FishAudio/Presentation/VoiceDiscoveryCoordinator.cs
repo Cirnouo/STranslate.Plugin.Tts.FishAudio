@@ -135,14 +135,14 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         if (_isDisposed || _isFacadeDisposed())
             return;
         InvalidateVoiceIdInput();
-        var trimmed = _getVoiceIdInput().Trim();
-        if (string.IsNullOrEmpty(trimmed))
+        var voiceId = _getVoiceIdInput();
+        if (string.IsNullOrEmpty(voiceId))
         {
             _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_Empty"));
             return;
         }
 
-        if (!SettingsValidation.IsValidVoiceIdFormat(trimmed))
+        if (!SettingsValidation.IsValidVoiceIdFormat(voiceId))
         {
             _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat"));
             return;
@@ -154,12 +154,12 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
         try
         {
-            if (_metadataCache.TryGet(trimmed, out var cachedMetadata))
+            if (_metadataCache.TryGet(voiceId, out var cachedMetadata))
             {
                 _setByIdResult(MapMetadata(cachedMetadata));
                 return;
             }
-            var model = await FishAudioApi.GetModelAsync(_context, SearchApiToken, trimmed, cts.Token);
+            var model = await FishAudioApi.GetModelAsync(_context, SearchApiToken, voiceId, cts.Token);
 
             if (!IsCurrentVoiceIdOperation(operationId))
                 return;
@@ -170,7 +170,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
                 return;
             }
 
-            var result = MapSearchResult(model, trimmed);
+            var result = MapSearchResult(model, voiceId);
             _setByIdResult(result);
             _setVoiceIdError(null);
         }

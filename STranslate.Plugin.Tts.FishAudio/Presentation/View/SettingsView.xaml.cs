@@ -67,6 +67,24 @@ public partial class SettingsView : UserControl
         return false;
     }
 
+    private void VoiceIdInput_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        if (sender is TextBox input)
+            e.Handled = !Configuration.SettingsValidation.IsValidVoiceIdDraft(ReplaceSelection(input, e.Text));
+    }
+
+    private void VoiceIdInput_Pasting(object sender, DataObjectPastingEventArgs e)
+    {
+        if (sender is not TextBox input || !e.DataObject.GetDataPresent(DataFormats.UnicodeText)
+            || e.DataObject.GetData(DataFormats.UnicodeText) is not string text
+            || !Configuration.SettingsValidation.IsValidVoiceIdPaste(text)
+            || !Configuration.SettingsValidation.IsValidVoiceIdDraft(ReplaceSelection(input, text)))
+            e.CancelCommand();
+    }
+
+    private static string ReplaceSelection(TextBox input, string replacement) =>
+        input.Text.Remove(input.SelectionStart, input.SelectionLength).Insert(input.SelectionStart, replacement);
+
     private void PageInputBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
     {
         e.Handled = !DigitsOnly.IsMatch(e.Text);

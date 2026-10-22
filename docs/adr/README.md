@@ -82,3 +82,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-056 | [Share selection state across every voice card](current/DD-056.md) | Current |
 | DD-057 | [Keep nucleus sampling above zero as a client compatibility rule](current/DD-057.md) | Current |
 | DD-058 | [Separate slider interaction steps from precise numeric editing](current/DD-058.md) | Current |
+| DD-059 | [Validate complete input drafts before accepting edits](current/DD-059.md) | Current |

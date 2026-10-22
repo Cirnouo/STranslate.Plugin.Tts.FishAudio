@@ -235,3 +235,7 @@ Moved to [current DD-057](adr/current/DD-057.md).
 ## DD-058: Separate slider interaction steps from precise numeric editing
 
 Moved to [current DD-058](adr/current/DD-058.md).
+
+## DD-059: Validate complete input drafts before accepting edits
+
+Moved to [current DD-059](adr/current/DD-059.md).

@@ -22,16 +22,27 @@ internal static class FavoriteVoicesSuite
         AssertEqual(true, SettingsValidation.IsValidVoiceIdFormat(Id(1)), "Canonical IDs remain valid");
     }
 
-    internal static async Task ByIdTrailingLineFeedUsesCanonicalCardAndApplyIdAsync()
+    internal static async Task ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync()
     {
         var settings = SelectedSettings();
         var directory = CreateTempDirectory();
         var (service, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = Detail(1, "Canonical result");
-        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings) { VoiceIdInput = Id(1) + "\n" };
+        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings);
+        foreach (var invalid in new[] { Id(1) + "\n", " " + Id(1), Id(1) + "\r\n", "https://fish.audio/m/" + Id(1), Id(1) + "0", Id(1).Replace("0", "A"), Id(1)[..31] })
+        {
+            view.VoiceIdInput = invalid;
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            AssertEqual(0, http.GetUrls.Count, "A noncanonical By-ID input must be rejected before any detail GET");
+            AssertEqual(0, view.ByIdResults.Count, "Invalid raw input must not produce an extracted or truncated voice card");
+            AssertEqual(Id(99), settings.VoiceId, "Rejected By-ID lookup must retain the selected voice");
+            AssertEqual(0, view.FavoriteCount, "Rejected By-ID lookup must preserve favorites");
+            AssertEqual(true, !string.IsNullOrEmpty(view.VoiceIdError), "Rejected By-ID input must report its format error");
+        }
+        view.VoiceIdInput = Id(1);
         await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        AssertEqual($"https://api.fish.audio/model/{Id(1)}", http.LastGetUrl, "By-ID should trim entry whitespace before querying");
-        AssertEqual(Id(1), view.ByIdResults.Single().Id, "By-ID card IDs must be canonical");
+        AssertEqual($"https://api.fish.audio/model/{Id(1)}", http.LastGetUrl, "An exact ID must retain normal By-ID lookup");
+        AssertEqual(Id(1), view.ByIdResults.Single().Id, "By-ID card IDs must remain canonical");
         view.ToggleFavoriteCommand.Execute(view.ByIdResults[0]);
         using var store = new FavoriteVoiceStore(directory);
         AssertEqual(Id(1), store.Read().Single(), "ID-file bookmarks must contain canonical IDs only");
@@ -39,7 +50,6 @@ internal static class FavoriteVoicesSuite
         view.SelectVoiceCommand.Execute(view.ByIdResults[0]);
         AssertEqual(Id(1), settings.VoiceId, "Only Apply selects the canonical By-ID result");
     }
-
     internal static async Task ByIdLookupKeepsSelectedVoiceUntilApplyAsync()
     {
         var settings = SelectedSettings();

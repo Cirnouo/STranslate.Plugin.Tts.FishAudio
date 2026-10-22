@@ -105,7 +105,7 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Speech synthesis failed. Check your system network connection and model service status.</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favorite Voices</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favorites</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Apply</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Add to favorites</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Remove from favorites</sys:String>

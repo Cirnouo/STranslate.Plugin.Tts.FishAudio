@@ -24,3 +24,5 @@ This policy applies to production code and regression tests. Preserve observable
 See [verification](verification.md), [API evidence](api-evidence.md) and the [architecture specification](../specs/architecture-and-lifecycle.md).
 
 Numeric display precision, pointer interaction steps and provider validity are separate contracts. Keep edit drafts separate from persisted values, and verify that a valid off-tick value survives the complete UI/save/reload path. Do not silently quantize precise input merely because a slider uses coarser ticks.
+
+Validate the complete proposed input draft, including selection replacement, before accepting composition or clipboard paste. Do not rely on MaxLength to truncate malformed clipboard data into a different valid value. Retain independent commit/domain validation, and keep lexical editing constraints separate from final numeric bounds or complete identifier requirements.

@@ -404,8 +404,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     private void PasteVoiceId()
     {
         var text = Clipboard.GetText();
-        if (!string.IsNullOrEmpty(text))
-            VoiceIdInput = text.Trim();
+        if (SettingsValidation.IsValidVoiceIdPaste(text))
+            VoiceIdInput = text;
     }
 
     // ── 账户命令 ──

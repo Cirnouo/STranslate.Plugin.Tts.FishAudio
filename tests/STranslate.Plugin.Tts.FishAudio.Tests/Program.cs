@@ -1,3 +1,11 @@
+if (args.Contains("--settings-control-tests"))
+{
+    await SettingsControlAlignmentSuite.RunAllAsync();
+    await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
+    Console.WriteLine("Settings control alignment tests passed.");
+    return;
+}
+
 if (args.Contains("--inline-numeric-tests"))
 {
     await SettingsLayoutSuite.InlineNumericInteractionsAsync();
@@ -134,7 +142,7 @@ await CreditRefreshSuite.ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsyn
 await CreditRefreshSuite.ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync();
 await CreditRefreshSuite.ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync();
 await CreditRefreshSuite.SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync();
-await FavoriteVoicesSuite.ByIdTrailingLineFeedUsesCanonicalCardAndApplyIdAsync();
+await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
 FavoriteSettingsIntegrationSuite.IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched();
 FavoriteSettingsIntegrationSuite.LegacySettingsAndFavoriteIdsRestartIndependently();
 FavoriteVoicesSuite.FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication();
@@ -238,5 +246,6 @@ TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection();
 await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync();
 
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
+await SettingsControlAlignmentSuite.RunAllAsync();
 
 Console.WriteLine("Fish Audio plugin regression tests passed.");

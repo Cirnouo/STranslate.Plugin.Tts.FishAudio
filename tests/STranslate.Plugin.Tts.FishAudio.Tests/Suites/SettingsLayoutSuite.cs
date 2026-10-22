@@ -172,9 +172,9 @@ internal static class SettingsLayoutSuite
         var referenceIcon = ((StackPanel)search.Content).Children.OfType<TextBlock>().Single(block => block.FontFamily.Source == "Segoe MDL2 Assets");
         AssertEqual(referenceIcon.FontSize, icon!.FontSize, "Favorite Voices must use the same tab icon size");
         AssertEqual(referenceIcon.Margin, icon.Margin, "Favorite Voices must use the same tab icon spacing");
-        AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == "Favorite Voices"),
+        AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == "Favorites"),
             "The tab must display the localized Favorite Voices label");
-        foreach (var (locale, label) in new[] { ("zh-cn", "收藏的声音"), ("zh-tw", "收藏的聲音"), ("ja", "お気に入りの音声"), ("ko", "즐겨찾는 음성") })
+        foreach (var (locale, label) in new[] { ("zh-cn", "收藏夹"), ("zh-tw", "收藏夾"), ("ja", "お気に入り"), ("ko", "즐겨찾기") })
         {
             view.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
@@ -538,7 +538,7 @@ internal static class SettingsLayoutSuite
             Source = new Uri(FindRepoFile("STranslate.Plugin.Tts.FishAudio/Languages/en.xaml"), UriKind.Absolute),
         });
 
-    private static SettingsView CreateThemedView(SettingsViewModel viewModel)
+    internal static SettingsView CreateThemedView(SettingsViewModel viewModel)
     {
         var view = new SettingsView { DataContext = viewModel };
         view.Resources.MergedDictionaries.Add(new ThemeResources { RequestedTheme = ApplicationTheme.Light });
@@ -548,7 +548,7 @@ internal static class SettingsLayoutSuite
         return view;
     }
 
-    private static void Layout(FrameworkElement view, double width = 600)
+    internal static void Layout(FrameworkElement view, double width = 600)
     {
         view.Measure(new Size(width, double.PositiveInfinity));
         view.Arrange(new Rect(0, 0, width, view.DesiredSize.Height));

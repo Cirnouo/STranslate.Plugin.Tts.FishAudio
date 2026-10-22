@@ -36,6 +36,7 @@ Use these terms consistently in code reviews, specifications, API references and
 | Audio cache | Plugin-managed audio bytes reusable across separate play operations. | CachedVoice metadata/sample URL and the cover-image cache are not audio caches; one play's disposed memory buffer is not reusable caching. |
 | Initialization generation | One declared plugin initialization attempt. | A later generation can overtake an earlier attempt before publication. |
 | Settings write lease | The credential that authorizes a specific runtime settings generation to save through the host. | Having a reference to Settings does not authorize an obsolete generation to persist it. |
+| Input draft | A temporary editable string before committing a domain value. | Lexical constraints permit partial entry; commit still checks the complete identifier or numeric bounds. Invalid paste must not be silently truncated into another value. |
 | Inline numeric editor | A numeric text label that temporarily becomes an input within the same bounds. | Its draft is separate from the committed setting, and its decimal precision is independent of a slider's interaction step. |
 | Current ADR | A decision with an active implementation or maintenance constraint, possibly amended by another record. | Classification is based on supersession, not date. |
 | Historical ADR | A replaced design retained to explain why behavior changed. | Its recorded rationale is not a current implementation requirement. |
