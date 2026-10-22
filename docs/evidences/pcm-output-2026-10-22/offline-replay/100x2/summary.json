@@ -1,0 +1,46 @@
+{
+  "outcome": "completed",
+  "failureType": null,
+  "configuration": "100x2",
+  "durationSeconds": 15,
+  "sourceSha256": "3a7783c5ccb27cbebf977a5c75c6f954b1ec6bf50359882b808d584feb32397f",
+  "replaySha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+  "productionSha256": "e023d87d35745c422edc0aa310ce7e7802e039ac27d0db0bc898061ac9ca7c1f",
+  "noNetwork": true,
+  "noCredentials": true,
+  "deadlineSeconds": 30,
+  "format": {
+    "sampleRate": 44100,
+    "bits": 16,
+    "channels": 1,
+    "signed": true,
+    "endianness": "little"
+  },
+  "arrivals": [
+    {
+      "DueAfterPlayMs": 0,
+      "Bytes": 684032
+    },
+    {
+      "DueAfterPlayMs": 4201.2674,
+      "Bytes": 557056
+    },
+    {
+      "DueAfterPlayMs": 4354.565599999999,
+      "Bytes": 81912
+    }
+  ],
+  "comparison": {
+    "ExactlyEqual": true,
+    "UpstreamBytes": 1323000,
+    "RenderedRealBytes": 1323000,
+    "InsertedPaddingBytes": 8820,
+    "FirstMismatchSourceByteOffset": null,
+    "UpstreamSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+    "RenderedRealSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+    "ReadsWithPadding": 2,
+    "LastRealPcmEnd": 1323000,
+    "HighestDevicePosition": 1323652
+  },
+  "instrumentation": "Production StreamingAudioPlayer, PcmStreamingDecoder and StreamingPcmBuffer; provider wrapper captures before driver. One case per invocation. No acoustic loopback."
+}

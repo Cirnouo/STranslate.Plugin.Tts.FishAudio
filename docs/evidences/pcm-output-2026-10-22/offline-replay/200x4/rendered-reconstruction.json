@@ -1,0 +1,12 @@
+{
+  "name": "rendered-audio.pcm",
+  "bytes": 1340640,
+  "sha256": "51c321662555d65e01a128207ceb9cb37a51639b35592adab297df45a8c889f1",
+  "relationship": "exactly reconstructable omitted replay artifact",
+  "reconstruct": {
+    "prefix": "first 1323000 bytes of upstream PCM reconstructed from retained incoming MessagePack",
+    "prefixBytes": 1323000,
+    "prefixSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+    "zeroSuffixBytes": 17640
+  }
+}

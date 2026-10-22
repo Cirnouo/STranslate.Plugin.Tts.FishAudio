@@ -1,0 +1,63 @@
+{
+  "beganUtc": "2026-10-22T18:26:52.7697441+00:00",
+  "deadlineUtc": "2026-10-22T18:28:52.7697441+00:00",
+  "endpoint": "wss://api.fish.audio/v1/tts/live",
+  "headers": {
+    "Authorization": "[REDACTED]",
+    "model": "s2.1-pro-free"
+  },
+  "requestSnapshot": {
+    "VoiceId": "7c22610883d2484ea17ce870da91de85",
+    "Speed": 1,
+    "Volume": 1,
+    "NormalizeLoudness": true,
+    "Temperature": 0.2,
+    "TopP": 0.25,
+    "Latency": "normal",
+    "Normalize": true,
+    "ConditionOnPreviousChunks": true,
+    "Mp3Bitrate": 192,
+    "SelectedModel": "s2.1-pro-free",
+    "AudioFormat": "pcm"
+  },
+  "text": "- For the highlighted buttons \"Search, By ID, Favorites,\" when hovering and when pressed they are gray, and only when the mouse moves away (normal state) do they become the blue accent color. On hover and press, they should instead change to slightly whiter (brighter) and slightly grayer (darker) than normal, respectively. - The text inside the \"Search, By ID\" input boxes is inconsistent in its front-end appearance, mainly reflected in different heights. - Add interaction to the numeric input boxes for speed, volume, expressiveness, and diversity so that values can be adjusted in increments of 0.01 or 0.1 using the mouse wheel. - In the \"Other\" configuration area, add a card for an About Plugin item, including a hyperlink entry to the plugin's official repository (preceded by GitHub's iconic octopus icon), the plugin version, the author, and Check for Updates. - The current streaming TTS playback audio occasionally has electrical noise.",
+  "textUtf16Length": 950,
+  "textSha256": "862d80616f9d3370a4f06dcfb9edefcbfecdab4093c777aabe369b25c71645f5",
+  "sampleRate": 44100,
+  "bitsPerSample": 16,
+  "channels": 1,
+  "signed": true,
+  "endianness": "little",
+  "retryCount": 0,
+  "fallback": false,
+  "modelGuard": {
+    "exact": "s2.1-pro-free",
+    "strictlyBeforeUtc": "2026-12-01T00:00:00+00:00",
+    "checkedBeforeConnectAndEverySend": true
+  },
+  "productionAssembly": {
+    "name": "STranslate.Plugin.Tts.FishAudio",
+    "version": "1.0.0.0",
+    "bytes": 368640,
+    "sha256": "e023d87d35745c422edc0aa310ce7e7802e039ac27d0db0bc898061ac9ca7c1f"
+  },
+  "audioAssembly": {
+    "name": "NAudio.WinMM",
+    "version": "2.3.0.0",
+    "bytes": 58368,
+    "sha256": "80807335ee64d5bb26a9de0d1f966a902b5adf32c53b853c8b871937d12b437b"
+  },
+  "harnessAssembly": {
+    "name": "STranslate.Plugin.Tts.FishAudio.Tests",
+    "version": "1.0.0.0",
+    "bytes": 132608,
+    "sha256": "1084f9401b193d8bf7014f4daf6c177e8b582dadd0aa1d7a942526b106fc4250"
+  },
+  "binaryCaptureLimitBytes": 18874368,
+  "publicationProvenance": {
+    "relationship": "allowlisted projection of original request-summary.json",
+    "originalCaptureSha256": "8dea4ae47d49ea61af20bb98ead08cad3f25e20a72fd044acf7596564d11e702",
+    "unsanitizedOriginalIncluded": false,
+    "sourceFieldMap": "request-summary-field-map.json"
+  }
+}

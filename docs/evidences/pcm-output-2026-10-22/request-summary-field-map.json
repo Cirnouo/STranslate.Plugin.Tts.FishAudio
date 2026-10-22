@@ -1,0 +1,121 @@
+{
+  "source": "original request-summary.json",
+  "destination": "capture/request-summary.sanitized.json",
+  "rules": [
+    "Only the listed source fields are copied; no recursive catch-all copy is performed.",
+    "Retained values and JSON types are unchanged. Authorization is already [REDACTED].",
+    "Assembly identities contain name/version/bytes/SHA-256 only; no local assembly paths.",
+    "The original file is represented by its exact SHA-256 and byte count, not included.",
+    "All fields not explicitly retained are omitted, including local source context and implementation notes.",
+    "The original capture summary is retained verbatim and still lists original hashes for omitted artifacts."
+  ],
+  "retainedFields": [
+    {
+      "sourceJsonPointer": "/beganUtc",
+      "destinationJsonPointer": "/beganUtc",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/deadlineUtc",
+      "destinationJsonPointer": "/deadlineUtc",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/endpoint",
+      "destinationJsonPointer": "/endpoint",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/headers",
+      "destinationJsonPointer": "/headers",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/requestSnapshot",
+      "destinationJsonPointer": "/requestSnapshot",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/text",
+      "destinationJsonPointer": "/text",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/textUtf16Length",
+      "destinationJsonPointer": "/textUtf16Length",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/textSha256",
+      "destinationJsonPointer": "/textSha256",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/sampleRate",
+      "destinationJsonPointer": "/sampleRate",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/bitsPerSample",
+      "destinationJsonPointer": "/bitsPerSample",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/channels",
+      "destinationJsonPointer": "/channels",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/signed",
+      "destinationJsonPointer": "/signed",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/endianness",
+      "destinationJsonPointer": "/endianness",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/retryCount",
+      "destinationJsonPointer": "/retryCount",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/fallback",
+      "destinationJsonPointer": "/fallback",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/modelGuard",
+      "destinationJsonPointer": "/modelGuard",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/productionAssembly",
+      "destinationJsonPointer": "/productionAssembly",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/audioAssembly",
+      "destinationJsonPointer": "/audioAssembly",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/harnessAssembly",
+      "destinationJsonPointer": "/harnessAssembly",
+      "operation": "copy value unchanged"
+    },
+    {
+      "sourceJsonPointer": "/binaryCaptureLimitBytes",
+      "destinationJsonPointer": "/binaryCaptureLimitBytes",
+      "operation": "copy value unchanged"
+    }
+  ],
+  "omittedTopLevelFields": [
+    "sourceFiles",
+    "instrumentation"
+  ],
+  "addedFields": {
+    "/publicationProvenance": "publication relationship, original SHA-256, and field-map reference"
+  }
+}
