@@ -1,0 +1,8570 @@
+[
+  {
+    "Sequence": 0,
+    "ElapsedMs": 98.3802,
+    "Utc": "2026-10-22T18:40:48.7867319+00:00",
+    "Bytes": 0,
+    "Origin": "initial"
+  },
+  {
+    "Sequence": 1,
+    "ElapsedMs": 99.4649,
+    "Utc": "2026-10-22T18:40:48.7878166+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 2,
+    "ElapsedMs": 99.8111,
+    "Utc": "2026-10-22T18:40:48.7881627+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 3,
+    "ElapsedMs": 100.1054,
+    "Utc": "2026-10-22T18:40:48.7884571+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 4,
+    "ElapsedMs": 100.4898,
+    "Utc": "2026-10-22T18:40:48.7888415+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 5,
+    "ElapsedMs": 101.6751,
+    "Utc": "2026-10-22T18:40:48.7900268+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 6,
+    "ElapsedMs": 101.7824,
+    "Utc": "2026-10-22T18:40:48.790134+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 7,
+    "ElapsedMs": 102.0956,
+    "Utc": "2026-10-22T18:40:48.7904473+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 8,
+    "ElapsedMs": 109.5924,
+    "Utc": "2026-10-22T18:40:48.797944+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 9,
+    "ElapsedMs": 126.0186,
+    "Utc": "2026-10-22T18:40:48.8143703+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 10,
+    "ElapsedMs": 140.5879,
+    "Utc": "2026-10-22T18:40:48.8289395+00:00",
+    "Bytes": 0,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 11,
+    "ElapsedMs": 156.0113,
+    "Utc": "2026-10-22T18:40:48.844363+00:00",
+    "Bytes": 1194,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 12,
+    "ElapsedMs": 171.5441,
+    "Utc": "2026-10-22T18:40:48.8598957+00:00",
+    "Bytes": 2494,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 13,
+    "ElapsedMs": 186.7922,
+    "Utc": "2026-10-22T18:40:48.8751439+00:00",
+    "Bytes": 3894,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 14,
+    "ElapsedMs": 200.8327,
+    "Utc": "2026-10-22T18:40:48.8891843+00:00",
+    "Bytes": 5144,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 15,
+    "ElapsedMs": 201.7792,
+    "Utc": "2026-10-22T18:40:48.8901309+00:00",
+    "Bytes": 5226,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 16,
+    "ElapsedMs": 217.1036,
+    "Utc": "2026-10-22T18:40:48.9054553+00:00",
+    "Bytes": 6516,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 17,
+    "ElapsedMs": 233.1086,
+    "Utc": "2026-10-22T18:40:48.9214602+00:00",
+    "Bytes": 7998,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 18,
+    "ElapsedMs": 248.8674,
+    "Utc": "2026-10-22T18:40:48.9372191+00:00",
+    "Bytes": 9328,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 19,
+    "ElapsedMs": 249.2459,
+    "Utc": "2026-10-22T18:40:48.9375976+00:00",
+    "Bytes": 9366,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 20,
+    "ElapsedMs": 264.2429,
+    "Utc": "2026-10-22T18:40:48.9525946+00:00",
+    "Bytes": 10710,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 21,
+    "ElapsedMs": 279.4614,
+    "Utc": "2026-10-22T18:40:48.9678131+00:00",
+    "Bytes": 12058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 22,
+    "ElapsedMs": 294.4495,
+    "Utc": "2026-10-22T18:40:48.9828012+00:00",
+    "Bytes": 13380,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 23,
+    "ElapsedMs": 294.5599,
+    "Utc": "2026-10-22T18:40:48.9829116+00:00",
+    "Bytes": 13390,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 24,
+    "ElapsedMs": 309.8357,
+    "Utc": "2026-10-22T18:40:48.9981873+00:00",
+    "Bytes": 14772,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 25,
+    "ElapsedMs": 325.4711,
+    "Utc": "2026-10-22T18:40:49.0138227+00:00",
+    "Bytes": 16132,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 26,
+    "ElapsedMs": 340.8781,
+    "Utc": "2026-10-22T18:40:49.0292298+00:00",
+    "Bytes": 17490,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 27,
+    "ElapsedMs": 351.5478,
+    "Utc": "2026-10-22T18:40:49.0398994+00:00",
+    "Bytes": 18370,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 28,
+    "ElapsedMs": 356.0368,
+    "Utc": "2026-10-22T18:40:49.0443885+00:00",
+    "Bytes": 18766,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 29,
+    "ElapsedMs": 371.9486,
+    "Utc": "2026-10-22T18:40:49.0603002+00:00",
+    "Bytes": 20236,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 30,
+    "ElapsedMs": 387.1544,
+    "Utc": "2026-10-22T18:40:49.0755061+00:00",
+    "Bytes": 21588,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 31,
+    "ElapsedMs": 402.0393,
+    "Utc": "2026-10-22T18:40:49.090391+00:00",
+    "Bytes": 22890,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 32,
+    "ElapsedMs": 403.4044,
+    "Utc": "2026-10-22T18:40:49.0917561+00:00",
+    "Bytes": 23012,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 33,
+    "ElapsedMs": 418.7577,
+    "Utc": "2026-10-22T18:40:49.1071093+00:00",
+    "Bytes": 24338,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 34,
+    "ElapsedMs": 434.7226,
+    "Utc": "2026-10-22T18:40:49.1230742+00:00",
+    "Bytes": 25782,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 35,
+    "ElapsedMs": 450.046,
+    "Utc": "2026-10-22T18:40:49.1383976+00:00",
+    "Bytes": 27106,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 36,
+    "ElapsedMs": 450.3768,
+    "Utc": "2026-10-22T18:40:49.1387285+00:00",
+    "Bytes": 27134,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 37,
+    "ElapsedMs": 465.7992,
+    "Utc": "2026-10-22T18:40:49.1541508+00:00",
+    "Bytes": 28524,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 38,
+    "ElapsedMs": 482.3086,
+    "Utc": "2026-10-22T18:40:49.1706603+00:00",
+    "Bytes": 29972,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 39,
+    "ElapsedMs": 498.6958,
+    "Utc": "2026-10-22T18:40:49.1870475+00:00",
+    "Bytes": 31394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 40,
+    "ElapsedMs": 498.9033,
+    "Utc": "2026-10-22T18:40:49.187255+00:00",
+    "Bytes": 31412,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 41,
+    "ElapsedMs": 514.1563,
+    "Utc": "2026-10-22T18:40:49.2025079+00:00",
+    "Bytes": 32760,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 42,
+    "ElapsedMs": 529.0288,
+    "Utc": "2026-10-22T18:40:49.2173805+00:00",
+    "Bytes": 34070,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 43,
+    "ElapsedMs": 545.2075,
+    "Utc": "2026-10-22T18:40:49.2335591+00:00",
+    "Bytes": 35512,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 44,
+    "ElapsedMs": 560.6886,
+    "Utc": "2026-10-22T18:40:49.2490402+00:00",
+    "Bytes": 36864,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 45,
+    "ElapsedMs": 576.7836,
+    "Utc": "2026-10-22T18:40:49.2651352+00:00",
+    "Bytes": 38274,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 46,
+    "ElapsedMs": 591.9265,
+    "Utc": "2026-10-22T18:40:49.2802782+00:00",
+    "Bytes": 39626,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 47,
+    "ElapsedMs": 600.7295,
+    "Utc": "2026-10-22T18:40:49.2890812+00:00",
+    "Bytes": 40426,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 48,
+    "ElapsedMs": 608.1462,
+    "Utc": "2026-10-22T18:40:49.2964979+00:00",
+    "Bytes": 41080,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 49,
+    "ElapsedMs": 623.8113,
+    "Utc": "2026-10-22T18:40:49.3121629+00:00",
+    "Bytes": 42430,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 50,
+    "ElapsedMs": 639.0515,
+    "Utc": "2026-10-22T18:40:49.3274032+00:00",
+    "Bytes": 43806,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 51,
+    "ElapsedMs": 652.0642,
+    "Utc": "2026-10-22T18:40:49.3404159+00:00",
+    "Bytes": 44956,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 52,
+    "ElapsedMs": 654.1792,
+    "Utc": "2026-10-22T18:40:49.3425309+00:00",
+    "Bytes": 45142,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 53,
+    "ElapsedMs": 670.0853,
+    "Utc": "2026-10-22T18:40:49.3584369+00:00",
+    "Bytes": 46470,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 54,
+    "ElapsedMs": 685.8088,
+    "Utc": "2026-10-22T18:40:49.3741605+00:00",
+    "Bytes": 47922,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 55,
+    "ElapsedMs": 700.8142,
+    "Utc": "2026-10-22T18:40:49.3891659+00:00",
+    "Bytes": 49246,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 56,
+    "ElapsedMs": 717.2016,
+    "Utc": "2026-10-22T18:40:49.4055532+00:00",
+    "Bytes": 50662,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 57,
+    "ElapsedMs": 732.7119,
+    "Utc": "2026-10-22T18:40:49.4210636+00:00",
+    "Bytes": 52058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 58,
+    "ElapsedMs": 748.2955,
+    "Utc": "2026-10-22T18:40:49.4366471+00:00",
+    "Bytes": 53406,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 59,
+    "ElapsedMs": 748.6951,
+    "Utc": "2026-10-22T18:40:49.4370468+00:00",
+    "Bytes": 53442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 60,
+    "ElapsedMs": 763.8834,
+    "Utc": "2026-10-22T18:40:49.4522351+00:00",
+    "Bytes": 54808,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 61,
+    "ElapsedMs": 779.4359,
+    "Utc": "2026-10-22T18:40:49.4677875+00:00",
+    "Bytes": 56166,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 62,
+    "ElapsedMs": 794.9997,
+    "Utc": "2026-10-22T18:40:49.4833513+00:00",
+    "Bytes": 57540,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 63,
+    "ElapsedMs": 795.2916,
+    "Utc": "2026-10-22T18:40:49.4836433+00:00",
+    "Bytes": 57566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 64,
+    "ElapsedMs": 810.286,
+    "Utc": "2026-10-22T18:40:49.4986376+00:00",
+    "Bytes": 58904,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 65,
+    "ElapsedMs": 825.3952,
+    "Utc": "2026-10-22T18:40:49.5137469+00:00",
+    "Bytes": 60242,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 66,
+    "ElapsedMs": 841.8691,
+    "Utc": "2026-10-22T18:40:49.5302208+00:00",
+    "Bytes": 61688,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 67,
+    "ElapsedMs": 852.1331,
+    "Utc": "2026-10-22T18:40:49.5404848+00:00",
+    "Bytes": 62566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 68,
+    "ElapsedMs": 857.7392,
+    "Utc": "2026-10-22T18:40:49.5460908+00:00",
+    "Bytes": 63058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 69,
+    "ElapsedMs": 873.5478,
+    "Utc": "2026-10-22T18:40:49.5618995+00:00",
+    "Bytes": 64458,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 70,
+    "ElapsedMs": 888.8053,
+    "Utc": "2026-10-22T18:40:49.5771569+00:00",
+    "Bytes": 65822,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 71,
+    "ElapsedMs": 901.8144,
+    "Utc": "2026-10-22T18:40:49.590166+00:00",
+    "Bytes": 66980,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 72,
+    "ElapsedMs": 904.6704,
+    "Utc": "2026-10-22T18:40:49.593022+00:00",
+    "Bytes": 67230,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 73,
+    "ElapsedMs": 920.4792,
+    "Utc": "2026-10-22T18:40:49.6088308+00:00",
+    "Bytes": 68596,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 74,
+    "ElapsedMs": 935.9356,
+    "Utc": "2026-10-22T18:40:49.6242873+00:00",
+    "Bytes": 69984,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 75,
+    "ElapsedMs": 950.8377,
+    "Utc": "2026-10-22T18:40:49.6391894+00:00",
+    "Bytes": 71290,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 76,
+    "ElapsedMs": 951.2208,
+    "Utc": "2026-10-22T18:40:49.6395725+00:00",
+    "Bytes": 71324,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 77,
+    "ElapsedMs": 966.691,
+    "Utc": "2026-10-22T18:40:49.6550427+00:00",
+    "Bytes": 72666,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 78,
+    "ElapsedMs": 982.1717,
+    "Utc": "2026-10-22T18:40:49.6705233+00:00",
+    "Bytes": 74072,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 79,
+    "ElapsedMs": 997.2972,
+    "Utc": "2026-10-22T18:40:49.6856488+00:00",
+    "Bytes": 75398,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 80,
+    "ElapsedMs": 997.602,
+    "Utc": "2026-10-22T18:40:49.6859536+00:00",
+    "Bytes": 75428,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 81,
+    "ElapsedMs": 1012.3854,
+    "Utc": "2026-10-22T18:40:49.7007371+00:00",
+    "Bytes": 76712,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 82,
+    "ElapsedMs": 1027.6862,
+    "Utc": "2026-10-22T18:40:49.7160379+00:00",
+    "Bytes": 78088,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 83,
+    "ElapsedMs": 1043.4273,
+    "Utc": "2026-10-22T18:40:49.731779+00:00",
+    "Bytes": 79466,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 84,
+    "ElapsedMs": 1043.5265,
+    "Utc": "2026-10-22T18:40:49.7318781+00:00",
+    "Bytes": 79478,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 85,
+    "ElapsedMs": 1043.8833,
+    "Utc": "2026-10-22T18:40:49.7322349+00:00",
+    "Bytes": 79508,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 86,
+    "ElapsedMs": 1044.0054,
+    "Utc": "2026-10-22T18:40:49.7323571+00:00",
+    "Bytes": 79520,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 87,
+    "ElapsedMs": 1058.4658,
+    "Utc": "2026-10-22T18:40:49.7468174+00:00",
+    "Bytes": 80734,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 88,
+    "ElapsedMs": 1074.1172,
+    "Utc": "2026-10-22T18:40:49.7624688+00:00",
+    "Bytes": 82176,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 89,
+    "ElapsedMs": 1090.0198,
+    "Utc": "2026-10-22T18:40:49.7783715+00:00",
+    "Bytes": 83554,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 90,
+    "ElapsedMs": 1100.8803,
+    "Utc": "2026-10-22T18:40:49.789232+00:00",
+    "Bytes": 84542,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 91,
+    "ElapsedMs": 1106.7913,
+    "Utc": "2026-10-22T18:40:49.795143+00:00",
+    "Bytes": 85062,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 92,
+    "ElapsedMs": 1122.0664,
+    "Utc": "2026-10-22T18:40:49.810418+00:00",
+    "Bytes": 86368,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 93,
+    "ElapsedMs": 1137.4172,
+    "Utc": "2026-10-22T18:40:49.8257689+00:00",
+    "Bytes": 87750,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 94,
+    "ElapsedMs": 1151.8777,
+    "Utc": "2026-10-22T18:40:49.8402294+00:00",
+    "Bytes": 89026,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 95,
+    "ElapsedMs": 1153.3767,
+    "Utc": "2026-10-22T18:40:49.8417284+00:00",
+    "Bytes": 89158,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 96,
+    "ElapsedMs": 1169.1648,
+    "Utc": "2026-10-22T18:40:49.8575165+00:00",
+    "Bytes": 90524,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 97,
+    "ElapsedMs": 1185.1297,
+    "Utc": "2026-10-22T18:40:49.8734813+00:00",
+    "Bytes": 91972,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 98,
+    "ElapsedMs": 1200.517,
+    "Utc": "2026-10-22T18:40:49.8888687+00:00",
+    "Bytes": 93248,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 99,
+    "ElapsedMs": 1216.1291,
+    "Utc": "2026-10-22T18:40:49.9044808+00:00",
+    "Bytes": 94628,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 100,
+    "ElapsedMs": 1232.3119,
+    "Utc": "2026-10-22T18:40:49.9206635+00:00",
+    "Bytes": 96132,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 101,
+    "ElapsedMs": 1247.3589,
+    "Utc": "2026-10-22T18:40:49.9357105+00:00",
+    "Bytes": 97432,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 102,
+    "ElapsedMs": 1247.6862,
+    "Utc": "2026-10-22T18:40:49.9360379+00:00",
+    "Bytes": 97460,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 103,
+    "ElapsedMs": 1262.5911,
+    "Utc": "2026-10-22T18:40:49.9509428+00:00",
+    "Bytes": 98728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 104,
+    "ElapsedMs": 1277.8467,
+    "Utc": "2026-10-22T18:40:49.9661984+00:00",
+    "Bytes": 100136,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 105,
+    "ElapsedMs": 1293.1776,
+    "Utc": "2026-10-22T18:40:49.9815292+00:00",
+    "Bytes": 101494,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 106,
+    "ElapsedMs": 1293.5575,
+    "Utc": "2026-10-22T18:40:49.9819091+00:00",
+    "Bytes": 101532,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 107,
+    "ElapsedMs": 1308.7598,
+    "Utc": "2026-10-22T18:40:49.9971115+00:00",
+    "Bytes": 102856,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 108,
+    "ElapsedMs": 1324.4641,
+    "Utc": "2026-10-22T18:40:50.0128157+00:00",
+    "Bytes": 104246,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 109,
+    "ElapsedMs": 1339.5379,
+    "Utc": "2026-10-22T18:40:50.0278896+00:00",
+    "Bytes": 105584,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 110,
+    "ElapsedMs": 1351.1641,
+    "Utc": "2026-10-22T18:40:50.0395157+00:00",
+    "Bytes": 106588,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 111,
+    "ElapsedMs": 1354.9112,
+    "Utc": "2026-10-22T18:40:50.0432629+00:00",
+    "Bytes": 106916,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 112,
+    "ElapsedMs": 1370.2129,
+    "Utc": "2026-10-22T18:40:50.0585645+00:00",
+    "Bytes": 108272,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 113,
+    "ElapsedMs": 1386.4554,
+    "Utc": "2026-10-22T18:40:50.0748071+00:00",
+    "Bytes": 109700,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 114,
+    "ElapsedMs": 1400.9473,
+    "Utc": "2026-10-22T18:40:50.089299+00:00",
+    "Bytes": 111004,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 115,
+    "ElapsedMs": 1402.1881,
+    "Utc": "2026-10-22T18:40:50.0905398+00:00",
+    "Bytes": 111114,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 116,
+    "ElapsedMs": 1417.7762,
+    "Utc": "2026-10-22T18:40:50.1061279+00:00",
+    "Bytes": 112448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 117,
+    "ElapsedMs": 1432.9371,
+    "Utc": "2026-10-22T18:40:50.1212888+00:00",
+    "Bytes": 113754,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 118,
+    "ElapsedMs": 1449.832,
+    "Utc": "2026-10-22T18:40:50.1381837+00:00",
+    "Bytes": 115244,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 119,
+    "ElapsedMs": 1465.5648,
+    "Utc": "2026-10-22T18:40:50.1539165+00:00",
+    "Bytes": 116674,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 120,
+    "ElapsedMs": 1480.3275,
+    "Utc": "2026-10-22T18:40:50.1686792+00:00",
+    "Bytes": 118002,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 121,
+    "ElapsedMs": 1496.8339,
+    "Utc": "2026-10-22T18:40:50.1851856+00:00",
+    "Bytes": 119402,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 122,
+    "ElapsedMs": 1496.9446,
+    "Utc": "2026-10-22T18:40:50.1852963+00:00",
+    "Bytes": 119414,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 123,
+    "ElapsedMs": 1512.241,
+    "Utc": "2026-10-22T18:40:50.2005926+00:00",
+    "Bytes": 120816,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 124,
+    "ElapsedMs": 1527.5903,
+    "Utc": "2026-10-22T18:40:50.215942+00:00",
+    "Bytes": 122152,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 125,
+    "ElapsedMs": 1543.0814,
+    "Utc": "2026-10-22T18:40:50.2314331+00:00",
+    "Bytes": 123496,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 126,
+    "ElapsedMs": 1543.1824,
+    "Utc": "2026-10-22T18:40:50.231534+00:00",
+    "Bytes": 123508,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 127,
+    "ElapsedMs": 1559.7089,
+    "Utc": "2026-10-22T18:40:50.2480606+00:00",
+    "Bytes": 124980,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 128,
+    "ElapsedMs": 1575.1375,
+    "Utc": "2026-10-22T18:40:50.2634892+00:00",
+    "Bytes": 126296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 129,
+    "ElapsedMs": 1590.5122,
+    "Utc": "2026-10-22T18:40:50.2788638+00:00",
+    "Bytes": 127726,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 130,
+    "ElapsedMs": 1600.833,
+    "Utc": "2026-10-22T18:40:50.2891847+00:00",
+    "Bytes": 128624,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 131,
+    "ElapsedMs": 1605.9229,
+    "Utc": "2026-10-22T18:40:50.2942746+00:00",
+    "Bytes": 129070,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 132,
+    "ElapsedMs": 1621.4314,
+    "Utc": "2026-10-22T18:40:50.309783+00:00",
+    "Bytes": 130440,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 133,
+    "ElapsedMs": 1636.9068,
+    "Utc": "2026-10-22T18:40:50.3252584+00:00",
+    "Bytes": 131792,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 134,
+    "ElapsedMs": 1651.5587,
+    "Utc": "2026-10-22T18:40:50.3399104+00:00",
+    "Bytes": 133028,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 135,
+    "ElapsedMs": 1652.954,
+    "Utc": "2026-10-22T18:40:50.3413056+00:00",
+    "Bytes": 133150,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 136,
+    "ElapsedMs": 1669.5686,
+    "Utc": "2026-10-22T18:40:50.3579203+00:00",
+    "Bytes": 134684,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 137,
+    "ElapsedMs": 1684.4958,
+    "Utc": "2026-10-22T18:40:50.3728474+00:00",
+    "Bytes": 135928,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 138,
+    "ElapsedMs": 1700.2241,
+    "Utc": "2026-10-22T18:40:50.3885757+00:00",
+    "Bytes": 137394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 139,
+    "ElapsedMs": 1716.6995,
+    "Utc": "2026-10-22T18:40:50.4050511+00:00",
+    "Bytes": 138814,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 140,
+    "ElapsedMs": 1732.1833,
+    "Utc": "2026-10-22T18:40:50.4205349+00:00",
+    "Bytes": 140140,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 141,
+    "ElapsedMs": 1747.8878,
+    "Utc": "2026-10-22T18:40:50.4362394+00:00",
+    "Bytes": 141586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 142,
+    "ElapsedMs": 1748.3698,
+    "Utc": "2026-10-22T18:40:50.4367214+00:00",
+    "Bytes": 141632,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 143,
+    "ElapsedMs": 1763.3862,
+    "Utc": "2026-10-22T18:40:50.4517378+00:00",
+    "Bytes": 142966,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 144,
+    "ElapsedMs": 1778.5935,
+    "Utc": "2026-10-22T18:40:50.4669451+00:00",
+    "Bytes": 144234,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 145,
+    "ElapsedMs": 1794.0953,
+    "Utc": "2026-10-22T18:40:50.4824469+00:00",
+    "Bytes": 145604,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 146,
+    "ElapsedMs": 1809.4476,
+    "Utc": "2026-10-22T18:40:50.4977992+00:00",
+    "Bytes": 147012,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 147,
+    "ElapsedMs": 1824.9584,
+    "Utc": "2026-10-22T18:40:50.51331+00:00",
+    "Bytes": 148396,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 148,
+    "ElapsedMs": 1840.2159,
+    "Utc": "2026-10-22T18:40:50.5285675+00:00",
+    "Bytes": 149708,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 149,
+    "ElapsedMs": 1852.2504,
+    "Utc": "2026-10-22T18:40:50.540602+00:00",
+    "Bytes": 150766,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 150,
+    "ElapsedMs": 1856.2835,
+    "Utc": "2026-10-22T18:40:50.5446352+00:00",
+    "Bytes": 151118,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 151,
+    "ElapsedMs": 1871.4237,
+    "Utc": "2026-10-22T18:40:50.5597754+00:00",
+    "Bytes": 152442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 152,
+    "ElapsedMs": 1887.2646,
+    "Utc": "2026-10-22T18:40:50.5756162+00:00",
+    "Bytes": 153900,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 153,
+    "ElapsedMs": 1900.7821,
+    "Utc": "2026-10-22T18:40:50.5891337+00:00",
+    "Bytes": 155094,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 154,
+    "ElapsedMs": 1902.1204,
+    "Utc": "2026-10-22T18:40:50.5904721+00:00",
+    "Bytes": 155212,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 155,
+    "ElapsedMs": 1917.8172,
+    "Utc": "2026-10-22T18:40:50.6061688+00:00",
+    "Bytes": 156594,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 156,
+    "ElapsedMs": 1933.5553,
+    "Utc": "2026-10-22T18:40:50.6219069+00:00",
+    "Bytes": 157954,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 157,
+    "ElapsedMs": 1948.8511,
+    "Utc": "2026-10-22T18:40:50.6372028+00:00",
+    "Bytes": 159314,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 158,
+    "ElapsedMs": 1949.147,
+    "Utc": "2026-10-22T18:40:50.6374986+00:00",
+    "Bytes": 159342,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 159,
+    "ElapsedMs": 1964.1184,
+    "Utc": "2026-10-22T18:40:50.6524701+00:00",
+    "Bytes": 160602,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 160,
+    "ElapsedMs": 1979.8419,
+    "Utc": "2026-10-22T18:40:50.6681935+00:00",
+    "Bytes": 162046,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 161,
+    "ElapsedMs": 1995.256,
+    "Utc": "2026-10-22T18:40:50.6836077+00:00",
+    "Bytes": 163422,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 162,
+    "ElapsedMs": 2010.6268,
+    "Utc": "2026-10-22T18:40:50.6989785+00:00",
+    "Bytes": 164754,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 163,
+    "ElapsedMs": 2026.591,
+    "Utc": "2026-10-22T18:40:50.7149426+00:00",
+    "Bytes": 166166,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 164,
+    "ElapsedMs": 2042.5569,
+    "Utc": "2026-10-22T18:40:50.7309086+00:00",
+    "Bytes": 167566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 165,
+    "ElapsedMs": 2050.836,
+    "Utc": "2026-10-22T18:40:50.7391876+00:00",
+    "Bytes": 168312,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 166,
+    "ElapsedMs": 2057.627,
+    "Utc": "2026-10-22T18:40:50.7459786+00:00",
+    "Bytes": 168910,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 167,
+    "ElapsedMs": 2072.8909,
+    "Utc": "2026-10-22T18:40:50.7612425+00:00",
+    "Bytes": 170240,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 168,
+    "ElapsedMs": 2088.3826,
+    "Utc": "2026-10-22T18:40:50.7767342+00:00",
+    "Bytes": 171634,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 169,
+    "ElapsedMs": 2101.1629,
+    "Utc": "2026-10-22T18:40:50.7895145+00:00",
+    "Bytes": 172732,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 170,
+    "ElapsedMs": 2104.4989,
+    "Utc": "2026-10-22T18:40:50.7928506+00:00",
+    "Bytes": 173024,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 171,
+    "ElapsedMs": 2119.3818,
+    "Utc": "2026-10-22T18:40:50.8077335+00:00",
+    "Bytes": 174334,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 172,
+    "ElapsedMs": 2135.2173,
+    "Utc": "2026-10-22T18:40:50.8235689+00:00",
+    "Bytes": 175760,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 173,
+    "ElapsedMs": 2150.252,
+    "Utc": "2026-10-22T18:40:50.8386036+00:00",
+    "Bytes": 177056,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 174,
+    "ElapsedMs": 2166.1712,
+    "Utc": "2026-10-22T18:40:50.8545229+00:00",
+    "Bytes": 178418,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 175,
+    "ElapsedMs": 2180.9792,
+    "Utc": "2026-10-22T18:40:50.8693309+00:00",
+    "Bytes": 179782,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 176,
+    "ElapsedMs": 2196.8313,
+    "Utc": "2026-10-22T18:40:50.8851829+00:00",
+    "Bytes": 181194,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 177,
+    "ElapsedMs": 2197.0374,
+    "Utc": "2026-10-22T18:40:50.8853891+00:00",
+    "Bytes": 181214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 178,
+    "ElapsedMs": 2211.7411,
+    "Utc": "2026-10-22T18:40:50.9000928+00:00",
+    "Bytes": 182474,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 179,
+    "ElapsedMs": 2227.1819,
+    "Utc": "2026-10-22T18:40:50.9155336+00:00",
+    "Bytes": 183852,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 180,
+    "ElapsedMs": 2243.3153,
+    "Utc": "2026-10-22T18:40:50.931667+00:00",
+    "Bytes": 185302,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 181,
+    "ElapsedMs": 2243.5484,
+    "Utc": "2026-10-22T18:40:50.9319001+00:00",
+    "Bytes": 185324,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 182,
+    "ElapsedMs": 2259.0962,
+    "Utc": "2026-10-22T18:40:50.9474478+00:00",
+    "Bytes": 186656,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 183,
+    "ElapsedMs": 2275.1445,
+    "Utc": "2026-10-22T18:40:50.9634961+00:00",
+    "Bytes": 188078,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 184,
+    "ElapsedMs": 2290.1323,
+    "Utc": "2026-10-22T18:40:50.978484+00:00",
+    "Bytes": 189412,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 185,
+    "ElapsedMs": 2301.3975,
+    "Utc": "2026-10-22T18:40:50.9897492+00:00",
+    "Bytes": 190368,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 186,
+    "ElapsedMs": 2306.2239,
+    "Utc": "2026-10-22T18:40:50.9945755+00:00",
+    "Bytes": 190794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 187,
+    "ElapsedMs": 2321.7527,
+    "Utc": "2026-10-22T18:40:51.0101044+00:00",
+    "Bytes": 192220,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 188,
+    "ElapsedMs": 2337.0128,
+    "Utc": "2026-10-22T18:40:51.0253644+00:00",
+    "Bytes": 193522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 189,
+    "ElapsedMs": 2350.9533,
+    "Utc": "2026-10-22T18:40:51.039305+00:00",
+    "Bytes": 194770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 190,
+    "ElapsedMs": 2352.1366,
+    "Utc": "2026-10-22T18:40:51.0404882+00:00",
+    "Bytes": 194872,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 191,
+    "ElapsedMs": 2368.7333,
+    "Utc": "2026-10-22T18:40:51.0570849+00:00",
+    "Bytes": 196326,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 192,
+    "ElapsedMs": 2385.2307,
+    "Utc": "2026-10-22T18:40:51.0735824+00:00",
+    "Bytes": 197782,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 193,
+    "ElapsedMs": 2400.605,
+    "Utc": "2026-10-22T18:40:51.0889567+00:00",
+    "Bytes": 199180,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 194,
+    "ElapsedMs": 2416.2194,
+    "Utc": "2026-10-22T18:40:51.104571+00:00",
+    "Bytes": 200526,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 195,
+    "ElapsedMs": 2432.2707,
+    "Utc": "2026-10-22T18:40:51.1206224+00:00",
+    "Bytes": 201958,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 196,
+    "ElapsedMs": 2447.9639,
+    "Utc": "2026-10-22T18:40:51.1363156+00:00",
+    "Bytes": 203340,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 197,
+    "ElapsedMs": 2448.0843,
+    "Utc": "2026-10-22T18:40:51.1364359+00:00",
+    "Bytes": 203350,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 198,
+    "ElapsedMs": 2464.4873,
+    "Utc": "2026-10-22T18:40:51.1528389+00:00",
+    "Bytes": 204740,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 199,
+    "ElapsedMs": 2480.217,
+    "Utc": "2026-10-22T18:40:51.1685687+00:00",
+    "Bytes": 206178,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 200,
+    "ElapsedMs": 2495.8563,
+    "Utc": "2026-10-22T18:40:51.1842079+00:00",
+    "Bytes": 207556,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 201,
+    "ElapsedMs": 2500.6909,
+    "Utc": "2026-10-22T18:40:51.1890426+00:00",
+    "Bytes": 207990,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 202,
+    "ElapsedMs": 2511.5177,
+    "Utc": "2026-10-22T18:40:51.1998693+00:00",
+    "Bytes": 208882,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 203,
+    "ElapsedMs": 2527.4106,
+    "Utc": "2026-10-22T18:40:51.2157623+00:00",
+    "Bytes": 210350,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 204,
+    "ElapsedMs": 2542.2676,
+    "Utc": "2026-10-22T18:40:51.2306193+00:00",
+    "Bytes": 211658,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 205,
+    "ElapsedMs": 2552.271,
+    "Utc": "2026-10-22T18:40:51.2406227+00:00",
+    "Bytes": 212530,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 206,
+    "ElapsedMs": 2558.0246,
+    "Utc": "2026-10-22T18:40:51.2463763+00:00",
+    "Bytes": 213040,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 207,
+    "ElapsedMs": 2573.2545,
+    "Utc": "2026-10-22T18:40:51.2616062+00:00",
+    "Bytes": 214388,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 208,
+    "ElapsedMs": 2589.9256,
+    "Utc": "2026-10-22T18:40:51.2782773+00:00",
+    "Bytes": 215832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 209,
+    "ElapsedMs": 2600.9699,
+    "Utc": "2026-10-22T18:40:51.2893216+00:00",
+    "Bytes": 216822,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 210,
+    "ElapsedMs": 2605.0952,
+    "Utc": "2026-10-22T18:40:51.2934469+00:00",
+    "Bytes": 217184,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 211,
+    "ElapsedMs": 2620.1832,
+    "Utc": "2026-10-22T18:40:51.3085348+00:00",
+    "Bytes": 218544,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 212,
+    "ElapsedMs": 2636.6219,
+    "Utc": "2026-10-22T18:40:51.3249736+00:00",
+    "Bytes": 219958,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 213,
+    "ElapsedMs": 2652.2183,
+    "Utc": "2026-10-22T18:40:51.3405699+00:00",
+    "Bytes": 221330,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 214,
+    "ElapsedMs": 2652.4435,
+    "Utc": "2026-10-22T18:40:51.3407951+00:00",
+    "Bytes": 221350,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 215,
+    "ElapsedMs": 2668.117,
+    "Utc": "2026-10-22T18:40:51.3564687+00:00",
+    "Bytes": 222750,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 216,
+    "ElapsedMs": 2683.2898,
+    "Utc": "2026-10-22T18:40:51.3716415+00:00",
+    "Bytes": 224088,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 217,
+    "ElapsedMs": 2699.0024,
+    "Utc": "2026-10-22T18:40:51.387354+00:00",
+    "Bytes": 225440,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 218,
+    "ElapsedMs": 2699.1984,
+    "Utc": "2026-10-22T18:40:51.3875501+00:00",
+    "Bytes": 225456,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 219,
+    "ElapsedMs": 2714.5871,
+    "Utc": "2026-10-22T18:40:51.4029388+00:00",
+    "Bytes": 226854,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 220,
+    "ElapsedMs": 2729.9231,
+    "Utc": "2026-10-22T18:40:51.4182747+00:00",
+    "Bytes": 228194,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 221,
+    "ElapsedMs": 2745.2339,
+    "Utc": "2026-10-22T18:40:51.4335856+00:00",
+    "Bytes": 229546,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 222,
+    "ElapsedMs": 2760.3532,
+    "Utc": "2026-10-22T18:40:51.4487049+00:00",
+    "Bytes": 230870,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 223,
+    "ElapsedMs": 2775.8348,
+    "Utc": "2026-10-22T18:40:51.4641865+00:00",
+    "Bytes": 232260,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 224,
+    "ElapsedMs": 2792.3259,
+    "Utc": "2026-10-22T18:40:51.4806775+00:00",
+    "Bytes": 233712,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 225,
+    "ElapsedMs": 2802.3594,
+    "Utc": "2026-10-22T18:40:51.490711+00:00",
+    "Bytes": 234568,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 226,
+    "ElapsedMs": 2807.618,
+    "Utc": "2026-10-22T18:40:51.4959696+00:00",
+    "Bytes": 235030,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 227,
+    "ElapsedMs": 2822.88,
+    "Utc": "2026-10-22T18:40:51.5112317+00:00",
+    "Bytes": 236400,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 228,
+    "ElapsedMs": 2838.9445,
+    "Utc": "2026-10-22T18:40:51.5272962+00:00",
+    "Bytes": 237828,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 229,
+    "ElapsedMs": 2850.9911,
+    "Utc": "2026-10-22T18:40:51.5393428+00:00",
+    "Bytes": 238870,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 230,
+    "ElapsedMs": 2854.7779,
+    "Utc": "2026-10-22T18:40:51.5431296+00:00",
+    "Bytes": 239204,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 231,
+    "ElapsedMs": 2870.1528,
+    "Utc": "2026-10-22T18:40:51.5585044+00:00",
+    "Bytes": 240568,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 232,
+    "ElapsedMs": 2886.5765,
+    "Utc": "2026-10-22T18:40:51.5749282+00:00",
+    "Bytes": 242000,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 233,
+    "ElapsedMs": 2901.9387,
+    "Utc": "2026-10-22T18:40:51.5902904+00:00",
+    "Bytes": 243358,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 234,
+    "ElapsedMs": 2902.0672,
+    "Utc": "2026-10-22T18:40:51.5904188+00:00",
+    "Bytes": 243370,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 235,
+    "ElapsedMs": 2918.0266,
+    "Utc": "2026-10-22T18:40:51.6063783+00:00",
+    "Bytes": 244790,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 236,
+    "ElapsedMs": 2933.5419,
+    "Utc": "2026-10-22T18:40:51.6218936+00:00",
+    "Bytes": 246156,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 237,
+    "ElapsedMs": 2949.4987,
+    "Utc": "2026-10-22T18:40:51.6378504+00:00",
+    "Bytes": 247582,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 238,
+    "ElapsedMs": 2964.6823,
+    "Utc": "2026-10-22T18:40:51.6530339+00:00",
+    "Bytes": 248894,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 239,
+    "ElapsedMs": 2980.0861,
+    "Utc": "2026-10-22T18:40:51.6684377+00:00",
+    "Bytes": 250278,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 240,
+    "ElapsedMs": 2995.0963,
+    "Utc": "2026-10-22T18:40:51.683448+00:00",
+    "Bytes": 251608,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 241,
+    "ElapsedMs": 2995.2323,
+    "Utc": "2026-10-22T18:40:51.683584+00:00",
+    "Bytes": 251618,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 242,
+    "ElapsedMs": 3010.0773,
+    "Utc": "2026-10-22T18:40:51.6984289+00:00",
+    "Bytes": 252896,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 243,
+    "ElapsedMs": 3026.3011,
+    "Utc": "2026-10-22T18:40:51.7146528+00:00",
+    "Bytes": 254278,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 244,
+    "ElapsedMs": 3040.9631,
+    "Utc": "2026-10-22T18:40:51.7293147+00:00",
+    "Bytes": 255628,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 245,
+    "ElapsedMs": 3050.6911,
+    "Utc": "2026-10-22T18:40:51.7390428+00:00",
+    "Bytes": 256502,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 246,
+    "ElapsedMs": 3056.6316,
+    "Utc": "2026-10-22T18:40:51.7449833+00:00",
+    "Bytes": 257024,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 247,
+    "ElapsedMs": 3072.2413,
+    "Utc": "2026-10-22T18:40:51.760593+00:00",
+    "Bytes": 258370,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 248,
+    "ElapsedMs": 3088.2174,
+    "Utc": "2026-10-22T18:40:51.776569+00:00",
+    "Bytes": 259798,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 249,
+    "ElapsedMs": 3101.5369,
+    "Utc": "2026-10-22T18:40:51.7898886+00:00",
+    "Bytes": 260922,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 250,
+    "ElapsedMs": 3103.1106,
+    "Utc": "2026-10-22T18:40:51.7914622+00:00",
+    "Bytes": 261060,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 251,
+    "ElapsedMs": 3118.2536,
+    "Utc": "2026-10-22T18:40:51.8066053+00:00",
+    "Bytes": 262462,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 252,
+    "ElapsedMs": 3133.8739,
+    "Utc": "2026-10-22T18:40:51.8222256+00:00",
+    "Bytes": 263842,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 253,
+    "ElapsedMs": 3149.0836,
+    "Utc": "2026-10-22T18:40:51.8374352+00:00",
+    "Bytes": 265156,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 254,
+    "ElapsedMs": 3149.3334,
+    "Utc": "2026-10-22T18:40:51.837685+00:00",
+    "Bytes": 265180,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 255,
+    "ElapsedMs": 3165.3044,
+    "Utc": "2026-10-22T18:40:51.853656+00:00",
+    "Bytes": 266618,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 256,
+    "ElapsedMs": 3181.906,
+    "Utc": "2026-10-22T18:40:51.8702576+00:00",
+    "Bytes": 268080,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 257,
+    "ElapsedMs": 3197.1913,
+    "Utc": "2026-10-22T18:40:51.8855429+00:00",
+    "Bytes": 269398,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 258,
+    "ElapsedMs": 3197.4585,
+    "Utc": "2026-10-22T18:40:51.8858102+00:00",
+    "Bytes": 269420,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 259,
+    "ElapsedMs": 3213.041,
+    "Utc": "2026-10-22T18:40:51.9013927+00:00",
+    "Bytes": 270802,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 260,
+    "ElapsedMs": 3228.4882,
+    "Utc": "2026-10-22T18:40:51.9168398+00:00",
+    "Bytes": 272176,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 261,
+    "ElapsedMs": 3244.9227,
+    "Utc": "2026-10-22T18:40:51.9332744+00:00",
+    "Bytes": 273626,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 262,
+    "ElapsedMs": 3245.0618,
+    "Utc": "2026-10-22T18:40:51.9334134+00:00",
+    "Bytes": 273638,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 263,
+    "ElapsedMs": 3260.445,
+    "Utc": "2026-10-22T18:40:51.9487967+00:00",
+    "Bytes": 274930,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 264,
+    "ElapsedMs": 3276.1345,
+    "Utc": "2026-10-22T18:40:51.9644862+00:00",
+    "Bytes": 276380,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 265,
+    "ElapsedMs": 3291.2965,
+    "Utc": "2026-10-22T18:40:51.9796481+00:00",
+    "Bytes": 277682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 266,
+    "ElapsedMs": 3300.8702,
+    "Utc": "2026-10-22T18:40:51.9892218+00:00",
+    "Bytes": 278560,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 267,
+    "ElapsedMs": 3306.5161,
+    "Utc": "2026-10-22T18:40:51.9948677+00:00",
+    "Bytes": 279058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 268,
+    "ElapsedMs": 3321.6247,
+    "Utc": "2026-10-22T18:40:52.0099763+00:00",
+    "Bytes": 280410,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 269,
+    "ElapsedMs": 3336.6765,
+    "Utc": "2026-10-22T18:40:52.0250282+00:00",
+    "Bytes": 281708,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 270,
+    "ElapsedMs": 3351.1541,
+    "Utc": "2026-10-22T18:40:52.0395058+00:00",
+    "Bytes": 282974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 271,
+    "ElapsedMs": 3352.2089,
+    "Utc": "2026-10-22T18:40:52.0405606+00:00",
+    "Bytes": 283066,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 272,
+    "ElapsedMs": 3367.1169,
+    "Utc": "2026-10-22T18:40:52.0554685+00:00",
+    "Bytes": 284394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 273,
+    "ElapsedMs": 3383.0108,
+    "Utc": "2026-10-22T18:40:52.0713625+00:00",
+    "Bytes": 285740,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 274,
+    "ElapsedMs": 3398.5911,
+    "Utc": "2026-10-22T18:40:52.0869428+00:00",
+    "Bytes": 287178,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 275,
+    "ElapsedMs": 3414.3493,
+    "Utc": "2026-10-22T18:40:52.1027009+00:00",
+    "Bytes": 288530,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 276,
+    "ElapsedMs": 3430.3427,
+    "Utc": "2026-10-22T18:40:52.1186944+00:00",
+    "Bytes": 289912,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 277,
+    "ElapsedMs": 3446.3213,
+    "Utc": "2026-10-22T18:40:52.134673+00:00",
+    "Bytes": 291410,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 278,
+    "ElapsedMs": 3460.8803,
+    "Utc": "2026-10-22T18:40:52.1492319+00:00",
+    "Bytes": 292660,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 279,
+    "ElapsedMs": 3476.8102,
+    "Utc": "2026-10-22T18:40:52.1651618+00:00",
+    "Bytes": 294080,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 280,
+    "ElapsedMs": 3491.5719,
+    "Utc": "2026-10-22T18:40:52.1799235+00:00",
+    "Bytes": 295350,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 281,
+    "ElapsedMs": 3500.9546,
+    "Utc": "2026-10-22T18:40:52.1893063+00:00",
+    "Bytes": 296198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 282,
+    "ElapsedMs": 3508.0691,
+    "Utc": "2026-10-22T18:40:52.1964208+00:00",
+    "Bytes": 296826,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 283,
+    "ElapsedMs": 3523.6046,
+    "Utc": "2026-10-22T18:40:52.2119563+00:00",
+    "Bytes": 298192,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 284,
+    "ElapsedMs": 3539.17,
+    "Utc": "2026-10-22T18:40:52.2275217+00:00",
+    "Bytes": 299594,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 285,
+    "ElapsedMs": 3551.0105,
+    "Utc": "2026-10-22T18:40:52.2393621+00:00",
+    "Bytes": 300616,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 286,
+    "ElapsedMs": 3554.6462,
+    "Utc": "2026-10-22T18:40:52.2429979+00:00",
+    "Bytes": 300936,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 287,
+    "ElapsedMs": 3569.9877,
+    "Utc": "2026-10-22T18:40:52.2583394+00:00",
+    "Bytes": 302288,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 288,
+    "ElapsedMs": 3585.4948,
+    "Utc": "2026-10-22T18:40:52.2738464+00:00",
+    "Bytes": 303666,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 289,
+    "ElapsedMs": 3601.7943,
+    "Utc": "2026-10-22T18:40:52.290146+00:00",
+    "Bytes": 305104,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 290,
+    "ElapsedMs": 3601.9074,
+    "Utc": "2026-10-22T18:40:52.2902591+00:00",
+    "Bytes": 305114,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 291,
+    "ElapsedMs": 3617.822,
+    "Utc": "2026-10-22T18:40:52.3061737+00:00",
+    "Bytes": 306522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 292,
+    "ElapsedMs": 3633.6118,
+    "Utc": "2026-10-22T18:40:52.3219635+00:00",
+    "Bytes": 307924,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 293,
+    "ElapsedMs": 3649.1854,
+    "Utc": "2026-10-22T18:40:52.337537+00:00",
+    "Bytes": 309274,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 294,
+    "ElapsedMs": 3649.3074,
+    "Utc": "2026-10-22T18:40:52.3376591+00:00",
+    "Bytes": 309284,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 295,
+    "ElapsedMs": 3665.3713,
+    "Utc": "2026-10-22T18:40:52.3537229+00:00",
+    "Bytes": 310702,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 296,
+    "ElapsedMs": 3682.0481,
+    "Utc": "2026-10-22T18:40:52.3703997+00:00",
+    "Bytes": 312160,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 297,
+    "ElapsedMs": 3697.6424,
+    "Utc": "2026-10-22T18:40:52.3859941+00:00",
+    "Bytes": 313512,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 298,
+    "ElapsedMs": 3713.9747,
+    "Utc": "2026-10-22T18:40:52.4023264+00:00",
+    "Bytes": 314998,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 299,
+    "ElapsedMs": 3729.845,
+    "Utc": "2026-10-22T18:40:52.4181966+00:00",
+    "Bytes": 316414,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 300,
+    "ElapsedMs": 3745.2951,
+    "Utc": "2026-10-22T18:40:52.4336467+00:00",
+    "Bytes": 317774,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 301,
+    "ElapsedMs": 3745.4934,
+    "Utc": "2026-10-22T18:40:52.433845+00:00",
+    "Bytes": 317790,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 302,
+    "ElapsedMs": 3760.1544,
+    "Utc": "2026-10-22T18:40:52.448506+00:00",
+    "Bytes": 319056,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 303,
+    "ElapsedMs": 3776.4837,
+    "Utc": "2026-10-22T18:40:52.4648354+00:00",
+    "Bytes": 320504,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 304,
+    "ElapsedMs": 3792.1717,
+    "Utc": "2026-10-22T18:40:52.4805233+00:00",
+    "Bytes": 321880,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 305,
+    "ElapsedMs": 3801.0216,
+    "Utc": "2026-10-22T18:40:52.4893733+00:00",
+    "Bytes": 322670,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 306,
+    "ElapsedMs": 3808.0457,
+    "Utc": "2026-10-22T18:40:52.4963974+00:00",
+    "Bytes": 323288,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 307,
+    "ElapsedMs": 3823.048,
+    "Utc": "2026-10-22T18:40:52.5113996+00:00",
+    "Bytes": 324608,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 308,
+    "ElapsedMs": 3839.1928,
+    "Utc": "2026-10-22T18:40:52.5275444+00:00",
+    "Bytes": 326060,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 309,
+    "ElapsedMs": 3851.3178,
+    "Utc": "2026-10-22T18:40:52.5396694+00:00",
+    "Bytes": 327098,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 310,
+    "ElapsedMs": 3855.3984,
+    "Utc": "2026-10-22T18:40:52.5437501+00:00",
+    "Bytes": 327460,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 311,
+    "ElapsedMs": 3870.6498,
+    "Utc": "2026-10-22T18:40:52.5590015+00:00",
+    "Bytes": 328820,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 312,
+    "ElapsedMs": 3886.2443,
+    "Utc": "2026-10-22T18:40:52.5745959+00:00",
+    "Bytes": 330198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 313,
+    "ElapsedMs": 3900.9369,
+    "Utc": "2026-10-22T18:40:52.5892886+00:00",
+    "Bytes": 331482,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 314,
+    "ElapsedMs": 3901.8281,
+    "Utc": "2026-10-22T18:40:52.5901798+00:00",
+    "Bytes": 331560,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 315,
+    "ElapsedMs": 3918.1983,
+    "Utc": "2026-10-22T18:40:52.60655+00:00",
+    "Bytes": 333022,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 316,
+    "ElapsedMs": 3933.9298,
+    "Utc": "2026-10-22T18:40:52.6222814+00:00",
+    "Bytes": 334362,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 317,
+    "ElapsedMs": 3949.5148,
+    "Utc": "2026-10-22T18:40:52.6378664+00:00",
+    "Bytes": 335784,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 318,
+    "ElapsedMs": 3949.8057,
+    "Utc": "2026-10-22T18:40:52.6381573+00:00",
+    "Bytes": 335810,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 319,
+    "ElapsedMs": 3965.212,
+    "Utc": "2026-10-22T18:40:52.6535636+00:00",
+    "Bytes": 337130,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 320,
+    "ElapsedMs": 3979.941,
+    "Utc": "2026-10-22T18:40:52.6682926+00:00",
+    "Bytes": 338452,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 321,
+    "ElapsedMs": 3996.4936,
+    "Utc": "2026-10-22T18:40:52.6848452+00:00",
+    "Bytes": 339916,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 322,
+    "ElapsedMs": 3996.7378,
+    "Utc": "2026-10-22T18:40:52.6850894+00:00",
+    "Bytes": 339936,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 323,
+    "ElapsedMs": 4012.1531,
+    "Utc": "2026-10-22T18:40:52.7005047+00:00",
+    "Bytes": 341300,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 324,
+    "ElapsedMs": 4027.6736,
+    "Utc": "2026-10-22T18:40:52.7160253+00:00",
+    "Bytes": 342604,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 325,
+    "ElapsedMs": 4043.8706,
+    "Utc": "2026-10-22T18:40:52.7322223+00:00",
+    "Bytes": 344098,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 326,
+    "ElapsedMs": 4059.6184,
+    "Utc": "2026-10-22T18:40:52.74797+00:00",
+    "Bytes": 345504,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 327,
+    "ElapsedMs": 4074.9098,
+    "Utc": "2026-10-22T18:40:52.7632614+00:00",
+    "Bytes": 346818,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 328,
+    "ElapsedMs": 4090.2316,
+    "Utc": "2026-10-22T18:40:52.7785833+00:00",
+    "Bytes": 348184,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 329,
+    "ElapsedMs": 4100.6644,
+    "Utc": "2026-10-22T18:40:52.789016+00:00",
+    "Bytes": 349120,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 330,
+    "ElapsedMs": 4106.4096,
+    "Utc": "2026-10-22T18:40:52.7947612+00:00",
+    "Bytes": 349624,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 331,
+    "ElapsedMs": 4121.7594,
+    "Utc": "2026-10-22T18:40:52.810111+00:00",
+    "Bytes": 350962,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 332,
+    "ElapsedMs": 4138.1221,
+    "Utc": "2026-10-22T18:40:52.8264737+00:00",
+    "Bytes": 352348,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 333,
+    "ElapsedMs": 4150.7182,
+    "Utc": "2026-10-22T18:40:52.8390699+00:00",
+    "Bytes": 353528,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 334,
+    "ElapsedMs": 4153.3373,
+    "Utc": "2026-10-22T18:40:52.841689+00:00",
+    "Bytes": 353760,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 335,
+    "ElapsedMs": 4169.3584,
+    "Utc": "2026-10-22T18:40:52.8577101+00:00",
+    "Bytes": 355146,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 336,
+    "ElapsedMs": 4184.4398,
+    "Utc": "2026-10-22T18:40:52.8727915+00:00",
+    "Bytes": 356492,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 337,
+    "ElapsedMs": 4199.87,
+    "Utc": "2026-10-22T18:40:52.8882216+00:00",
+    "Bytes": 357784,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 338,
+    "ElapsedMs": 4200.0944,
+    "Utc": "2026-10-22T18:40:52.888446+00:00",
+    "Bytes": 357806,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 339,
+    "ElapsedMs": 4214.8488,
+    "Utc": "2026-10-22T18:40:52.9032004+00:00",
+    "Bytes": 359186,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 340,
+    "ElapsedMs": 4229.9241,
+    "Utc": "2026-10-22T18:40:52.9182758+00:00",
+    "Bytes": 360450,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 341,
+    "ElapsedMs": 4246.1853,
+    "Utc": "2026-10-22T18:40:52.934537+00:00",
+    "Bytes": 361946,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 342,
+    "ElapsedMs": 4246.2962,
+    "Utc": "2026-10-22T18:40:52.9346478+00:00",
+    "Bytes": 361954,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 343,
+    "ElapsedMs": 4262.0816,
+    "Utc": "2026-10-22T18:40:52.9504333+00:00",
+    "Bytes": 363322,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 344,
+    "ElapsedMs": 4278.0266,
+    "Utc": "2026-10-22T18:40:52.9663783+00:00",
+    "Bytes": 364744,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 345,
+    "ElapsedMs": 4293.4136,
+    "Utc": "2026-10-22T18:40:52.9817652+00:00",
+    "Bytes": 366058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 346,
+    "ElapsedMs": 4308.7696,
+    "Utc": "2026-10-22T18:40:52.9971212+00:00",
+    "Bytes": 367476,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 347,
+    "ElapsedMs": 4324.2396,
+    "Utc": "2026-10-22T18:40:53.0125912+00:00",
+    "Bytes": 368828,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 348,
+    "ElapsedMs": 4340.1549,
+    "Utc": "2026-10-22T18:40:53.0285066+00:00",
+    "Bytes": 370198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 349,
+    "ElapsedMs": 4351.2404,
+    "Utc": "2026-10-22T18:40:53.039592+00:00",
+    "Bytes": 371178,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 350,
+    "ElapsedMs": 4355.855,
+    "Utc": "2026-10-22T18:40:53.0442066+00:00",
+    "Bytes": 371584,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 351,
+    "ElapsedMs": 4371.9995,
+    "Utc": "2026-10-22T18:40:53.0603511+00:00",
+    "Bytes": 373024,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 352,
+    "ElapsedMs": 4387.245,
+    "Utc": "2026-10-22T18:40:53.0755966+00:00",
+    "Bytes": 374384,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 353,
+    "ElapsedMs": 4400.6954,
+    "Utc": "2026-10-22T18:40:53.089047+00:00",
+    "Bytes": 375578,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 354,
+    "ElapsedMs": 4400.789,
+    "Utc": "2026-10-22T18:40:53.0891406+00:00",
+    "Bytes": 375586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 355,
+    "ElapsedMs": 4400.8893,
+    "Utc": "2026-10-22T18:40:53.0892409+00:00",
+    "Bytes": 375594,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 356,
+    "ElapsedMs": 4403.3683,
+    "Utc": "2026-10-22T18:40:53.09172+00:00",
+    "Bytes": 375812,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 357,
+    "ElapsedMs": 4418.1336,
+    "Utc": "2026-10-22T18:40:53.1064853+00:00",
+    "Bytes": 377088,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 358,
+    "ElapsedMs": 4434.4899,
+    "Utc": "2026-10-22T18:40:53.1228415+00:00",
+    "Bytes": 378528,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 359,
+    "ElapsedMs": 4449.9091,
+    "Utc": "2026-10-22T18:40:53.1382607+00:00",
+    "Bytes": 379904,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 360,
+    "ElapsedMs": 4451.5218,
+    "Utc": "2026-10-22T18:40:53.1398735+00:00",
+    "Bytes": 379986,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 361,
+    "ElapsedMs": 4466.497,
+    "Utc": "2026-10-22T18:40:53.1548487+00:00",
+    "Bytes": 381374,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 362,
+    "ElapsedMs": 4482.3072,
+    "Utc": "2026-10-22T18:40:53.1706589+00:00",
+    "Bytes": 382760,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 363,
+    "ElapsedMs": 4497.1434,
+    "Utc": "2026-10-22T18:40:53.185495+00:00",
+    "Bytes": 384046,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 364,
+    "ElapsedMs": 4497.4015,
+    "Utc": "2026-10-22T18:40:53.1857531+00:00",
+    "Bytes": 384070,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 365,
+    "ElapsedMs": 4513.6401,
+    "Utc": "2026-10-22T18:40:53.2019917+00:00",
+    "Bytes": 385516,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 366,
+    "ElapsedMs": 4529.2118,
+    "Utc": "2026-10-22T18:40:53.2175635+00:00",
+    "Bytes": 386898,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 367,
+    "ElapsedMs": 4544.211,
+    "Utc": "2026-10-22T18:40:53.2325627+00:00",
+    "Bytes": 388236,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 368,
+    "ElapsedMs": 4559.5343,
+    "Utc": "2026-10-22T18:40:53.247886+00:00",
+    "Bytes": 389574,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 369,
+    "ElapsedMs": 4574.8107,
+    "Utc": "2026-10-22T18:40:53.2631623+00:00",
+    "Bytes": 390922,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 370,
+    "ElapsedMs": 4590.4014,
+    "Utc": "2026-10-22T18:40:53.278753+00:00",
+    "Bytes": 392306,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 371,
+    "ElapsedMs": 4601.1017,
+    "Utc": "2026-10-22T18:40:53.2894534+00:00",
+    "Bytes": 393246,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 372,
+    "ElapsedMs": 4605.9253,
+    "Utc": "2026-10-22T18:40:53.2942769+00:00",
+    "Bytes": 393672,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 373,
+    "ElapsedMs": 4621.9538,
+    "Utc": "2026-10-22T18:40:53.3103055+00:00",
+    "Bytes": 395068,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 374,
+    "ElapsedMs": 4637.2858,
+    "Utc": "2026-10-22T18:40:53.3256374+00:00",
+    "Bytes": 396448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 375,
+    "ElapsedMs": 4651.0991,
+    "Utc": "2026-10-22T18:40:53.3394508+00:00",
+    "Bytes": 397636,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 376,
+    "ElapsedMs": 4653.3975,
+    "Utc": "2026-10-22T18:40:53.3417492+00:00",
+    "Bytes": 397838,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 377,
+    "ElapsedMs": 4669.3022,
+    "Utc": "2026-10-22T18:40:53.3576539+00:00",
+    "Bytes": 399224,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 378,
+    "ElapsedMs": 4684.8182,
+    "Utc": "2026-10-22T18:40:53.3731698+00:00",
+    "Bytes": 400642,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 379,
+    "ElapsedMs": 4700.258,
+    "Utc": "2026-10-22T18:40:53.3886096+00:00",
+    "Bytes": 401974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 380,
+    "ElapsedMs": 4716.0061,
+    "Utc": "2026-10-22T18:40:53.4043577+00:00",
+    "Bytes": 403360,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 381,
+    "ElapsedMs": 4731.7629,
+    "Utc": "2026-10-22T18:40:53.4201145+00:00",
+    "Bytes": 404778,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 382,
+    "ElapsedMs": 4747.4465,
+    "Utc": "2026-10-22T18:40:53.4357982+00:00",
+    "Bytes": 406140,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 383,
+    "ElapsedMs": 4762.5583,
+    "Utc": "2026-10-22T18:40:53.4509099+00:00",
+    "Bytes": 407472,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 384,
+    "ElapsedMs": 4778.1289,
+    "Utc": "2026-10-22T18:40:53.4664805+00:00",
+    "Bytes": 408844,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 385,
+    "ElapsedMs": 4794.3408,
+    "Utc": "2026-10-22T18:40:53.4826924+00:00",
+    "Bytes": 410288,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 386,
+    "ElapsedMs": 4794.4581,
+    "Utc": "2026-10-22T18:40:53.4828097+00:00",
+    "Bytes": 410300,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 387,
+    "ElapsedMs": 4810.0301,
+    "Utc": "2026-10-22T18:40:53.4983817+00:00",
+    "Bytes": 411650,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 388,
+    "ElapsedMs": 4826.1024,
+    "Utc": "2026-10-22T18:40:53.514454+00:00",
+    "Bytes": 413030,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 389,
+    "ElapsedMs": 4842.5255,
+    "Utc": "2026-10-22T18:40:53.5308771+00:00",
+    "Bytes": 414526,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 390,
+    "ElapsedMs": 4850.8504,
+    "Utc": "2026-10-22T18:40:53.5392021+00:00",
+    "Bytes": 415286,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 391,
+    "ElapsedMs": 4858.1437,
+    "Utc": "2026-10-22T18:40:53.5464953+00:00",
+    "Bytes": 415930,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 392,
+    "ElapsedMs": 4873.6209,
+    "Utc": "2026-10-22T18:40:53.5619725+00:00",
+    "Bytes": 417264,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 393,
+    "ElapsedMs": 4888.946,
+    "Utc": "2026-10-22T18:40:53.5772976+00:00",
+    "Bytes": 418624,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 394,
+    "ElapsedMs": 4900.7059,
+    "Utc": "2026-10-22T18:40:53.5890575+00:00",
+    "Bytes": 419680,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 395,
+    "ElapsedMs": 4903.9935,
+    "Utc": "2026-10-22T18:40:53.5923451+00:00",
+    "Bytes": 419968,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 396,
+    "ElapsedMs": 4919.4449,
+    "Utc": "2026-10-22T18:40:53.6077966+00:00",
+    "Bytes": 421276,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 397,
+    "ElapsedMs": 4934.3919,
+    "Utc": "2026-10-22T18:40:53.6227435+00:00",
+    "Bytes": 422578,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 398,
+    "ElapsedMs": 4949.5073,
+    "Utc": "2026-10-22T18:40:53.637859+00:00",
+    "Bytes": 423964,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 399,
+    "ElapsedMs": 4949.6166,
+    "Utc": "2026-10-22T18:40:53.6379683+00:00",
+    "Bytes": 423974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 400,
+    "ElapsedMs": 4965.2273,
+    "Utc": "2026-10-22T18:40:53.6535789+00:00",
+    "Bytes": 425340,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 401,
+    "ElapsedMs": 4980.1942,
+    "Utc": "2026-10-22T18:40:53.6685458+00:00",
+    "Bytes": 426688,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 402,
+    "ElapsedMs": 4995.3415,
+    "Utc": "2026-10-22T18:40:53.6836932+00:00",
+    "Bytes": 428016,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 403,
+    "ElapsedMs": 4995.4489,
+    "Utc": "2026-10-22T18:40:53.6838006+00:00",
+    "Bytes": 428026,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 404,
+    "ElapsedMs": 5010.8656,
+    "Utc": "2026-10-22T18:40:53.6992173+00:00",
+    "Bytes": 429394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 405,
+    "ElapsedMs": 5026.8567,
+    "Utc": "2026-10-22T18:40:53.7152084+00:00",
+    "Bytes": 430802,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 406,
+    "ElapsedMs": 5042.9987,
+    "Utc": "2026-10-22T18:40:53.7313504+00:00",
+    "Bytes": 432222,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 407,
+    "ElapsedMs": 5057.6862,
+    "Utc": "2026-10-22T18:40:53.7460379+00:00",
+    "Bytes": 433492,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 408,
+    "ElapsedMs": 5074.1189,
+    "Utc": "2026-10-22T18:40:53.7624706+00:00",
+    "Bytes": 434906,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 409,
+    "ElapsedMs": 5089.4966,
+    "Utc": "2026-10-22T18:40:53.7778483+00:00",
+    "Bytes": 436326,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 410,
+    "ElapsedMs": 5100.8756,
+    "Utc": "2026-10-22T18:40:53.7892273+00:00",
+    "Bytes": 437330,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 411,
+    "ElapsedMs": 5105.2757,
+    "Utc": "2026-10-22T18:40:53.7936274+00:00",
+    "Bytes": 437718,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 412,
+    "ElapsedMs": 5120.752,
+    "Utc": "2026-10-22T18:40:53.8091037+00:00",
+    "Bytes": 439074,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 413,
+    "ElapsedMs": 5136.2578,
+    "Utc": "2026-10-22T18:40:53.8246095+00:00",
+    "Bytes": 440420,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 414,
+    "ElapsedMs": 5151.1412,
+    "Utc": "2026-10-22T18:40:53.8394929+00:00",
+    "Bytes": 441746,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 415,
+    "ElapsedMs": 5151.4286,
+    "Utc": "2026-10-22T18:40:53.8397803+00:00",
+    "Bytes": 441772,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 416,
+    "ElapsedMs": 5168.2217,
+    "Utc": "2026-10-22T18:40:53.8565734+00:00",
+    "Bytes": 443260,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 417,
+    "ElapsedMs": 5183.6251,
+    "Utc": "2026-10-22T18:40:53.8719768+00:00",
+    "Bytes": 444600,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 418,
+    "ElapsedMs": 5200.3713,
+    "Utc": "2026-10-22T18:40:53.8887229+00:00",
+    "Bytes": 446082,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 419,
+    "ElapsedMs": 5215.1285,
+    "Utc": "2026-10-22T18:40:53.9034801+00:00",
+    "Bytes": 447384,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 420,
+    "ElapsedMs": 5231.1977,
+    "Utc": "2026-10-22T18:40:53.9195493+00:00",
+    "Bytes": 448788,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 421,
+    "ElapsedMs": 5246.6462,
+    "Utc": "2026-10-22T18:40:53.9349979+00:00",
+    "Bytes": 450174,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 422,
+    "ElapsedMs": 5246.854,
+    "Utc": "2026-10-22T18:40:53.9352057+00:00",
+    "Bytes": 450194,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 423,
+    "ElapsedMs": 5262.0127,
+    "Utc": "2026-10-22T18:40:53.9503644+00:00",
+    "Bytes": 451524,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 424,
+    "ElapsedMs": 5277.0053,
+    "Utc": "2026-10-22T18:40:53.9653569+00:00",
+    "Bytes": 452862,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 425,
+    "ElapsedMs": 5292.3159,
+    "Utc": "2026-10-22T18:40:53.9806675+00:00",
+    "Bytes": 454214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 426,
+    "ElapsedMs": 5300.8817,
+    "Utc": "2026-10-22T18:40:53.9892333+00:00",
+    "Bytes": 454966,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 427,
+    "ElapsedMs": 5308.0543,
+    "Utc": "2026-10-22T18:40:53.9964059+00:00",
+    "Bytes": 455594,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 428,
+    "ElapsedMs": 5323.1151,
+    "Utc": "2026-10-22T18:40:54.0114667+00:00",
+    "Bytes": 456862,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 429,
+    "ElapsedMs": 5338.6733,
+    "Utc": "2026-10-22T18:40:54.027025+00:00",
+    "Bytes": 458280,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 430,
+    "ElapsedMs": 5350.9277,
+    "Utc": "2026-10-22T18:40:54.0392794+00:00",
+    "Bytes": 459368,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 431,
+    "ElapsedMs": 5353.3979,
+    "Utc": "2026-10-22T18:40:54.0417495+00:00",
+    "Bytes": 459586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 432,
+    "ElapsedMs": 5368.6684,
+    "Utc": "2026-10-22T18:40:54.05702+00:00",
+    "Bytes": 460912,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 433,
+    "ElapsedMs": 5384.7996,
+    "Utc": "2026-10-22T18:40:54.0731513+00:00",
+    "Bytes": 462380,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 434,
+    "ElapsedMs": 5399.8407,
+    "Utc": "2026-10-22T18:40:54.0881923+00:00",
+    "Bytes": 463632,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 435,
+    "ElapsedMs": 5400.8003,
+    "Utc": "2026-10-22T18:40:54.0891519+00:00",
+    "Bytes": 463794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 436,
+    "ElapsedMs": 5416.4537,
+    "Utc": "2026-10-22T18:40:54.1048054+00:00",
+    "Bytes": 465158,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 437,
+    "ElapsedMs": 5431.6104,
+    "Utc": "2026-10-22T18:40:54.119962+00:00",
+    "Bytes": 466476,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 438,
+    "ElapsedMs": 5447.7391,
+    "Utc": "2026-10-22T18:40:54.1360907+00:00",
+    "Bytes": 467930,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 439,
+    "ElapsedMs": 5451.1374,
+    "Utc": "2026-10-22T18:40:54.139489+00:00",
+    "Bytes": 468196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 440,
+    "ElapsedMs": 5451.3517,
+    "Utc": "2026-10-22T18:40:54.1397034+00:00",
+    "Bytes": 468218,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 441,
+    "ElapsedMs": 5464.133,
+    "Utc": "2026-10-22T18:40:54.1524846+00:00",
+    "Bytes": 469344,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 442,
+    "ElapsedMs": 5479.4548,
+    "Utc": "2026-10-22T18:40:54.1678065+00:00",
+    "Bytes": 470716,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 443,
+    "ElapsedMs": 5495.5239,
+    "Utc": "2026-10-22T18:40:54.1838756+00:00",
+    "Bytes": 472076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 444,
+    "ElapsedMs": 5495.7469,
+    "Utc": "2026-10-22T18:40:54.1840986+00:00",
+    "Bytes": 472098,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 445,
+    "ElapsedMs": 5510.8079,
+    "Utc": "2026-10-22T18:40:54.1991595+00:00",
+    "Bytes": 473470,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 446,
+    "ElapsedMs": 5527.5265,
+    "Utc": "2026-10-22T18:40:54.2158781+00:00",
+    "Bytes": 474952,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 447,
+    "ElapsedMs": 5542.6597,
+    "Utc": "2026-10-22T18:40:54.2310114+00:00",
+    "Bytes": 476226,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 448,
+    "ElapsedMs": 5550.8999,
+    "Utc": "2026-10-22T18:40:54.2392516+00:00",
+    "Bytes": 477010,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 449,
+    "ElapsedMs": 5558.1037,
+    "Utc": "2026-10-22T18:40:54.2464553+00:00",
+    "Bytes": 477646,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 450,
+    "ElapsedMs": 5573.5595,
+    "Utc": "2026-10-22T18:40:54.2619112+00:00",
+    "Bytes": 478992,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 451,
+    "ElapsedMs": 5589.5103,
+    "Utc": "2026-10-22T18:40:54.2778619+00:00",
+    "Bytes": 480418,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 452,
+    "ElapsedMs": 5600.9622,
+    "Utc": "2026-10-22T18:40:54.2893138+00:00",
+    "Bytes": 481442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 453,
+    "ElapsedMs": 5604.8587,
+    "Utc": "2026-10-22T18:40:54.2932103+00:00",
+    "Bytes": 481784,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 454,
+    "ElapsedMs": 5620.5479,
+    "Utc": "2026-10-22T18:40:54.3088995+00:00",
+    "Bytes": 483138,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 455,
+    "ElapsedMs": 5635.6959,
+    "Utc": "2026-10-22T18:40:54.3240475+00:00",
+    "Bytes": 484486,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 456,
+    "ElapsedMs": 5651.0887,
+    "Utc": "2026-10-22T18:40:54.3394404+00:00",
+    "Bytes": 485838,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 457,
+    "ElapsedMs": 5651.1963,
+    "Utc": "2026-10-22T18:40:54.3395479+00:00",
+    "Bytes": 485848,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 458,
+    "ElapsedMs": 5666.2649,
+    "Utc": "2026-10-22T18:40:54.3546166+00:00",
+    "Bytes": 487164,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 459,
+    "ElapsedMs": 5681.7559,
+    "Utc": "2026-10-22T18:40:54.3701076+00:00",
+    "Bytes": 488566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 460,
+    "ElapsedMs": 5698.0847,
+    "Utc": "2026-10-22T18:40:54.3864364+00:00",
+    "Bytes": 489974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 461,
+    "ElapsedMs": 5713.5732,
+    "Utc": "2026-10-22T18:40:54.4019248+00:00",
+    "Bytes": 491340,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 462,
+    "ElapsedMs": 5729.1031,
+    "Utc": "2026-10-22T18:40:54.4174548+00:00",
+    "Bytes": 492730,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 463,
+    "ElapsedMs": 5745.1215,
+    "Utc": "2026-10-22T18:40:54.4334732+00:00",
+    "Bytes": 494132,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 464,
+    "ElapsedMs": 5745.3373,
+    "Utc": "2026-10-22T18:40:54.433689+00:00",
+    "Bytes": 494152,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 465,
+    "ElapsedMs": 5760.4893,
+    "Utc": "2026-10-22T18:40:54.448841+00:00",
+    "Bytes": 495456,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 466,
+    "ElapsedMs": 5775.7999,
+    "Utc": "2026-10-22T18:40:54.4641515+00:00",
+    "Bytes": 496852,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 467,
+    "ElapsedMs": 5792.1907,
+    "Utc": "2026-10-22T18:40:54.4805424+00:00",
+    "Bytes": 498314,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 468,
+    "ElapsedMs": 5800.9097,
+    "Utc": "2026-10-22T18:40:54.4892614+00:00",
+    "Bytes": 499062,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 469,
+    "ElapsedMs": 5807.3491,
+    "Utc": "2026-10-22T18:40:54.4957008+00:00",
+    "Bytes": 499630,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 470,
+    "ElapsedMs": 5822.7772,
+    "Utc": "2026-10-22T18:40:54.5111289+00:00",
+    "Bytes": 500988,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 471,
+    "ElapsedMs": 5838.0898,
+    "Utc": "2026-10-22T18:40:54.5264414+00:00",
+    "Bytes": 502326,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 472,
+    "ElapsedMs": 5851.7184,
+    "Utc": "2026-10-22T18:40:54.54007+00:00",
+    "Bytes": 503486,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 473,
+    "ElapsedMs": 5853.9368,
+    "Utc": "2026-10-22T18:40:54.5422885+00:00",
+    "Bytes": 503682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 474,
+    "ElapsedMs": 5869.4712,
+    "Utc": "2026-10-22T18:40:54.5578228+00:00",
+    "Bytes": 505112,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 475,
+    "ElapsedMs": 5885.5302,
+    "Utc": "2026-10-22T18:40:54.5738819+00:00",
+    "Bytes": 506534,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 476,
+    "ElapsedMs": 5900.4458,
+    "Utc": "2026-10-22T18:40:54.5887975+00:00",
+    "Bytes": 507860,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 477,
+    "ElapsedMs": 5900.7547,
+    "Utc": "2026-10-22T18:40:54.5891064+00:00",
+    "Bytes": 507886,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 478,
+    "ElapsedMs": 5915.9994,
+    "Utc": "2026-10-22T18:40:54.604351+00:00",
+    "Bytes": 509206,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 479,
+    "ElapsedMs": 5931.7699,
+    "Utc": "2026-10-22T18:40:54.6201216+00:00",
+    "Bytes": 510606,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 480,
+    "ElapsedMs": 5946.8488,
+    "Utc": "2026-10-22T18:40:54.6352004+00:00",
+    "Bytes": 511954,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 481,
+    "ElapsedMs": 5946.9649,
+    "Utc": "2026-10-22T18:40:54.6353165+00:00",
+    "Bytes": 511964,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 482,
+    "ElapsedMs": 5962.6598,
+    "Utc": "2026-10-22T18:40:54.6510115+00:00",
+    "Bytes": 513306,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 483,
+    "ElapsedMs": 5978.7299,
+    "Utc": "2026-10-22T18:40:54.6670816+00:00",
+    "Bytes": 514682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 484,
+    "ElapsedMs": 5994.4449,
+    "Utc": "2026-10-22T18:40:54.6827966+00:00",
+    "Bytes": 516146,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 485,
+    "ElapsedMs": 6010.1988,
+    "Utc": "2026-10-22T18:40:54.6985505+00:00",
+    "Bytes": 517510,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 486,
+    "ElapsedMs": 6025.5681,
+    "Utc": "2026-10-22T18:40:54.7139198+00:00",
+    "Bytes": 518868,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 487,
+    "ElapsedMs": 6040.4875,
+    "Utc": "2026-10-22T18:40:54.7288392+00:00",
+    "Bytes": 520206,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 488,
+    "ElapsedMs": 6051.1506,
+    "Utc": "2026-10-22T18:40:54.7395022+00:00",
+    "Bytes": 521108,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 489,
+    "ElapsedMs": 6055.8799,
+    "Utc": "2026-10-22T18:40:54.7442315+00:00",
+    "Bytes": 521522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 490,
+    "ElapsedMs": 6071.7795,
+    "Utc": "2026-10-22T18:40:54.7601311+00:00",
+    "Bytes": 522954,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 491,
+    "ElapsedMs": 6088.0668,
+    "Utc": "2026-10-22T18:40:54.7764184+00:00",
+    "Bytes": 524390,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 492,
+    "ElapsedMs": 6101.7344,
+    "Utc": "2026-10-22T18:40:54.7900861+00:00",
+    "Bytes": 525532,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 493,
+    "ElapsedMs": 6103.6366,
+    "Utc": "2026-10-22T18:40:54.7919882+00:00",
+    "Bytes": 525700,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 494,
+    "ElapsedMs": 6119.9198,
+    "Utc": "2026-10-22T18:40:54.8082714+00:00",
+    "Bytes": 527210,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 495,
+    "ElapsedMs": 6136.4686,
+    "Utc": "2026-10-22T18:40:54.8248203+00:00",
+    "Bytes": 528662,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 496,
+    "ElapsedMs": 6150.8658,
+    "Utc": "2026-10-22T18:40:54.8392174+00:00",
+    "Bytes": 529952,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 497,
+    "ElapsedMs": 6152.2959,
+    "Utc": "2026-10-22T18:40:54.8406476+00:00",
+    "Bytes": 530076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 498,
+    "ElapsedMs": 6167.8592,
+    "Utc": "2026-10-22T18:40:54.8562108+00:00",
+    "Bytes": 531428,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 499,
+    "ElapsedMs": 6183.4527,
+    "Utc": "2026-10-22T18:40:54.8718043+00:00",
+    "Bytes": 532810,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 500,
+    "ElapsedMs": 6199.0931,
+    "Utc": "2026-10-22T18:40:54.8874448+00:00",
+    "Bytes": 534186,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 501,
+    "ElapsedMs": 6199.2092,
+    "Utc": "2026-10-22T18:40:54.8875609+00:00",
+    "Bytes": 534196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 502,
+    "ElapsedMs": 6214.5613,
+    "Utc": "2026-10-22T18:40:54.902913+00:00",
+    "Bytes": 535542,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 503,
+    "ElapsedMs": 6230.5025,
+    "Utc": "2026-10-22T18:40:54.9188541+00:00",
+    "Bytes": 536964,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 504,
+    "ElapsedMs": 6246.1009,
+    "Utc": "2026-10-22T18:40:54.9344526+00:00",
+    "Bytes": 538334,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 505,
+    "ElapsedMs": 6246.2048,
+    "Utc": "2026-10-22T18:40:54.9345565+00:00",
+    "Bytes": 538344,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 506,
+    "ElapsedMs": 6262.2331,
+    "Utc": "2026-10-22T18:40:54.9505848+00:00",
+    "Bytes": 539728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 507,
+    "ElapsedMs": 6278.6818,
+    "Utc": "2026-10-22T18:40:54.9670335+00:00",
+    "Bytes": 541190,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 508,
+    "ElapsedMs": 6294.7335,
+    "Utc": "2026-10-22T18:40:54.9830852+00:00",
+    "Bytes": 542638,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 509,
+    "ElapsedMs": 6294.9453,
+    "Utc": "2026-10-22T18:40:54.983297+00:00",
+    "Bytes": 542658,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 510,
+    "ElapsedMs": 6310.0136,
+    "Utc": "2026-10-22T18:40:54.9983653+00:00",
+    "Bytes": 543928,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 511,
+    "ElapsedMs": 6324.8808,
+    "Utc": "2026-10-22T18:40:55.0132324+00:00",
+    "Bytes": 545272,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 512,
+    "ElapsedMs": 6339.9509,
+    "Utc": "2026-10-22T18:40:55.0283025+00:00",
+    "Bytes": 546618,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 513,
+    "ElapsedMs": 6351.3594,
+    "Utc": "2026-10-22T18:40:55.0397111+00:00",
+    "Bytes": 547590,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 514,
+    "ElapsedMs": 6354.7328,
+    "Utc": "2026-10-22T18:40:55.0430844+00:00",
+    "Bytes": 547890,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 515,
+    "ElapsedMs": 6370.1246,
+    "Utc": "2026-10-22T18:40:55.0584763+00:00",
+    "Bytes": 549260,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 516,
+    "ElapsedMs": 6385.8312,
+    "Utc": "2026-10-22T18:40:55.0741828+00:00",
+    "Bytes": 550618,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 517,
+    "ElapsedMs": 6401.5916,
+    "Utc": "2026-10-22T18:40:55.0899432+00:00",
+    "Bytes": 552056,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 518,
+    "ElapsedMs": 6417.6516,
+    "Utc": "2026-10-22T18:40:55.1060033+00:00",
+    "Bytes": 553396,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 519,
+    "ElapsedMs": 6433.9175,
+    "Utc": "2026-10-22T18:40:55.1222691+00:00",
+    "Bytes": 554906,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 520,
+    "ElapsedMs": 6449.5692,
+    "Utc": "2026-10-22T18:40:55.1379208+00:00",
+    "Bytes": 556214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 521,
+    "ElapsedMs": 6465.6664,
+    "Utc": "2026-10-22T18:40:55.1540181+00:00",
+    "Bytes": 557710,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 522,
+    "ElapsedMs": 6482.0902,
+    "Utc": "2026-10-22T18:40:55.1704418+00:00",
+    "Bytes": 559162,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 523,
+    "ElapsedMs": 6498.0818,
+    "Utc": "2026-10-22T18:40:55.1864334+00:00",
+    "Bytes": 560550,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 524,
+    "ElapsedMs": 6498.3198,
+    "Utc": "2026-10-22T18:40:55.1866715+00:00",
+    "Bytes": 560572,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 525,
+    "ElapsedMs": 6513.4513,
+    "Utc": "2026-10-22T18:40:55.2018029+00:00",
+    "Bytes": 561896,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 526,
+    "ElapsedMs": 6529.1919,
+    "Utc": "2026-10-22T18:40:55.2175435+00:00",
+    "Bytes": 563296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 527,
+    "ElapsedMs": 6545.4078,
+    "Utc": "2026-10-22T18:40:55.2337594+00:00",
+    "Bytes": 564728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 528,
+    "ElapsedMs": 6545.6341,
+    "Utc": "2026-10-22T18:40:55.2339858+00:00",
+    "Bytes": 564750,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 529,
+    "ElapsedMs": 6560.5386,
+    "Utc": "2026-10-22T18:40:55.2488902+00:00",
+    "Bytes": 566076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 530,
+    "ElapsedMs": 6575.9984,
+    "Utc": "2026-10-22T18:40:55.2643501+00:00",
+    "Bytes": 567428,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 531,
+    "ElapsedMs": 6591.8306,
+    "Utc": "2026-10-22T18:40:55.2801823+00:00",
+    "Bytes": 568820,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 532,
+    "ElapsedMs": 6601.1809,
+    "Utc": "2026-10-22T18:40:55.2895326+00:00",
+    "Bytes": 569634,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 533,
+    "ElapsedMs": 6601.2996,
+    "Utc": "2026-10-22T18:40:55.2896513+00:00",
+    "Bytes": 569646,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 534,
+    "ElapsedMs": 6608.3027,
+    "Utc": "2026-10-22T18:40:55.2966544+00:00",
+    "Bytes": 570262,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 535,
+    "ElapsedMs": 6623.6399,
+    "Utc": "2026-10-22T18:40:55.3119916+00:00",
+    "Bytes": 571612,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 536,
+    "ElapsedMs": 6639.3464,
+    "Utc": "2026-10-22T18:40:55.3276981+00:00",
+    "Bytes": 573014,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 537,
+    "ElapsedMs": 6650.8428,
+    "Utc": "2026-10-22T18:40:55.3391945+00:00",
+    "Bytes": 574040,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 538,
+    "ElapsedMs": 6655.9905,
+    "Utc": "2026-10-22T18:40:55.3443421+00:00",
+    "Bytes": 574494,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 539,
+    "ElapsedMs": 6672.6176,
+    "Utc": "2026-10-22T18:40:55.3609692+00:00",
+    "Bytes": 575932,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 540,
+    "ElapsedMs": 6687.7659,
+    "Utc": "2026-10-22T18:40:55.3761176+00:00",
+    "Bytes": 577278,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 541,
+    "ElapsedMs": 6702.3499,
+    "Utc": "2026-10-22T18:40:55.3907016+00:00",
+    "Bytes": 578548,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 542,
+    "ElapsedMs": 6703.0062,
+    "Utc": "2026-10-22T18:40:55.3913578+00:00",
+    "Bytes": 578606,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 543,
+    "ElapsedMs": 6718.5453,
+    "Utc": "2026-10-22T18:40:55.4068969+00:00",
+    "Bytes": 579990,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 544,
+    "ElapsedMs": 6733.1861,
+    "Utc": "2026-10-22T18:40:55.4215377+00:00",
+    "Bytes": 581296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 545,
+    "ElapsedMs": 6749.003,
+    "Utc": "2026-10-22T18:40:55.4373546+00:00",
+    "Bytes": 582622,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 546,
+    "ElapsedMs": 6764.6792,
+    "Utc": "2026-10-22T18:40:55.4530308+00:00",
+    "Bytes": 584090,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 547,
+    "ElapsedMs": 6780.3507,
+    "Utc": "2026-10-22T18:40:55.4687023+00:00",
+    "Bytes": 585462,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 548,
+    "ElapsedMs": 6796.5931,
+    "Utc": "2026-10-22T18:40:55.4849448+00:00",
+    "Bytes": 586892,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 549,
+    "ElapsedMs": 6812.1674,
+    "Utc": "2026-10-22T18:40:55.5005191+00:00",
+    "Bytes": 588268,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 550,
+    "ElapsedMs": 6828.0554,
+    "Utc": "2026-10-22T18:40:55.5164071+00:00",
+    "Bytes": 589640,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 551,
+    "ElapsedMs": 6844.1819,
+    "Utc": "2026-10-22T18:40:55.5325335+00:00",
+    "Bytes": 591056,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 552,
+    "ElapsedMs": 6844.3977,
+    "Utc": "2026-10-22T18:40:55.5327494+00:00",
+    "Bytes": 591076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 553,
+    "ElapsedMs": 6859.5501,
+    "Utc": "2026-10-22T18:40:55.5479018+00:00",
+    "Bytes": 592422,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 554,
+    "ElapsedMs": 6876.1196,
+    "Utc": "2026-10-22T18:40:55.5644712+00:00",
+    "Bytes": 593870,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 555,
+    "ElapsedMs": 6892.2116,
+    "Utc": "2026-10-22T18:40:55.5805632+00:00",
+    "Bytes": 595338,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 556,
+    "ElapsedMs": 6900.6456,
+    "Utc": "2026-10-22T18:40:55.5889972+00:00",
+    "Bytes": 596082,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 557,
+    "ElapsedMs": 6907.1898,
+    "Utc": "2026-10-22T18:40:55.5955415+00:00",
+    "Bytes": 596656,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 558,
+    "ElapsedMs": 6923.6118,
+    "Utc": "2026-10-22T18:40:55.6119634+00:00",
+    "Bytes": 598076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 559,
+    "ElapsedMs": 6939.7944,
+    "Utc": "2026-10-22T18:40:55.628146+00:00",
+    "Bytes": 599524,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 560,
+    "ElapsedMs": 6950.8148,
+    "Utc": "2026-10-22T18:40:55.6391665+00:00",
+    "Bytes": 600502,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 561,
+    "ElapsedMs": 6956.1102,
+    "Utc": "2026-10-22T18:40:55.6444619+00:00",
+    "Bytes": 600970,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 562,
+    "ElapsedMs": 6971.675,
+    "Utc": "2026-10-22T18:40:55.6600267+00:00",
+    "Bytes": 602346,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 563,
+    "ElapsedMs": 6986.9413,
+    "Utc": "2026-10-22T18:40:55.675293+00:00",
+    "Bytes": 603662,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 564,
+    "ElapsedMs": 7001.0533,
+    "Utc": "2026-10-22T18:40:55.6894049+00:00",
+    "Bytes": 604918,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 565,
+    "ElapsedMs": 7002.959,
+    "Utc": "2026-10-22T18:40:55.6913106+00:00",
+    "Bytes": 605086,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 566,
+    "ElapsedMs": 7019.3369,
+    "Utc": "2026-10-22T18:40:55.7076886+00:00",
+    "Bytes": 606542,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 567,
+    "ElapsedMs": 7034.8476,
+    "Utc": "2026-10-22T18:40:55.7231993+00:00",
+    "Bytes": 607896,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 568,
+    "ElapsedMs": 7050.4021,
+    "Utc": "2026-10-22T18:40:55.7387538+00:00",
+    "Bytes": 609286,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 569,
+    "ElapsedMs": 7050.674,
+    "Utc": "2026-10-22T18:40:55.7390256+00:00",
+    "Bytes": 609310,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 570,
+    "ElapsedMs": 7066.6957,
+    "Utc": "2026-10-22T18:40:55.7550474+00:00",
+    "Bytes": 610682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 571,
+    "ElapsedMs": 7082.0778,
+    "Utc": "2026-10-22T18:40:55.7704295+00:00",
+    "Bytes": 612054,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 572,
+    "ElapsedMs": 7098.3775,
+    "Utc": "2026-10-22T18:40:55.7867291+00:00",
+    "Bytes": 613516,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 573,
+    "ElapsedMs": 7098.4978,
+    "Utc": "2026-10-22T18:40:55.7868495+00:00",
+    "Bytes": 613526,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 574,
+    "ElapsedMs": 7113.9748,
+    "Utc": "2026-10-22T18:40:55.8023264+00:00",
+    "Bytes": 614858,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 575,
+    "ElapsedMs": 7129.2537,
+    "Utc": "2026-10-22T18:40:55.8176054+00:00",
+    "Bytes": 616236,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 576,
+    "ElapsedMs": 7144.8086,
+    "Utc": "2026-10-22T18:40:55.8331603+00:00",
+    "Bytes": 617592,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 577,
+    "ElapsedMs": 7144.9152,
+    "Utc": "2026-10-22T18:40:55.8332669+00:00",
+    "Bytes": 617602,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 578,
+    "ElapsedMs": 7160.6249,
+    "Utc": "2026-10-22T18:40:55.8489765+00:00",
+    "Bytes": 618978,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 579,
+    "ElapsedMs": 7176.7917,
+    "Utc": "2026-10-22T18:40:55.8651433+00:00",
+    "Bytes": 620348,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 580,
+    "ElapsedMs": 7192.6142,
+    "Utc": "2026-10-22T18:40:55.8809658+00:00",
+    "Bytes": 621798,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 581,
+    "ElapsedMs": 7200.9121,
+    "Utc": "2026-10-22T18:40:55.8892637+00:00",
+    "Bytes": 622550,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 582,
+    "ElapsedMs": 7208.403,
+    "Utc": "2026-10-22T18:40:55.8967547+00:00",
+    "Bytes": 623212,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 583,
+    "ElapsedMs": 7223.7715,
+    "Utc": "2026-10-22T18:40:55.9121231+00:00",
+    "Bytes": 624576,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 584,
+    "ElapsedMs": 7239.9154,
+    "Utc": "2026-10-22T18:40:55.928267+00:00",
+    "Bytes": 625978,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 585,
+    "ElapsedMs": 7250.7535,
+    "Utc": "2026-10-22T18:40:55.9391051+00:00",
+    "Bytes": 626958,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 586,
+    "ElapsedMs": 7256.1043,
+    "Utc": "2026-10-22T18:40:55.9444559+00:00",
+    "Bytes": 627430,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 587,
+    "ElapsedMs": 7272.2275,
+    "Utc": "2026-10-22T18:40:55.9605791+00:00",
+    "Bytes": 628832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 588,
+    "ElapsedMs": 7287.9799,
+    "Utc": "2026-10-22T18:40:55.9763316+00:00",
+    "Bytes": 630214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 589,
+    "ElapsedMs": 7301.0207,
+    "Utc": "2026-10-22T18:40:55.9893724+00:00",
+    "Bytes": 631360,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 590,
+    "ElapsedMs": 7304.5962,
+    "Utc": "2026-10-22T18:40:55.9929478+00:00",
+    "Bytes": 631672,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 591,
+    "ElapsedMs": 7319.9319,
+    "Utc": "2026-10-22T18:40:56.0082835+00:00",
+    "Bytes": 633042,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 592,
+    "ElapsedMs": 7335.112,
+    "Utc": "2026-10-22T18:40:56.0234637+00:00",
+    "Bytes": 634372,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 593,
+    "ElapsedMs": 7350.5641,
+    "Utc": "2026-10-22T18:40:56.0389157+00:00",
+    "Bytes": 635746,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 594,
+    "ElapsedMs": 7366.4648,
+    "Utc": "2026-10-22T18:40:56.0548164+00:00",
+    "Bytes": 637150,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 595,
+    "ElapsedMs": 7381.9868,
+    "Utc": "2026-10-22T18:40:56.0703384+00:00",
+    "Bytes": 638514,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 596,
+    "ElapsedMs": 7398.3335,
+    "Utc": "2026-10-22T18:40:56.0866851+00:00",
+    "Bytes": 639958,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 597,
+    "ElapsedMs": 7398.4525,
+    "Utc": "2026-10-22T18:40:56.0868042+00:00",
+    "Bytes": 639968,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 598,
+    "ElapsedMs": 7413.6679,
+    "Utc": "2026-10-22T18:40:56.1020196+00:00",
+    "Bytes": 641318,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 599,
+    "ElapsedMs": 7429.5179,
+    "Utc": "2026-10-22T18:40:56.1178695+00:00",
+    "Bytes": 642700,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 600,
+    "ElapsedMs": 7444.8611,
+    "Utc": "2026-10-22T18:40:56.1332128+00:00",
+    "Bytes": 644078,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 601,
+    "ElapsedMs": 7460.3555,
+    "Utc": "2026-10-22T18:40:56.1487071+00:00",
+    "Bytes": 645426,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 602,
+    "ElapsedMs": 7476.6875,
+    "Utc": "2026-10-22T18:40:56.1650392+00:00",
+    "Bytes": 646880,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 603,
+    "ElapsedMs": 7491.5667,
+    "Utc": "2026-10-22T18:40:56.1799184+00:00",
+    "Bytes": 648148,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 604,
+    "ElapsedMs": 7500.8962,
+    "Utc": "2026-10-22T18:40:56.1892479+00:00",
+    "Bytes": 648990,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 605,
+    "ElapsedMs": 7507.1074,
+    "Utc": "2026-10-22T18:40:56.195459+00:00",
+    "Bytes": 649538,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 606,
+    "ElapsedMs": 7523.3095,
+    "Utc": "2026-10-22T18:40:56.2116612+00:00",
+    "Bytes": 650988,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 607,
+    "ElapsedMs": 7539.3156,
+    "Utc": "2026-10-22T18:40:56.2276672+00:00",
+    "Bytes": 652406,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 608,
+    "ElapsedMs": 7550.9536,
+    "Utc": "2026-10-22T18:40:56.2393052+00:00",
+    "Bytes": 653408,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 609,
+    "ElapsedMs": 7555.0815,
+    "Utc": "2026-10-22T18:40:56.2434332+00:00",
+    "Bytes": 653770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 610,
+    "ElapsedMs": 7570.2598,
+    "Utc": "2026-10-22T18:40:56.2586114+00:00",
+    "Bytes": 655138,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 611,
+    "ElapsedMs": 7585.3754,
+    "Utc": "2026-10-22T18:40:56.273727+00:00",
+    "Bytes": 656448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 612,
+    "ElapsedMs": 7601.2032,
+    "Utc": "2026-10-22T18:40:56.2895548+00:00",
+    "Bytes": 657834,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 613,
+    "ElapsedMs": 7616.407,
+    "Utc": "2026-10-22T18:40:56.3047587+00:00",
+    "Bytes": 659186,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 614,
+    "ElapsedMs": 7632.189,
+    "Utc": "2026-10-22T18:40:56.3205407+00:00",
+    "Bytes": 660586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 615,
+    "ElapsedMs": 7648.5171,
+    "Utc": "2026-10-22T18:40:56.3368688+00:00",
+    "Bytes": 662038,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 616,
+    "ElapsedMs": 7648.7345,
+    "Utc": "2026-10-22T18:40:56.3370861+00:00",
+    "Bytes": 662058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 617,
+    "ElapsedMs": 7663.8745,
+    "Utc": "2026-10-22T18:40:56.3522261+00:00",
+    "Bytes": 663380,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 618,
+    "ElapsedMs": 7679.9824,
+    "Utc": "2026-10-22T18:40:56.368334+00:00",
+    "Bytes": 664790,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 619,
+    "ElapsedMs": 7695.4196,
+    "Utc": "2026-10-22T18:40:56.3837713+00:00",
+    "Bytes": 666150,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 620,
+    "ElapsedMs": 7695.542,
+    "Utc": "2026-10-22T18:40:56.3838937+00:00",
+    "Bytes": 666162,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 621,
+    "ElapsedMs": 7695.7445,
+    "Utc": "2026-10-22T18:40:56.3840961+00:00",
+    "Bytes": 666180,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 622,
+    "ElapsedMs": 7712.1897,
+    "Utc": "2026-10-22T18:40:56.4005413+00:00",
+    "Bytes": 667656,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 623,
+    "ElapsedMs": 7728.0522,
+    "Utc": "2026-10-22T18:40:56.4164039+00:00",
+    "Bytes": 669020,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 624,
+    "ElapsedMs": 7743.5962,
+    "Utc": "2026-10-22T18:40:56.4319478+00:00",
+    "Bytes": 670386,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 625,
+    "ElapsedMs": 7743.7196,
+    "Utc": "2026-10-22T18:40:56.4320713+00:00",
+    "Bytes": 670398,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 626,
+    "ElapsedMs": 7760.0506,
+    "Utc": "2026-10-22T18:40:56.4484022+00:00",
+    "Bytes": 671856,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 627,
+    "ElapsedMs": 7775.3726,
+    "Utc": "2026-10-22T18:40:56.4637242+00:00",
+    "Bytes": 673204,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 628,
+    "ElapsedMs": 7792.1362,
+    "Utc": "2026-10-22T18:40:56.4804878+00:00",
+    "Bytes": 674656,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 629,
+    "ElapsedMs": 7801.7376,
+    "Utc": "2026-10-22T18:40:56.4900893+00:00",
+    "Bytes": 675474,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 630,
+    "ElapsedMs": 7807.7195,
+    "Utc": "2026-10-22T18:40:56.4960712+00:00",
+    "Bytes": 676002,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 631,
+    "ElapsedMs": 7823.9171,
+    "Utc": "2026-10-22T18:40:56.5122687+00:00",
+    "Bytes": 677500,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 632,
+    "ElapsedMs": 7839.284,
+    "Utc": "2026-10-22T18:40:56.5276356+00:00",
+    "Bytes": 678852,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 633,
+    "ElapsedMs": 7851.2785,
+    "Utc": "2026-10-22T18:40:56.5396302+00:00",
+    "Bytes": 679894,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 634,
+    "ElapsedMs": 7854.7108,
+    "Utc": "2026-10-22T18:40:56.5430624+00:00",
+    "Bytes": 680196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 635,
+    "ElapsedMs": 7870.3471,
+    "Utc": "2026-10-22T18:40:56.5586987+00:00",
+    "Bytes": 681572,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 636,
+    "ElapsedMs": 7886.1294,
+    "Utc": "2026-10-22T18:40:56.574481+00:00",
+    "Bytes": 683002,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 637,
+    "ElapsedMs": 7900.902,
+    "Utc": "2026-10-22T18:40:56.5892537+00:00",
+    "Bytes": 684288,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 638,
+    "ElapsedMs": 7901.6682,
+    "Utc": "2026-10-22T18:40:56.5900199+00:00",
+    "Bytes": 684354,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 639,
+    "ElapsedMs": 7917.9286,
+    "Utc": "2026-10-22T18:40:56.6062803+00:00",
+    "Bytes": 685800,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 640,
+    "ElapsedMs": 7933.7893,
+    "Utc": "2026-10-22T18:40:56.622141+00:00",
+    "Bytes": 687188,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 641,
+    "ElapsedMs": 7949.3639,
+    "Utc": "2026-10-22T18:40:56.6377156+00:00",
+    "Bytes": 688570,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 642,
+    "ElapsedMs": 7964.9433,
+    "Utc": "2026-10-22T18:40:56.6532949+00:00",
+    "Bytes": 689908,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 643,
+    "ElapsedMs": 7980.3442,
+    "Utc": "2026-10-22T18:40:56.6686958+00:00",
+    "Bytes": 691228,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 644,
+    "ElapsedMs": 7996.7971,
+    "Utc": "2026-10-22T18:40:56.6851487+00:00",
+    "Bytes": 692728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 645,
+    "ElapsedMs": 7996.8975,
+    "Utc": "2026-10-22T18:40:56.6852492+00:00",
+    "Bytes": 692738,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 646,
+    "ElapsedMs": 8012.7103,
+    "Utc": "2026-10-22T18:40:56.7010619+00:00",
+    "Bytes": 694104,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 647,
+    "ElapsedMs": 8028.0998,
+    "Utc": "2026-10-22T18:40:56.7164514+00:00",
+    "Bytes": 695442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 648,
+    "ElapsedMs": 8043.7363,
+    "Utc": "2026-10-22T18:40:56.7320879+00:00",
+    "Bytes": 696862,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 649,
+    "ElapsedMs": 8043.9588,
+    "Utc": "2026-10-22T18:40:56.7323105+00:00",
+    "Bytes": 696882,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 650,
+    "ElapsedMs": 8058.8595,
+    "Utc": "2026-10-22T18:40:56.7472111+00:00",
+    "Bytes": 698222,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 651,
+    "ElapsedMs": 8074.2567,
+    "Utc": "2026-10-22T18:40:56.7626083+00:00",
+    "Bytes": 699592,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 652,
+    "ElapsedMs": 8090.2725,
+    "Utc": "2026-10-22T18:40:56.7786242+00:00",
+    "Bytes": 701006,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 653,
+    "ElapsedMs": 8101.8952,
+    "Utc": "2026-10-22T18:40:56.7902468+00:00",
+    "Bytes": 702030,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 654,
+    "ElapsedMs": 8105.4066,
+    "Utc": "2026-10-22T18:40:56.7937583+00:00",
+    "Bytes": 702338,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 655,
+    "ElapsedMs": 8120.922,
+    "Utc": "2026-10-22T18:40:56.8092736+00:00",
+    "Bytes": 703690,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 656,
+    "ElapsedMs": 8136.4276,
+    "Utc": "2026-10-22T18:40:56.8247792+00:00",
+    "Bytes": 705058,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 657,
+    "ElapsedMs": 8150.8955,
+    "Utc": "2026-10-22T18:40:56.8392471+00:00",
+    "Bytes": 706328,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 658,
+    "ElapsedMs": 8151.935,
+    "Utc": "2026-10-22T18:40:56.8402867+00:00",
+    "Bytes": 706422,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 659,
+    "ElapsedMs": 8167.8312,
+    "Utc": "2026-10-22T18:40:56.8561828+00:00",
+    "Bytes": 707836,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 660,
+    "ElapsedMs": 8182.9586,
+    "Utc": "2026-10-22T18:40:56.8713102+00:00",
+    "Bytes": 709162,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 661,
+    "ElapsedMs": 8198.2476,
+    "Utc": "2026-10-22T18:40:56.8865993+00:00",
+    "Bytes": 710508,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 662,
+    "ElapsedMs": 8198.3508,
+    "Utc": "2026-10-22T18:40:56.8867025+00:00",
+    "Bytes": 710518,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 663,
+    "ElapsedMs": 8214.662,
+    "Utc": "2026-10-22T18:40:56.9030137+00:00",
+    "Bytes": 711938,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 664,
+    "ElapsedMs": 8230.2084,
+    "Utc": "2026-10-22T18:40:56.91856+00:00",
+    "Bytes": 713318,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 665,
+    "ElapsedMs": 8246.4357,
+    "Utc": "2026-10-22T18:40:56.9347873+00:00",
+    "Bytes": 714708,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 666,
+    "ElapsedMs": 8261.8719,
+    "Utc": "2026-10-22T18:40:56.9502236+00:00",
+    "Bytes": 716086,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 667,
+    "ElapsedMs": 8277.3414,
+    "Utc": "2026-10-22T18:40:56.965693+00:00",
+    "Bytes": 717504,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 668,
+    "ElapsedMs": 8293.2148,
+    "Utc": "2026-10-22T18:40:56.9815664+00:00",
+    "Bytes": 718868,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 669,
+    "ElapsedMs": 8293.3149,
+    "Utc": "2026-10-22T18:40:56.9816665+00:00",
+    "Bytes": 718880,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 670,
+    "ElapsedMs": 8308.2139,
+    "Utc": "2026-10-22T18:40:56.9965656+00:00",
+    "Bytes": 720196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 671,
+    "ElapsedMs": 8324.2054,
+    "Utc": "2026-10-22T18:40:57.0125571+00:00",
+    "Bytes": 721632,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 672,
+    "ElapsedMs": 8339.1653,
+    "Utc": "2026-10-22T18:40:57.027517+00:00",
+    "Bytes": 722958,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 673,
+    "ElapsedMs": 8351.98,
+    "Utc": "2026-10-22T18:40:57.0403316+00:00",
+    "Bytes": 724084,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 674,
+    "ElapsedMs": 8355.1789,
+    "Utc": "2026-10-22T18:40:57.0435306+00:00",
+    "Bytes": 724366,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 675,
+    "ElapsedMs": 8369.9516,
+    "Utc": "2026-10-22T18:40:57.0583033+00:00",
+    "Bytes": 725644,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 676,
+    "ElapsedMs": 8385.7144,
+    "Utc": "2026-10-22T18:40:57.0740661+00:00",
+    "Bytes": 727038,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 677,
+    "ElapsedMs": 8401.6123,
+    "Utc": "2026-10-22T18:40:57.089964+00:00",
+    "Bytes": 728380,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 678,
+    "ElapsedMs": 8416.8694,
+    "Utc": "2026-10-22T18:40:57.105221+00:00",
+    "Bytes": 729802,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 679,
+    "ElapsedMs": 8433.4478,
+    "Utc": "2026-10-22T18:40:57.1217994+00:00",
+    "Bytes": 731242,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 680,
+    "ElapsedMs": 8450.2834,
+    "Utc": "2026-10-22T18:40:57.1386351+00:00",
+    "Bytes": 732734,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 681,
+    "ElapsedMs": 8465.2962,
+    "Utc": "2026-10-22T18:40:57.1536479+00:00",
+    "Bytes": 734076,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 682,
+    "ElapsedMs": 8480.7606,
+    "Utc": "2026-10-22T18:40:57.1691122+00:00",
+    "Bytes": 735440,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 683,
+    "ElapsedMs": 8496.4174,
+    "Utc": "2026-10-22T18:40:57.1847691+00:00",
+    "Bytes": 736774,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 684,
+    "ElapsedMs": 8496.6217,
+    "Utc": "2026-10-22T18:40:57.1849733+00:00",
+    "Bytes": 736794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 685,
+    "ElapsedMs": 8512.9308,
+    "Utc": "2026-10-22T18:40:57.2012825+00:00",
+    "Bytes": 738222,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 686,
+    "ElapsedMs": 8529.5335,
+    "Utc": "2026-10-22T18:40:57.2178851+00:00",
+    "Bytes": 739690,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 687,
+    "ElapsedMs": 8545.1961,
+    "Utc": "2026-10-22T18:40:57.2335477+00:00",
+    "Bytes": 741048,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 688,
+    "ElapsedMs": 8545.415,
+    "Utc": "2026-10-22T18:40:57.2337667+00:00",
+    "Bytes": 741066,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 689,
+    "ElapsedMs": 8560.6838,
+    "Utc": "2026-10-22T18:40:57.2490355+00:00",
+    "Bytes": 742474,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 690,
+    "ElapsedMs": 8576.1323,
+    "Utc": "2026-10-22T18:40:57.2644839+00:00",
+    "Bytes": 743836,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 691,
+    "ElapsedMs": 8591.264,
+    "Utc": "2026-10-22T18:40:57.2796156+00:00",
+    "Bytes": 745180,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 692,
+    "ElapsedMs": 8600.8163,
+    "Utc": "2026-10-22T18:40:57.289168+00:00",
+    "Bytes": 746018,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 693,
+    "ElapsedMs": 8605.9658,
+    "Utc": "2026-10-22T18:40:57.2943174+00:00",
+    "Bytes": 746472,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 694,
+    "ElapsedMs": 8622.0315,
+    "Utc": "2026-10-22T18:40:57.3103831+00:00",
+    "Bytes": 747864,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 695,
+    "ElapsedMs": 8637.8778,
+    "Utc": "2026-10-22T18:40:57.3262295+00:00",
+    "Bytes": 749302,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 696,
+    "ElapsedMs": 8651.8767,
+    "Utc": "2026-10-22T18:40:57.3402284+00:00",
+    "Bytes": 750528,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 697,
+    "ElapsedMs": 8653.0814,
+    "Utc": "2026-10-22T18:40:57.341433+00:00",
+    "Bytes": 750636,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 698,
+    "ElapsedMs": 8668.7765,
+    "Utc": "2026-10-22T18:40:57.3571281+00:00",
+    "Bytes": 752026,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 699,
+    "ElapsedMs": 8684.175,
+    "Utc": "2026-10-22T18:40:57.3725266+00:00",
+    "Bytes": 753376,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 700,
+    "ElapsedMs": 8699.9902,
+    "Utc": "2026-10-22T18:40:57.3883419+00:00",
+    "Bytes": 754760,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 701,
+    "ElapsedMs": 8700.3387,
+    "Utc": "2026-10-22T18:40:57.3886904+00:00",
+    "Bytes": 754794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 702,
+    "ElapsedMs": 8715.3224,
+    "Utc": "2026-10-22T18:40:57.403674+00:00",
+    "Bytes": 756132,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 703,
+    "ElapsedMs": 8730.2109,
+    "Utc": "2026-10-22T18:40:57.4185626+00:00",
+    "Bytes": 757400,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 704,
+    "ElapsedMs": 8745.6254,
+    "Utc": "2026-10-22T18:40:57.4339771+00:00",
+    "Bytes": 758720,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 705,
+    "ElapsedMs": 8745.8469,
+    "Utc": "2026-10-22T18:40:57.4341986+00:00",
+    "Bytes": 758742,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 706,
+    "ElapsedMs": 8760.9989,
+    "Utc": "2026-10-22T18:40:57.4493506+00:00",
+    "Bytes": 760142,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 707,
+    "ElapsedMs": 8776.4674,
+    "Utc": "2026-10-22T18:40:57.464819+00:00",
+    "Bytes": 761520,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 708,
+    "ElapsedMs": 8791.8666,
+    "Utc": "2026-10-22T18:40:57.4802182+00:00",
+    "Bytes": 762858,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 709,
+    "ElapsedMs": 8800.8797,
+    "Utc": "2026-10-22T18:40:57.4892313+00:00",
+    "Bytes": 763682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 710,
+    "ElapsedMs": 8801.0917,
+    "Utc": "2026-10-22T18:40:57.4894434+00:00",
+    "Bytes": 763700,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 711,
+    "ElapsedMs": 8807.4642,
+    "Utc": "2026-10-22T18:40:57.4958159+00:00",
+    "Bytes": 764262,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 712,
+    "ElapsedMs": 8823.8976,
+    "Utc": "2026-10-22T18:40:57.5122493+00:00",
+    "Bytes": 765696,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 713,
+    "ElapsedMs": 8840.3011,
+    "Utc": "2026-10-22T18:40:57.5286528+00:00",
+    "Bytes": 767148,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 714,
+    "ElapsedMs": 8850.9642,
+    "Utc": "2026-10-22T18:40:57.5393159+00:00",
+    "Bytes": 768078,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 715,
+    "ElapsedMs": 8856.0034,
+    "Utc": "2026-10-22T18:40:57.544355+00:00",
+    "Bytes": 768522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 716,
+    "ElapsedMs": 8871.9833,
+    "Utc": "2026-10-22T18:40:57.5603349+00:00",
+    "Bytes": 769928,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 717,
+    "ElapsedMs": 8887.5869,
+    "Utc": "2026-10-22T18:40:57.5759386+00:00",
+    "Bytes": 771300,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 718,
+    "ElapsedMs": 8900.6696,
+    "Utc": "2026-10-22T18:40:57.5890212+00:00",
+    "Bytes": 772472,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 719,
+    "ElapsedMs": 8902.8873,
+    "Utc": "2026-10-22T18:40:57.591239+00:00",
+    "Bytes": 772666,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 720,
+    "ElapsedMs": 8918.3231,
+    "Utc": "2026-10-22T18:40:57.6066747+00:00",
+    "Bytes": 774038,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 721,
+    "ElapsedMs": 8934.8586,
+    "Utc": "2026-10-22T18:40:57.6232102+00:00",
+    "Bytes": 775486,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 722,
+    "ElapsedMs": 8950.6087,
+    "Utc": "2026-10-22T18:40:57.6389604+00:00",
+    "Bytes": 776822,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 723,
+    "ElapsedMs": 8965.7176,
+    "Utc": "2026-10-22T18:40:57.6540692+00:00",
+    "Bytes": 778136,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 724,
+    "ElapsedMs": 8981.539,
+    "Utc": "2026-10-22T18:40:57.6698907+00:00",
+    "Bytes": 779530,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 725,
+    "ElapsedMs": 8996.718,
+    "Utc": "2026-10-22T18:40:57.6850697+00:00",
+    "Bytes": 780926,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 726,
+    "ElapsedMs": 8996.8636,
+    "Utc": "2026-10-22T18:40:57.6852153+00:00",
+    "Bytes": 780942,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 727,
+    "ElapsedMs": 9011.9528,
+    "Utc": "2026-10-22T18:40:57.7003044+00:00",
+    "Bytes": 782274,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 728,
+    "ElapsedMs": 9027.5685,
+    "Utc": "2026-10-22T18:40:57.7159201+00:00",
+    "Bytes": 783664,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 729,
+    "ElapsedMs": 9044.1041,
+    "Utc": "2026-10-22T18:40:57.7324558+00:00",
+    "Bytes": 785102,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 730,
+    "ElapsedMs": 9044.3946,
+    "Utc": "2026-10-22T18:40:57.7327462+00:00",
+    "Bytes": 785128,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 731,
+    "ElapsedMs": 9059.5769,
+    "Utc": "2026-10-22T18:40:57.7479286+00:00",
+    "Bytes": 786482,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 732,
+    "ElapsedMs": 9075.7563,
+    "Utc": "2026-10-22T18:40:57.7641079+00:00",
+    "Bytes": 787924,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 733,
+    "ElapsedMs": 9090.9391,
+    "Utc": "2026-10-22T18:40:57.7792907+00:00",
+    "Bytes": 789244,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 734,
+    "ElapsedMs": 9101.08,
+    "Utc": "2026-10-22T18:40:57.7894316+00:00",
+    "Bytes": 790128,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 735,
+    "ElapsedMs": 9106.0441,
+    "Utc": "2026-10-22T18:40:57.7943957+00:00",
+    "Bytes": 790566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 736,
+    "ElapsedMs": 9121.6916,
+    "Utc": "2026-10-22T18:40:57.8100433+00:00",
+    "Bytes": 791888,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 737,
+    "ElapsedMs": 9137.6096,
+    "Utc": "2026-10-22T18:40:57.8259612+00:00",
+    "Bytes": 793342,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 738,
+    "ElapsedMs": 9150.7275,
+    "Utc": "2026-10-22T18:40:57.8390792+00:00",
+    "Bytes": 794534,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 739,
+    "ElapsedMs": 9153.6372,
+    "Utc": "2026-10-22T18:40:57.8419888+00:00",
+    "Bytes": 794788,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 740,
+    "ElapsedMs": 9169.0452,
+    "Utc": "2026-10-22T18:40:57.8573969+00:00",
+    "Bytes": 796130,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 741,
+    "ElapsedMs": 9184.526,
+    "Utc": "2026-10-22T18:40:57.8728776+00:00",
+    "Bytes": 797488,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 742,
+    "ElapsedMs": 9199.8608,
+    "Utc": "2026-10-22T18:40:57.8882125+00:00",
+    "Bytes": 798854,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 743,
+    "ElapsedMs": 9216.1661,
+    "Utc": "2026-10-22T18:40:57.9045178+00:00",
+    "Bytes": 800310,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 744,
+    "ElapsedMs": 9232.3291,
+    "Utc": "2026-10-22T18:40:57.9206808+00:00",
+    "Bytes": 801712,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 745,
+    "ElapsedMs": 9248.22,
+    "Utc": "2026-10-22T18:40:57.9365716+00:00",
+    "Bytes": 803118,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 746,
+    "ElapsedMs": 9248.3666,
+    "Utc": "2026-10-22T18:40:57.9367182+00:00",
+    "Bytes": 803134,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 747,
+    "ElapsedMs": 9263.1152,
+    "Utc": "2026-10-22T18:40:57.9514669+00:00",
+    "Bytes": 804420,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 748,
+    "ElapsedMs": 9278.273,
+    "Utc": "2026-10-22T18:40:57.9666246+00:00",
+    "Bytes": 805770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 749,
+    "ElapsedMs": 9293.8195,
+    "Utc": "2026-10-22T18:40:57.9821711+00:00",
+    "Bytes": 807072,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 750,
+    "ElapsedMs": 9294.0541,
+    "Utc": "2026-10-22T18:40:57.9824057+00:00",
+    "Bytes": 807094,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 751,
+    "ElapsedMs": 9310.244,
+    "Utc": "2026-10-22T18:40:57.9985957+00:00",
+    "Bytes": 808586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 752,
+    "ElapsedMs": 9325.5311,
+    "Utc": "2026-10-22T18:40:58.0138828+00:00",
+    "Bytes": 809926,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 753,
+    "ElapsedMs": 9341.0002,
+    "Utc": "2026-10-22T18:40:58.0293519+00:00",
+    "Bytes": 811294,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 754,
+    "ElapsedMs": 9350.8561,
+    "Utc": "2026-10-22T18:40:58.0392078+00:00",
+    "Bytes": 812188,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 755,
+    "ElapsedMs": 9357.4803,
+    "Utc": "2026-10-22T18:40:58.0458319+00:00",
+    "Bytes": 812772,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 756,
+    "ElapsedMs": 9373.8667,
+    "Utc": "2026-10-22T18:40:58.0622184+00:00",
+    "Bytes": 814196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 757,
+    "ElapsedMs": 9389.7166,
+    "Utc": "2026-10-22T18:40:58.0780682+00:00",
+    "Bytes": 815602,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 758,
+    "ElapsedMs": 9401.7218,
+    "Utc": "2026-10-22T18:40:58.0900734+00:00",
+    "Bytes": 816588,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 759,
+    "ElapsedMs": 9405.6001,
+    "Utc": "2026-10-22T18:40:58.0939517+00:00",
+    "Bytes": 816932,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 760,
+    "ElapsedMs": 9421.9226,
+    "Utc": "2026-10-22T18:40:58.1102742+00:00",
+    "Bytes": 818442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 761,
+    "ElapsedMs": 9437.2534,
+    "Utc": "2026-10-22T18:40:58.125605+00:00",
+    "Bytes": 819800,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 762,
+    "ElapsedMs": 9451.1763,
+    "Utc": "2026-10-22T18:40:58.1395279+00:00",
+    "Bytes": 820988,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 763,
+    "ElapsedMs": 9452.6016,
+    "Utc": "2026-10-22T18:40:58.1409532+00:00",
+    "Bytes": 821116,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 764,
+    "ElapsedMs": 9469.2807,
+    "Utc": "2026-10-22T18:40:58.1576323+00:00",
+    "Bytes": 822596,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 765,
+    "ElapsedMs": 9485.4218,
+    "Utc": "2026-10-22T18:40:58.1737735+00:00",
+    "Bytes": 824052,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 766,
+    "ElapsedMs": 9500.1987,
+    "Utc": "2026-10-22T18:40:58.1885504+00:00",
+    "Bytes": 825338,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 767,
+    "ElapsedMs": 9500.4907,
+    "Utc": "2026-10-22T18:40:58.1888424+00:00",
+    "Bytes": 825366,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 768,
+    "ElapsedMs": 9516.4956,
+    "Utc": "2026-10-22T18:40:58.2048473+00:00",
+    "Bytes": 826770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 769,
+    "ElapsedMs": 9531.9607,
+    "Utc": "2026-10-22T18:40:58.2203123+00:00",
+    "Bytes": 828134,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 770,
+    "ElapsedMs": 9547.5437,
+    "Utc": "2026-10-22T18:40:58.2358954+00:00",
+    "Bytes": 829512,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 771,
+    "ElapsedMs": 9563.1397,
+    "Utc": "2026-10-22T18:40:58.2514913+00:00",
+    "Bytes": 830872,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 772,
+    "ElapsedMs": 9579.3425,
+    "Utc": "2026-10-22T18:40:58.2676942+00:00",
+    "Bytes": 832260,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 773,
+    "ElapsedMs": 9595.0591,
+    "Utc": "2026-10-22T18:40:58.2834108+00:00",
+    "Bytes": 833712,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 774,
+    "ElapsedMs": 9610.2924,
+    "Utc": "2026-10-22T18:40:58.2986441+00:00",
+    "Bytes": 835064,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 775,
+    "ElapsedMs": 9626.4978,
+    "Utc": "2026-10-22T18:40:58.3148494+00:00",
+    "Bytes": 836432,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 776,
+    "ElapsedMs": 9641.818,
+    "Utc": "2026-10-22T18:40:58.3301696+00:00",
+    "Bytes": 837846,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 777,
+    "ElapsedMs": 9651.199,
+    "Utc": "2026-10-22T18:40:58.3395507+00:00",
+    "Bytes": 838644,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 778,
+    "ElapsedMs": 9656.8837,
+    "Utc": "2026-10-22T18:40:58.3452354+00:00",
+    "Bytes": 839146,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 779,
+    "ElapsedMs": 9672.1809,
+    "Utc": "2026-10-22T18:40:58.3605325+00:00",
+    "Bytes": 840516,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 780,
+    "ElapsedMs": 9688.5433,
+    "Utc": "2026-10-22T18:40:58.3768949+00:00",
+    "Bytes": 841948,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 781,
+    "ElapsedMs": 9701.5919,
+    "Utc": "2026-10-22T18:40:58.3899435+00:00",
+    "Bytes": 843044,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 782,
+    "ElapsedMs": 9704.0166,
+    "Utc": "2026-10-22T18:40:58.3923683+00:00",
+    "Bytes": 843258,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 783,
+    "ElapsedMs": 9720.4625,
+    "Utc": "2026-10-22T18:40:58.4088141+00:00",
+    "Bytes": 844770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 784,
+    "ElapsedMs": 9736.0963,
+    "Utc": "2026-10-22T18:40:58.4244479+00:00",
+    "Bytes": 846150,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 785,
+    "ElapsedMs": 9750.9492,
+    "Utc": "2026-10-22T18:40:58.4393008+00:00",
+    "Bytes": 847442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 786,
+    "ElapsedMs": 9751.0654,
+    "Utc": "2026-10-22T18:40:58.439417+00:00",
+    "Bytes": 847454,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 787,
+    "ElapsedMs": 9766.6709,
+    "Utc": "2026-10-22T18:40:58.4550225+00:00",
+    "Bytes": 848834,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 788,
+    "ElapsedMs": 9782.111,
+    "Utc": "2026-10-22T18:40:58.4704627+00:00",
+    "Bytes": 850192,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 789,
+    "ElapsedMs": 9798.7437,
+    "Utc": "2026-10-22T18:40:58.4870954+00:00",
+    "Bytes": 851678,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 790,
+    "ElapsedMs": 9813.5704,
+    "Utc": "2026-10-22T18:40:58.5019221+00:00",
+    "Bytes": 852978,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 791,
+    "ElapsedMs": 9829.1936,
+    "Utc": "2026-10-22T18:40:58.5175453+00:00",
+    "Bytes": 854294,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 792,
+    "ElapsedMs": 9845.449,
+    "Utc": "2026-10-22T18:40:58.5338007+00:00",
+    "Bytes": 855800,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 793,
+    "ElapsedMs": 9845.565,
+    "Utc": "2026-10-22T18:40:58.5339167+00:00",
+    "Bytes": 855810,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 794,
+    "ElapsedMs": 9860.2215,
+    "Utc": "2026-10-22T18:40:58.5485731+00:00",
+    "Bytes": 857026,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 795,
+    "ElapsedMs": 9876.1549,
+    "Utc": "2026-10-22T18:40:58.5645065+00:00",
+    "Bytes": 858520,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 796,
+    "ElapsedMs": 9890.9308,
+    "Utc": "2026-10-22T18:40:58.5792825+00:00",
+    "Bytes": 859794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 797,
+    "ElapsedMs": 9901.4917,
+    "Utc": "2026-10-22T18:40:58.5898434+00:00",
+    "Bytes": 860676,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 798,
+    "ElapsedMs": 9907.0829,
+    "Utc": "2026-10-22T18:40:58.5954345+00:00",
+    "Bytes": 861168,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 799,
+    "ElapsedMs": 9922.2916,
+    "Utc": "2026-10-22T18:40:58.6106433+00:00",
+    "Bytes": 862574,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 800,
+    "ElapsedMs": 9937.6568,
+    "Utc": "2026-10-22T18:40:58.6260085+00:00",
+    "Bytes": 863864,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 801,
+    "ElapsedMs": 9950.6292,
+    "Utc": "2026-10-22T18:40:58.6389808+00:00",
+    "Bytes": 865090,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 802,
+    "ElapsedMs": 9950.7819,
+    "Utc": "2026-10-22T18:40:58.6391335+00:00",
+    "Bytes": 865104,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 803,
+    "ElapsedMs": 9953.7269,
+    "Utc": "2026-10-22T18:40:58.6420785+00:00",
+    "Bytes": 865362,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 804,
+    "ElapsedMs": 9968.4538,
+    "Utc": "2026-10-22T18:40:58.6568054+00:00",
+    "Bytes": 866662,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 805,
+    "ElapsedMs": 9984.696,
+    "Utc": "2026-10-22T18:40:58.6730476+00:00",
+    "Bytes": 868012,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 806,
+    "ElapsedMs": 9999.5671,
+    "Utc": "2026-10-22T18:40:58.6879188+00:00",
+    "Bytes": 869376,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 807,
+    "ElapsedMs": 10014.9864,
+    "Utc": "2026-10-22T18:40:58.703338+00:00",
+    "Bytes": 870744,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 808,
+    "ElapsedMs": 10030.5109,
+    "Utc": "2026-10-22T18:40:58.7188625+00:00",
+    "Bytes": 872128,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 809,
+    "ElapsedMs": 10045.848,
+    "Utc": "2026-10-22T18:40:58.7341996+00:00",
+    "Bytes": 873474,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 810,
+    "ElapsedMs": 10045.9594,
+    "Utc": "2026-10-22T18:40:58.734311+00:00",
+    "Bytes": 873486,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 811,
+    "ElapsedMs": 10062.1272,
+    "Utc": "2026-10-22T18:40:58.7504789+00:00",
+    "Bytes": 874900,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 812,
+    "ElapsedMs": 10077.161,
+    "Utc": "2026-10-22T18:40:58.7655127+00:00",
+    "Bytes": 876238,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 813,
+    "ElapsedMs": 10093.091,
+    "Utc": "2026-10-22T18:40:58.7814427+00:00",
+    "Bytes": 877620,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 814,
+    "ElapsedMs": 10093.3094,
+    "Utc": "2026-10-22T18:40:58.7816611+00:00",
+    "Bytes": 877640,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 815,
+    "ElapsedMs": 10108.692,
+    "Utc": "2026-10-22T18:40:58.7970436+00:00",
+    "Bytes": 879030,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 816,
+    "ElapsedMs": 10123.5343,
+    "Utc": "2026-10-22T18:40:58.8118859+00:00",
+    "Bytes": 880296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 817,
+    "ElapsedMs": 10139.3536,
+    "Utc": "2026-10-22T18:40:58.8277053+00:00",
+    "Bytes": 881698,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 818,
+    "ElapsedMs": 10152.0951,
+    "Utc": "2026-10-22T18:40:58.8404468+00:00",
+    "Bytes": 882820,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 819,
+    "ElapsedMs": 10155.0744,
+    "Utc": "2026-10-22T18:40:58.843426+00:00",
+    "Bytes": 883080,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 820,
+    "ElapsedMs": 10171.8069,
+    "Utc": "2026-10-22T18:40:58.8601585+00:00",
+    "Bytes": 884590,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 821,
+    "ElapsedMs": 10187.5401,
+    "Utc": "2026-10-22T18:40:58.8758918+00:00",
+    "Bytes": 885922,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 822,
+    "ElapsedMs": 10201.5653,
+    "Utc": "2026-10-22T18:40:58.889917+00:00",
+    "Bytes": 887144,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 823,
+    "ElapsedMs": 10202.8461,
+    "Utc": "2026-10-22T18:40:58.8911978+00:00",
+    "Bytes": 887258,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 824,
+    "ElapsedMs": 10218.894,
+    "Utc": "2026-10-22T18:40:58.9072457+00:00",
+    "Bytes": 888688,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 825,
+    "ElapsedMs": 10233.93,
+    "Utc": "2026-10-22T18:40:58.9222817+00:00",
+    "Bytes": 890044,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 826,
+    "ElapsedMs": 10249.8191,
+    "Utc": "2026-10-22T18:40:58.9381708+00:00",
+    "Bytes": 891460,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 827,
+    "ElapsedMs": 10264.6329,
+    "Utc": "2026-10-22T18:40:58.9529846+00:00",
+    "Bytes": 892752,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 828,
+    "ElapsedMs": 10279.8907,
+    "Utc": "2026-10-22T18:40:58.9682423+00:00",
+    "Bytes": 894046,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 829,
+    "ElapsedMs": 10296.0215,
+    "Utc": "2026-10-22T18:40:58.9843732+00:00",
+    "Bytes": 895526,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 830,
+    "ElapsedMs": 10296.1465,
+    "Utc": "2026-10-22T18:40:58.9844982+00:00",
+    "Bytes": 895536,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 831,
+    "ElapsedMs": 10311.6576,
+    "Utc": "2026-10-22T18:40:59.0000093+00:00",
+    "Bytes": 896932,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 832,
+    "ElapsedMs": 10327.0951,
+    "Utc": "2026-10-22T18:40:59.0154468+00:00",
+    "Bytes": 898258,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 833,
+    "ElapsedMs": 10343.2908,
+    "Utc": "2026-10-22T18:40:59.0316425+00:00",
+    "Bytes": 899718,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 834,
+    "ElapsedMs": 10343.398,
+    "Utc": "2026-10-22T18:40:59.0317496+00:00",
+    "Bytes": 899728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 835,
+    "ElapsedMs": 10359.0826,
+    "Utc": "2026-10-22T18:40:59.0474342+00:00",
+    "Bytes": 901070,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 836,
+    "ElapsedMs": 10374.4358,
+    "Utc": "2026-10-22T18:40:59.0627874+00:00",
+    "Bytes": 902442,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 837,
+    "ElapsedMs": 10390.2128,
+    "Utc": "2026-10-22T18:40:59.0785644+00:00",
+    "Bytes": 903844,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 838,
+    "ElapsedMs": 10401.3999,
+    "Utc": "2026-10-22T18:40:59.0897516+00:00",
+    "Bytes": 904808,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 839,
+    "ElapsedMs": 10406.0736,
+    "Utc": "2026-10-22T18:40:59.0944252+00:00",
+    "Bytes": 905222,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 840,
+    "ElapsedMs": 10421.7416,
+    "Utc": "2026-10-22T18:40:59.1100932+00:00",
+    "Bytes": 906640,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 841,
+    "ElapsedMs": 10436.6727,
+    "Utc": "2026-10-22T18:40:59.1250243+00:00",
+    "Bytes": 907918,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 842,
+    "ElapsedMs": 10451.8678,
+    "Utc": "2026-10-22T18:40:59.1402194+00:00",
+    "Bytes": 909294,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 843,
+    "ElapsedMs": 10453.2807,
+    "Utc": "2026-10-22T18:40:59.1416323+00:00",
+    "Bytes": 909418,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 844,
+    "ElapsedMs": 10469.4109,
+    "Utc": "2026-10-22T18:40:59.1577626+00:00",
+    "Bytes": 910762,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 845,
+    "ElapsedMs": 10484.7196,
+    "Utc": "2026-10-22T18:40:59.1730713+00:00",
+    "Bytes": 912192,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 846,
+    "ElapsedMs": 10500.1556,
+    "Utc": "2026-10-22T18:40:59.1885073+00:00",
+    "Bytes": 913538,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 847,
+    "ElapsedMs": 10500.294,
+    "Utc": "2026-10-22T18:40:59.1886456+00:00",
+    "Bytes": 913550,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 848,
+    "ElapsedMs": 10515.4121,
+    "Utc": "2026-10-22T18:40:59.2037637+00:00",
+    "Bytes": 914890,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 849,
+    "ElapsedMs": 10531.206,
+    "Utc": "2026-10-22T18:40:59.2195577+00:00",
+    "Bytes": 916236,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 850,
+    "ElapsedMs": 10548.0783,
+    "Utc": "2026-10-22T18:40:59.2364299+00:00",
+    "Bytes": 917702,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 851,
+    "ElapsedMs": 10548.3896,
+    "Utc": "2026-10-22T18:40:59.2367413+00:00",
+    "Bytes": 917730,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 852,
+    "ElapsedMs": 10563.2402,
+    "Utc": "2026-10-22T18:40:59.2515919+00:00",
+    "Bytes": 919116,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 853,
+    "ElapsedMs": 10579.2708,
+    "Utc": "2026-10-22T18:40:59.2676225+00:00",
+    "Bytes": 920502,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 854,
+    "ElapsedMs": 10595.2847,
+    "Utc": "2026-10-22T18:40:59.2836364+00:00",
+    "Bytes": 921904,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 855,
+    "ElapsedMs": 10595.4917,
+    "Utc": "2026-10-22T18:40:59.2838434+00:00",
+    "Bytes": 921924,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 856,
+    "ElapsedMs": 10610.3393,
+    "Utc": "2026-10-22T18:40:59.2986909+00:00",
+    "Bytes": 923242,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 857,
+    "ElapsedMs": 10625.6343,
+    "Utc": "2026-10-22T18:40:59.3139859+00:00",
+    "Bytes": 924536,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 858,
+    "ElapsedMs": 10641.196,
+    "Utc": "2026-10-22T18:40:59.3295476+00:00",
+    "Bytes": 925998,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 859,
+    "ElapsedMs": 10651.0783,
+    "Utc": "2026-10-22T18:40:59.3394299+00:00",
+    "Bytes": 926840,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 860,
+    "ElapsedMs": 10656.1401,
+    "Utc": "2026-10-22T18:40:59.3444918+00:00",
+    "Bytes": 927286,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 861,
+    "ElapsedMs": 10671.1377,
+    "Utc": "2026-10-22T18:40:59.3594893+00:00",
+    "Bytes": 928630,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 862,
+    "ElapsedMs": 10686.4053,
+    "Utc": "2026-10-22T18:40:59.374757+00:00",
+    "Bytes": 929972,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 863,
+    "ElapsedMs": 10700.964,
+    "Utc": "2026-10-22T18:40:59.3893156+00:00",
+    "Bytes": 931240,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 864,
+    "ElapsedMs": 10701.8699,
+    "Utc": "2026-10-22T18:40:59.3902215+00:00",
+    "Bytes": 931318,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 865,
+    "ElapsedMs": 10717.3473,
+    "Utc": "2026-10-22T18:40:59.4056989+00:00",
+    "Bytes": 932692,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 866,
+    "ElapsedMs": 10733.9156,
+    "Utc": "2026-10-22T18:40:59.4222673+00:00",
+    "Bytes": 934146,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 867,
+    "ElapsedMs": 10750.0293,
+    "Utc": "2026-10-22T18:40:59.438381+00:00",
+    "Bytes": 935576,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 868,
+    "ElapsedMs": 10750.1456,
+    "Utc": "2026-10-22T18:40:59.4384972+00:00",
+    "Bytes": 935586,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 869,
+    "ElapsedMs": 10765.6563,
+    "Utc": "2026-10-22T18:40:59.454008+00:00",
+    "Bytes": 936946,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 870,
+    "ElapsedMs": 10781.0722,
+    "Utc": "2026-10-22T18:40:59.4694239+00:00",
+    "Bytes": 938292,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 871,
+    "ElapsedMs": 10797.6556,
+    "Utc": "2026-10-22T18:40:59.4860073+00:00",
+    "Bytes": 939772,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 872,
+    "ElapsedMs": 10813.0977,
+    "Utc": "2026-10-22T18:40:59.5014494+00:00",
+    "Bytes": 941124,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 873,
+    "ElapsedMs": 10828.5579,
+    "Utc": "2026-10-22T18:40:59.5169095+00:00",
+    "Bytes": 942492,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 874,
+    "ElapsedMs": 10844.94,
+    "Utc": "2026-10-22T18:40:59.5332917+00:00",
+    "Bytes": 943940,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 875,
+    "ElapsedMs": 10845.1797,
+    "Utc": "2026-10-22T18:40:59.5335314+00:00",
+    "Bytes": 943962,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 876,
+    "ElapsedMs": 10860.4631,
+    "Utc": "2026-10-22T18:40:59.5488148+00:00",
+    "Bytes": 945334,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 877,
+    "ElapsedMs": 10875.6419,
+    "Utc": "2026-10-22T18:40:59.5639936+00:00",
+    "Bytes": 946594,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 878,
+    "ElapsedMs": 10892.3691,
+    "Utc": "2026-10-22T18:40:59.5807207+00:00",
+    "Bytes": 948144,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 879,
+    "ElapsedMs": 10900.8219,
+    "Utc": "2026-10-22T18:40:59.5891736+00:00",
+    "Bytes": 948896,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 880,
+    "ElapsedMs": 10907.4614,
+    "Utc": "2026-10-22T18:40:59.5958131+00:00",
+    "Bytes": 949482,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 881,
+    "ElapsedMs": 10922.6228,
+    "Utc": "2026-10-22T18:40:59.6109744+00:00",
+    "Bytes": 950772,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 882,
+    "ElapsedMs": 10938.207,
+    "Utc": "2026-10-22T18:40:59.6265587+00:00",
+    "Bytes": 952162,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 883,
+    "ElapsedMs": 10952.3198,
+    "Utc": "2026-10-22T18:40:59.6406714+00:00",
+    "Bytes": 953394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 884,
+    "ElapsedMs": 10953.5432,
+    "Utc": "2026-10-22T18:40:59.6418949+00:00",
+    "Bytes": 953502,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 885,
+    "ElapsedMs": 10969.0578,
+    "Utc": "2026-10-22T18:40:59.6574095+00:00",
+    "Bytes": 954886,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 886,
+    "ElapsedMs": 10984.1233,
+    "Utc": "2026-10-22T18:40:59.6724749+00:00",
+    "Bytes": 956214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 887,
+    "ElapsedMs": 10999.1493,
+    "Utc": "2026-10-22T18:40:59.6875009+00:00",
+    "Bytes": 957542,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 888,
+    "ElapsedMs": 10999.2637,
+    "Utc": "2026-10-22T18:40:59.6876153+00:00",
+    "Bytes": 957552,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 889,
+    "ElapsedMs": 11013.7819,
+    "Utc": "2026-10-22T18:40:59.7021335+00:00",
+    "Bytes": 958836,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 890,
+    "ElapsedMs": 11029.231,
+    "Utc": "2026-10-22T18:40:59.7175826+00:00",
+    "Bytes": 960180,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 891,
+    "ElapsedMs": 11044.2788,
+    "Utc": "2026-10-22T18:40:59.7326305+00:00",
+    "Bytes": 961534,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 892,
+    "ElapsedMs": 11044.3802,
+    "Utc": "2026-10-22T18:40:59.7327318+00:00",
+    "Bytes": 961544,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 893,
+    "ElapsedMs": 11044.5805,
+    "Utc": "2026-10-22T18:40:59.7329322+00:00",
+    "Bytes": 961562,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 894,
+    "ElapsedMs": 11059.6669,
+    "Utc": "2026-10-22T18:40:59.7480186+00:00",
+    "Bytes": 962898,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 895,
+    "ElapsedMs": 11075.6126,
+    "Utc": "2026-10-22T18:40:59.7639643+00:00",
+    "Bytes": 964276,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 896,
+    "ElapsedMs": 11090.6711,
+    "Utc": "2026-10-22T18:40:59.7790227+00:00",
+    "Bytes": 965624,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 897,
+    "ElapsedMs": 11101.5388,
+    "Utc": "2026-10-22T18:40:59.7898905+00:00",
+    "Bytes": 966522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 898,
+    "ElapsedMs": 11105.6907,
+    "Utc": "2026-10-22T18:40:59.7940423+00:00",
+    "Bytes": 966886,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 899,
+    "ElapsedMs": 11121.512,
+    "Utc": "2026-10-22T18:40:59.8098637+00:00",
+    "Bytes": 968278,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 900,
+    "ElapsedMs": 11137.6386,
+    "Utc": "2026-10-22T18:40:59.8259903+00:00",
+    "Bytes": 969758,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 901,
+    "ElapsedMs": 11150.9017,
+    "Utc": "2026-10-22T18:40:59.8392534+00:00",
+    "Bytes": 970932,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 902,
+    "ElapsedMs": 11153.0974,
+    "Utc": "2026-10-22T18:40:59.8414491+00:00",
+    "Bytes": 971124,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 903,
+    "ElapsedMs": 11169.3476,
+    "Utc": "2026-10-22T18:40:59.8576992+00:00",
+    "Bytes": 972544,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 904,
+    "ElapsedMs": 11185.8612,
+    "Utc": "2026-10-22T18:40:59.8742128+00:00",
+    "Bytes": 974034,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 905,
+    "ElapsedMs": 11200.8333,
+    "Utc": "2026-10-22T18:40:59.889185+00:00",
+    "Bytes": 975346,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 906,
+    "ElapsedMs": 11201.2462,
+    "Utc": "2026-10-22T18:40:59.8895978+00:00",
+    "Bytes": 975378,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 907,
+    "ElapsedMs": 11217.8372,
+    "Utc": "2026-10-22T18:40:59.9061888+00:00",
+    "Bytes": 976844,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 908,
+    "ElapsedMs": 11234.2588,
+    "Utc": "2026-10-22T18:40:59.9226104+00:00",
+    "Bytes": 978250,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 909,
+    "ElapsedMs": 11250.1652,
+    "Utc": "2026-10-22T18:40:59.9385168+00:00",
+    "Bytes": 979704,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 910,
+    "ElapsedMs": 11250.4632,
+    "Utc": "2026-10-22T18:40:59.9388149+00:00",
+    "Bytes": 979732,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 911,
+    "ElapsedMs": 11265.5455,
+    "Utc": "2026-10-22T18:40:59.9538972+00:00",
+    "Bytes": 981038,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 912,
+    "ElapsedMs": 11280.8962,
+    "Utc": "2026-10-22T18:40:59.9692478+00:00",
+    "Bytes": 982408,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 913,
+    "ElapsedMs": 11296.6727,
+    "Utc": "2026-10-22T18:40:59.9850243+00:00",
+    "Bytes": 983780,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 914,
+    "ElapsedMs": 11296.7936,
+    "Utc": "2026-10-22T18:40:59.9851453+00:00",
+    "Bytes": 983790,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 915,
+    "ElapsedMs": 11311.9366,
+    "Utc": "2026-10-22T18:41:00.0002883+00:00",
+    "Bytes": 985138,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 916,
+    "ElapsedMs": 11326.811,
+    "Utc": "2026-10-22T18:41:00.0151626+00:00",
+    "Bytes": 986462,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 917,
+    "ElapsedMs": 11342.4402,
+    "Utc": "2026-10-22T18:41:00.0307918+00:00",
+    "Bytes": 987822,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 918,
+    "ElapsedMs": 11350.9464,
+    "Utc": "2026-10-22T18:41:00.0392981+00:00",
+    "Bytes": 988584,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 919,
+    "ElapsedMs": 11357.8954,
+    "Utc": "2026-10-22T18:41:00.046247+00:00",
+    "Bytes": 989198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 920,
+    "ElapsedMs": 11373.171,
+    "Utc": "2026-10-22T18:41:00.0615227+00:00",
+    "Bytes": 990550,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 921,
+    "ElapsedMs": 11389.5226,
+    "Utc": "2026-10-22T18:41:00.0778743+00:00",
+    "Bytes": 991974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 922,
+    "ElapsedMs": 11401.0626,
+    "Utc": "2026-10-22T18:41:00.0894142+00:00",
+    "Bytes": 993008,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 923,
+    "ElapsedMs": 11405.3415,
+    "Utc": "2026-10-22T18:41:00.0936932+00:00",
+    "Bytes": 993386,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 924,
+    "ElapsedMs": 11420.1943,
+    "Utc": "2026-10-22T18:41:00.1085459+00:00",
+    "Bytes": 994706,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 925,
+    "ElapsedMs": 11436.2424,
+    "Utc": "2026-10-22T18:41:00.124594+00:00",
+    "Bytes": 996112,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 926,
+    "ElapsedMs": 11450.9316,
+    "Utc": "2026-10-22T18:41:00.1392832+00:00",
+    "Bytes": 997404,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 927,
+    "ElapsedMs": 11451.4298,
+    "Utc": "2026-10-22T18:41:00.1397814+00:00",
+    "Bytes": 997446,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 928,
+    "ElapsedMs": 11467.4715,
+    "Utc": "2026-10-22T18:41:00.1558231+00:00",
+    "Bytes": 998872,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 929,
+    "ElapsedMs": 11484.1964,
+    "Utc": "2026-10-22T18:41:00.1725481+00:00",
+    "Bytes": 1000310,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 930,
+    "ElapsedMs": 11500.2584,
+    "Utc": "2026-10-22T18:41:00.1886101+00:00",
+    "Bytes": 1001692,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 931,
+    "ElapsedMs": 11514.8253,
+    "Utc": "2026-10-22T18:41:00.203177+00:00",
+    "Bytes": 1003036,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 932,
+    "ElapsedMs": 11529.9893,
+    "Utc": "2026-10-22T18:41:00.2183409+00:00",
+    "Bytes": 1004390,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 933,
+    "ElapsedMs": 11545.474,
+    "Utc": "2026-10-22T18:41:00.2338257+00:00",
+    "Bytes": 1005738,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 934,
+    "ElapsedMs": 11545.599,
+    "Utc": "2026-10-22T18:41:00.2339507+00:00",
+    "Bytes": 1005748,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 935,
+    "ElapsedMs": 11561.4909,
+    "Utc": "2026-10-22T18:41:00.2498426+00:00",
+    "Bytes": 1007084,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 936,
+    "ElapsedMs": 11576.9376,
+    "Utc": "2026-10-22T18:41:00.2652892+00:00",
+    "Bytes": 1008522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 937,
+    "ElapsedMs": 11592.2544,
+    "Utc": "2026-10-22T18:41:00.280606+00:00",
+    "Bytes": 1009874,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 938,
+    "ElapsedMs": 11600.7216,
+    "Utc": "2026-10-22T18:41:00.2890733+00:00",
+    "Bytes": 1010624,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 939,
+    "ElapsedMs": 11607.8725,
+    "Utc": "2026-10-22T18:41:00.2962241+00:00",
+    "Bytes": 1011254,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 940,
+    "ElapsedMs": 11623.8007,
+    "Utc": "2026-10-22T18:41:00.3121523+00:00",
+    "Bytes": 1012660,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 941,
+    "ElapsedMs": 11639.2003,
+    "Utc": "2026-10-22T18:41:00.327552+00:00",
+    "Bytes": 1013986,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 942,
+    "ElapsedMs": 11651.5699,
+    "Utc": "2026-10-22T18:41:00.3399216+00:00",
+    "Bytes": 1015044,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 943,
+    "ElapsedMs": 11655.5203,
+    "Utc": "2026-10-22T18:41:00.343872+00:00",
+    "Bytes": 1015394,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 944,
+    "ElapsedMs": 11671.7108,
+    "Utc": "2026-10-22T18:41:00.3600625+00:00",
+    "Bytes": 1016806,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 945,
+    "ElapsedMs": 11686.5145,
+    "Utc": "2026-10-22T18:41:00.3748661+00:00",
+    "Bytes": 1018184,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 946,
+    "ElapsedMs": 11701.9156,
+    "Utc": "2026-10-22T18:41:00.3902673+00:00",
+    "Bytes": 1019544,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 947,
+    "ElapsedMs": 11717.6865,
+    "Utc": "2026-10-22T18:41:00.4060381+00:00",
+    "Bytes": 1020920,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 948,
+    "ElapsedMs": 11732.5792,
+    "Utc": "2026-10-22T18:41:00.4209309+00:00",
+    "Bytes": 1022212,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 949,
+    "ElapsedMs": 11748.3733,
+    "Utc": "2026-10-22T18:41:00.4367249+00:00",
+    "Bytes": 1023564,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 950,
+    "ElapsedMs": 11763.7592,
+    "Utc": "2026-10-22T18:41:00.4521109+00:00",
+    "Bytes": 1024992,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 951,
+    "ElapsedMs": 11779.4074,
+    "Utc": "2026-10-22T18:41:00.4677591+00:00",
+    "Bytes": 1026384,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 952,
+    "ElapsedMs": 11794.5674,
+    "Utc": "2026-10-22T18:41:00.482919+00:00",
+    "Bytes": 1027688,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 953,
+    "ElapsedMs": 11794.6814,
+    "Utc": "2026-10-22T18:41:00.483033+00:00",
+    "Bytes": 1027700,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 954,
+    "ElapsedMs": 11810.5863,
+    "Utc": "2026-10-22T18:41:00.498938+00:00",
+    "Bytes": 1029112,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 955,
+    "ElapsedMs": 11826.3789,
+    "Utc": "2026-10-22T18:41:00.5147305+00:00",
+    "Bytes": 1030522,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 956,
+    "ElapsedMs": 11841.8403,
+    "Utc": "2026-10-22T18:41:00.5301919+00:00",
+    "Bytes": 1031880,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 957,
+    "ElapsedMs": 11852.2428,
+    "Utc": "2026-10-22T18:41:00.5405944+00:00",
+    "Bytes": 1032788,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 958,
+    "ElapsedMs": 11857.0849,
+    "Utc": "2026-10-22T18:41:00.5454365+00:00",
+    "Bytes": 1033216,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 959,
+    "ElapsedMs": 11872.6106,
+    "Utc": "2026-10-22T18:41:00.5609622+00:00",
+    "Bytes": 1034574,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 960,
+    "ElapsedMs": 11887.8481,
+    "Utc": "2026-10-22T18:41:00.5761997+00:00",
+    "Bytes": 1035926,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 961,
+    "ElapsedMs": 11900.6948,
+    "Utc": "2026-10-22T18:41:00.5890464+00:00",
+    "Bytes": 1037082,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 962,
+    "ElapsedMs": 11903.7582,
+    "Utc": "2026-10-22T18:41:00.5921099+00:00",
+    "Bytes": 1037352,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 963,
+    "ElapsedMs": 11918.6524,
+    "Utc": "2026-10-22T18:41:00.6070041+00:00",
+    "Bytes": 1038636,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 964,
+    "ElapsedMs": 11935.2225,
+    "Utc": "2026-10-22T18:41:00.6235741+00:00",
+    "Bytes": 1040132,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 965,
+    "ElapsedMs": 11951.6281,
+    "Utc": "2026-10-22T18:41:00.6399797+00:00",
+    "Bytes": 1041574,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 966,
+    "ElapsedMs": 11951.8809,
+    "Utc": "2026-10-22T18:41:00.6402326+00:00",
+    "Bytes": 1041598,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 967,
+    "ElapsedMs": 11966.5172,
+    "Utc": "2026-10-22T18:41:00.6548689+00:00",
+    "Bytes": 1042858,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 968,
+    "ElapsedMs": 11982.1852,
+    "Utc": "2026-10-22T18:41:00.6705368+00:00",
+    "Bytes": 1044270,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 969,
+    "ElapsedMs": 11997.4447,
+    "Utc": "2026-10-22T18:41:00.6857964+00:00",
+    "Bytes": 1045592,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 970,
+    "ElapsedMs": 11997.5455,
+    "Utc": "2026-10-22T18:41:00.6858972+00:00",
+    "Bytes": 1045602,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 971,
+    "ElapsedMs": 12012.791,
+    "Utc": "2026-10-22T18:41:00.7011426+00:00",
+    "Bytes": 1046948,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 972,
+    "ElapsedMs": 12029.4385,
+    "Utc": "2026-10-22T18:41:00.7177902+00:00",
+    "Bytes": 1048430,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 973,
+    "ElapsedMs": 12044.5684,
+    "Utc": "2026-10-22T18:41:00.7329201+00:00",
+    "Bytes": 1049770,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 974,
+    "ElapsedMs": 12044.6627,
+    "Utc": "2026-10-22T18:41:00.7330144+00:00",
+    "Bytes": 1049778,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 975,
+    "ElapsedMs": 12060.2762,
+    "Utc": "2026-10-22T18:41:00.7486279+00:00",
+    "Bytes": 1051128,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 976,
+    "ElapsedMs": 12076.5715,
+    "Utc": "2026-10-22T18:41:00.7649232+00:00",
+    "Bytes": 1052554,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 977,
+    "ElapsedMs": 12092.2446,
+    "Utc": "2026-10-22T18:41:00.7805962+00:00",
+    "Bytes": 1053974,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 978,
+    "ElapsedMs": 12101.7372,
+    "Utc": "2026-10-22T18:41:00.7900888+00:00",
+    "Bytes": 1054736,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 979,
+    "ElapsedMs": 12107.5001,
+    "Utc": "2026-10-22T18:41:00.7958517+00:00",
+    "Bytes": 1055244,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 980,
+    "ElapsedMs": 12123.148,
+    "Utc": "2026-10-22T18:41:00.8114996+00:00",
+    "Bytes": 1056626,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 981,
+    "ElapsedMs": 12139.2174,
+    "Utc": "2026-10-22T18:41:00.827569+00:00",
+    "Bytes": 1058090,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 982,
+    "ElapsedMs": 12151.0287,
+    "Utc": "2026-10-22T18:41:00.8393804+00:00",
+    "Bytes": 1059146,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 983,
+    "ElapsedMs": 12154.9987,
+    "Utc": "2026-10-22T18:41:00.8433504+00:00",
+    "Bytes": 1059496,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 984,
+    "ElapsedMs": 12170.1894,
+    "Utc": "2026-10-22T18:41:00.858541+00:00",
+    "Bytes": 1060848,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 985,
+    "ElapsedMs": 12185.2728,
+    "Utc": "2026-10-22T18:41:00.8736245+00:00",
+    "Bytes": 1062130,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 986,
+    "ElapsedMs": 12201.8738,
+    "Utc": "2026-10-22T18:41:00.8902254+00:00",
+    "Bytes": 1063636,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 987,
+    "ElapsedMs": 12202.1501,
+    "Utc": "2026-10-22T18:41:00.8905018+00:00",
+    "Bytes": 1063662,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 988,
+    "ElapsedMs": 12216.9223,
+    "Utc": "2026-10-22T18:41:00.905274+00:00",
+    "Bytes": 1064970,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 989,
+    "ElapsedMs": 12232.4128,
+    "Utc": "2026-10-22T18:41:00.9207645+00:00",
+    "Bytes": 1066322,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 990,
+    "ElapsedMs": 12247.8551,
+    "Utc": "2026-10-22T18:41:00.9362068+00:00",
+    "Bytes": 1067690,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 991,
+    "ElapsedMs": 12248.1408,
+    "Utc": "2026-10-22T18:41:00.9364924+00:00",
+    "Bytes": 1067718,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 992,
+    "ElapsedMs": 12263.5251,
+    "Utc": "2026-10-22T18:41:00.9518768+00:00",
+    "Bytes": 1069044,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 993,
+    "ElapsedMs": 12278.8341,
+    "Utc": "2026-10-22T18:41:00.9671858+00:00",
+    "Bytes": 1070398,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 994,
+    "ElapsedMs": 12294.3587,
+    "Utc": "2026-10-22T18:41:00.9827104+00:00",
+    "Bytes": 1071750,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 995,
+    "ElapsedMs": 12294.5254,
+    "Utc": "2026-10-22T18:41:00.9828771+00:00",
+    "Bytes": 1071766,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 996,
+    "ElapsedMs": 12310.4422,
+    "Utc": "2026-10-22T18:41:00.9987938+00:00",
+    "Bytes": 1073184,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 997,
+    "ElapsedMs": 12325.3491,
+    "Utc": "2026-10-22T18:41:01.0137007+00:00",
+    "Bytes": 1074458,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 998,
+    "ElapsedMs": 12341.8518,
+    "Utc": "2026-10-22T18:41:01.0302035+00:00",
+    "Bytes": 1075978,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 999,
+    "ElapsedMs": 12351.0722,
+    "Utc": "2026-10-22T18:41:01.0394239+00:00",
+    "Bytes": 1076766,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1000,
+    "ElapsedMs": 12357.26,
+    "Utc": "2026-10-22T18:41:01.0456117+00:00",
+    "Bytes": 1077312,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1001,
+    "ElapsedMs": 12372.2421,
+    "Utc": "2026-10-22T18:41:01.0605937+00:00",
+    "Bytes": 1078658,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1002,
+    "ElapsedMs": 12387.3196,
+    "Utc": "2026-10-22T18:41:01.0756713+00:00",
+    "Bytes": 1080006,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1003,
+    "ElapsedMs": 12402.0313,
+    "Utc": "2026-10-22T18:41:01.090383+00:00",
+    "Bytes": 1081264,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1004,
+    "ElapsedMs": 12402.1325,
+    "Utc": "2026-10-22T18:41:01.0904841+00:00",
+    "Bytes": 1081274,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1005,
+    "ElapsedMs": 12417.5293,
+    "Utc": "2026-10-22T18:41:01.105881+00:00",
+    "Bytes": 1082652,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1006,
+    "ElapsedMs": 12432.7484,
+    "Utc": "2026-10-22T18:41:01.1211001+00:00",
+    "Bytes": 1083994,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1007,
+    "ElapsedMs": 12449.4525,
+    "Utc": "2026-10-22T18:41:01.1378041+00:00",
+    "Bytes": 1085476,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1008,
+    "ElapsedMs": 12465.8449,
+    "Utc": "2026-10-22T18:41:01.1541966+00:00",
+    "Bytes": 1086892,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1009,
+    "ElapsedMs": 12481.3762,
+    "Utc": "2026-10-22T18:41:01.1697279+00:00",
+    "Bytes": 1088284,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1010,
+    "ElapsedMs": 12496.4335,
+    "Utc": "2026-10-22T18:41:01.1847851+00:00",
+    "Bytes": 1089596,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1011,
+    "ElapsedMs": 12496.6175,
+    "Utc": "2026-10-22T18:41:01.1849692+00:00",
+    "Bytes": 1089614,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1012,
+    "ElapsedMs": 12511.7082,
+    "Utc": "2026-10-22T18:41:01.2000598+00:00",
+    "Bytes": 1090962,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1013,
+    "ElapsedMs": 12527.713,
+    "Utc": "2026-10-22T18:41:01.2160646+00:00",
+    "Bytes": 1092308,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1014,
+    "ElapsedMs": 12544.6046,
+    "Utc": "2026-10-22T18:41:01.2329563+00:00",
+    "Bytes": 1093816,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1015,
+    "ElapsedMs": 12559.9002,
+    "Utc": "2026-10-22T18:41:01.2482519+00:00",
+    "Bytes": 1095184,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1016,
+    "ElapsedMs": 12575.2116,
+    "Utc": "2026-10-22T18:41:01.2635633+00:00",
+    "Bytes": 1096492,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1017,
+    "ElapsedMs": 12591.6212,
+    "Utc": "2026-10-22T18:41:01.2799728+00:00",
+    "Bytes": 1098016,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1018,
+    "ElapsedMs": 12601.0638,
+    "Utc": "2026-10-22T18:41:01.2894154+00:00",
+    "Bytes": 1098846,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1019,
+    "ElapsedMs": 12607.9117,
+    "Utc": "2026-10-22T18:41:01.2962634+00:00",
+    "Bytes": 1099448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1020,
+    "ElapsedMs": 12623.8845,
+    "Utc": "2026-10-22T18:41:01.3122362+00:00",
+    "Bytes": 1100858,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1021,
+    "ElapsedMs": 12638.6565,
+    "Utc": "2026-10-22T18:41:01.3270081+00:00",
+    "Bytes": 1102144,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1022,
+    "ElapsedMs": 12651.4549,
+    "Utc": "2026-10-22T18:41:01.3398066+00:00",
+    "Bytes": 1103226,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1023,
+    "ElapsedMs": 12653.7001,
+    "Utc": "2026-10-22T18:41:01.3420518+00:00",
+    "Bytes": 1103424,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1024,
+    "ElapsedMs": 12669.2451,
+    "Utc": "2026-10-22T18:41:01.3575968+00:00",
+    "Bytes": 1104832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1025,
+    "ElapsedMs": 12684.461,
+    "Utc": "2026-10-22T18:41:01.3728126+00:00",
+    "Bytes": 1106198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1026,
+    "ElapsedMs": 12699.7419,
+    "Utc": "2026-10-22T18:41:01.3880936+00:00",
+    "Bytes": 1107554,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1027,
+    "ElapsedMs": 12700.0016,
+    "Utc": "2026-10-22T18:41:01.3883532+00:00",
+    "Bytes": 1107578,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1028,
+    "ElapsedMs": 12715.1343,
+    "Utc": "2026-10-22T18:41:01.4034859+00:00",
+    "Bytes": 1108878,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1029,
+    "ElapsedMs": 12731.509,
+    "Utc": "2026-10-22T18:41:01.4198607+00:00",
+    "Bytes": 1110280,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1030,
+    "ElapsedMs": 12747.5869,
+    "Utc": "2026-10-22T18:41:01.4359386+00:00",
+    "Bytes": 1111754,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1031,
+    "ElapsedMs": 12747.8039,
+    "Utc": "2026-10-22T18:41:01.4361556+00:00",
+    "Bytes": 1111774,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1032,
+    "ElapsedMs": 12762.5775,
+    "Utc": "2026-10-22T18:41:01.4509291+00:00",
+    "Bytes": 1113068,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1033,
+    "ElapsedMs": 12779.1352,
+    "Utc": "2026-10-22T18:41:01.4674869+00:00",
+    "Bytes": 1114486,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1034,
+    "ElapsedMs": 12794.6201,
+    "Utc": "2026-10-22T18:41:01.4829718+00:00",
+    "Bytes": 1115924,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1035,
+    "ElapsedMs": 12794.937,
+    "Utc": "2026-10-22T18:41:01.4832886+00:00",
+    "Bytes": 1115952,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1036,
+    "ElapsedMs": 12810.4572,
+    "Utc": "2026-10-22T18:41:01.4988089+00:00",
+    "Bytes": 1117300,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1037,
+    "ElapsedMs": 12826.9746,
+    "Utc": "2026-10-22T18:41:01.5153262+00:00",
+    "Bytes": 1118746,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1038,
+    "ElapsedMs": 12842.6151,
+    "Utc": "2026-10-22T18:41:01.5309668+00:00",
+    "Bytes": 1120138,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1039,
+    "ElapsedMs": 12851.9008,
+    "Utc": "2026-10-22T18:41:01.5402524+00:00",
+    "Bytes": 1120980,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1040,
+    "ElapsedMs": 12858.6061,
+    "Utc": "2026-10-22T18:41:01.5469578+00:00",
+    "Bytes": 1121574,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1041,
+    "ElapsedMs": 12874.904,
+    "Utc": "2026-10-22T18:41:01.5632557+00:00",
+    "Bytes": 1123006,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1042,
+    "ElapsedMs": 12890.5031,
+    "Utc": "2026-10-22T18:41:01.5788547+00:00",
+    "Bytes": 1124382,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1043,
+    "ElapsedMs": 12901.178,
+    "Utc": "2026-10-22T18:41:01.5895296+00:00",
+    "Bytes": 1125296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1044,
+    "ElapsedMs": 12906.8338,
+    "Utc": "2026-10-22T18:41:01.5951855+00:00",
+    "Bytes": 1125794,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1045,
+    "ElapsedMs": 12923.1649,
+    "Utc": "2026-10-22T18:41:01.6115165+00:00",
+    "Bytes": 1127270,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1046,
+    "ElapsedMs": 12939.6121,
+    "Utc": "2026-10-22T18:41:01.6279638+00:00",
+    "Bytes": 1128660,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1047,
+    "ElapsedMs": 12950.7582,
+    "Utc": "2026-10-22T18:41:01.6391099+00:00",
+    "Bytes": 1129684,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1048,
+    "ElapsedMs": 12955.377,
+    "Utc": "2026-10-22T18:41:01.6437287+00:00",
+    "Bytes": 1130090,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1049,
+    "ElapsedMs": 12970.8772,
+    "Utc": "2026-10-22T18:41:01.6592289+00:00",
+    "Bytes": 1131458,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1050,
+    "ElapsedMs": 12986.4225,
+    "Utc": "2026-10-22T18:41:01.6747742+00:00",
+    "Bytes": 1132812,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1051,
+    "ElapsedMs": 13002.6602,
+    "Utc": "2026-10-22T18:41:01.6910119+00:00",
+    "Bytes": 1134272,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1052,
+    "ElapsedMs": 13002.7664,
+    "Utc": "2026-10-22T18:41:01.6911181+00:00",
+    "Bytes": 1134282,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1053,
+    "ElapsedMs": 13018.8767,
+    "Utc": "2026-10-22T18:41:01.7072284+00:00",
+    "Bytes": 1135676,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1054,
+    "ElapsedMs": 13035.2568,
+    "Utc": "2026-10-22T18:41:01.7236084+00:00",
+    "Bytes": 1137148,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1055,
+    "ElapsedMs": 13050.4522,
+    "Utc": "2026-10-22T18:41:01.7388038+00:00",
+    "Bytes": 1138466,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1056,
+    "ElapsedMs": 13050.6599,
+    "Utc": "2026-10-22T18:41:01.7390116+00:00",
+    "Bytes": 1138484,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1057,
+    "ElapsedMs": 13066.0955,
+    "Utc": "2026-10-22T18:41:01.7544471+00:00",
+    "Bytes": 1139872,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1058,
+    "ElapsedMs": 13082.7142,
+    "Utc": "2026-10-22T18:41:01.7710659+00:00",
+    "Bytes": 1141324,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1059,
+    "ElapsedMs": 13098.5374,
+    "Utc": "2026-10-22T18:41:01.786889+00:00",
+    "Bytes": 1142684,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1060,
+    "ElapsedMs": 13114.6287,
+    "Utc": "2026-10-22T18:41:01.8029803+00:00",
+    "Bytes": 1144148,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1061,
+    "ElapsedMs": 13130.2415,
+    "Utc": "2026-10-22T18:41:01.8185932+00:00",
+    "Bytes": 1145496,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1062,
+    "ElapsedMs": 13145.291,
+    "Utc": "2026-10-22T18:41:01.8336426+00:00",
+    "Bytes": 1146840,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1063,
+    "ElapsedMs": 13145.4253,
+    "Utc": "2026-10-22T18:41:01.833777+00:00",
+    "Bytes": 1146852,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1064,
+    "ElapsedMs": 13160.7577,
+    "Utc": "2026-10-22T18:41:01.8491094+00:00",
+    "Bytes": 1148214,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1065,
+    "ElapsedMs": 13176.0118,
+    "Utc": "2026-10-22T18:41:01.8643635+00:00",
+    "Bytes": 1149488,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1066,
+    "ElapsedMs": 13191.2564,
+    "Utc": "2026-10-22T18:41:01.8796081+00:00",
+    "Bytes": 1150852,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1067,
+    "ElapsedMs": 13201.1323,
+    "Utc": "2026-10-22T18:41:01.8894839+00:00",
+    "Bytes": 1151748,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1068,
+    "ElapsedMs": 13206.5764,
+    "Utc": "2026-10-22T18:41:01.894928+00:00",
+    "Bytes": 1152228,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1069,
+    "ElapsedMs": 13222.9232,
+    "Utc": "2026-10-22T18:41:01.9112748+00:00",
+    "Bytes": 1153672,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1070,
+    "ElapsedMs": 13238.3824,
+    "Utc": "2026-10-22T18:41:01.9267341+00:00",
+    "Bytes": 1155048,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1071,
+    "ElapsedMs": 13250.9231,
+    "Utc": "2026-10-22T18:41:01.9392747+00:00",
+    "Bytes": 1156170,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1072,
+    "ElapsedMs": 13253.7407,
+    "Utc": "2026-10-22T18:41:01.9420924+00:00",
+    "Bytes": 1156420,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1073,
+    "ElapsedMs": 13269.1061,
+    "Utc": "2026-10-22T18:41:01.9574578+00:00",
+    "Bytes": 1157738,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1074,
+    "ElapsedMs": 13285.5419,
+    "Utc": "2026-10-22T18:41:01.9738936+00:00",
+    "Bytes": 1159188,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1075,
+    "ElapsedMs": 13301.6429,
+    "Utc": "2026-10-22T18:41:01.9899946+00:00",
+    "Bytes": 1160566,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1076,
+    "ElapsedMs": 13301.7531,
+    "Utc": "2026-10-22T18:41:01.9901047+00:00",
+    "Bytes": 1160578,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1077,
+    "ElapsedMs": 13317.4305,
+    "Utc": "2026-10-22T18:41:02.0057822+00:00",
+    "Bytes": 1162018,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1078,
+    "ElapsedMs": 13333.0046,
+    "Utc": "2026-10-22T18:41:02.0213563+00:00",
+    "Bytes": 1163382,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1079,
+    "ElapsedMs": 13349.1453,
+    "Utc": "2026-10-22T18:41:02.037497+00:00",
+    "Bytes": 1164832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1080,
+    "ElapsedMs": 13349.3296,
+    "Utc": "2026-10-22T18:41:02.0376812+00:00",
+    "Bytes": 1164848,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1081,
+    "ElapsedMs": 13364.1207,
+    "Utc": "2026-10-22T18:41:02.0524723+00:00",
+    "Bytes": 1166124,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1082,
+    "ElapsedMs": 13379.3352,
+    "Utc": "2026-10-22T18:41:02.0676868+00:00",
+    "Bytes": 1167482,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1083,
+    "ElapsedMs": 13395.8649,
+    "Utc": "2026-10-22T18:41:02.0842166+00:00",
+    "Bytes": 1168944,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1084,
+    "ElapsedMs": 13396.0804,
+    "Utc": "2026-10-22T18:41:02.0844321+00:00",
+    "Bytes": 1168964,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1085,
+    "ElapsedMs": 13411.3092,
+    "Utc": "2026-10-22T18:41:02.0996608+00:00",
+    "Bytes": 1170308,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1086,
+    "ElapsedMs": 13426.3717,
+    "Utc": "2026-10-22T18:41:02.1147233+00:00",
+    "Bytes": 1171628,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1087,
+    "ElapsedMs": 13442.0861,
+    "Utc": "2026-10-22T18:41:02.1304378+00:00",
+    "Bytes": 1172994,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1088,
+    "ElapsedMs": 13451.3297,
+    "Utc": "2026-10-22T18:41:02.1396814+00:00",
+    "Bytes": 1173792,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1089,
+    "ElapsedMs": 13457.379,
+    "Utc": "2026-10-22T18:41:02.1457307+00:00",
+    "Bytes": 1174324,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1090,
+    "ElapsedMs": 13472.5742,
+    "Utc": "2026-10-22T18:41:02.1609258+00:00",
+    "Bytes": 1175696,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1091,
+    "ElapsedMs": 13487.829,
+    "Utc": "2026-10-22T18:41:02.1761806+00:00",
+    "Bytes": 1176998,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1092,
+    "ElapsedMs": 13500.7278,
+    "Utc": "2026-10-22T18:41:02.1890795+00:00",
+    "Bytes": 1178210,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1093,
+    "ElapsedMs": 13503.1009,
+    "Utc": "2026-10-22T18:41:02.1914525+00:00",
+    "Bytes": 1178418,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1094,
+    "ElapsedMs": 13518.6577,
+    "Utc": "2026-10-22T18:41:02.2070093+00:00",
+    "Bytes": 1179756,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1095,
+    "ElapsedMs": 13533.4847,
+    "Utc": "2026-10-22T18:41:02.2218364+00:00",
+    "Bytes": 1181080,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1096,
+    "ElapsedMs": 13549.3859,
+    "Utc": "2026-10-22T18:41:02.2377375+00:00",
+    "Bytes": 1182448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1097,
+    "ElapsedMs": 13549.5003,
+    "Utc": "2026-10-22T18:41:02.2378519+00:00",
+    "Bytes": 1182458,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1098,
+    "ElapsedMs": 13565.7427,
+    "Utc": "2026-10-22T18:41:02.2540944+00:00",
+    "Bytes": 1183928,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1099,
+    "ElapsedMs": 13581.8914,
+    "Utc": "2026-10-22T18:41:02.2702431+00:00",
+    "Bytes": 1185344,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1100,
+    "ElapsedMs": 13598.1212,
+    "Utc": "2026-10-22T18:41:02.2864728+00:00",
+    "Bytes": 1186788,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1101,
+    "ElapsedMs": 13613.1729,
+    "Utc": "2026-10-22T18:41:02.3015245+00:00",
+    "Bytes": 1188104,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1102,
+    "ElapsedMs": 13628.4324,
+    "Utc": "2026-10-22T18:41:02.316784+00:00",
+    "Bytes": 1189448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1103,
+    "ElapsedMs": 13644.0794,
+    "Utc": "2026-10-22T18:41:02.3324311+00:00",
+    "Bytes": 1190826,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1104,
+    "ElapsedMs": 13644.2962,
+    "Utc": "2026-10-22T18:41:02.3326479+00:00",
+    "Bytes": 1190848,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1105,
+    "ElapsedMs": 13659.2001,
+    "Utc": "2026-10-22T18:41:02.3475518+00:00",
+    "Bytes": 1192104,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1106,
+    "ElapsedMs": 13674.5127,
+    "Utc": "2026-10-22T18:41:02.3628643+00:00",
+    "Bytes": 1193500,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1107,
+    "ElapsedMs": 13690.4152,
+    "Utc": "2026-10-22T18:41:02.3787668+00:00",
+    "Bytes": 1194904,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1108,
+    "ElapsedMs": 13700.675,
+    "Utc": "2026-10-22T18:41:02.3890266+00:00",
+    "Bytes": 1195840,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1109,
+    "ElapsedMs": 13705.7795,
+    "Utc": "2026-10-22T18:41:02.3941312+00:00",
+    "Bytes": 1196288,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1110,
+    "ElapsedMs": 13721.2244,
+    "Utc": "2026-10-22T18:41:02.409576+00:00",
+    "Bytes": 1197638,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1111,
+    "ElapsedMs": 13737.6454,
+    "Utc": "2026-10-22T18:41:02.425997+00:00",
+    "Bytes": 1199084,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1112,
+    "ElapsedMs": 13750.5797,
+    "Utc": "2026-10-22T18:41:02.4389314+00:00",
+    "Bytes": 1200242,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1113,
+    "ElapsedMs": 13753.2302,
+    "Utc": "2026-10-22T18:41:02.4415818+00:00",
+    "Bytes": 1200476,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1114,
+    "ElapsedMs": 13769.0311,
+    "Utc": "2026-10-22T18:41:02.4573828+00:00",
+    "Bytes": 1201844,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1115,
+    "ElapsedMs": 13784.5724,
+    "Utc": "2026-10-22T18:41:02.472924+00:00",
+    "Bytes": 1203162,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1116,
+    "ElapsedMs": 13800.0334,
+    "Utc": "2026-10-22T18:41:02.4883851+00:00",
+    "Bytes": 1204550,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1117,
+    "ElapsedMs": 13815.0247,
+    "Utc": "2026-10-22T18:41:02.5033763+00:00",
+    "Bytes": 1205890,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1118,
+    "ElapsedMs": 13830.4617,
+    "Utc": "2026-10-22T18:41:02.5188133+00:00",
+    "Bytes": 1207228,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1119,
+    "ElapsedMs": 13846.0369,
+    "Utc": "2026-10-22T18:41:02.5343885+00:00",
+    "Bytes": 1208598,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1120,
+    "ElapsedMs": 13846.2334,
+    "Utc": "2026-10-22T18:41:02.534585+00:00",
+    "Bytes": 1208616,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1121,
+    "ElapsedMs": 13862.1214,
+    "Utc": "2026-10-22T18:41:02.550473+00:00",
+    "Bytes": 1210074,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1122,
+    "ElapsedMs": 13878.0563,
+    "Utc": "2026-10-22T18:41:02.566408+00:00",
+    "Bytes": 1211446,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1123,
+    "ElapsedMs": 13893.5642,
+    "Utc": "2026-10-22T18:41:02.5819159+00:00",
+    "Bytes": 1212780,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1124,
+    "ElapsedMs": 13893.9852,
+    "Utc": "2026-10-22T18:41:02.5823368+00:00",
+    "Bytes": 1212818,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1125,
+    "ElapsedMs": 13909.3597,
+    "Utc": "2026-10-22T18:41:02.5977114+00:00",
+    "Bytes": 1214234,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1126,
+    "ElapsedMs": 13924.9569,
+    "Utc": "2026-10-22T18:41:02.6133085+00:00",
+    "Bytes": 1215610,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1127,
+    "ElapsedMs": 13940.9455,
+    "Utc": "2026-10-22T18:41:02.6292971+00:00",
+    "Bytes": 1217018,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1128,
+    "ElapsedMs": 13951.4868,
+    "Utc": "2026-10-22T18:41:02.6398385+00:00",
+    "Bytes": 1217922,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1129,
+    "ElapsedMs": 13955.7263,
+    "Utc": "2026-10-22T18:41:02.644078+00:00",
+    "Bytes": 1218298,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1130,
+    "ElapsedMs": 13971.1223,
+    "Utc": "2026-10-22T18:41:02.659474+00:00",
+    "Bytes": 1219648,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1131,
+    "ElapsedMs": 13987.3687,
+    "Utc": "2026-10-22T18:41:02.6757204+00:00",
+    "Bytes": 1221106,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1132,
+    "ElapsedMs": 14001.5182,
+    "Utc": "2026-10-22T18:41:02.6898699+00:00",
+    "Bytes": 1222308,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1133,
+    "ElapsedMs": 14002.852,
+    "Utc": "2026-10-22T18:41:02.6912037+00:00",
+    "Bytes": 1222426,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1134,
+    "ElapsedMs": 14019.2194,
+    "Utc": "2026-10-22T18:41:02.707571+00:00",
+    "Bytes": 1223934,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1135,
+    "ElapsedMs": 14034.6284,
+    "Utc": "2026-10-22T18:41:02.72298+00:00",
+    "Bytes": 1225290,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1136,
+    "ElapsedMs": 14051.3747,
+    "Utc": "2026-10-22T18:41:02.7397264+00:00",
+    "Bytes": 1226728,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1137,
+    "ElapsedMs": 14066.2892,
+    "Utc": "2026-10-22T18:41:02.7546408+00:00",
+    "Bytes": 1228024,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1138,
+    "ElapsedMs": 14081.7595,
+    "Utc": "2026-10-22T18:41:02.7701112+00:00",
+    "Bytes": 1229446,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1139,
+    "ElapsedMs": 14097.4475,
+    "Utc": "2026-10-22T18:41:02.7857992+00:00",
+    "Bytes": 1230828,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1140,
+    "ElapsedMs": 14113.679,
+    "Utc": "2026-10-22T18:41:02.8020307+00:00",
+    "Bytes": 1232258,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1141,
+    "ElapsedMs": 14129.1436,
+    "Utc": "2026-10-22T18:41:02.8174952+00:00",
+    "Bytes": 1233568,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1142,
+    "ElapsedMs": 14144.1889,
+    "Utc": "2026-10-22T18:41:02.8325405+00:00",
+    "Bytes": 1234952,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1143,
+    "ElapsedMs": 14144.4025,
+    "Utc": "2026-10-22T18:41:02.8327542+00:00",
+    "Bytes": 1234970,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1144,
+    "ElapsedMs": 14159.5361,
+    "Utc": "2026-10-22T18:41:02.8478877+00:00",
+    "Bytes": 1236286,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1145,
+    "ElapsedMs": 14176.2089,
+    "Utc": "2026-10-22T18:41:02.8645605+00:00",
+    "Bytes": 1237758,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1146,
+    "ElapsedMs": 14191.5223,
+    "Utc": "2026-10-22T18:41:02.879874+00:00",
+    "Bytes": 1239090,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1147,
+    "ElapsedMs": 14200.9614,
+    "Utc": "2026-10-22T18:41:02.8893131+00:00",
+    "Bytes": 1239964,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1148,
+    "ElapsedMs": 14207.2675,
+    "Utc": "2026-10-22T18:41:02.8956191+00:00",
+    "Bytes": 1240520,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1149,
+    "ElapsedMs": 14222.5179,
+    "Utc": "2026-10-22T18:41:02.9108696+00:00",
+    "Bytes": 1241832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1150,
+    "ElapsedMs": 14237.8369,
+    "Utc": "2026-10-22T18:41:02.9261886+00:00",
+    "Bytes": 1243156,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1151,
+    "ElapsedMs": 14252.0569,
+    "Utc": "2026-10-22T18:41:02.9404085+00:00",
+    "Bytes": 1244448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1152,
+    "ElapsedMs": 14253.887,
+    "Utc": "2026-10-22T18:41:02.9422387+00:00",
+    "Bytes": 1244610,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1153,
+    "ElapsedMs": 14268.7769,
+    "Utc": "2026-10-22T18:41:02.9571286+00:00",
+    "Bytes": 1245914,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1154,
+    "ElapsedMs": 14284.037,
+    "Utc": "2026-10-22T18:41:02.9723887+00:00",
+    "Bytes": 1247206,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1155,
+    "ElapsedMs": 14299.7711,
+    "Utc": "2026-10-22T18:41:02.9881227+00:00",
+    "Bytes": 1248674,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1156,
+    "ElapsedMs": 14299.8828,
+    "Utc": "2026-10-22T18:41:02.9882344+00:00",
+    "Bytes": 1248682,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1157,
+    "ElapsedMs": 14315.1855,
+    "Utc": "2026-10-22T18:41:03.0035371+00:00",
+    "Bytes": 1250038,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1158,
+    "ElapsedMs": 14331.4898,
+    "Utc": "2026-10-22T18:41:03.0198414+00:00",
+    "Bytes": 1251398,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1159,
+    "ElapsedMs": 14346.9262,
+    "Utc": "2026-10-22T18:41:03.0352778+00:00",
+    "Bytes": 1252812,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1160,
+    "ElapsedMs": 14347.1351,
+    "Utc": "2026-10-22T18:41:03.0354867+00:00",
+    "Bytes": 1252832,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1161,
+    "ElapsedMs": 14362.5183,
+    "Utc": "2026-10-22T18:41:03.0508699+00:00",
+    "Bytes": 1254196,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1162,
+    "ElapsedMs": 14377.8608,
+    "Utc": "2026-10-22T18:41:03.0662125+00:00",
+    "Bytes": 1255558,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1163,
+    "ElapsedMs": 14393.5651,
+    "Utc": "2026-10-22T18:41:03.0819167+00:00",
+    "Bytes": 1256918,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1164,
+    "ElapsedMs": 14393.6834,
+    "Utc": "2026-10-22T18:41:03.082035+00:00",
+    "Bytes": 1256930,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1165,
+    "ElapsedMs": 14409.1965,
+    "Utc": "2026-10-22T18:41:03.0975482+00:00",
+    "Bytes": 1258292,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1166,
+    "ElapsedMs": 14424.6341,
+    "Utc": "2026-10-22T18:41:03.1129857+00:00",
+    "Bytes": 1259668,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1167,
+    "ElapsedMs": 14440.1169,
+    "Utc": "2026-10-22T18:41:03.1284686+00:00",
+    "Bytes": 1261026,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1168,
+    "ElapsedMs": 14451.7093,
+    "Utc": "2026-10-22T18:41:03.140061+00:00",
+    "Bytes": 1262004,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1169,
+    "ElapsedMs": 14456.6522,
+    "Utc": "2026-10-22T18:41:03.1450039+00:00",
+    "Bytes": 1262440,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1170,
+    "ElapsedMs": 14471.8985,
+    "Utc": "2026-10-22T18:41:03.1602501+00:00",
+    "Bytes": 1263860,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1171,
+    "ElapsedMs": 14487.1796,
+    "Utc": "2026-10-22T18:41:03.1755312+00:00",
+    "Bytes": 1265164,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1172,
+    "ElapsedMs": 14501.5356,
+    "Utc": "2026-10-22T18:41:03.1898872+00:00",
+    "Bytes": 1266406,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1173,
+    "ElapsedMs": 14502.9679,
+    "Utc": "2026-10-22T18:41:03.1913195+00:00",
+    "Bytes": 1266532,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1174,
+    "ElapsedMs": 14519.4335,
+    "Utc": "2026-10-22T18:41:03.2077851+00:00",
+    "Bytes": 1268046,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1175,
+    "ElapsedMs": 14534.9388,
+    "Utc": "2026-10-22T18:41:03.2232904+00:00",
+    "Bytes": 1269386,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1176,
+    "ElapsedMs": 14551.4018,
+    "Utc": "2026-10-22T18:41:03.2397534+00:00",
+    "Bytes": 1270814,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1177,
+    "ElapsedMs": 14551.6071,
+    "Utc": "2026-10-22T18:41:03.2399587+00:00",
+    "Bytes": 1270834,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1178,
+    "ElapsedMs": 14567.0547,
+    "Utc": "2026-10-22T18:41:03.2554064+00:00",
+    "Bytes": 1272190,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1179,
+    "ElapsedMs": 14582.3017,
+    "Utc": "2026-10-22T18:41:03.2706533+00:00",
+    "Bytes": 1273538,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1180,
+    "ElapsedMs": 14598.2508,
+    "Utc": "2026-10-22T18:41:03.2866024+00:00",
+    "Bytes": 1275002,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1181,
+    "ElapsedMs": 14613.7725,
+    "Utc": "2026-10-22T18:41:03.3021241+00:00",
+    "Bytes": 1276376,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1182,
+    "ElapsedMs": 14629.1785,
+    "Utc": "2026-10-22T18:41:03.3175301+00:00",
+    "Bytes": 1277736,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1183,
+    "ElapsedMs": 14645.95,
+    "Utc": "2026-10-22T18:41:03.3343017+00:00",
+    "Bytes": 1279154,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1184,
+    "ElapsedMs": 14646.0655,
+    "Utc": "2026-10-22T18:41:03.3344172+00:00",
+    "Bytes": 1279164,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1185,
+    "ElapsedMs": 14661.0138,
+    "Utc": "2026-10-22T18:41:03.3493655+00:00",
+    "Bytes": 1280502,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1186,
+    "ElapsedMs": 14676.9943,
+    "Utc": "2026-10-22T18:41:03.365346+00:00",
+    "Bytes": 1281894,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1187,
+    "ElapsedMs": 14693.2599,
+    "Utc": "2026-10-22T18:41:03.3816115+00:00",
+    "Bytes": 1283388,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1188,
+    "ElapsedMs": 14693.4979,
+    "Utc": "2026-10-22T18:41:03.3818496+00:00",
+    "Bytes": 1283408,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1189,
+    "ElapsedMs": 14707.912,
+    "Utc": "2026-10-22T18:41:03.3962637+00:00",
+    "Bytes": 1284652,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1190,
+    "ElapsedMs": 14723.5608,
+    "Utc": "2026-10-22T18:41:03.4119124+00:00",
+    "Bytes": 1286036,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1191,
+    "ElapsedMs": 14739.3804,
+    "Utc": "2026-10-22T18:41:03.4277321+00:00",
+    "Bytes": 1287448,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1192,
+    "ElapsedMs": 14751.4912,
+    "Utc": "2026-10-22T18:41:03.4398429+00:00",
+    "Bytes": 1288478,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1193,
+    "ElapsedMs": 14754.3084,
+    "Utc": "2026-10-22T18:41:03.44266+00:00",
+    "Bytes": 1288724,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1194,
+    "ElapsedMs": 14770.4512,
+    "Utc": "2026-10-22T18:41:03.4588028+00:00",
+    "Bytes": 1290150,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1195,
+    "ElapsedMs": 14786.3628,
+    "Utc": "2026-10-22T18:41:03.4747145+00:00",
+    "Bytes": 1291582,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1196,
+    "ElapsedMs": 14801.3431,
+    "Utc": "2026-10-22T18:41:03.4896948+00:00",
+    "Bytes": 1292862,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1197,
+    "ElapsedMs": 14817.5216,
+    "Utc": "2026-10-22T18:41:03.5058733+00:00",
+    "Bytes": 1294328,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1198,
+    "ElapsedMs": 14832.5524,
+    "Utc": "2026-10-22T18:41:03.5209041+00:00",
+    "Bytes": 1295642,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1199,
+    "ElapsedMs": 14849.1258,
+    "Utc": "2026-10-22T18:41:03.5374774+00:00",
+    "Bytes": 1297116,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1200,
+    "ElapsedMs": 14864.7089,
+    "Utc": "2026-10-22T18:41:03.5530605+00:00",
+    "Bytes": 1298450,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1201,
+    "ElapsedMs": 14880.7218,
+    "Utc": "2026-10-22T18:41:03.5690734+00:00",
+    "Bytes": 1299910,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1202,
+    "ElapsedMs": 14896.1153,
+    "Utc": "2026-10-22T18:41:03.5844669+00:00",
+    "Bytes": 1301256,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1203,
+    "ElapsedMs": 14896.2283,
+    "Utc": "2026-10-22T18:41:03.58458+00:00",
+    "Bytes": 1301266,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1204,
+    "ElapsedMs": 14912.3093,
+    "Utc": "2026-10-22T18:41:03.600661+00:00",
+    "Bytes": 1302692,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1205,
+    "ElapsedMs": 14927.6629,
+    "Utc": "2026-10-22T18:41:03.6160145+00:00",
+    "Bytes": 1304060,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1206,
+    "ElapsedMs": 14943.8666,
+    "Utc": "2026-10-22T18:41:03.6322182+00:00",
+    "Bytes": 1305466,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1207,
+    "ElapsedMs": 14943.9736,
+    "Utc": "2026-10-22T18:41:03.6323252+00:00",
+    "Bytes": 1305476,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1208,
+    "ElapsedMs": 14959.3589,
+    "Utc": "2026-10-22T18:41:03.6477105+00:00",
+    "Bytes": 1306840,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1209,
+    "ElapsedMs": 14974.7711,
+    "Utc": "2026-10-22T18:41:03.6631227+00:00",
+    "Bytes": 1308198,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1210,
+    "ElapsedMs": 14990.1134,
+    "Utc": "2026-10-22T18:41:03.6784651+00:00",
+    "Bytes": 1309554,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1211,
+    "ElapsedMs": 15000.8726,
+    "Utc": "2026-10-22T18:41:03.6892243+00:00",
+    "Bytes": 1310496,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1212,
+    "ElapsedMs": 15005.9892,
+    "Utc": "2026-10-22T18:41:03.6943408+00:00",
+    "Bytes": 1310946,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1213,
+    "ElapsedMs": 15021.4508,
+    "Utc": "2026-10-22T18:41:03.7098025+00:00",
+    "Bytes": 1312316,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1214,
+    "ElapsedMs": 15037.3031,
+    "Utc": "2026-10-22T18:41:03.7256547+00:00",
+    "Bytes": 1313712,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1215,
+    "ElapsedMs": 15051.6006,
+    "Utc": "2026-10-22T18:41:03.7399522+00:00",
+    "Bytes": 1314938,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1216,
+    "ElapsedMs": 15053.9284,
+    "Utc": "2026-10-22T18:41:03.7422801+00:00",
+    "Bytes": 1315142,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1217,
+    "ElapsedMs": 15069.9154,
+    "Utc": "2026-10-22T18:41:03.758267+00:00",
+    "Bytes": 1316558,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1218,
+    "ElapsedMs": 15085.2594,
+    "Utc": "2026-10-22T18:41:03.7736111+00:00",
+    "Bytes": 1317920,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1219,
+    "ElapsedMs": 15100.4669,
+    "Utc": "2026-10-22T18:41:03.7888185+00:00",
+    "Bytes": 1319296,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1220,
+    "ElapsedMs": 15100.7262,
+    "Utc": "2026-10-22T18:41:03.7890778+00:00",
+    "Bytes": 1319320,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1221,
+    "ElapsedMs": 15115.8371,
+    "Utc": "2026-10-22T18:41:03.8041888+00:00",
+    "Bytes": 1320658,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1222,
+    "ElapsedMs": 15132.1382,
+    "Utc": "2026-10-22T18:41:03.8204898+00:00",
+    "Bytes": 1322054,
+    "Origin": "pump"
+  },
+  {
+    "Sequence": 1223,
+    "ElapsedMs": 15148.5717,
+    "Utc": "2026-10-22T18:41:03.8369234+00:00",
+    "Bytes": 1323470,
+    "Origin": "pump"
+  }
+]

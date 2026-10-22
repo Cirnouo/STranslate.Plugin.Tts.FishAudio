@@ -20,7 +20,7 @@ The producer pauses at the startup threshold until the pump has initialized the 
 
 ## Output position, underflow and drain
 
-[WaveOutStreamingAudioOutput](../../STranslate.Plugin.Tts.FishAudio/Playback/WaveOutStreamingAudioOutput.cs) uses NAudio.WinMM 2.3.0 `WaveOutEvent`, desired latency 100 ms and two buffers. Construction avoids capturing a WPF synchronization context for output-stop callbacks. The device adapter extends wrapping 32-bit WinMM byte positions into a continuing cursor. Unexpected stop, including one without an exception, signals failure to interrupt every waiting phase.
+[WaveOutStreamingAudioOutput](../../STranslate.Plugin.Tts.FishAudio/Playback/WaveOutStreamingAudioOutput.cs) uses NAudio.WinMM 2.3.0 `WaveOutEvent`, desired latency 200 ms and four buffers, retaining approximately 50 ms per device buffer. The additional nominal 100 ms device-queue margin is independent of the software startup conditions and total text length; it can add output queuing delay and is not an acoustic latency guarantee. Construction avoids capturing a WPF synchronization context for output-stop callbacks. The device adapter extends wrapping 32-bit WinMM byte positions into a continuing cursor. Unexpected stop, including one without an exception, signals failure to interrupt every waiting phase.
 
 [StreamingPcmBuffer](../../STranslate.Plugin.Tts.FishAudio/Playback/StreamingPcmBuffer.cs) returns silence for an underflow so later real PCM can resume. The device/source cursor includes that silence, while the final real-PCM position is tracked separately. This silence policy concerns output underflow; it does not zero-pad truncated input samples. Ten seconds without device-position advance fails only while real PCM is outstanding; an empty source during upstream waiting does not itself trigger the device-progress timeout.
 
@@ -32,4 +32,4 @@ Every owned output, decoder and cancellation source gets an independent cleanup 
 
 [Playback regressions](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/StreamingPlaybackSuite.cs) cover arbitrary PCM/MP3 splits, persistent ACM state, VBR/metadata, truncation, large-event pressure, short-prefix startup under silent input, exact byte order, underflow recovery, position wrap, drain, device failure and cleanup. The two reused MP3 fixtures remain unchanged; fixture success is not new provider evidence. Fake output positions establish the software contract. They do not establish coexistence with real application audio, removal/no-device behavior on every host or physical sound. Installed-host production streaming acceptance and live free-model output measurements require their own record under the [verification policy](../policies/streaming-validation.md).
 
-Rationale: [DD-052](../adr/current/DD-052.md).
+Rationale: [DD-052](../adr/current/DD-052.md), [DD-061](../adr/current/DD-061.md).

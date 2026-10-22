@@ -1,0 +1,521 @@
+[
+  {
+    "case": "100x2",
+    "providerReadCount": 302,
+    "callbackToStopMs": 15383.3469,
+    "renderedPrefixEqualsSourceReported": true,
+    "tailPaddingBytes": 8820,
+    "refillGapMs": {
+      "0": 0.6470999999999947,
+      "50": 49.74069999999983,
+      "90": 97.01519999999982,
+      "95": 99.05010000000038,
+      "99": 100.09810000000016,
+      "100": 101.00160000000142
+    },
+    "gapsAbove75Ms": 35,
+    "largeGaps": [
+      {
+        "previousRead": 1,
+        "nextRead": 2,
+        "gapMs": 91.57849999999999,
+        "playbackRelativeMs": 93.20329999999998,
+        "sourcePositionSeconds": 0.1
+      },
+      {
+        "previousRead": 5,
+        "nextRead": 6,
+        "gapMs": 98.74059999999997,
+        "playbackRelativeMs": 300.67409999999995,
+        "sourcePositionSeconds": 0.3
+      },
+      {
+        "previousRead": 16,
+        "nextRead": 17,
+        "gapMs": 97.2559,
+        "playbackRelativeMs": 859.2849,
+        "sourcePositionSeconds": 0.85
+      },
+      {
+        "previousRead": 33,
+        "nextRead": 34,
+        "gapMs": 98.4858999999999,
+        "playbackRelativeMs": 1720.3105,
+        "sourcePositionSeconds": 1.7
+      },
+      {
+        "previousRead": 45,
+        "nextRead": 46,
+        "gapMs": 99.69500000000016,
+        "playbackRelativeMs": 2332.1224,
+        "sourcePositionSeconds": 2.3
+      },
+      {
+        "previousRead": 52,
+        "nextRead": 53,
+        "gapMs": 97.93069999999989,
+        "playbackRelativeMs": 2691.25,
+        "sourcePositionSeconds": 2.65
+      },
+      {
+        "previousRead": 76,
+        "nextRead": 77,
+        "gapMs": 97.92370000000028,
+        "playbackRelativeMs": 3899.9895,
+        "sourcePositionSeconds": 3.85
+      },
+      {
+        "previousRead": 91,
+        "nextRead": 92,
+        "gapMs": 99.35600000000068,
+        "playbackRelativeMs": 4662.1032000000005,
+        "sourcePositionSeconds": 4.6
+      },
+      {
+        "previousRead": 93,
+        "nextRead": 94,
+        "gapMs": 100.1304999999993,
+        "playbackRelativeMs": 4772.0786,
+        "sourcePositionSeconds": 4.7
+      },
+      {
+        "previousRead": 95,
+        "nextRead": 96,
+        "gapMs": 99.88839999999982,
+        "playbackRelativeMs": 4881.9613,
+        "sourcePositionSeconds": 4.8
+      },
+      {
+        "previousRead": 97,
+        "nextRead": 98,
+        "gapMs": 99.11260000000038,
+        "playbackRelativeMs": 4991.7538,
+        "sourcePositionSeconds": 4.9
+      },
+      {
+        "previousRead": 99,
+        "nextRead": 100,
+        "gapMs": 98.56660000000011,
+        "playbackRelativeMs": 5100.642,
+        "sourcePositionSeconds": 5.0
+      },
+      {
+        "previousRead": 120,
+        "nextRead": 121,
+        "gapMs": 99.13340000000062,
+        "playbackRelativeMs": 6161.7637,
+        "sourcePositionSeconds": 6.05
+      },
+      {
+        "previousRead": 129,
+        "nextRead": 130,
+        "gapMs": 100.09810000000016,
+        "playbackRelativeMs": 6622.7518,
+        "sourcePositionSeconds": 6.5
+      },
+      {
+        "previousRead": 134,
+        "nextRead": 135,
+        "gapMs": 99.71879999999965,
+        "playbackRelativeMs": 6882.6335,
+        "sourcePositionSeconds": 6.75
+      },
+      {
+        "previousRead": 136,
+        "nextRead": 137,
+        "gapMs": 99.75810000000001,
+        "playbackRelativeMs": 6991.5895,
+        "sourcePositionSeconds": 6.85
+      },
+      {
+        "previousRead": 146,
+        "nextRead": 147,
+        "gapMs": 99.85130000000026,
+        "playbackRelativeMs": 7501.7316,
+        "sourcePositionSeconds": 7.35
+      },
+      {
+        "previousRead": 148,
+        "nextRead": 149,
+        "gapMs": 98.95939999999973,
+        "playbackRelativeMs": 7610.9333,
+        "sourcePositionSeconds": 7.45
+      },
+      {
+        "previousRead": 162,
+        "nextRead": 163,
+        "gapMs": 98.9323000000004,
+        "playbackRelativeMs": 8321.9316,
+        "sourcePositionSeconds": 8.15
+      },
+      {
+        "previousRead": 164,
+        "nextRead": 165,
+        "gapMs": 97.503999999999,
+        "playbackRelativeMs": 8430.7521,
+        "sourcePositionSeconds": 8.25
+      },
+      {
+        "previousRead": 175,
+        "nextRead": 176,
+        "gapMs": 99.05010000000038,
+        "playbackRelativeMs": 8991.8196,
+        "sourcePositionSeconds": 8.8
+      },
+      {
+        "previousRead": 177,
+        "nextRead": 178,
+        "gapMs": 98.43659999999909,
+        "playbackRelativeMs": 9101.5306,
+        "sourcePositionSeconds": 8.9
+      },
+      {
+        "previousRead": 185,
+        "nextRead": 186,
+        "gapMs": 96.01239999999962,
+        "playbackRelativeMs": 9509.0236,
+        "sourcePositionSeconds": 9.3
+      },
+      {
+        "previousRead": 195,
+        "nextRead": 196,
+        "gapMs": 100.00640000000021,
+        "playbackRelativeMs": 10022.0648,
+        "sourcePositionSeconds": 9.8
+      },
+      {
+        "previousRead": 198,
+        "nextRead": 199,
+        "gapMs": 96.2443000000003,
+        "playbackRelativeMs": 10178.8539,
+        "sourcePositionSeconds": 9.95
+      },
+      {
+        "previousRead": 214,
+        "nextRead": 215,
+        "gapMs": 97.63709999999992,
+        "playbackRelativeMs": 10990.3235,
+        "sourcePositionSeconds": 10.75
+      },
+      {
+        "previousRead": 224,
+        "nextRead": 225,
+        "gapMs": 101.00160000000142,
+        "playbackRelativeMs": 11502.8821,
+        "sourcePositionSeconds": 11.25
+      },
+      {
+        "previousRead": 235,
+        "nextRead": 236,
+        "gapMs": 98.57470000000103,
+        "playbackRelativeMs": 12060.6306,
+        "sourcePositionSeconds": 11.8
+      },
+      {
+        "previousRead": 251,
+        "nextRead": 252,
+        "gapMs": 98.16320000000087,
+        "playbackRelativeMs": 12869.895,
+        "sourcePositionSeconds": 12.6
+      },
+      {
+        "previousRead": 257,
+        "nextRead": 258,
+        "gapMs": 99.72379999999976,
+        "playbackRelativeMs": 13181.4737,
+        "sourcePositionSeconds": 12.9
+      },
+      {
+        "previousRead": 264,
+        "nextRead": 265,
+        "gapMs": 97.01519999999982,
+        "playbackRelativeMs": 13539.6677,
+        "sourcePositionSeconds": 13.25
+      },
+      {
+        "previousRead": 276,
+        "nextRead": 277,
+        "gapMs": 96.47790000000168,
+        "playbackRelativeMs": 14148.297700000001,
+        "sourcePositionSeconds": 13.85
+      },
+      {
+        "previousRead": 282,
+        "nextRead": 283,
+        "gapMs": 100.2489999999998,
+        "playbackRelativeMs": 14463.0784,
+        "sourcePositionSeconds": 14.15
+      },
+      {
+        "previousRead": 284,
+        "nextRead": 285,
+        "gapMs": 99.90109999999913,
+        "playbackRelativeMs": 14571.6937,
+        "sourcePositionSeconds": 14.25
+      },
+      {
+        "previousRead": 297,
+        "nextRead": 298,
+        "gapMs": 97.40209999999934,
+        "playbackRelativeMs": 15230.5319,
+        "sourcePositionSeconds": 14.9
+      }
+    ],
+    "steadyStateDefinition": "Exclude initial prefill reads and the gap leading to the first refill.",
+    "steadyStateGapsAbove75Ms": 34,
+    "steadyStateMaximumGapMs": 101.00160000000142,
+    "minimumPreReadQueueEstimate": {
+      "readSequence": 10,
+      "readElapsedMs": 608.025,
+      "sourcePositionSeconds": 0.5,
+      "sampledPosition": 40292,
+      "sampledPositionElapsedMs": 608.023,
+      "queuedBytesUpperEstimate": 3808
+    },
+    "preReadQueueEstimateAtOrBelowZeroCount": 0,
+    "positionPlateausAbove10MsAfterStartup": [
+      {
+        "deviceBytePosition": 17640,
+        "startAfterPlayMs": 202.2297,
+        "durationObservedMs": 36.32409999999999,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 66150,
+        "startAfterPlayMs": 762.2574,
+        "durationObservedMs": 35.66269999999997,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 141120,
+        "startAfterPlayMs": 1622.049,
+        "durationObservedMs": 36.88800000000015,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 194040,
+        "startAfterPlayMs": 2232.6434,
+        "durationObservedMs": 38.250800000000254,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 224910,
+        "startAfterPlayMs": 2593.676,
+        "durationObservedMs": 35.05040000000008,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 330750,
+        "startAfterPlayMs": 3802.4,
+        "durationObservedMs": 35.66989999999987,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 396900,
+        "startAfterPlayMs": 4562.9469,
+        "durationObservedMs": 37.66020000000026,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 405720,
+        "startAfterPlayMs": 4672.1386,
+        "durationObservedMs": 37.539700000000266,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 414540,
+        "startAfterPlayMs": 4782.4071,
+        "durationObservedMs": 37.20939999999973,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 423360,
+        "startAfterPlayMs": 4892.9825,
+        "durationObservedMs": 36.36629999999968,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 432180,
+        "startAfterPlayMs": 5002.3884,
+        "durationObservedMs": 35.51000000000022,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 524790,
+        "startAfterPlayMs": 6062.7474,
+        "durationObservedMs": 37.60660000000007,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 564480,
+        "startAfterPlayMs": 6522.8454,
+        "durationObservedMs": 43.3122000000003,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 586530,
+        "startAfterPlayMs": 6783.1084,
+        "durationObservedMs": 36.82589999999982,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 595350,
+        "startAfterPlayMs": 6892.146,
+        "durationObservedMs": 37.28030000000035,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 639450,
+        "startAfterPlayMs": 7402.0904,
+        "durationObservedMs": 38.02630000000045,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 648270,
+        "startAfterPlayMs": 7512.1026,
+        "durationObservedMs": 36.97400000000016,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 710010,
+        "startAfterPlayMs": 8223.4035,
+        "durationObservedMs": 35.60230000000047,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 718830,
+        "startAfterPlayMs": 8333.6323,
+        "durationObservedMs": 34.565700000001016,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 767340,
+        "startAfterPlayMs": 8893.1701,
+        "durationObservedMs": 37.63169999999991,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 776160,
+        "startAfterPlayMs": 9003.395,
+        "durationObservedMs": 35.753600000000006,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 811440,
+        "startAfterPlayMs": 9413.3085,
+        "durationObservedMs": 47.66570000000138,
+        "samples": 5
+      },
+      {
+        "deviceBytePosition": 855540,
+        "startAfterPlayMs": 9922.1793,
+        "durationObservedMs": 38.243099999999686,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 868770,
+        "startAfterPlayMs": 10082.890300000001,
+        "durationObservedMs": 48.816499999998996,
+        "samples": 5
+      },
+      {
+        "deviceBytePosition": 939330,
+        "startAfterPlayMs": 10892.9677,
+        "durationObservedMs": 35.792200000001685,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 983430,
+        "startAfterPlayMs": 11402.0744,
+        "durationObservedMs": 39.26780000000144,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1031940,
+        "startAfterPlayMs": 11962.3513,
+        "durationObservedMs": 36.5586000000003,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1102500,
+        "startAfterPlayMs": 12771.9764,
+        "durationObservedMs": 36.16320000000087,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1128960,
+        "startAfterPlayMs": 13081.958,
+        "durationObservedMs": 36.628099999999904,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1159830,
+        "startAfterPlayMs": 13442.9419,
+        "durationObservedMs": 35.410499999999956,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1212750,
+        "startAfterPlayMs": 14052.0103,
+        "durationObservedMs": 35.49539999999979,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1239210,
+        "startAfterPlayMs": 14363.0382,
+        "durationObservedMs": 35.930099999999584,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1248030,
+        "startAfterPlayMs": 14471.9977,
+        "durationObservedMs": 38.44030000000021,
+        "samples": 4
+      },
+      {
+        "deviceBytePosition": 1305360,
+        "startAfterPlayMs": 15133.3319,
+        "durationObservedMs": 35.13890000000174,
+        "samples": 4
+      }
+    ]
+  },
+  {
+    "case": "200x4",
+    "providerReadCount": 304,
+    "callbackToStopMs": 15050.394900000001,
+    "renderedPrefixEqualsSourceReported": true,
+    "tailPaddingBytes": 17640,
+    "refillGapMs": {
+      "0": 0.31739999999999213,
+      "50": 49.09090000000015,
+      "90": 56.57410000000091,
+      "95": 57.30390999999986,
+      "99": 58.157782000000154,
+      "100": 98.69839999999999
+    },
+    "gapsAbove75Ms": 1,
+    "largeGaps": [
+      {
+        "previousRead": 3,
+        "nextRead": 4,
+        "gapMs": 98.69839999999999,
+        "playbackRelativeMs": 101.35179999999998,
+        "sourcePositionSeconds": 0.2
+      }
+    ],
+    "steadyStateDefinition": "Exclude initial prefill reads and the gap leading to the first refill.",
+    "steadyStateGapsAbove75Ms": 0,
+    "steadyStateMaximumGapMs": 58.95310000000063,
+    "minimumPreReadQueueEstimate": {
+      "readSequence": 58,
+      "readElapsedMs": 2901.9409,
+      "sourcePositionSeconds": 2.9,
+      "sampledPosition": 243358,
+      "sampledPositionElapsedMs": 2901.9387,
+      "queuedBytesUpperEstimate": 12422
+    },
+    "preReadQueueEstimateAtOrBelowZeroCount": 0,
+    "positionPlateausAbove10MsAfterStartup": []
+  }
+]

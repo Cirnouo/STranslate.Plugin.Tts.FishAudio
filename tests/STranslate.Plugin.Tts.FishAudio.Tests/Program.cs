@@ -1,3 +1,10 @@
+if (args.Contains("--streaming-output-tests"))
+{
+    await StreamingPlaybackSuite.RunAllAsync();
+    Console.WriteLine("Streaming output regression tests passed.");
+    return;
+}
+
 if (args.Contains("--voice-card-ink-tests"))
 {
     await VoiceCardInkSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-ink-tests") + 1));

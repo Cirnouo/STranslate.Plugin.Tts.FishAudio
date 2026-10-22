@@ -15,3 +15,7 @@
 [Settings interaction follow-up](settings-interactions-host-2026-10-22.md) records real title-copy notifications, collapsed last-favorite removal, resting numeric wheel adjustment and editing-state page scrolling, distinguishing host observations from theme fixtures.
 
 [Voice glyph follow-up](voice-glyph-host-2026-10-22.md) records outline/raster verification and installed-host visual checks for the reported high Cross, including the failed first test attempt and corrected coverage.
+
+[PCM output queue comparison](pcm-output-2026-10-22.md) preserves real native responses, provider-byte reconstruction and the user's same-source two/four-buffer listening comparison, with portable integrity checks and explicit inference limits.
+
+[Four-buffer installed-host acceptance](pcm-output-host-2026-10-22.md) records the exact validation-package identity, retained user state and the user's same-sample confirmation that the reported electrical noise/stuttering disappeared after the audio update.

@@ -1,0 +1,12 @@
+{
+  "ExactlyEqual": true,
+  "UpstreamBytes": 6053526,
+  "RenderedRealBytes": 6053526,
+  "InsertedPaddingBytes": 5814,
+  "FirstMismatchSourceByteOffset": null,
+  "UpstreamSha256": "3a7783c5ccb27cbebf977a5c75c6f954b1ec6bf50359882b808d584feb32397f",
+  "RenderedRealSha256": "3a7783c5ccb27cbebf977a5c75c6f954b1ec6bf50359882b808d584feb32397f",
+  "ReadsWithPadding": 2,
+  "LastRealPcmEnd": 6053526,
+  "HighestDevicePosition": 6054444
+}

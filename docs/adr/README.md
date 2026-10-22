@@ -84,3 +84,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-058 | [Separate slider interaction steps from precise numeric editing](current/DD-058.md) | Current |
 | DD-059 | [Validate complete input drafts before accepting edits](current/DD-059.md) | Current |
 | DD-060 | [Center voice action glyph outlines rather than font line boxes](current/DD-060.md) | Current |
+| DD-061 | [Keep four device buffers without increasing each refill block](current/DD-061.md) | Current |

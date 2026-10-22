@@ -1,0 +1,28 @@
+{
+  "assemblySha256": "a435361b5b4821d9b2ebc968077a745cc21f91da03acd5271ad13ec2750f0f45",
+  "productionSha256": "e023d87d35745c422edc0aa310ce7e7802e039ac27d0db0bc898061ac9ca7c1f",
+  "sourceFingerprints": [
+    {
+      "name": "DiagnosticCapture.cs",
+      "sha256": "3fcbfa2e378e389d1d63e9b340fbc436927531a5b3e44e4e05324f1c076e57d3"
+    },
+    {
+      "name": "OfflineReplay.csproj",
+      "sha256": "3ea2723642532e844ec83fa5d30f8b53fbe47cd5d677f70c5bb7180da6f4d9bf"
+    },
+    {
+      "name": "Program.cs",
+      "sha256": "542a601d6932fbcbb4a87bdd607a8e02ed043fd0c6bf5715906d6659f7ab871b"
+    },
+    {
+      "name": "SelfTests.cs",
+      "sha256": "4eb38d99020901f1a83e63c4f1634abf0c598b3e7c2ced6bda06ad6a897c35f5"
+    }
+  ],
+  "modes": "100x2 invokes the production default constructor; 200x4 injects only DesiredLatency=200 and NumberOfBuffers=4 into the same adapter.",
+  "noNetwork": true,
+  "noCredentials": true,
+  "deadlineSeconds": 30,
+  "sourcePcmSha256": "3a7783c5ccb27cbebf977a5c75c6f954b1ec6bf50359882b808d584feb32397f",
+  "replayedFirst15SecondsSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b"
+}

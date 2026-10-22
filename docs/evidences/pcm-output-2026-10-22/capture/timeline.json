@@ -1,0 +1,5635 @@
+[
+  {
+    "sequence": 0,
+    "elapsedMs": 68.7949,
+    "utc": "2026-10-22T18:26:52.8385393+00:00",
+    "kind": "connectAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 1,
+    "elapsedMs": 1535.0053,
+    "utc": "2026-10-22T18:26:54.3047495+00:00",
+    "kind": "connectCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": null
+  },
+  {
+    "sequence": 2,
+    "elapsedMs": 1585.6866,
+    "utc": "2026-10-22T18:26:54.3554313+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 3,
+    "elapsedMs": 1586.5055,
+    "utc": "2026-10-22T18:26:54.3562498+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": -1,
+    "details": {
+      "index": 0,
+      "event": "start",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 4,
+    "elapsedMs": 1587.7107,
+    "utc": "2026-10-22T18:26:54.3574549+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 98,
+      "cumulativeTextUtf16": 0,
+      "textEvents": 0,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 5,
+    "elapsedMs": 1587.7925,
+    "utc": "2026-10-22T18:26:54.3575367+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 1,
+      "event": "text",
+      "textUtf16Length": 98,
+      "cumulativeTextUtf16": 98,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 6,
+    "elapsedMs": 1587.8491,
+    "utc": "2026-10-22T18:26:54.3575932+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 98,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 7,
+    "elapsedMs": 1587.9611,
+    "utc": "2026-10-22T18:26:54.3577053+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "index": 2,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 98,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 8,
+    "elapsedMs": 5956.0988,
+    "utc": "2026-10-22T18:26:58.7258435+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 9,
+    "elapsedMs": 6095.771,
+    "utc": "2026-10-22T18:26:58.8655155+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 10,
+    "elapsedMs": 6124.5368,
+    "utc": "2026-10-22T18:26:58.8942813+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 11,
+    "elapsedMs": 6168.7453,
+    "utc": "2026-10-22T18:26:58.9384898+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 12,
+    "elapsedMs": 6192.3877,
+    "utc": "2026-10-22T18:26:58.9621321+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 13,
+    "elapsedMs": 6258.3003,
+    "utc": "2026-10-22T18:26:59.0280451+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 14,
+    "elapsedMs": 6277.4965,
+    "utc": "2026-10-22T18:26:59.047241+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 15,
+    "elapsedMs": 6294.0885,
+    "utc": "2026-10-22T18:26:59.0638341+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 16,
+    "elapsedMs": 6319.1777,
+    "utc": "2026-10-22T18:26:59.0889222+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 17,
+    "elapsedMs": 6329.5898,
+    "utc": "2026-10-22T18:26:59.0993341+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 18,
+    "elapsedMs": 6343.7262,
+    "utc": "2026-10-22T18:26:59.1134709+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 19,
+    "elapsedMs": 6357.6721,
+    "utc": "2026-10-22T18:26:59.1274166+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 20,
+    "elapsedMs": 6419.8546,
+    "utc": "2026-10-22T18:26:59.1895997+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 21,
+    "elapsedMs": 6432.0199,
+    "utc": "2026-10-22T18:26:59.2017642+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 22,
+    "elapsedMs": 6442.6107,
+    "utc": "2026-10-22T18:26:59.2123601+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 23,
+    "elapsedMs": 6451.3149,
+    "utc": "2026-10-22T18:26:59.2210597+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 24,
+    "elapsedMs": 6461.5425,
+    "utc": "2026-10-22T18:26:59.2312866+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 25,
+    "elapsedMs": 6469.2907,
+    "utc": "2026-10-22T18:26:59.239035+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 26,
+    "elapsedMs": 6477.6689,
+    "utc": "2026-10-22T18:26:59.2474131+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 27,
+    "elapsedMs": 6486.7148,
+    "utc": "2026-10-22T18:26:59.2564589+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 28,
+    "elapsedMs": 6492.7675,
+    "utc": "2026-10-22T18:26:59.2625117+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 29,
+    "elapsedMs": 6500.1504,
+    "utc": "2026-10-22T18:26:59.2698946+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 30,
+    "elapsedMs": 6506.5692,
+    "utc": "2026-10-22T18:26:59.2763133+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 31,
+    "elapsedMs": 6513.3822,
+    "utc": "2026-10-22T18:26:59.2831264+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 32,
+    "elapsedMs": 6520.4175,
+    "utc": "2026-10-22T18:26:59.2901617+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 33,
+    "elapsedMs": 6527.0536,
+    "utc": "2026-10-22T18:26:59.2967978+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 34,
+    "elapsedMs": 6584.6675,
+    "utc": "2026-10-22T18:26:59.3544117+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 35,
+    "elapsedMs": 6590.0646,
+    "utc": "2026-10-22T18:26:59.3598095+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 36,
+    "elapsedMs": 6595.6193,
+    "utc": "2026-10-22T18:26:59.3653634+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 37,
+    "elapsedMs": 6601.9917,
+    "utc": "2026-10-22T18:26:59.3717359+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 38,
+    "elapsedMs": 6606.4334,
+    "utc": "2026-10-22T18:26:59.3761776+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 39,
+    "elapsedMs": 6611.3885,
+    "utc": "2026-10-22T18:26:59.3811329+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 40,
+    "elapsedMs": 6615.3142,
+    "utc": "2026-10-22T18:26:59.3850583+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 41,
+    "elapsedMs": 6621.3179,
+    "utc": "2026-10-22T18:26:59.391062+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 42,
+    "elapsedMs": 6624.7462,
+    "utc": "2026-10-22T18:26:59.3944904+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 43,
+    "elapsedMs": 6629.458,
+    "utc": "2026-10-22T18:26:59.3992022+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 44,
+    "elapsedMs": 6632.6012,
+    "utc": "2026-10-22T18:26:59.4023453+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 45,
+    "elapsedMs": 6636.5139,
+    "utc": "2026-10-22T18:26:59.4062581+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 46,
+    "elapsedMs": 6641.2906,
+    "utc": "2026-10-22T18:26:59.4110348+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 47,
+    "elapsedMs": 6645.3638,
+    "utc": "2026-10-22T18:26:59.415108+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 48,
+    "elapsedMs": 6647.8419,
+    "utc": "2026-10-22T18:26:59.4175861+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 49,
+    "elapsedMs": 6649.6581,
+    "utc": "2026-10-22T18:26:59.4194023+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "messageIndex": 0,
+      "Count": 12326,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 50,
+    "elapsedMs": 6651.335,
+    "utc": "2026-10-22T18:26:59.4210791+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "event": "audio",
+      "audioBytes": 684032,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 51,
+    "elapsedMs": 6655.1047,
+    "utc": "2026-10-22T18:26:59.4248489+00:00",
+    "kind": "waveOutInit",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "SampleRate": 44100,
+      "BitsPerSample": 16,
+      "Channels": 1
+    }
+  },
+  {
+    "sequence": 52,
+    "elapsedMs": 6748.6774,
+    "utc": "2026-10-22T18:26:59.5184216+00:00",
+    "kind": "waveOutPlayEntry",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 53,
+    "elapsedMs": 6748.9883,
+    "utc": "2026-10-22T18:26:59.5187324+00:00",
+    "kind": "waveOutPlayReturned",
+    "sourceReadHighestIndex": 99,
+    "details": null
+  },
+  {
+    "sequence": 54,
+    "elapsedMs": 6749.3437,
+    "utc": "2026-10-22T18:26:59.5190878+00:00",
+    "kind": "actualPlaybackCallbackEntry",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 98,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 55,
+    "elapsedMs": 6749.4735,
+    "utc": "2026-10-22T18:26:59.5192177+00:00",
+    "kind": "nativePlaybackCallbackReturned",
+    "sourceReadHighestIndex": 99,
+    "details": {
+      "HighestIndex": 99,
+      "ReadCount": 100,
+      "SentTextUtf16": 98,
+      "CompletedTextEvents": 1,
+      "StopCompleted": false
+    }
+  },
+  {
+    "sequence": 56,
+    "elapsedMs": 6750.3321,
+    "utc": "2026-10-22T18:26:59.5200765+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 397,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 226,
+      "cumulativeTextUtf16": 98,
+      "textEvents": 1,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 57,
+    "elapsedMs": 6750.502,
+    "utc": "2026-10-22T18:26:59.5202461+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 397,
+    "details": {
+      "index": 3,
+      "event": "text",
+      "textUtf16Length": 226,
+      "cumulativeTextUtf16": 324,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 58,
+    "elapsedMs": 6750.5347,
+    "utc": "2026-10-22T18:26:59.5202788+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 397,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 324,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 59,
+    "elapsedMs": 6750.6182,
+    "utc": "2026-10-22T18:26:59.5203624+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 397,
+    "details": {
+      "index": 4,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 324,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 60,
+    "elapsedMs": 6750.8848,
+    "utc": "2026-10-22T18:26:59.5206289+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 623,
+    "details": {
+      "index": 5,
+      "event": "text",
+      "textUtf16Length": 287,
+      "cumulativeTextUtf16": 324,
+      "textEvents": 2,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 61,
+    "elapsedMs": 6750.9496,
+    "utc": "2026-10-22T18:26:59.5206938+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 623,
+    "details": {
+      "index": 5,
+      "event": "text",
+      "textUtf16Length": 287,
+      "cumulativeTextUtf16": 611,
+      "textEvents": 3,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 62,
+    "elapsedMs": 6750.9639,
+    "utc": "2026-10-22T18:26:59.520708+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 623,
+    "details": {
+      "index": 6,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 611,
+      "textEvents": 3,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 63,
+    "elapsedMs": 6750.9882,
+    "utc": "2026-10-22T18:26:59.5207323+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 623,
+    "details": {
+      "index": 6,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 611,
+      "textEvents": 3,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 64,
+    "elapsedMs": 6751.1255,
+    "utc": "2026-10-22T18:26:59.5208697+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 910,
+    "details": {
+      "index": 7,
+      "event": "text",
+      "textUtf16Length": 261,
+      "cumulativeTextUtf16": 611,
+      "textEvents": 3,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 65,
+    "elapsedMs": 6751.2388,
+    "utc": "2026-10-22T18:26:59.5209829+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 910,
+    "details": {
+      "index": 7,
+      "event": "text",
+      "textUtf16Length": 261,
+      "cumulativeTextUtf16": 872,
+      "textEvents": 4,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 66,
+    "elapsedMs": 6751.254,
+    "utc": "2026-10-22T18:26:59.5209982+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 910,
+    "details": {
+      "index": 8,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 872,
+      "textEvents": 4,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 67,
+    "elapsedMs": 6751.2941,
+    "utc": "2026-10-22T18:26:59.5210383+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 910,
+    "details": {
+      "index": 8,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 872,
+      "textEvents": 4,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 68,
+    "elapsedMs": 6751.3298,
+    "utc": "2026-10-22T18:26:59.5210739+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 9,
+      "event": "text",
+      "textUtf16Length": 78,
+      "cumulativeTextUtf16": 872,
+      "textEvents": 4,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 69,
+    "elapsedMs": 6751.3672,
+    "utc": "2026-10-22T18:26:59.5211113+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 9,
+      "event": "text",
+      "textUtf16Length": 78,
+      "cumulativeTextUtf16": 950,
+      "textEvents": 5,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 70,
+    "elapsedMs": 6751.3738,
+    "utc": "2026-10-22T18:26:59.521118+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 10,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 950,
+      "textEvents": 5,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 71,
+    "elapsedMs": 6751.4085,
+    "utc": "2026-10-22T18:26:59.5211526+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 10,
+      "event": "flush",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 950,
+      "textEvents": 5,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 72,
+    "elapsedMs": 6751.4224,
+    "utc": "2026-10-22T18:26:59.5211665+00:00",
+    "kind": "sendAttempt",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 11,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 950,
+      "textEvents": 5,
+      "stopCompleted": false
+    }
+  },
+  {
+    "sequence": 73,
+    "elapsedMs": 6751.4609,
+    "utc": "2026-10-22T18:26:59.5212051+00:00",
+    "kind": "sendCompleted",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "index": 11,
+      "event": "stop",
+      "textUtf16Length": 0,
+      "cumulativeTextUtf16": 950,
+      "textEvents": 5,
+      "stopCompleted": true
+    }
+  },
+  {
+    "sequence": 74,
+    "elapsedMs": 10306.3062,
+    "utc": "2026-10-22T18:27:03.0760503+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 75,
+    "elapsedMs": 10348.291,
+    "utc": "2026-10-22T18:27:03.1180351+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 76,
+    "elapsedMs": 10471.0261,
+    "utc": "2026-10-22T18:27:03.2407702+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 77,
+    "elapsedMs": 10491.4428,
+    "utc": "2026-10-22T18:27:03.2611869+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 78,
+    "elapsedMs": 10518.4289,
+    "utc": "2026-10-22T18:27:03.288173+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 79,
+    "elapsedMs": 10592.6517,
+    "utc": "2026-10-22T18:27:03.3623958+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 80,
+    "elapsedMs": 10613.8237,
+    "utc": "2026-10-22T18:27:03.3835678+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 81,
+    "elapsedMs": 10629.8529,
+    "utc": "2026-10-22T18:27:03.399597+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 82,
+    "elapsedMs": 10652.5525,
+    "utc": "2026-10-22T18:27:03.4222967+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 83,
+    "elapsedMs": 10670.429,
+    "utc": "2026-10-22T18:27:03.4401731+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 84,
+    "elapsedMs": 10682.451,
+    "utc": "2026-10-22T18:27:03.4521952+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 85,
+    "elapsedMs": 10695.6207,
+    "utc": "2026-10-22T18:27:03.4653649+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 86,
+    "elapsedMs": 10754.8713,
+    "utc": "2026-10-22T18:27:03.5246155+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 87,
+    "elapsedMs": 10766.0275,
+    "utc": "2026-10-22T18:27:03.5357716+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 88,
+    "elapsedMs": 10779.8784,
+    "utc": "2026-10-22T18:27:03.5496226+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 89,
+    "elapsedMs": 10786.7296,
+    "utc": "2026-10-22T18:27:03.5564737+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 90,
+    "elapsedMs": 10796.4,
+    "utc": "2026-10-22T18:27:03.5661442+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 91,
+    "elapsedMs": 10806.344,
+    "utc": "2026-10-22T18:27:03.5760881+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 92,
+    "elapsedMs": 10813.0024,
+    "utc": "2026-10-22T18:27:03.5827465+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 93,
+    "elapsedMs": 10821.1384,
+    "utc": "2026-10-22T18:27:03.5908826+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 94,
+    "elapsedMs": 10828.0723,
+    "utc": "2026-10-22T18:27:03.5978165+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 95,
+    "elapsedMs": 10834.1415,
+    "utc": "2026-10-22T18:27:03.6038856+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 96,
+    "elapsedMs": 10841.8379,
+    "utc": "2026-10-22T18:27:03.6115822+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 97,
+    "elapsedMs": 10846.6518,
+    "utc": "2026-10-22T18:27:03.616396+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 98,
+    "elapsedMs": 10855.7317,
+    "utc": "2026-10-22T18:27:03.6254759+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 99,
+    "elapsedMs": 10864.6381,
+    "utc": "2026-10-22T18:27:03.6343823+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 100,
+    "elapsedMs": 10918.651,
+    "utc": "2026-10-22T18:27:03.6883953+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 101,
+    "elapsedMs": 10924.4593,
+    "utc": "2026-10-22T18:27:03.6942034+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 102,
+    "elapsedMs": 10929.9417,
+    "utc": "2026-10-22T18:27:03.6996859+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 103,
+    "elapsedMs": 10934.8172,
+    "utc": "2026-10-22T18:27:03.7045613+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 104,
+    "elapsedMs": 10938.8692,
+    "utc": "2026-10-22T18:27:03.7086133+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 105,
+    "elapsedMs": 10944.1082,
+    "utc": "2026-10-22T18:27:03.7138524+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 106,
+    "elapsedMs": 10949.6562,
+    "utc": "2026-10-22T18:27:03.7194003+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 107,
+    "elapsedMs": 10950.4446,
+    "utc": "2026-10-22T18:27:03.7201887+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 108,
+    "elapsedMs": 10950.448,
+    "utc": "2026-10-22T18:27:03.7201921+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 1,
+      "Count": 38,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 109,
+    "elapsedMs": 10950.6111,
+    "utc": "2026-10-22T18:27:03.7203552+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 557056,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 110,
+    "elapsedMs": 11102.4988,
+    "utc": "2026-10-22T18:27:03.8722431+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 111,
+    "elapsedMs": 11102.5335,
+    "utc": "2026-10-22T18:27:03.8722777+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 112,
+    "elapsedMs": 11102.5411,
+    "utc": "2026-10-22T18:27:03.8722853+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 113,
+    "elapsedMs": 11102.5956,
+    "utc": "2026-10-22T18:27:03.8723397+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 114,
+    "elapsedMs": 11102.6025,
+    "utc": "2026-10-22T18:27:03.8723466+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 115,
+    "elapsedMs": 11102.6259,
+    "utc": "2026-10-22T18:27:03.8723701+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 116,
+    "elapsedMs": 11102.63,
+    "utc": "2026-10-22T18:27:03.8723742+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 117,
+    "elapsedMs": 11102.8164,
+    "utc": "2026-10-22T18:27:03.8725605+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 118,
+    "elapsedMs": 11103.5893,
+    "utc": "2026-10-22T18:27:03.8733334+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 119,
+    "elapsedMs": 11103.7592,
+    "utc": "2026-10-22T18:27:03.8735033+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 2,
+      "Count": 15204,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 120,
+    "elapsedMs": 11103.9093,
+    "utc": "2026-10-22T18:27:03.8736535+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 162622,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 121,
+    "elapsedMs": 14279.2472,
+    "utc": "2026-10-22T18:27:07.0489914+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 122,
+    "elapsedMs": 14302.7641,
+    "utc": "2026-10-22T18:27:07.0725082+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 123,
+    "elapsedMs": 14423.3521,
+    "utc": "2026-10-22T18:27:07.1930962+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 124,
+    "elapsedMs": 14462.9077,
+    "utc": "2026-10-22T18:27:07.2326519+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 125,
+    "elapsedMs": 14480.2994,
+    "utc": "2026-10-22T18:27:07.2500435+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 126,
+    "elapsedMs": 14561.4105,
+    "utc": "2026-10-22T18:27:07.3311546+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 127,
+    "elapsedMs": 14577.8633,
+    "utc": "2026-10-22T18:27:07.3476074+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 128,
+    "elapsedMs": 14596.6268,
+    "utc": "2026-10-22T18:27:07.366371+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 129,
+    "elapsedMs": 14613.7807,
+    "utc": "2026-10-22T18:27:07.3835248+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 130,
+    "elapsedMs": 14626.76,
+    "utc": "2026-10-22T18:27:07.3965041+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 131,
+    "elapsedMs": 14641.0641,
+    "utc": "2026-10-22T18:27:07.4108083+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 132,
+    "elapsedMs": 14659.675,
+    "utc": "2026-10-22T18:27:07.4294192+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 133,
+    "elapsedMs": 14718.8539,
+    "utc": "2026-10-22T18:27:07.488598+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 134,
+    "elapsedMs": 14731.2122,
+    "utc": "2026-10-22T18:27:07.5009564+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 135,
+    "elapsedMs": 14739.3957,
+    "utc": "2026-10-22T18:27:07.5091398+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 136,
+    "elapsedMs": 14749.0795,
+    "utc": "2026-10-22T18:27:07.5188237+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 137,
+    "elapsedMs": 14758.6089,
+    "utc": "2026-10-22T18:27:07.5283531+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 138,
+    "elapsedMs": 14766.3251,
+    "utc": "2026-10-22T18:27:07.5360692+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 139,
+    "elapsedMs": 14774.9288,
+    "utc": "2026-10-22T18:27:07.544673+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 140,
+    "elapsedMs": 14782.072,
+    "utc": "2026-10-22T18:27:07.5518161+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 141,
+    "elapsedMs": 14789.9563,
+    "utc": "2026-10-22T18:27:07.5597005+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 142,
+    "elapsedMs": 14797.0991,
+    "utc": "2026-10-22T18:27:07.5668433+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 143,
+    "elapsedMs": 14803.2347,
+    "utc": "2026-10-22T18:27:07.5729788+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 144,
+    "elapsedMs": 14809.37,
+    "utc": "2026-10-22T18:27:07.5791141+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 145,
+    "elapsedMs": 14815.1909,
+    "utc": "2026-10-22T18:27:07.584935+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 146,
+    "elapsedMs": 14823.027,
+    "utc": "2026-10-22T18:27:07.5927712+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 147,
+    "elapsedMs": 14882.5002,
+    "utc": "2026-10-22T18:27:07.6522443+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 148,
+    "elapsedMs": 14885.4397,
+    "utc": "2026-10-22T18:27:07.6551839+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 149,
+    "elapsedMs": 14890.964,
+    "utc": "2026-10-22T18:27:07.6607082+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 150,
+    "elapsedMs": 14896.1626,
+    "utc": "2026-10-22T18:27:07.6659067+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 151,
+    "elapsedMs": 14902.8732,
+    "utc": "2026-10-22T18:27:07.6726174+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 152,
+    "elapsedMs": 14905.2932,
+    "utc": "2026-10-22T18:27:07.6750373+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 153,
+    "elapsedMs": 14910.1424,
+    "utc": "2026-10-22T18:27:07.6798866+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 154,
+    "elapsedMs": 14913.961,
+    "utc": "2026-10-22T18:27:07.6837051+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 155,
+    "elapsedMs": 14919.0966,
+    "utc": "2026-10-22T18:27:07.6888408+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 156,
+    "elapsedMs": 14919.4109,
+    "utc": "2026-10-22T18:27:07.689155+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 3,
+      "Count": 12326,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 157,
+    "elapsedMs": 14919.5481,
+    "utc": "2026-10-22T18:27:07.6892924+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 585728,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 158,
+    "elapsedMs": 19952.7844,
+    "utc": "2026-10-22T18:27:12.7225287+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 159,
+    "elapsedMs": 19952.8224,
+    "utc": "2026-10-22T18:27:12.7225666+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 160,
+    "elapsedMs": 19952.8276,
+    "utc": "2026-10-22T18:27:12.7225718+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 161,
+    "elapsedMs": 19952.8559,
+    "utc": "2026-10-22T18:27:12.7226+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 162,
+    "elapsedMs": 19952.8604,
+    "utc": "2026-10-22T18:27:12.7226046+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 163,
+    "elapsedMs": 19952.8838,
+    "utc": "2026-10-22T18:27:12.722628+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 164,
+    "elapsedMs": 19952.8855,
+    "utc": "2026-10-22T18:27:12.7226297+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 4,
+      "Count": 4134,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 165,
+    "elapsedMs": 19953.0189,
+    "utc": "2026-10-22T18:27:12.7227632+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 102400,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 166,
+    "elapsedMs": 21103.1375,
+    "utc": "2026-10-22T18:27:13.8728817+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 167,
+    "elapsedMs": 21103.1426,
+    "utc": "2026-10-22T18:27:13.8728868+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 168,
+    "elapsedMs": 21103.1665,
+    "utc": "2026-10-22T18:27:13.8729106+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 169,
+    "elapsedMs": 21103.1688,
+    "utc": "2026-10-22T18:27:13.8729129+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 170,
+    "elapsedMs": 21103.1854,
+    "utc": "2026-10-22T18:27:13.8729295+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 171,
+    "elapsedMs": 21103.188,
+    "utc": "2026-10-22T18:27:13.8729321+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 172,
+    "elapsedMs": 21103.2044,
+    "utc": "2026-10-22T18:27:13.8729486+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 173,
+    "elapsedMs": 21103.2186,
+    "utc": "2026-10-22T18:27:13.8729628+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 174,
+    "elapsedMs": 21103.2266,
+    "utc": "2026-10-22T18:27:13.8729707+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 175,
+    "elapsedMs": 21104.7226,
+    "utc": "2026-10-22T18:27:13.8744668+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 176,
+    "elapsedMs": 21104.7549,
+    "utc": "2026-10-22T18:27:13.8744991+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 177,
+    "elapsedMs": 21106.035,
+    "utc": "2026-10-22T18:27:13.8757791+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 178,
+    "elapsedMs": 21106.0492,
+    "utc": "2026-10-22T18:27:13.8757934+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 179,
+    "elapsedMs": 21110.1048,
+    "utc": "2026-10-22T18:27:13.8798489+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 180,
+    "elapsedMs": 21110.1179,
+    "utc": "2026-10-22T18:27:13.8798621+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 181,
+    "elapsedMs": 21111.2292,
+    "utc": "2026-10-22T18:27:13.8809734+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 182,
+    "elapsedMs": 21111.2515,
+    "utc": "2026-10-22T18:27:13.8809956+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 183,
+    "elapsedMs": 21114.3622,
+    "utc": "2026-10-22T18:27:13.8841063+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 184,
+    "elapsedMs": 21114.374,
+    "utc": "2026-10-22T18:27:13.8841181+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 185,
+    "elapsedMs": 21115.4431,
+    "utc": "2026-10-22T18:27:13.8851872+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 186,
+    "elapsedMs": 21115.4596,
+    "utc": "2026-10-22T18:27:13.8852038+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 187,
+    "elapsedMs": 21118.5383,
+    "utc": "2026-10-22T18:27:13.8882825+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 188,
+    "elapsedMs": 21118.5614,
+    "utc": "2026-10-22T18:27:13.8883056+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 189,
+    "elapsedMs": 21119.552,
+    "utc": "2026-10-22T18:27:13.8892962+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 190,
+    "elapsedMs": 21119.5652,
+    "utc": "2026-10-22T18:27:13.8893093+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 191,
+    "elapsedMs": 21122.5604,
+    "utc": "2026-10-22T18:27:13.8923046+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 192,
+    "elapsedMs": 21122.5693,
+    "utc": "2026-10-22T18:27:13.8923134+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 193,
+    "elapsedMs": 21125.6028,
+    "utc": "2026-10-22T18:27:13.8953469+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 194,
+    "elapsedMs": 21125.615,
+    "utc": "2026-10-22T18:27:13.8953591+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 195,
+    "elapsedMs": 21126.6178,
+    "utc": "2026-10-22T18:27:13.8963619+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 196,
+    "elapsedMs": 21126.6287,
+    "utc": "2026-10-22T18:27:13.8963729+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 197,
+    "elapsedMs": 21129.2908,
+    "utc": "2026-10-22T18:27:13.8990349+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 198,
+    "elapsedMs": 21129.3022,
+    "utc": "2026-10-22T18:27:13.8990463+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 199,
+    "elapsedMs": 21129.3047,
+    "utc": "2026-10-22T18:27:13.8990488+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 5,
+      "Count": 4134,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 200,
+    "elapsedMs": 21129.4404,
+    "utc": "2026-10-22T18:27:13.8991846+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 544768,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 201,
+    "elapsedMs": 26603.2809,
+    "utc": "2026-10-22T18:27:19.3730252+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 202,
+    "elapsedMs": 26603.3178,
+    "utc": "2026-10-22T18:27:19.373062+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 203,
+    "elapsedMs": 26603.3228,
+    "utc": "2026-10-22T18:27:19.3730669+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 204,
+    "elapsedMs": 26603.3559,
+    "utc": "2026-10-22T18:27:19.3731+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 205,
+    "elapsedMs": 26603.3782,
+    "utc": "2026-10-22T18:27:19.3731223+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 206,
+    "elapsedMs": 26603.3814,
+    "utc": "2026-10-22T18:27:19.3731256+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 207,
+    "elapsedMs": 26603.4061,
+    "utc": "2026-10-22T18:27:19.3731503+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 208,
+    "elapsedMs": 26603.6608,
+    "utc": "2026-10-22T18:27:19.3734049+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 209,
+    "elapsedMs": 26604.4245,
+    "utc": "2026-10-22T18:27:19.3741687+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 210,
+    "elapsedMs": 26604.9165,
+    "utc": "2026-10-22T18:27:19.3746607+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 211,
+    "elapsedMs": 26605.4457,
+    "utc": "2026-10-22T18:27:19.3751898+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 212,
+    "elapsedMs": 26607.7614,
+    "utc": "2026-10-22T18:27:19.3775056+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 213,
+    "elapsedMs": 26608.7629,
+    "utc": "2026-10-22T18:27:19.378507+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 214,
+    "elapsedMs": 26608.7841,
+    "utc": "2026-10-22T18:27:19.3785283+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 215,
+    "elapsedMs": 26611.481,
+    "utc": "2026-10-22T18:27:19.3812252+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 216,
+    "elapsedMs": 26611.4918,
+    "utc": "2026-10-22T18:27:19.3812359+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 217,
+    "elapsedMs": 26612.5324,
+    "utc": "2026-10-22T18:27:19.3822765+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 218,
+    "elapsedMs": 26612.543,
+    "utc": "2026-10-22T18:27:19.3822871+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 219,
+    "elapsedMs": 26614.9158,
+    "utc": "2026-10-22T18:27:19.38466+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 220,
+    "elapsedMs": 26614.9263,
+    "utc": "2026-10-22T18:27:19.3846704+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 221,
+    "elapsedMs": 26615.9892,
+    "utc": "2026-10-22T18:27:19.3857334+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 222,
+    "elapsedMs": 26616.0006,
+    "utc": "2026-10-22T18:27:19.3857448+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 223,
+    "elapsedMs": 26618.5426,
+    "utc": "2026-10-22T18:27:19.3882867+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 224,
+    "elapsedMs": 26618.549,
+    "utc": "2026-10-22T18:27:19.3882931+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 225,
+    "elapsedMs": 26619.6428,
+    "utc": "2026-10-22T18:27:19.3893869+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 226,
+    "elapsedMs": 26619.6484,
+    "utc": "2026-10-22T18:27:19.3893925+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 227,
+    "elapsedMs": 26622.2635,
+    "utc": "2026-10-22T18:27:19.3920076+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 228,
+    "elapsedMs": 26622.2693,
+    "utc": "2026-10-22T18:27:19.3920134+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 229,
+    "elapsedMs": 26623.334,
+    "utc": "2026-10-22T18:27:19.3930781+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 230,
+    "elapsedMs": 26623.3443,
+    "utc": "2026-10-22T18:27:19.3930885+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 231,
+    "elapsedMs": 26626.1485,
+    "utc": "2026-10-22T18:27:19.3958926+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 232,
+    "elapsedMs": 26626.1589,
+    "utc": "2026-10-22T18:27:19.3959031+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 233,
+    "elapsedMs": 26626.6789,
+    "utc": "2026-10-22T18:27:19.396423+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 234,
+    "elapsedMs": 26626.6898,
+    "utc": "2026-10-22T18:27:19.3964339+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 6,
+      "Count": 38,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 235,
+    "elapsedMs": 26626.7968,
+    "utc": "2026-10-22T18:27:19.396541+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 540672,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 236,
+    "elapsedMs": 33352.4867,
+    "utc": "2026-10-22T18:27:26.122231+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 237,
+    "elapsedMs": 33352.491,
+    "utc": "2026-10-22T18:27:26.1222352+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 238,
+    "elapsedMs": 33352.5222,
+    "utc": "2026-10-22T18:27:26.1222663+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 239,
+    "elapsedMs": 33352.5255,
+    "utc": "2026-10-22T18:27:26.1222696+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 240,
+    "elapsedMs": 33352.5412,
+    "utc": "2026-10-22T18:27:26.1222853+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 241,
+    "elapsedMs": 33352.563,
+    "utc": "2026-10-22T18:27:26.1223071+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 242,
+    "elapsedMs": 33352.5664,
+    "utc": "2026-10-22T18:27:26.1223105+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 243,
+    "elapsedMs": 33352.5791,
+    "utc": "2026-10-22T18:27:26.1223232+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 244,
+    "elapsedMs": 33353.8664,
+    "utc": "2026-10-22T18:27:26.1236106+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 245,
+    "elapsedMs": 33354.8843,
+    "utc": "2026-10-22T18:27:26.1246284+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 246,
+    "elapsedMs": 33354.896,
+    "utc": "2026-10-22T18:27:26.1246401+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 247,
+    "elapsedMs": 33357.8882,
+    "utc": "2026-10-22T18:27:26.1276324+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 248,
+    "elapsedMs": 33358.8901,
+    "utc": "2026-10-22T18:27:26.1286342+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 249,
+    "elapsedMs": 33358.8991,
+    "utc": "2026-10-22T18:27:26.1286433+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 250,
+    "elapsedMs": 33359.1266,
+    "utc": "2026-10-22T18:27:26.1288707+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 251,
+    "elapsedMs": 33361.8223,
+    "utc": "2026-10-22T18:27:26.1315665+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 252,
+    "elapsedMs": 33362.1801,
+    "utc": "2026-10-22T18:27:26.1319243+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 253,
+    "elapsedMs": 33362.8765,
+    "utc": "2026-10-22T18:27:26.1326206+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 254,
+    "elapsedMs": 33363.2828,
+    "utc": "2026-10-22T18:27:26.1330269+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 255,
+    "elapsedMs": 33365.6329,
+    "utc": "2026-10-22T18:27:26.1353771+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 256,
+    "elapsedMs": 33366.1842,
+    "utc": "2026-10-22T18:27:26.1359284+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 257,
+    "elapsedMs": 33366.6413,
+    "utc": "2026-10-22T18:27:26.1363854+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 258,
+    "elapsedMs": 33369.7204,
+    "utc": "2026-10-22T18:27:26.1394646+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 259,
+    "elapsedMs": 33369.7365,
+    "utc": "2026-10-22T18:27:26.1394807+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 260,
+    "elapsedMs": 33370.3942,
+    "utc": "2026-10-22T18:27:26.1401384+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 261,
+    "elapsedMs": 33371.4081,
+    "utc": "2026-10-22T18:27:26.1411522+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 262,
+    "elapsedMs": 33371.4131,
+    "utc": "2026-10-22T18:27:26.1411572+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 263,
+    "elapsedMs": 33374.2688,
+    "utc": "2026-10-22T18:27:26.144013+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 264,
+    "elapsedMs": 33374.3873,
+    "utc": "2026-10-22T18:27:26.1441314+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 265,
+    "elapsedMs": 33375.1351,
+    "utc": "2026-10-22T18:27:26.1448792+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 266,
+    "elapsedMs": 33375.5313,
+    "utc": "2026-10-22T18:27:26.1452755+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 267,
+    "elapsedMs": 33378.3606,
+    "utc": "2026-10-22T18:27:26.1481048+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 268,
+    "elapsedMs": 33378.3672,
+    "utc": "2026-10-22T18:27:26.1481113+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 269,
+    "elapsedMs": 33381.2159,
+    "utc": "2026-10-22T18:27:26.15096+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 270,
+    "elapsedMs": 33381.2214,
+    "utc": "2026-10-22T18:27:26.1509655+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 271,
+    "elapsedMs": 33382.3009,
+    "utc": "2026-10-22T18:27:26.1520451+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 272,
+    "elapsedMs": 33385.0907,
+    "utc": "2026-10-22T18:27:26.1548348+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 273,
+    "elapsedMs": 33385.0948,
+    "utc": "2026-10-22T18:27:26.1548389+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 274,
+    "elapsedMs": 33386.2055,
+    "utc": "2026-10-22T18:27:26.1559497+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 275,
+    "elapsedMs": 33386.2156,
+    "utc": "2026-10-22T18:27:26.1559598+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 276,
+    "elapsedMs": 33386.6763,
+    "utc": "2026-10-22T18:27:26.1564204+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 277,
+    "elapsedMs": 33389.5481,
+    "utc": "2026-10-22T18:27:26.1592922+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 278,
+    "elapsedMs": 33390.069,
+    "utc": "2026-10-22T18:27:26.1598132+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 279,
+    "elapsedMs": 33390.6464,
+    "utc": "2026-10-22T18:27:26.1603906+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 280,
+    "elapsedMs": 33394.1314,
+    "utc": "2026-10-22T18:27:26.1638756+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 281,
+    "elapsedMs": 33394.1366,
+    "utc": "2026-10-22T18:27:26.1638808+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 282,
+    "elapsedMs": 33394.9426,
+    "utc": "2026-10-22T18:27:26.1646867+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 283,
+    "elapsedMs": 33394.9463,
+    "utc": "2026-10-22T18:27:26.1646905+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 7,
+      "Count": 8230,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 284,
+    "elapsedMs": 33395.1163,
+    "utc": "2026-10-22T18:27:26.1648605+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 778240,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 285,
+    "elapsedMs": 42302.9845,
+    "utc": "2026-10-22T18:27:35.0727288+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 286,
+    "elapsedMs": 42303.023,
+    "utc": "2026-10-22T18:27:35.0727672+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 287,
+    "elapsedMs": 42303.0308,
+    "utc": "2026-10-22T18:27:35.072775+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 288,
+    "elapsedMs": 42303.0902,
+    "utc": "2026-10-22T18:27:35.0728344+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 289,
+    "elapsedMs": 42303.1139,
+    "utc": "2026-10-22T18:27:35.0728581+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 290,
+    "elapsedMs": 42303.2542,
+    "utc": "2026-10-22T18:27:35.0729985+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 291,
+    "elapsedMs": 42303.2681,
+    "utc": "2026-10-22T18:27:35.0730123+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 292,
+    "elapsedMs": 42304.6679,
+    "utc": "2026-10-22T18:27:35.074412+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 293,
+    "elapsedMs": 42304.9732,
+    "utc": "2026-10-22T18:27:35.0747173+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 294,
+    "elapsedMs": 42305.523,
+    "utc": "2026-10-22T18:27:35.0752671+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 295,
+    "elapsedMs": 42306.047,
+    "utc": "2026-10-22T18:27:35.0757912+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 296,
+    "elapsedMs": 42309.0539,
+    "utc": "2026-10-22T18:27:35.0787981+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 297,
+    "elapsedMs": 42309.1577,
+    "utc": "2026-10-22T18:27:35.0789019+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 298,
+    "elapsedMs": 42312.1523,
+    "utc": "2026-10-22T18:27:35.0818965+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 299,
+    "elapsedMs": 42312.1747,
+    "utc": "2026-10-22T18:27:35.0819188+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 300,
+    "elapsedMs": 42313.1916,
+    "utc": "2026-10-22T18:27:35.0829357+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 301,
+    "elapsedMs": 42313.2034,
+    "utc": "2026-10-22T18:27:35.0829475+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 302,
+    "elapsedMs": 42315.0647,
+    "utc": "2026-10-22T18:27:35.0848088+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 303,
+    "elapsedMs": 42315.6047,
+    "utc": "2026-10-22T18:27:35.0853488+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 304,
+    "elapsedMs": 42316.5231,
+    "utc": "2026-10-22T18:27:35.0862673+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 305,
+    "elapsedMs": 42316.5309,
+    "utc": "2026-10-22T18:27:35.0862751+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 306,
+    "elapsedMs": 42319.2468,
+    "utc": "2026-10-22T18:27:35.0889909+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 307,
+    "elapsedMs": 42319.2585,
+    "utc": "2026-10-22T18:27:35.0890026+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 308,
+    "elapsedMs": 42320.3117,
+    "utc": "2026-10-22T18:27:35.0900558+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 309,
+    "elapsedMs": 42320.3163,
+    "utc": "2026-10-22T18:27:35.0900605+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 310,
+    "elapsedMs": 42323.0917,
+    "utc": "2026-10-22T18:27:35.0928358+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 311,
+    "elapsedMs": 42323.0966,
+    "utc": "2026-10-22T18:27:35.0928407+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 312,
+    "elapsedMs": 42324.0528,
+    "utc": "2026-10-22T18:27:35.093797+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 313,
+    "elapsedMs": 42324.0638,
+    "utc": "2026-10-22T18:27:35.093808+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 314,
+    "elapsedMs": 42327.2065,
+    "utc": "2026-10-22T18:27:35.0969506+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 315,
+    "elapsedMs": 42327.2176,
+    "utc": "2026-10-22T18:27:35.0969617+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 316,
+    "elapsedMs": 42327.8626,
+    "utc": "2026-10-22T18:27:35.0976068+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 317,
+    "elapsedMs": 42328.7628,
+    "utc": "2026-10-22T18:27:35.098507+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 318,
+    "elapsedMs": 42331.3221,
+    "utc": "2026-10-22T18:27:35.1010663+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 319,
+    "elapsedMs": 42331.3341,
+    "utc": "2026-10-22T18:27:35.1010782+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 320,
+    "elapsedMs": 42332.5075,
+    "utc": "2026-10-22T18:27:35.1022517+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 321,
+    "elapsedMs": 42332.5285,
+    "utc": "2026-10-22T18:27:35.1022727+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 322,
+    "elapsedMs": 42335.3355,
+    "utc": "2026-10-22T18:27:35.1050797+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 323,
+    "elapsedMs": 42335.3471,
+    "utc": "2026-10-22T18:27:35.1050912+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 324,
+    "elapsedMs": 42335.9246,
+    "utc": "2026-10-22T18:27:35.1056688+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 325,
+    "elapsedMs": 42335.9276,
+    "utc": "2026-10-22T18:27:35.1056717+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 8,
+      "Count": 894,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 326,
+    "elapsedMs": 42336.0681,
+    "utc": "2026-10-22T18:27:35.1058123+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 656216,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 327,
+    "elapsedMs": 48902.6427,
+    "utc": "2026-10-22T18:27:41.672387+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 328,
+    "elapsedMs": 48902.7153,
+    "utc": "2026-10-22T18:27:41.6724594+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 329,
+    "elapsedMs": 48902.7193,
+    "utc": "2026-10-22T18:27:41.6724634+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 330,
+    "elapsedMs": 48902.7444,
+    "utc": "2026-10-22T18:27:41.6724885+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 331,
+    "elapsedMs": 48902.7559,
+    "utc": "2026-10-22T18:27:41.6725001+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 332,
+    "elapsedMs": 48902.7581,
+    "utc": "2026-10-22T18:27:41.6725022+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 333,
+    "elapsedMs": 48902.7953,
+    "utc": "2026-10-22T18:27:41.6725395+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 334,
+    "elapsedMs": 48903.1891,
+    "utc": "2026-10-22T18:27:41.6729332+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 335,
+    "elapsedMs": 48904.0454,
+    "utc": "2026-10-22T18:27:41.6737895+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 336,
+    "elapsedMs": 48904.9708,
+    "utc": "2026-10-22T18:27:41.674715+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 337,
+    "elapsedMs": 48904.9939,
+    "utc": "2026-10-22T18:27:41.6747381+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 338,
+    "elapsedMs": 48907.8988,
+    "utc": "2026-10-22T18:27:41.6776429+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 339,
+    "elapsedMs": 48908.0788,
+    "utc": "2026-10-22T18:27:41.677823+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 340,
+    "elapsedMs": 48909.0569,
+    "utc": "2026-10-22T18:27:41.6788011+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 341,
+    "elapsedMs": 48909.0677,
+    "utc": "2026-10-22T18:27:41.6788118+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 342,
+    "elapsedMs": 48911.7161,
+    "utc": "2026-10-22T18:27:41.6814603+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 343,
+    "elapsedMs": 48911.7279,
+    "utc": "2026-10-22T18:27:41.681472+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 344,
+    "elapsedMs": 48912.2598,
+    "utc": "2026-10-22T18:27:41.682004+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 345,
+    "elapsedMs": 48912.9688,
+    "utc": "2026-10-22T18:27:41.6827129+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 346,
+    "elapsedMs": 48915.2473,
+    "utc": "2026-10-22T18:27:41.6849914+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 347,
+    "elapsedMs": 48915.2579,
+    "utc": "2026-10-22T18:27:41.6850021+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 348,
+    "elapsedMs": 48916.741,
+    "utc": "2026-10-22T18:27:41.6864851+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 349,
+    "elapsedMs": 48916.7645,
+    "utc": "2026-10-22T18:27:41.6865086+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 350,
+    "elapsedMs": 48919.6655,
+    "utc": "2026-10-22T18:27:41.6894097+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 351,
+    "elapsedMs": 48919.6796,
+    "utc": "2026-10-22T18:27:41.6894237+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 352,
+    "elapsedMs": 48920.706,
+    "utc": "2026-10-22T18:27:41.6904501+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 353,
+    "elapsedMs": 48920.7168,
+    "utc": "2026-10-22T18:27:41.6904609+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 354,
+    "elapsedMs": 48923.3973,
+    "utc": "2026-10-22T18:27:41.6931415+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 355,
+    "elapsedMs": 48923.4079,
+    "utc": "2026-10-22T18:27:41.6931521+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 356,
+    "elapsedMs": 48924.5131,
+    "utc": "2026-10-22T18:27:41.6942572+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 357,
+    "elapsedMs": 48924.5236,
+    "utc": "2026-10-22T18:27:41.6942677+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 358,
+    "elapsedMs": 48927.0619,
+    "utc": "2026-10-22T18:27:41.696806+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 359,
+    "elapsedMs": 48927.0732,
+    "utc": "2026-10-22T18:27:41.6968174+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 360,
+    "elapsedMs": 48929.7347,
+    "utc": "2026-10-22T18:27:41.6994788+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 361,
+    "elapsedMs": 48929.7451,
+    "utc": "2026-10-22T18:27:41.6994893+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 362,
+    "elapsedMs": 48930.7795,
+    "utc": "2026-10-22T18:27:41.7005236+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 363,
+    "elapsedMs": 48930.7905,
+    "utc": "2026-10-22T18:27:41.7005347+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 364,
+    "elapsedMs": 48933.3422,
+    "utc": "2026-10-22T18:27:41.7030863+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 365,
+    "elapsedMs": 48933.353,
+    "utc": "2026-10-22T18:27:41.7030972+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 366,
+    "elapsedMs": 48935.192,
+    "utc": "2026-10-22T18:27:41.7049361+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 367,
+    "elapsedMs": 48935.2033,
+    "utc": "2026-10-22T18:27:41.7049474+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 368,
+    "elapsedMs": 48938.8353,
+    "utc": "2026-10-22T18:27:41.7085794+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 369,
+    "elapsedMs": 48938.8464,
+    "utc": "2026-10-22T18:27:41.7085905+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 370,
+    "elapsedMs": 48940.5857,
+    "utc": "2026-10-22T18:27:41.7103299+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 371,
+    "elapsedMs": 48940.5986,
+    "utc": "2026-10-22T18:27:41.7103428+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 372,
+    "elapsedMs": 48944.598,
+    "utc": "2026-10-22T18:27:41.7143422+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 373,
+    "elapsedMs": 48944.6058,
+    "utc": "2026-10-22T18:27:41.7143499+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 374,
+    "elapsedMs": 48945.5315,
+    "utc": "2026-10-22T18:27:41.7152757+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 375,
+    "elapsedMs": 48945.5347,
+    "utc": "2026-10-22T18:27:41.7152788+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 9,
+      "Count": 8230,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 376,
+    "elapsedMs": 48945.685,
+    "utc": "2026-10-22T18:27:41.7154292+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 794624,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 377,
+    "elapsedMs": 57802.1925,
+    "utc": "2026-10-22T18:27:50.5719367+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 378,
+    "elapsedMs": 57802.3646,
+    "utc": "2026-10-22T18:27:50.5721088+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 379,
+    "elapsedMs": 57802.3695,
+    "utc": "2026-10-22T18:27:50.5721136+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 380,
+    "elapsedMs": 57802.3938,
+    "utc": "2026-10-22T18:27:50.5721379+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 381,
+    "elapsedMs": 57802.3965,
+    "utc": "2026-10-22T18:27:50.5721406+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 382,
+    "elapsedMs": 57802.4215,
+    "utc": "2026-10-22T18:27:50.5721656+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 383,
+    "elapsedMs": 57802.4636,
+    "utc": "2026-10-22T18:27:50.5722077+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 384,
+    "elapsedMs": 57803.857,
+    "utc": "2026-10-22T18:27:50.5736011+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 385,
+    "elapsedMs": 57804.7597,
+    "utc": "2026-10-22T18:27:50.5745038+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 386,
+    "elapsedMs": 57804.772,
+    "utc": "2026-10-22T18:27:50.5745161+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 387,
+    "elapsedMs": 57808.2034,
+    "utc": "2026-10-22T18:27:50.5779476+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 388,
+    "elapsedMs": 57808.2153,
+    "utc": "2026-10-22T18:27:50.5779594+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 389,
+    "elapsedMs": 57808.9359,
+    "utc": "2026-10-22T18:27:50.5786801+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 390,
+    "elapsedMs": 57808.9393,
+    "utc": "2026-10-22T18:27:50.5786834+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 10,
+      "Count": 4134,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 391,
+    "elapsedMs": 57809.0633,
+    "utc": "2026-10-22T18:27:50.5788075+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 217088,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 392,
+    "elapsedMs": 61152.3328,
+    "utc": "2026-10-22T18:27:53.9220771+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 393,
+    "elapsedMs": 61152.357,
+    "utc": "2026-10-22T18:27:53.9221012+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 394,
+    "elapsedMs": 61152.3612,
+    "utc": "2026-10-22T18:27:53.9221053+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 395,
+    "elapsedMs": 61152.3795,
+    "utc": "2026-10-22T18:27:53.9221236+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 396,
+    "elapsedMs": 61152.3819,
+    "utc": "2026-10-22T18:27:53.922126+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 397,
+    "elapsedMs": 61152.3963,
+    "utc": "2026-10-22T18:27:53.9221405+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 398,
+    "elapsedMs": 61152.3989,
+    "utc": "2026-10-22T18:27:53.922143+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 399,
+    "elapsedMs": 61152.4115,
+    "utc": "2026-10-22T18:27:53.9221556+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 400,
+    "elapsedMs": 61154.0453,
+    "utc": "2026-10-22T18:27:53.9237895+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 401,
+    "elapsedMs": 61154.7196,
+    "utc": "2026-10-22T18:27:53.9244637+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 402,
+    "elapsedMs": 61154.7315,
+    "utc": "2026-10-22T18:27:53.9244756+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 403,
+    "elapsedMs": 61158.0255,
+    "utc": "2026-10-22T18:27:53.9277696+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 404,
+    "elapsedMs": 61158.0378,
+    "utc": "2026-10-22T18:27:53.9277819+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 405,
+    "elapsedMs": 61159.1053,
+    "utc": "2026-10-22T18:27:53.9288494+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 406,
+    "elapsedMs": 61159.1286,
+    "utc": "2026-10-22T18:27:53.9288727+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 407,
+    "elapsedMs": 61162.3092,
+    "utc": "2026-10-22T18:27:53.9320534+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 408,
+    "elapsedMs": 61162.7518,
+    "utc": "2026-10-22T18:27:53.932496+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 409,
+    "elapsedMs": 61162.9655,
+    "utc": "2026-10-22T18:27:53.9327097+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 410,
+    "elapsedMs": 61163.8213,
+    "utc": "2026-10-22T18:27:53.9335654+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 411,
+    "elapsedMs": 61166.6356,
+    "utc": "2026-10-22T18:27:53.9363797+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 412,
+    "elapsedMs": 61166.647,
+    "utc": "2026-10-22T18:27:53.9363911+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 413,
+    "elapsedMs": 61167.7011,
+    "utc": "2026-10-22T18:27:53.9374453+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 414,
+    "elapsedMs": 61167.7127,
+    "utc": "2026-10-22T18:27:53.9374568+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 415,
+    "elapsedMs": 61170.969,
+    "utc": "2026-10-22T18:27:53.9407132+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 416,
+    "elapsedMs": 61170.9895,
+    "utc": "2026-10-22T18:27:53.9407336+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 417,
+    "elapsedMs": 61171.4315,
+    "utc": "2026-10-22T18:27:53.9411757+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 16384,
+      "EndOfMessage": false,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 418,
+    "elapsedMs": 61171.4333,
+    "utc": "2026-10-22T18:27:53.9411774+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 11,
+      "Count": 4134,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 419,
+    "elapsedMs": 61171.5727,
+    "utc": "2026-10-22T18:27:53.9413169+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "audio",
+      "audioBytes": 430080,
+      "finishReason": null
+    }
+  },
+  {
+    "sequence": 420,
+    "elapsedMs": 65554.9267,
+    "utc": "2026-10-22T18:27:58.324671+00:00",
+    "kind": "receiveFragment",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "messageIndex": 12,
+      "Count": 40,
+      "EndOfMessage": true,
+      "messageType": "Binary"
+    }
+  },
+  {
+    "sequence": 421,
+    "elapsedMs": 65554.9581,
+    "utc": "2026-10-22T18:27:58.3247022+00:00",
+    "kind": "decodedIncomingEvent",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "event": "finish",
+      "audioBytes": 0,
+      "finishReason": "stop"
+    }
+  },
+  {
+    "sequence": 422,
+    "elapsedMs": 75397.2198,
+    "utc": "2026-10-22T18:28:08.166964+00:00",
+    "kind": "waveOutStop",
+    "sourceReadHighestIndex": 949,
+    "details": null
+  },
+  {
+    "sequence": 423,
+    "elapsedMs": 75408.8201,
+    "utc": "2026-10-22T18:28:08.1785643+00:00",
+    "kind": "waveOutDisposed",
+    "sourceReadHighestIndex": 949,
+    "details": null
+  },
+  {
+    "sequence": 424,
+    "elapsedMs": 75409.2597,
+    "utc": "2026-10-22T18:28:08.1790039+00:00",
+    "kind": "playerDisposed",
+    "sourceReadHighestIndex": 949,
+    "details": null
+  },
+  {
+    "sequence": 425,
+    "elapsedMs": 75410.0818,
+    "utc": "2026-10-22T18:28:08.179826+00:00",
+    "kind": "socketDisposed",
+    "sourceReadHighestIndex": 949,
+    "details": null
+  },
+  {
+    "sequence": 426,
+    "elapsedMs": 75413.3438,
+    "utc": "2026-10-22T18:28:08.1830879+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "Request",
+      "stageElapsedMs": 0
+    }
+  },
+  {
+    "sequence": 427,
+    "elapsedMs": 75413.3493,
+    "utc": "2026-10-22T18:28:08.1830934+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "Connected",
+      "stageElapsedMs": 1528.7663
+    }
+  },
+  {
+    "sequence": 428,
+    "elapsedMs": 75413.3495,
+    "utc": "2026-10-22T18:28:08.1830936+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "PrefixSent",
+      "stageElapsedMs": 1581.5133
+    }
+  },
+  {
+    "sequence": 429,
+    "elapsedMs": 75413.3495,
+    "utc": "2026-10-22T18:28:08.1830937+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "FirstAudio",
+      "stageElapsedMs": 6645.0978
+    }
+  },
+  {
+    "sequence": 430,
+    "elapsedMs": 75413.3502,
+    "utc": "2026-10-22T18:28:08.1830943+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "FirstPcm",
+      "stageElapsedMs": 6648.1288
+    }
+  },
+  {
+    "sequence": 431,
+    "elapsedMs": 75413.3503,
+    "utc": "2026-10-22T18:28:08.1830944+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "PlaybackStarted",
+      "stageElapsedMs": 6742.9801
+    }
+  },
+  {
+    "sequence": 432,
+    "elapsedMs": 75413.3504,
+    "utc": "2026-10-22T18:28:08.1830945+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "Finish",
+      "stageElapsedMs": 65548.478
+    }
+  },
+  {
+    "sequence": 433,
+    "elapsedMs": 75413.3504,
+    "utc": "2026-10-22T18:28:08.1830946+00:00",
+    "kind": "nativeObservationDeliveredAfterCompletion",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "stage": "Drained",
+      "stageElapsedMs": 75390.1295
+    }
+  },
+  {
+    "sequence": 434,
+    "elapsedMs": 75413.5705,
+    "utc": "2026-10-22T18:28:08.1833146+00:00",
+    "kind": "nativeSessionCompleted",
+    "sourceReadHighestIndex": 949,
+    "details": {
+      "outcome": "completed",
+      "failureType": null
+    }
+  }
+]

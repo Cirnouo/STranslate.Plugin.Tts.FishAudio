@@ -1,0 +1,19 @@
+{
+  "source": "Qualitative listener feedback during the investigation; no identifying listener details retained.",
+  "rawFirst15Seconds": "The listener did not hear the reported electrical noise.",
+  "orderedSingleComparison": [
+    {
+      "case": "100x2",
+      "feedback": "The same electrical noise was heard."
+    },
+    {
+      "case": "200x4",
+      "feedback": "The reported electrical noise was not heard."
+    }
+  ],
+  "limitations": [
+    "One sequential, unblinded A/B pair on one machine.",
+    "No microphone or acoustic loopback retained.",
+    "The portable verifier checks bytes and timings, not subjective listening feedback."
+  ]
+}

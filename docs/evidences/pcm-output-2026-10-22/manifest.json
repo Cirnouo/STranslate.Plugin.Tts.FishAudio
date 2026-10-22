@@ -1,0 +1,535 @@
+{
+  "schema": 1,
+  "classification": "selected-artifact publication; not the complete original capture directory",
+  "captureUtc": "2026-10-22T18:26:52.7697441+00:00",
+  "sourceCaptureSummarySha256": "6ffd1affc352f6f76887e47c4a773c6d4abdc540b075c36e63ca2215353b58c6",
+  "originalSourceFingerprints": [
+    {
+      "name": "CrackleCapture.csproj",
+      "sha256": "3ea2723642532e844ec83fa5d30f8b53fbe47cd5d677f70c5bb7180da6f4d9bf"
+    },
+    {
+      "name": "DiagnosticCapture.cs",
+      "sha256": "3fcbfa2e378e389d1d63e9b340fbc436927531a5b3e44e4e05324f1c076e57d3"
+    },
+    {
+      "name": "ProbeInputs.cs",
+      "sha256": "09a57d8b396fc18641172813b336ab613b1110d76c6862831acefa521382bce9"
+    },
+    {
+      "name": "Program.cs",
+      "sha256": "7df18555e5208c5223836f7c289d22eb3158090e28929c0d9572ba370cc37e85"
+    },
+    {
+      "name": "SelfTests.cs",
+      "sha256": "64996d46db0129ee5487c78f87207df5784e76558621af5e3dd570736fbcdf80"
+    }
+  ],
+  "files": [
+    {
+      "name": "REPORT.txt",
+      "bytes": 6879,
+      "sha256": "e637153da29a6c16fb13ab25b5a4de4496d7e2e01eb6fc604ec6835ec4ae3177",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "capture/capture-summary.original.json",
+      "bytes": 15238,
+      "sha256": "6ffd1affc352f6f76887e47c4a773c6d4abdc540b075c36e63ca2215353b58c6",
+      "relationship": "exact original bytes; renamed",
+      "originalCaptureName": "summary.json",
+      "originalCaptureBytes": 15238,
+      "originalCaptureSha256": "6ffd1affc352f6f76887e47c4a773c6d4abdc540b075c36e63ca2215353b58c6"
+    },
+    {
+      "name": "capture/device-positions.json",
+      "bytes": 943291,
+      "sha256": "9110766537e15d9484991005d409484f16c19e81c9c7b130c0d4f7fd90b955e1",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "device-positions.json",
+      "originalCaptureBytes": 943291,
+      "originalCaptureSha256": "9110766537e15d9484991005d409484f16c19e81c9c7b130c0d4f7fd90b955e1"
+    },
+    {
+      "name": "capture/incoming-0000.msgpack",
+      "bytes": 684070,
+      "sha256": "91c5333287e2825e720ddd433bea632a9c3346ddad86950486e7911a9381e11b",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0000.msgpack",
+      "originalCaptureBytes": 684070,
+      "originalCaptureSha256": "91c5333287e2825e720ddd433bea632a9c3346ddad86950486e7911a9381e11b"
+    },
+    {
+      "name": "capture/incoming-0001.msgpack",
+      "bytes": 557094,
+      "sha256": "9296c9b2d6fac6bf8d3dbd751a58b107c703f7b7fad7b0aafc43d5842c8dc120",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0001.msgpack",
+      "originalCaptureBytes": 557094,
+      "originalCaptureSha256": "9296c9b2d6fac6bf8d3dbd751a58b107c703f7b7fad7b0aafc43d5842c8dc120"
+    },
+    {
+      "name": "capture/incoming-0002.msgpack",
+      "bytes": 162660,
+      "sha256": "ba9cc5fdad644d8ce19fbe032ab2fe3f788f84d247605a5ad2a59e873b393b31",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0002.msgpack",
+      "originalCaptureBytes": 162660,
+      "originalCaptureSha256": "ba9cc5fdad644d8ce19fbe032ab2fe3f788f84d247605a5ad2a59e873b393b31"
+    },
+    {
+      "name": "capture/incoming-0003.msgpack",
+      "bytes": 585766,
+      "sha256": "e358f7116d2117867fbcc0764de441a93372d3bd448416217b2fc5f6fb7304e3",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0003.msgpack",
+      "originalCaptureBytes": 585766,
+      "originalCaptureSha256": "e358f7116d2117867fbcc0764de441a93372d3bd448416217b2fc5f6fb7304e3"
+    },
+    {
+      "name": "capture/incoming-0004.msgpack",
+      "bytes": 102438,
+      "sha256": "0837ee5f1ee387d9c63375b902f3aad4f56618410eb299c90b2be66fdd3e0ebf",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0004.msgpack",
+      "originalCaptureBytes": 102438,
+      "originalCaptureSha256": "0837ee5f1ee387d9c63375b902f3aad4f56618410eb299c90b2be66fdd3e0ebf"
+    },
+    {
+      "name": "capture/incoming-0005.msgpack",
+      "bytes": 544806,
+      "sha256": "aef96c476886b41dec7f11eb959a97efb7b4775f6ebcedb1c5820fac584a7d6b",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0005.msgpack",
+      "originalCaptureBytes": 544806,
+      "originalCaptureSha256": "aef96c476886b41dec7f11eb959a97efb7b4775f6ebcedb1c5820fac584a7d6b"
+    },
+    {
+      "name": "capture/incoming-0006.msgpack",
+      "bytes": 540710,
+      "sha256": "eb802861512655af7690897d85bdbcd3b741baa2130a5b1ac0cf70ff91ea7680",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0006.msgpack",
+      "originalCaptureBytes": 540710,
+      "originalCaptureSha256": "eb802861512655af7690897d85bdbcd3b741baa2130a5b1ac0cf70ff91ea7680"
+    },
+    {
+      "name": "capture/incoming-0007.msgpack",
+      "bytes": 778278,
+      "sha256": "f73ead65505e36d69b2647dced5555fa76aef738ed6937f235bd198455f71839",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0007.msgpack",
+      "originalCaptureBytes": 778278,
+      "originalCaptureSha256": "f73ead65505e36d69b2647dced5555fa76aef738ed6937f235bd198455f71839"
+    },
+    {
+      "name": "capture/incoming-0008.msgpack",
+      "bytes": 656254,
+      "sha256": "c169699300ed033ca6e2932bc611f5eae87ec687621f5520b2fff9ed5b643ca5",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0008.msgpack",
+      "originalCaptureBytes": 656254,
+      "originalCaptureSha256": "c169699300ed033ca6e2932bc611f5eae87ec687621f5520b2fff9ed5b643ca5"
+    },
+    {
+      "name": "capture/incoming-0009.msgpack",
+      "bytes": 794662,
+      "sha256": "07fc4925ae8c9dea04fa13d72778d6e06f5614ec8fd8b35c280bd9b4b929842b",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0009.msgpack",
+      "originalCaptureBytes": 794662,
+      "originalCaptureSha256": "07fc4925ae8c9dea04fa13d72778d6e06f5614ec8fd8b35c280bd9b4b929842b"
+    },
+    {
+      "name": "capture/incoming-0010.msgpack",
+      "bytes": 217126,
+      "sha256": "854a72e31b865f941d71f6195df6518fc71c303fa0d53bdd42f2dc5d931a52bc",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0010.msgpack",
+      "originalCaptureBytes": 217126,
+      "originalCaptureSha256": "854a72e31b865f941d71f6195df6518fc71c303fa0d53bdd42f2dc5d931a52bc"
+    },
+    {
+      "name": "capture/incoming-0011.msgpack",
+      "bytes": 430118,
+      "sha256": "eb7d1f3bafd98e32eb7f8dfbe150643cd2d33326d9056d59c0a4aafffed16a4c",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0011.msgpack",
+      "originalCaptureBytes": 430118,
+      "originalCaptureSha256": "eb7d1f3bafd98e32eb7f8dfbe150643cd2d33326d9056d59c0a4aafffed16a4c"
+    },
+    {
+      "name": "capture/incoming-0012.msgpack",
+      "bytes": 40,
+      "sha256": "8671d4709bc24d7fe8834fd9a2b752729af15d08acc230b4c4c2e4de780e7ff9",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "incoming-0012.msgpack",
+      "originalCaptureBytes": 40,
+      "originalCaptureSha256": "8671d4709bc24d7fe8834fd9a2b752729af15d08acc230b4c4c2e4de780e7ff9"
+    },
+    {
+      "name": "capture/observations.json",
+      "bytes": 884,
+      "sha256": "a0f47bcdf53030a55926a2f90843b6d6082e71a617015067aa4bdf13eff9f7d8",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "observations.json",
+      "originalCaptureBytes": 884,
+      "originalCaptureSha256": "a0f47bcdf53030a55926a2f90843b6d6082e71a617015067aa4bdf13eff9f7d8"
+    },
+    {
+      "name": "capture/outgoing-0000.msgpack",
+      "bytes": 273,
+      "sha256": "6f9e8586c99f47b36c2d4c9c52e46c656fed752c9ccb71487c74e933906c9ee7",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0000.msgpack",
+      "originalCaptureBytes": 273,
+      "originalCaptureSha256": "6f9e8586c99f47b36c2d4c9c52e46c656fed752c9ccb71487c74e933906c9ee7"
+    },
+    {
+      "name": "capture/outgoing-0001.msgpack",
+      "bytes": 117,
+      "sha256": "32a3a7fa6f24b3554866f9f55f7754f5e4a7ca3fac0a343e0b4d950f2a066357",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0001.msgpack",
+      "originalCaptureBytes": 117,
+      "originalCaptureSha256": "32a3a7fa6f24b3554866f9f55f7754f5e4a7ca3fac0a343e0b4d950f2a066357"
+    },
+    {
+      "name": "capture/outgoing-0002.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0002.msgpack",
+      "originalCaptureBytes": 13,
+      "originalCaptureSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "name": "capture/outgoing-0003.msgpack",
+      "bytes": 245,
+      "sha256": "5bb202465db5247e2af4e389c8c2335fd11d840774bb6b9b025c49f68817b399",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0003.msgpack",
+      "originalCaptureBytes": 245,
+      "originalCaptureSha256": "5bb202465db5247e2af4e389c8c2335fd11d840774bb6b9b025c49f68817b399"
+    },
+    {
+      "name": "capture/outgoing-0004.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0004.msgpack",
+      "originalCaptureBytes": 13,
+      "originalCaptureSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "name": "capture/outgoing-0005.msgpack",
+      "bytes": 307,
+      "sha256": "94ff5a384086b54376107248bb1adc69c6fb4ff7e861ea43a806e4c84cf7adde",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0005.msgpack",
+      "originalCaptureBytes": 307,
+      "originalCaptureSha256": "94ff5a384086b54376107248bb1adc69c6fb4ff7e861ea43a806e4c84cf7adde"
+    },
+    {
+      "name": "capture/outgoing-0006.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0006.msgpack",
+      "originalCaptureBytes": 13,
+      "originalCaptureSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "name": "capture/outgoing-0007.msgpack",
+      "bytes": 281,
+      "sha256": "074112084a384571a6a8d3fec41aa42ab1b0353aa15489084ebc9caa7dc49871",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0007.msgpack",
+      "originalCaptureBytes": 281,
+      "originalCaptureSha256": "074112084a384571a6a8d3fec41aa42ab1b0353aa15489084ebc9caa7dc49871"
+    },
+    {
+      "name": "capture/outgoing-0008.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0008.msgpack",
+      "originalCaptureBytes": 13,
+      "originalCaptureSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "name": "capture/outgoing-0009.msgpack",
+      "bytes": 97,
+      "sha256": "795854dd248d022cc0fd291d9c3b1355308265638aac6bffe0ed182130c74142",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0009.msgpack",
+      "originalCaptureBytes": 97,
+      "originalCaptureSha256": "795854dd248d022cc0fd291d9c3b1355308265638aac6bffe0ed182130c74142"
+    },
+    {
+      "name": "capture/outgoing-0010.msgpack",
+      "bytes": 13,
+      "sha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0010.msgpack",
+      "originalCaptureBytes": 13,
+      "originalCaptureSha256": "76c73c86569c861a926c31891e2da9e091c9275170879502a3d721a58f150171"
+    },
+    {
+      "name": "capture/outgoing-0011.msgpack",
+      "bytes": 12,
+      "sha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "outgoing-0011.msgpack",
+      "originalCaptureBytes": 12,
+      "originalCaptureSha256": "7d32df559cbb037b91e71c8a567b8a3e41cb6263af7ea2c87bc9f7166b8f0d75"
+    },
+    {
+      "name": "capture/pcm-comparison.json",
+      "bytes": 440,
+      "sha256": "ba1ecf6811c1fe2d4f8c75a6e4e07b489a0b4cf43968ef0f8c22b61879237878",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "pcm-comparison.json",
+      "originalCaptureBytes": 440,
+      "originalCaptureSha256": "ba1ecf6811c1fe2d4f8c75a6e4e07b489a0b4cf43968ef0f8c22b61879237878"
+    },
+    {
+      "name": "capture/provider-reads.json",
+      "bytes": 489517,
+      "sha256": "16072f68f4b3652512de900bd03c9fc1f32311e54bc0e8ae7fcdd231ad2a551d",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "provider-reads.json",
+      "originalCaptureBytes": 489517,
+      "originalCaptureSha256": "16072f68f4b3652512de900bd03c9fc1f32311e54bc0e8ae7fcdd231ad2a551d"
+    },
+    {
+      "name": "capture/rendered-audio.pcm",
+      "bytes": 6059340,
+      "sha256": "eb346799d0c64bdd9304ffa3c3789ee07172b3cbeea8d9ebb76528f45b7f36a1",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "rendered-audio.pcm",
+      "originalCaptureBytes": 6059340,
+      "originalCaptureSha256": "eb346799d0c64bdd9304ffa3c3789ee07172b3cbeea8d9ebb76528f45b7f36a1"
+    },
+    {
+      "name": "capture/request-summary.sanitized.json",
+      "bytes": 2921,
+      "sha256": "5020596eb3eb578e7c0779818aada3bc632fd400137b7c9eeeba9667125a1e8d",
+      "relationship": "sanitized allowlisted projection; original omitted",
+      "originalCaptureName": "request-summary.json",
+      "originalCaptureBytes": 3614,
+      "originalCaptureSha256": "8dea4ae47d49ea61af20bb98ead08cad3f25e20a72fd044acf7596564d11e702"
+    },
+    {
+      "name": "capture/timeline.json",
+      "bytes": 136501,
+      "sha256": "91bfe29e82b2241f4481c27933324ad890c86390431f074db8460966d92cd0e9",
+      "relationship": "exact original bytes",
+      "originalCaptureName": "timeline.json",
+      "originalCaptureBytes": 136501,
+      "originalCaptureSha256": "91bfe29e82b2241f4481c27933324ad890c86390431f074db8460966d92cd0e9"
+    },
+    {
+      "name": "offline-replay/100x2/device-positions.json",
+      "bytes": 196464,
+      "sha256": "06ff0d9e0a7927e9b4926c4e901cef6c64171c1b8449570526091c353c1a9521",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "100x2/device-positions.json",
+      "originalReplayBytes": 196464,
+      "originalReplaySha256": "06ff0d9e0a7927e9b4926c4e901cef6c64171c1b8449570526091c353c1a9521"
+    },
+    {
+      "name": "offline-replay/100x2/events.json",
+      "bytes": 1533,
+      "sha256": "43b83d8720cb8733b83e179e673611f3c3c174baba5597722cb2411537aba1ca",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "100x2/events.json",
+      "originalReplayBytes": 1533,
+      "originalReplaySha256": "43b83d8720cb8733b83e179e673611f3c3c174baba5597722cb2411537aba1ca"
+    },
+    {
+      "name": "offline-replay/100x2/provider-reads.json",
+      "bytes": 106656,
+      "sha256": "003d971b50d3d27299ab8e163d841d93f76499c43200535f8b31cf0f2b665d0a",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "100x2/provider-reads.json",
+      "originalReplayBytes": 106656,
+      "originalReplaySha256": "003d971b50d3d27299ab8e163d841d93f76499c43200535f8b31cf0f2b665d0a"
+    },
+    {
+      "name": "offline-replay/100x2/rendered-reconstruction.json",
+      "bytes": 474,
+      "sha256": "5f380a0563330ef7566a5e8d947bc5d43e9ac4acb6f565805b3d34af25af2b2c",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "offline-replay/100x2/summary.json",
+      "bytes": 1495,
+      "sha256": "3da56b71e20c00fbb15921e8b2f2c2d0d57c71912ea7c3422e579079e31ca42a",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "100x2/summary.json",
+      "originalReplayBytes": 1495,
+      "originalReplaySha256": "3da56b71e20c00fbb15921e8b2f2c2d0d57c71912ea7c3422e579079e31ca42a"
+    },
+    {
+      "name": "offline-replay/200x4/device-positions.json",
+      "bytes": 190055,
+      "sha256": "cbb2d3aa2d0e9514443ef989152cfaf2e28b46b85850456b2ab17d82a3406967",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "200x4/device-positions.json",
+      "originalReplayBytes": 190055,
+      "originalReplaySha256": "cbb2d3aa2d0e9514443ef989152cfaf2e28b46b85850456b2ab17d82a3406967"
+    },
+    {
+      "name": "offline-replay/200x4/events.json",
+      "bytes": 1531,
+      "sha256": "5a66d423a3de67cec944ef298e1859a94a7bdd588abed675b570320139e39598",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "200x4/events.json",
+      "originalReplayBytes": 1531,
+      "originalReplaySha256": "5a66d423a3de67cec944ef298e1859a94a7bdd588abed675b570320139e39598"
+    },
+    {
+      "name": "offline-replay/200x4/provider-reads.json",
+      "bytes": 107349,
+      "sha256": "d71a10d25d8654204aeb7221617618ff1d9ee00c647d46bf897d44747f003aef",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "200x4/provider-reads.json",
+      "originalReplayBytes": 107349,
+      "originalReplaySha256": "d71a10d25d8654204aeb7221617618ff1d9ee00c647d46bf897d44747f003aef"
+    },
+    {
+      "name": "offline-replay/200x4/rendered-reconstruction.json",
+      "bytes": 475,
+      "sha256": "2291d621545bb483175962a5641f18763a22c1a0cd6b559986f72f6e28e00c22",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "offline-replay/200x4/summary.json",
+      "bytes": 1496,
+      "sha256": "825c177f033e2ec4d8c89a1dcf6263522a89ea912492c2113163f29c7bfe65fd",
+      "relationship": "exact original replay bytes",
+      "originalReplayName": "200x4/summary.json",
+      "originalReplayBytes": 1496,
+      "originalReplaySha256": "825c177f033e2ec4d8c89a1dcf6263522a89ea912492c2113163f29c7bfe65fd"
+    },
+    {
+      "name": "offline-replay/listening-observations.json",
+      "bytes": 651,
+      "sha256": "6dbdf9fd1ac2f987ecfcd634231cce90e23aeaa86a9fa25532800a23bde4c72d",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "offline-replay/metrics.json",
+      "bytes": 14270,
+      "sha256": "438866011659faf30a0b01035426490253a9301696a6abb383d56c6f8b74ae2e",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "offline-replay/runner-identity.json",
+      "bytes": 1138,
+      "sha256": "de90de97cf83fe577db1fab9df31647e443d089b8f6e55a13fb9c4b3315981a4",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "offline-replay/runner-source/DiagnosticCapture.cs",
+      "bytes": 4665,
+      "sha256": "3fcbfa2e378e389d1d63e9b340fbc436927531a5b3e44e4e05324f1c076e57d3",
+      "relationship": "exact original replay source bytes",
+      "originalReplayName": "runner-source/DiagnosticCapture.cs",
+      "originalReplayBytes": 4665,
+      "originalReplaySha256": "3fcbfa2e378e389d1d63e9b340fbc436927531a5b3e44e4e05324f1c076e57d3"
+    },
+    {
+      "name": "offline-replay/runner-source/OfflineReplay.csproj",
+      "bytes": 2438,
+      "sha256": "3ea2723642532e844ec83fa5d30f8b53fbe47cd5d677f70c5bb7180da6f4d9bf",
+      "relationship": "exact original replay source bytes",
+      "originalReplayName": "runner-source/OfflineReplay.csproj",
+      "originalReplayBytes": 2438,
+      "originalReplaySha256": "3ea2723642532e844ec83fa5d30f8b53fbe47cd5d677f70c5bb7180da6f4d9bf"
+    },
+    {
+      "name": "offline-replay/runner-source/Program.cs",
+      "bytes": 9416,
+      "sha256": "542a601d6932fbcbb4a87bdd607a8e02ed043fd0c6bf5715906d6659f7ab871b",
+      "relationship": "exact original replay source bytes",
+      "originalReplayName": "runner-source/Program.cs",
+      "originalReplayBytes": 9416,
+      "originalReplaySha256": "542a601d6932fbcbb4a87bdd607a8e02ed043fd0c6bf5715906d6659f7ab871b"
+    },
+    {
+      "name": "offline-replay/runner-source/SelfTests.cs",
+      "bytes": 2329,
+      "sha256": "4eb38d99020901f1a83e63c4f1634abf0c598b3e7c2ced6bda06ad6a897c35f5",
+      "relationship": "exact original replay source bytes",
+      "originalReplayName": "runner-source/SelfTests.cs",
+      "originalReplayBytes": 2329,
+      "originalReplaySha256": "4eb38d99020901f1a83e63c4f1634abf0c598b3e7c2ced6bda06ad6a897c35f5"
+    },
+    {
+      "name": "request-summary-field-map.json",
+      "bytes": 3862,
+      "sha256": "f345faeb169fa93919963a78358549c8f1653ef69daaf6c34fc763674760903b",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "verify.py",
+      "bytes": 9770,
+      "sha256": "d8066ec0f17e0616759c7ee1a63549834660cfc0b6c93359c2ca793c0b5a66b0",
+      "relationship": "new derived artifact"
+    },
+    {
+      "name": "verify_replays.py",
+      "bytes": 4392,
+      "sha256": "ed9240de320cc932d7f5046fff38dc924150eeefdeaf309952b83a75bb5771b5",
+      "relationship": "new derived artifact"
+    }
+  ],
+  "omittedOriginalArtifacts": [
+    {
+      "name": "raw-audio.pcm",
+      "bytes": 6053526,
+      "sha256": "3a7783c5ccb27cbebf977a5c75c6f954b1ec6bf50359882b808d584feb32397f",
+      "reason": "Reconstructed exactly from retained incoming MessagePack audio payloads."
+    },
+    {
+      "name": "request-summary.json",
+      "bytes": 3614,
+      "sha256": "8dea4ae47d49ea61af20bb98ead08cad3f25e20a72fd044acf7596564d11e702",
+      "reason": "Original omitted; allowlisted sanitized projection and explicit field map retained."
+    }
+  ],
+  "inventoryExcludes": [
+    "manifest.json (this index)"
+  ],
+  "verification": "python verify.py; Python standard library only; offline",
+  "omittedReconstructableReplayArtifacts": [
+    {
+      "replay": "100x2",
+      "name": "rendered-audio.pcm",
+      "bytes": 1331820,
+      "sha256": "d36d64fecc7674227de27eb8188193c136a2d99c3d559cc07d08ee324b830f6d",
+      "relationship": "exactly reconstructable omitted replay artifact",
+      "reconstruct": {
+        "prefix": "first 1323000 bytes of upstream PCM reconstructed from retained incoming MessagePack",
+        "prefixBytes": 1323000,
+        "prefixSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+        "zeroSuffixBytes": 8820
+      }
+    },
+    {
+      "replay": "200x4",
+      "name": "rendered-audio.pcm",
+      "bytes": 1340640,
+      "sha256": "51c321662555d65e01a128207ceb9cb37a51639b35592adab297df45a8c889f1",
+      "relationship": "exactly reconstructable omitted replay artifact",
+      "reconstruct": {
+        "prefix": "first 1323000 bytes of upstream PCM reconstructed from retained incoming MessagePack",
+        "prefixBytes": 1323000,
+        "prefixSha256": "3b088864790d89ab35e3f8597a43a0c039ea65e6c0656536fa0668008f5f317b",
+        "zeroSuffixBytes": 17640
+      }
+    }
+  ]
+}
