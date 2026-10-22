@@ -64,6 +64,12 @@ internal static class InlineNumericEditorSuite
                     var position = editor.TranslatePoint(new Point(), (UIElement)editor.Parent);
                     var text = display.Content?.ToString();
                     Click(display);
+                    if (width == 400)
+                    {
+                        var savesBeforeGrammar = storage.SaveCount;
+                        AssertInputGrammar(input, minimum, format == "F1" ? 1 : 2);
+                        AssertEqual(savesBeforeGrammar, storage.SaveCount, "Partial typing, rejection, and paste must remain isolated drafts until commit");
+                    }
                     layout(view, width);
                     if (culture == "en-US" && ((property == "Speed" && width == 400) || (property == "Volume" && width == 600)))
                     {
@@ -102,7 +108,7 @@ internal static class InlineNumericEditorSuite
                 // localized view above still commits all four values.
                 if (culture is "en-US" or "de-DE")
                 {
-                    foreach (var invalid in new[] { "", "-", "NaN", "Infinity", "1e999", (minimum - 0.01).ToString(CultureInfo.InvariantCulture), (maximum + 0.01).ToString(CultureInfo.InvariantCulture) })
+                    foreach (var invalid in new[] { "", "-", "NaN", "Infinity", "1e999", "1e0", "+0.8", " 0.8", "0.8 ", "0.800", minimum < 0 ? "000.8" : "00.8", (minimum - 0.01).ToString(CultureInfo.InvariantCulture), (maximum + 0.01).ToString(CultureInfo.InvariantCulture) })
                     {
                         var saves = storage.SaveCount;
                         Click(display); input.Text = invalid; Blur(input); Drain();
@@ -179,6 +185,87 @@ internal static class InlineNumericEditorSuite
     }
 
     private static DependencyProperty ValueProperty(FrameworkElement editor) => (DependencyProperty)editor.GetType().GetField("ValueProperty")!.GetValue(null)!;
+    private static void AssertInputGrammar(TextBox input, double minimum, int decimalPlaces)
+    {
+        var original = input.Text;
+        var separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        AssertEqual(minimum < 0 ? 5 : 4, input.MaxLength, "Numeric input capacity must match the complete signed fixed-precision format");
+        try
+        {
+            input.Text = "0";
+            input.Select(1, 0);
+            Compose(input, ".", accepted: true);
+            Compose(input, "8", accepted: true);
+            if (decimalPlaces == 2) Compose(input, "3", accepted: true);
+            var fullDraft = input.Text;
+            foreach (var invalid in new[] { "9", ".", ",", "e", "E", "+", "-", " ", "\n", "１", "中", "NaN" })
+            {
+                input.Select(input.Text.Length, 0);
+                Compose(input, invalid, accepted: false);
+                AssertEqual(fullDraft, input.Text, "Rejected composition must never appear in the draft");
+            }
+            input.Select(input.Text.Length - 1, 1);
+            Compose(input, "2", accepted: true);
+            AssertEqual(decimalPlaces == 2 ? "0.82" : "0.2", input.Text, "Replacing selected fractional digits must remain possible at maximum capacity");
+            input.Select(input.Text.Length, 0);
+            EditingCommands.Backspace.Execute(null, input);
+            AssertEqual(decimalPlaces == 2 ? "0.8" : "0.", input.Text, "Native Backspace must preserve editable partial decimal drafts");
+
+            input.Text = "";
+            input.Select(0, 0);
+            Compose(input, "-", accepted: minimum < 0);
+            AssertEqual(minimum < 0 ? "-" : "", input.Text, "Only the negative-range setting may begin with a minus sign");
+            input.Text = minimum < 0 ? "10" : "1";
+            input.Select(input.Text.Length, 0);
+            Compose(input, "0", accepted: false);
+            input.Select(0, input.Text.Length);
+            Compose(input, "0", accepted: true);
+            Compose(input, separator, accepted: true);
+            Compose(input, "8", accepted: true);
+            AssertEqual($"0{separator}8", input.Text, "The current culture decimal separator must support normal composition");
+
+            foreach (var invalid in new[] { "1e0", "NaN", "Infinity", " 0.8", "0.8 ", "0..8", "0,8.0", "100", "0.123", "１", "-0.8" })
+            {
+                if (invalid == "-0.8" && minimum < 0) continue;
+                input.Text = "0.8";
+                input.SelectAll();
+                Paste(input, invalid, accepted: false);
+                AssertEqual("0.8", input.Text, "Illegal whole paste must preserve the selected draft rather than sanitize or truncate it");
+            }
+            input.Text = "0.8";
+            input.SelectAll();
+            Paste(input, minimum < 0 ? "-10.0" : "0.82", accepted: true);
+            AssertEqual(minimum < 0 ? "-10.0" : "0.82", input.Text, "A legal full-capacity paste must replace the selection intact");
+            input.SelectAll();
+            Paste(input, $"0{separator}8", accepted: true);
+            if (separator != ",") { input.SelectAll(); Paste(input, "0,8", accepted: false); }
+        }
+        finally { input.Text = original; input.SelectAll(); }
+    }
+
+    private static void Compose(TextBox input, string text, bool accepted)
+    {
+        var composition = new TextComposition(InputManager.Current, input, text);
+        var args = new TextCompositionEventArgs(Keyboard.PrimaryDevice, composition) { RoutedEvent = TextCompositionManager.PreviewTextInputEvent };
+        input.RaiseEvent(args);
+        AssertEqual(!accepted, args.Handled, $"Numeric composition '{text}' must be {(accepted ? "accepted" : "rejected")}");
+        if (!args.Handled) InsertAcceptedText(input, text);
+    }
+
+    private static void InsertAcceptedText(TextBox input, string text)
+    {
+        var caret = input.SelectionStart + text.Length;
+        input.SelectedText = text;
+        input.Select(caret, 0);
+    }
+
+    private static void Paste(TextBox input, string text, bool accepted)
+    {
+        var args = new DataObjectPastingEventArgs(new DataObject(DataFormats.UnicodeText, text), false, DataFormats.UnicodeText) { RoutedEvent = DataObject.PastingEvent };
+        input.RaiseEvent(args);
+        AssertEqual(!accepted, args.CommandCancelled, $"Whole numeric paste '{text}' must be {(accepted ? "accepted" : "rejected")}");
+        if (!args.CommandCancelled) InsertAcceptedText(input, text);
+    }
     private static void AssertNumericViewport(TextBox input, params string[] values)
     {
         var contentHost = (ScrollViewer)input.Template.FindName("PART_ContentHost", input);

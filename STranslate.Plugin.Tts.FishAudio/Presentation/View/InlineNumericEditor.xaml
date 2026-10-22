@@ -32,6 +32,7 @@
         <TextBox x:Name="EditorBox" Width="58" Height="32" MinWidth="0" MinHeight="0"
                  helpers:TextBoxHelper.IsDeleteButtonVisible="False"
                  Padding="4,0" VerticalContentAlignment="Center" TextAlignment="Center"
+                 PreviewTextInput="EditorBox_PreviewTextInput"
                  Visibility="Collapsed" LostKeyboardFocus="EditorBox_LostKeyboardFocus" KeyDown="EditorBox_KeyDown" />
         <TextBlock x:Name="UnitText" Grid.Column="1" Margin="4,0,0,0" VerticalAlignment="Center"
                    Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
