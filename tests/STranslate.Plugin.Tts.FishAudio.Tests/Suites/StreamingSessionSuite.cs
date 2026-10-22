@@ -202,11 +202,14 @@ internal static class StreamingSessionSuite
         var emitted = false;
         socket.OnSend = m =>
         {
-            if (Event(m) == "flush" && !emitted) { emitted = true; socket.QueueAudio(new byte[1024 * 1024]); }
+            if (Event(m) == "flush" && !emitted) { emitted = true; socket.QueueAudio([1, 2]); }
         };
         using var session = new NativeStreamingTtsSession(_ => socket, () => player, clock);
         var operation = session.PlayAsync(Request(), new string('a', 1000), CancellationToken.None);
         await player.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        // Hold the reader before filling the queue so its pressure write cannot
+        // already have completed while the receiver still owns its first lease.
+        socket.QueueAudio(new byte[1024 * 1024]);
         await WaitUntilAsync(() => player.Activity!.IsBackpressured);
         clock.Advance(TimeSpan.FromSeconds(10));
         using (player.Activity!.EnterBackpressure(StreamingBackpressure.PcmBuffer))
@@ -215,7 +218,7 @@ internal static class StreamingSessionSuite
         AssertEqual(TimeSpan.Zero, player.Activity.ActiveElapsed, "Overlapping queue/PCM pressure must exclude their union exactly once");
         AssertEqual(false, operation.IsCompleted, "A blocked bounded queue cannot trigger the network idle watchdog");
         player.AllowContinue.TrySetResult();
-        await WaitUntilAsync(() => Interlocked.Read(ref player.Bytes) == 1024 * 1024 && !player.Activity.IsBackpressured);
+        await WaitUntilAsync(() => Interlocked.Read(ref player.Bytes) == 2 + 1024 * 1024 && !player.Activity.IsBackpressured);
         clock.Advance(TimeSpan.FromSeconds(29));
         await Task.Delay(10);
         AssertEqual(false, operation.IsCompleted, "Only active time after pressure releases counts toward idle");

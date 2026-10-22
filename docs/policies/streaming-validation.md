@@ -32,6 +32,8 @@ If active WebSocket PING/PONG timeouts are enabled, verify that required pending
 
 Account overlapping encoded/PCM pressure as a union, not a sum or an entire buffer-occupied interval. Test first PCM separately from first encoded bytes. Freeze request values before await and prove that capture of the last published initialization remains available while replacement host load is blocked. Test successor cleanup ordering across at least three calls and all caller/supersession/retirement/disposal cancellation paths.
 
+An observed pressure flag does not prove that its pending write is still blocked: a completed write can retain its lease until its continuation runs. To test continuous queue pressure with a manual clock, first establish that the consumer is held, then inject the large event. Keep the exact union and idle-boundary assertions; do not conceal a real active gap by adding another pressure lease, allowing extra elapsed time or sleeping for scheduling luck.
+
 ## Evidence and compatibility
 
 Run core checks with fake transports and outputs. Use local fixtures for decoder/device checks and identify the runtime, device and output mode. Test coexistence with other application audio, no device, format rejection, device removal and cancellation isolation. Test package contents and dependencies on the supported host baseline.
