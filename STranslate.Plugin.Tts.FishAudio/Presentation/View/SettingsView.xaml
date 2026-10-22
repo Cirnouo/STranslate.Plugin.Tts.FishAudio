@@ -59,7 +59,10 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="BareIconSurface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="16">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <view:InkCenteredGlyph Glyph="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                                   FontFamily="{TemplateBinding FontFamily}" FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -152,7 +155,7 @@
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                     CornerRadius="6">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
                         <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
                                 Background="Transparent" BorderThickness="0"
                                 Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
@@ -226,8 +229,8 @@
                                     </Style>
                                 </Button.Style>
                                 <Grid>
-                                    <TextBlock x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Text="&#xE768;" />
+                                    <view:InkCenteredGlyph x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
                                     <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
                                             HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                 </Grid>
@@ -446,7 +449,7 @@
             CornerRadius="8"
             Padding="12">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
                     <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
                             Background="Transparent" BorderThickness="0"
                             Command="{Binding ToggleSelectedVoiceFavoriteCommand}"
@@ -534,11 +537,11 @@
                                 </Style>
                             </Button.Style>
                             <Grid>
-                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                <view:InkCenteredGlyph FontFamily="Segoe MDL2 Assets" FontSize="13"
                                            HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="&#xE768;" />
+                                    <view:InkCenteredGlyph.Style>
+                                        <Style TargetType="view:InkCenteredGlyph">
+                                            <Setter Property="Glyph" Value="&#xE768;" />
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
@@ -546,8 +549,8 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
+                                    </view:InkCenteredGlyph.Style>
+                                </view:InkCenteredGlyph>
                                 <Border Width="10" Height="10" CornerRadius="1" Background="White"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
