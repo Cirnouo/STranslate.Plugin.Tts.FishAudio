@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: User guides and support
+    url: https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/blob/main/SUPPORT.md
+    about: Find setup help, language-specific guides and reporting guidance.
+  - name: Report a security vulnerability privately
+    url: https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/security/advisories/new
+    about: Share suspected vulnerability details privately with maintainers. Never post secrets or exploit details in a public issue.

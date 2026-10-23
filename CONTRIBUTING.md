@@ -68,6 +68,10 @@ Update the relevant current specification in the same change. Record a new ADR w
 
 Maintain the five existing locales for persistent UI text. README and user guides have Simplified Chinese, Traditional Chinese, English, Japanese and Korean versions; other maintenance documents are English, and new user-visible net changes go in Chinese under `CHANGELOG.md` Unreleased with applicable English categories. Verify the latest published stable baseline under the release policy before editing it. Published release sections retain their historical content. Check relative links and assets after moving documentation.
 
+## Community and reporting
+
+Follow the [code of conduct](CODE_OF_CONDUCT.md). Use [SUPPORT.md](SUPPORT.md) for questions and ordinary bug reports; report suspected vulnerabilities privately under [SECURITY.md](SECURITY.md).
+
 ## Report an issue
 
 Search [existing issues](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) first. A useful report includes plugin and STranslate versions, Windows version, concrete reproduction steps, expected/actual behavior and whether the problem involves search, preview or formal speech. Include the model, audio format, relevant system-network conditions and output device. Formal speech always uses the system default proxy; there is no plugin proxy mode/address UI. Obsolete stored proxy fields are ignored and canonically removed within schema 2, without another version bump.
