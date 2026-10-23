@@ -23,6 +23,6 @@ internal sealed class NumericWheelAdjustment
         if (notches == 0) return value;
         var next = Math.Clamp((decimal)value + notches * .01m, (decimal)minimum, (decimal)maximum);
         if (next == (decimal)minimum || next == (decimal)maximum) Reset();
-        return (double)Math.Round(next, decimalPlaces, MidpointRounding.AwayFromZero);
+        return Configuration.SettingsNormalizer.RoundToPrecision(next, decimalPlaces);
     }
 }

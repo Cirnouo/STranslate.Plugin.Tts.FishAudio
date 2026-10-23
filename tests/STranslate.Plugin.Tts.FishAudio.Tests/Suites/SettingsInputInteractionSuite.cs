@@ -26,7 +26,10 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is null or "zero")
+            foreach (var culture in new[] { "en-US", "de-DE" })
+                await RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture));
         if (group is null or "fold-focus")
             foreach (var dark in new[] { false, true })
                 await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark));
@@ -46,6 +49,149 @@ internal static class SettingsInputInteractionSuite
         if (group is null or "copy")
             foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
                 await RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language));
+    }
+
+    private static void VolumeZeroIsCanonicalAcrossInputRoutes(string culture)
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            var settings = new Settings { SelectedModel = "s2-pro", Volume = -.01, Temperature = .3, TopP = .05 };
+            var context = CreateContext(settings: settings);
+            var storage = (ContextProxy)(object)context;
+            string? saved = null;
+            storage.SaveSettings = value => saved = JsonSerializer.Serialize(value);
+            using var vm = new SettingsViewModel(context, settings);
+            var view = CreateView(vm);
+            using var source = new HwndSource(new HwndSourceParameters("Fish Audio canonical volume zero fixture") { Width = 600, Height = 800, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+            source.RootVisual = view;
+            var slider = Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "Volume");
+            var editor = Logical(view).OfType<InlineNumericEditor>().Single(item => BindingOperations.GetBinding(item, InlineNumericEditor.ValueProperty)?.Path.Path == "Volume");
+            var display = (Button)editor.FindName("DisplayButton");
+            var input = (TextBox)editor.FindName("EditorBox");
+            var expected = culture == "de-DE" ? "0,00" : "0.00";
+            var failures = new List<string>();
+            AssertEqual(.3, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "Temperature").Value, "Precision initialization must preserve a valid fractional bound value");
+            AssertEqual(.05, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "TopP").Value, "Zero canonicalization must preserve the positive TopP floor during construction");
+            void CheckZero(string route, ToolTip? toolTip = null)
+            {
+                var values = new[] { slider.Value, editor.Value, vm.Volume, settings.Volume };
+                var bits = string.Join(", ", values.Select(value => $"{value:R}/0x{BitConverter.DoubleToInt64Bits(value):X16}"));
+                if (values.Any(value => BitConverter.DoubleToInt64Bits(value) != 0)
+                    || !Equals(expected, display.Content)
+                    || (toolTip is not null && !Equals(expected, toolTip.Content)))
+                    failures.Add($"{route}: slider/editor/VM/settings {bits}; label={display.Content}; bubble={toolTip?.Content}");
+            }
+            foreach (var width in new[] { 400d, 600d })
+            foreach (var initial in new[] { -.01, .01 })
+            {
+                Layout(view, width);
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                var saves = storage.SaveCount;
+                Wheel(track.Thumb, initial < 0 ? 120 : -120);
+                CheckZero($"{width}/slider wheel from {initial}", (ToolTip)track.Thumb.ToolTip);
+                AssertEqual(saves + 1, storage.SaveCount, "Crossing to zero must save exactly once");
+                track.Thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                track.Thumb.RaiseEvent(new DragDeltaEventArgs(0, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                CheckZero($"{width}/drag over the reached zero from {initial}", (ToolTip)track.Thumb.ToolTip);
+                track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                var loaded = JsonSerializer.Deserialize<Settings>(saved!)!;
+                SettingsStore.Load(CreateContext(settings: loaded), new DateTimeOffset(2026, 10, 23, 0, 0, 0, TimeSpan.Zero));
+                if (BitConverter.DoubleToInt64Bits(loaded.Volume) != 0) failures.Add("Wheel zero must survive canonical save/reload");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                Wheel(display, initial < 0 ? 120 : -120);
+                CheckZero($"{width}/numeric label wheel from {initial}");
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                Layout(view, width);
+                saves = storage.SaveCount;
+                var distance = -initial / (slider.Maximum - slider.Minimum) * (track.ActualWidth - track.Thumb.ActualWidth);
+                track.Thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                track.Thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                CheckZero($"{width}/native drag from {initial}", (ToolTip)track.Thumb.ToolTip);
+                AssertEqual(saves + 1, storage.SaveCount, "A native drag to zero must persist one effective value");
+                track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                input.Text = culture == "de-DE" ? "-0,00" : "-0.00";
+                editor.CommitEdit();
+                CheckZero($"{width}/direct entry from {initial}");
+            }
+            foreach (var initial in new[] { -.01, .01 })
+            foreach (var target in new[] { -.001, .001, -1e-16, 1e-16 })
+            {
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                Layout(view, 600);
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                var distance = (target - initial) / (slider.Maximum - slider.Minimum) * (track.ActualWidth - track.Thumb.ActualWidth);
+                track.Thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                track.Thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                CheckZero($"native zero-tick bucket from {initial} toward {target}", (ToolTip)track.Thumb.ToolTip);
+                track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            }
+            foreach (var stored in new[] { BitConverter.Int64BitsToDouble(long.MinValue), -.004, .004 })
+            {
+                var reloadSettings = new Settings { SelectedModel = "s2-pro", Volume = stored };
+                var reloadContext = CreateContext(settings: reloadSettings);
+                var reloadStorage = (ContextProxy)(object)reloadContext;
+                string? canonical = null;
+                reloadStorage.SaveSettings = value => canonical = JsonSerializer.Serialize(value);
+                SettingsStore.Load(reloadContext, new DateTimeOffset(2026, 10, 23, 0, 0, 0, TimeSpan.Zero));
+                if (BitConverter.DoubleToInt64Bits(reloadSettings.Volume) != 0 || reloadStorage.SaveCount != 1)
+                    failures.Add($"stored {stored:R}/0x{BitConverter.DoubleToInt64Bits(stored):X16}: loaded {reloadSettings.Volume:R}/0x{BitConverter.DoubleToInt64Bits(reloadSettings.Volume):X16}, saves {reloadStorage.SaveCount}; must repair and persist canonical zero once");
+                if (canonical is not null && BitConverter.DoubleToInt64Bits(JsonSerializer.Deserialize<Settings>(canonical)!.Volume) != 0)
+                    failures.Add("Canonical stored zero must retain its positive sign after JSON round trip");
+                SettingsStore.Load(reloadContext, new DateTimeOffset(2026, 10, 23, 0, 0, 0, TimeSpan.Zero));
+                if (reloadStorage.SaveCount != 1) failures.Add("Canonical zero reload must be idempotent");
+            }
+            slider.SetCurrentValue(Slider.ValueProperty, -.01);
+            var notifications = new List<string>();
+            vm.PropertyChanging += (_, args) => { if (args.PropertyName == nameof(vm.Volume)) notifications.Add("changing"); };
+            vm.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(vm.Volume)) notifications.Add("changed"); };
+            var residueSaves = storage.SaveCount;
+            slider.SetCurrentValue(Slider.ValueProperty, -1e-16);
+            CheckZero("A raw negative floating-point residue at the zero tick");
+            AssertEqual("changing,changed", string.Join(",", notifications), "Canonical source publication must retain the normal changing-before-changed notification order");
+            AssertEqual(residueSaves + 1, storage.SaveCount, "A raw zero-tick residue must publish and persist only one canonical value");
+            var zeroSaves = storage.SaveCount;
+            notifications.Clear();
+            vm.Volume = BitConverter.Int64BitsToDouble(long.MinValue);
+            CheckZero("An equal signed-zero ViewModel write");
+            AssertEqual(0, notifications.Count, "A signed-zero source no-op must not raise duplicate notifications");
+            display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            input.Text = "-0.00";
+            editor.CommitEdit();
+            CheckZero("Invariant negative-zero entry while already at zero");
+            var zeroTrack = (Track)slider.Template.FindName("PART_Track", slider);
+            zeroTrack.Thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+            CheckZero("Native drag after a negative-zero input commit", (ToolTip)zeroTrack.Thumb.ToolTip);
+            zeroTrack.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+            AssertEqual(zeroSaves, storage.SaveCount, "Canonicalizing an already-zero value must not introduce a redundant save");
+            vm.Volume = -.005;
+            AssertEqual(-.005, vm.Volume, "The negative rounding midpoint must not be classified as zero");
+            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "The existing midpoint-away-from-zero display rule must remain intact");
+            vm.Volume = 0d;
+            slider.Minimum = .05;
+            AssertEqual(.05, slider.Value, "Derived value coercion must retain native dynamic minimum clamping");
+            slider.SetCurrentValue(Slider.ValueProperty, -.01);
+            AssertEqual(.05, slider.Value, "A raw value below a dynamic minimum must remain clamped");
+            slider.Maximum = .3;
+            slider.SetCurrentValue(Slider.ValueProperty, 1d);
+            AssertEqual(.3, slider.Value, "Derived value coercion must retain native dynamic maximum clamping");
+            slider.Minimum = -10;
+            slider.Maximum = 10;
+            slider.SetCurrentValue(Slider.ValueProperty, -.02);
+            var negativeTrack = (Track)slider.Template.FindName("PART_Track", slider);
+            Wheel(negativeTrack.Thumb, 120);
+            AssertEqual(-.01, slider.Value, "A real negative hundredth must remain negative");
+            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "Canonical zero must not erase real negative values");
+            AssertEqual(display.Content, ((ToolTip)negativeTrack.Thumb.ToolTip).Content, "Native bubble and label must retain matching negative hundredths");
+            slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+            AssertEqual("", string.Join(Environment.NewLine, failures), "All zero-producing routes must publish positive zero with identical text");
+        }
+        finally { CultureInfo.CurrentCulture = previousCulture; }
     }
 
     private static SettingsView CreateView(SettingsViewModel vm)

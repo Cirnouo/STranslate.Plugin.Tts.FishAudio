@@ -21,3 +21,5 @@
 [Four-buffer installed-host acceptance](pcm-output-host-2026-10-22.md) records the exact validation-package identity, retained user state and the user's same-sample confirmation that the reported electrical noise/stuttering disappeared after the audio update.
 
 [Hundredth-step slider and focus acceptance](settings-wheel-host-2026-10-23.md) records installed-host dragging, slider/text wheel, native value feedback, Volume hundredth persistence and pointer-versus-keyboard fold focus, with preserved user state and explicit fixture boundaries.
+
+[Positive-zero Volume acceptance](settings-zero-host-2026-10-23.md) records negative-to-zero slider/text wheel and native dragging, visible positive-zero feedback, persisted sign and the distinction between retained user choices and a refreshed sample URL.

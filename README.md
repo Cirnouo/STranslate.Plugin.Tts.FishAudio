@@ -12,6 +12,9 @@
   <p><b>简体中文</b> · <a href="docs/README_TW.md">繁體中文</a> · <a href="docs/README_EN.md">English</a> · <a href="docs/README_JA.md">日本語</a> · <a href="docs/README_KO.md">한국어</a></p>
 </div>
 
+> [!WARNING]
+> 大陆网络无法访问 `fish.audio` 服务。请参阅用户指南中的[网络与代理说明](docs/user-guide/README.md#network-and-proxy)。
+
 > [!TIP]
 > 使用 `.edu` 邮箱注册 Fish Audio 并完成学生认证，可免费领取 **5 美元余额**。[申请入口](https://fish.audio/students/)
 
@@ -20,9 +23,6 @@
 
 > [!IMPORTANT]
 > S1 将于 **2026-12-31** 退役。此后，使用模型 `s1` 的 API 请求将由 S2.1 Pro 以相同价格提供服务。请在此之前切换到 `s2.1-pro`。[官方说明](https://docs.fish.audio/api-reference/endpoint/websocket/tts-live)
-
-> [!WARNING]
-> 大陆网络无法访问 `fish.audio` 服务。请参阅用户指南中的[网络与代理说明](docs/user-guide/README.md#network-and-proxy)。
 
 福利资格与免费活动条件以 Fish Audio 官方页面为准。
 

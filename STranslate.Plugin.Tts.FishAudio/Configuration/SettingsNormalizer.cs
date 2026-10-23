@@ -63,6 +63,12 @@ public static class SettingsNormalizer
     internal static bool NeedsSelectedModelNormalization(Settings settings, DateTimeOffset nowUtc) =>
         !FishAudioModelPolicy.GetAvailableModels(nowUtc).Contains(settings.SelectedModel, StringComparer.Ordinal);
 
+    internal static double RoundToPrecision(decimal value, int decimalPlaces)
+    {
+        var rounded = Math.Round(value, decimalPlaces, MidpointRounding.AwayFromZero);
+        return rounded == 0m ? 0d : (double)rounded;
+    }
+
     private static bool NormalizeRangeAndPrecision(
         double value,
         double min,
@@ -77,8 +83,7 @@ public static class SettingsNormalizer
             return true;
         }
 
-        var decimalValue = (decimal)value;
-        normalized = (double)Math.Round(decimalValue, decimalPlaces, MidpointRounding.AwayFromZero);
-        return normalized != value;
+        normalized = RoundToPrecision((decimal)value, decimalPlaces);
+        return normalized != value || (value == 0d && double.IsNegative(value));
     }
 }
