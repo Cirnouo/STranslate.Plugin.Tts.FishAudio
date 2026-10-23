@@ -1,3 +1,12 @@
+if (args.Contains("--activity-dispatcher-tests"))
+{
+    await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
+    await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
+    await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
+    Console.WriteLine("Activity dispatcher regression tests passed.");
+    return;
+}
+
 if (args.Contains("--credential-display-tests"))
 {
     await CredentialDisplayPreservationSuite.AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync();
@@ -148,6 +157,7 @@ OperationActivitySuite.OperationActivityCounterPublishesPendingStateBeforeRethro
 await OperationActivitySuite.OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync();
 OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangingReentrancy();
 await OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync();
+await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
 await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
 await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
 SettingsStorageSuite.ApiKeyEditingPersistsImmediately();
