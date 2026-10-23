@@ -8,6 +8,7 @@ The table defines the current layout. The root README is Simplified Chinese; loc
 |---|---|
 | `README.md` and `docs/user-guide/` | User entry and detailed setup/configuration guidance in five languages. |
 | `CONTRIBUTING.md` | The designated English unified developer and contribution entry; links to canonical policies/specs rather than duplicating them. |
+| `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md` and `.github/ISSUE_TEMPLATE/` | Community conduct, human vulnerability reporting, support routing and public issue intake. Keep report routes consistent with actual repository settings; do not invent contact details, support windows or response deadlines. |
 | `CHANGELOG.md` | Chinese user-visible net changes under Unreleased and immutable historical release sections. |
 | `docs/glossary.md` | Canonical domain terms without implementation recipes. |
 | `docs/specs/` | Current implemented behavior, ownership, compatibility and known limitations. |
