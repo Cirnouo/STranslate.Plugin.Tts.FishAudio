@@ -404,6 +404,7 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         CancellationToken cancellationToken)
     {
         var requestedVoiceId = settings.VoiceId;
+        var requestedApiKey = settings.ApiKey;
         if (string.IsNullOrWhiteSpace(requestedVoiceId) || !SettingsValidation.IsValidVoiceIdFormat(requestedVoiceId))
             return;
 
@@ -415,9 +416,9 @@ internal sealed class PluginInitializationCoordinator : IDisposable
 
         try
         {
-            var model = await FishAudioApi.GetModelAsync(context, "dummy", requestedVoiceId, cancellationToken);
+            var model = await FishAudioApi.GetModelAsync(context, FishAudioApi.MetadataApiKey(requestedApiKey), requestedVoiceId, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            if (model is null)
+            if (model is null || !string.Equals(settings.ApiKey, requestedApiKey, StringComparison.Ordinal))
                 return;
 
             var cached = SettingsViewModel.CreateCachedVoiceInfo(model);
@@ -442,7 +443,8 @@ internal sealed class PluginInitializationCoordinator : IDisposable
                     settingsWriteLease,
                     candidate =>
                     {
-                        if (!string.Equals(candidate.VoiceId, requestedVoiceId, StringComparison.Ordinal))
+                        if (!string.Equals(candidate.VoiceId, requestedVoiceId, StringComparison.Ordinal)
+                            || !string.Equals(candidate.ApiKey, requestedApiKey, StringComparison.Ordinal))
                             return false;
 
                         candidate.CachedVoice = cached;
@@ -453,11 +455,11 @@ internal sealed class PluginInitializationCoordinator : IDisposable
             }
 
             if (TryGetCurrentViewModel(identity, out var viewModel))
-                viewModel?.ApplyRefreshedCachedVoice(requestedVoiceId, cached);
+                viewModel?.ApplyRefreshedCachedVoice(requestedVoiceId, cached, requestedApiKey);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            context.Logger?.LogWarning(ex, "Startup voice refresh failed");
+            context.Logger?.LogWarning("Startup voice refresh failed ({ErrorType})", ex.GetType().Name);
         }
     }
 

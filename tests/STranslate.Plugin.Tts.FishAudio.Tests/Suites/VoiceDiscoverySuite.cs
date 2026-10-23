@@ -17,30 +17,69 @@ using static TestAssertions;
 
 internal static class VoiceDiscoverySuite
 {
-    internal static async Task SearchAndByIdUseDummyTokenAsync()
+    internal static async Task SearchAndByIdUseConfiguredTokenOrDummyAsync()
     {
-        var settings = new Settings { ApiKey = AppliedKey };
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = "{\"total\":0,\"items\":[]}";
-        var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+        foreach (var key in new[] { AppliedKey, "unvalidated-configured-key", "", " \t" })
         {
-            SearchQuery = "voice",
-        };
+            var settings = new Settings { ApiKey = key };
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = "{\"total\":0,\"items\":[]}";
+            using var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+            {
+                SearchQuery = "voice",
+            };
 
-        await viewModel.SearchVoicesCommand.ExecuteAsync(null);
+            await viewModel.SearchVoicesCommand.ExecuteAsync(null);
 
-        var headers = AssertHeaders(http.LastGetOptions, "Voice search should send Authorization headers");
-        AssertEqual("Bearer dummy", headers["Authorization"], "Voice search should use the dummy token by default");
+            var headers = AssertHeaders(http.LastGetOptions, "Voice search should send Authorization headers");
+            AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(key) ? "dummy" : key)}", headers["Authorization"], "Voice search should use the configured value or dummy only when blank");
 
-        http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
-        viewModel.VoiceIdInput = "fedcba9876543210fedcba9876543210";
+            http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
+            viewModel.VoiceIdInput = "fedcba9876543210fedcba9876543210";
 
-        await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
+            await viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
 
-        headers = AssertHeaders(http.LastGetOptions, "Voice by-ID lookup should send Authorization headers");
-        AssertEqual("Bearer dummy", headers["Authorization"], "Voice by-ID lookup should use the dummy token by default");
-        AssertEqual(1, viewModel.ByIdResults.Count, "Public By-ID lookup should expose one card for inspection");
-        AssertEqual("", settings.VoiceId, "Public metadata lookup should leave selection to Apply");
+            headers = AssertHeaders(http.LastGetOptions, "Voice by-ID lookup should send Authorization headers");
+            AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(key) ? "dummy" : key)}", headers["Authorization"], "Voice lookup should preserve the configured value without TTS validation");
+            AssertEqual(1, viewModel.ByIdResults.Count, "Public By-ID lookup should expose one card for inspection");
+            AssertEqual("", settings.VoiceId, "Public metadata lookup should leave selection to Apply");
+        }
+    }
+
+    internal static async Task CredentialChangesInvalidateMetadataAndPendingSearchAsync()
+    {
+        var settings = new Settings { ApiKey = "first-account" };
+        var (service, http) = TestHttpServiceProxy.Create();
+        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+        const string id = "fedcba9876543210fedcba9876543210";
+        http.GetResponseJson = "{\"_id\":\"" + id + "\",\"title\":\"Private voice\"}";
+        view.VoiceIdInput = id;
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        view.ToggleFavoriteCommand.Execute(view.ByIdResults.Single());
+        view.SelectVoiceCommand.Execute(view.ByIdResults.Single());
+        var calls = http.GetCallCount;
+        view.ApiKey = "second-account";
+        AssertEqual(id, settings.VoiceId, "Key edits retain selected voice identity");
+        AssertEqual(null, settings.CachedVoice, "Key edits remove saved metadata from the prior account");
+        AssertEqual(0, view.ByIdResults.Count, "Changing credentials must remove retained detail cards");
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        AssertEqual(calls + 1, http.GetCallCount, "The new account must not reuse the old metadata cache");
+        AssertEqual("Bearer second-account", AssertHeaders(http.LastGetOptions, "New credential headers")["Authorization"], "New lookup uses new credentials");
+
+        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        http.GetAsyncHandler = (_, _, _) => pending.Task; // Deliberately ignores cancellation.
+        var search = view.SearchVoicesCommand.ExecuteAsync(null);
+        view.ApiKey = "";
+        pending.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + id + "\",\"title\":\"Late private voice\"}]}");
+        await search;
+        AssertEqual(0, view.SearchResults.Count, "An old credential response must not republish private cards");
+        http.GetAsyncHandler = null;
+        http.GetException = new HttpRequestException("rejected", null, HttpStatusCode.Unauthorized);
+        view.ApiKey = "rejected-key";
+        calls = http.GetCallCount;
+        await view.SearchVoicesCommand.ExecuteAsync(null);
+        AssertEqual(calls + 1, http.GetCallCount, "Rejected configured credentials must not fall back to dummy");
+        AssertEqual("Bearer rejected-key", AssertHeaders(http.LastGetOptions, "Rejected key headers")["Authorization"], "Rejected key is forwarded once");
     }
 
     internal static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync()

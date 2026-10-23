@@ -32,13 +32,18 @@ internal sealed class VoiceMetadataCache(TimeProvider? timeProvider = null)
     private readonly LinkedList<string> _recency = new();
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
 
-    internal event Action<VoiceMetadata>? MetadataUpdated;
+    internal static string CredentialScope(string? apiKey) => Convert.ToHexString(
+        System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(
+            string.IsNullOrWhiteSpace(apiKey) ? "" : apiKey)));
 
-    internal bool TryGet(string voiceId, out VoiceMetadata metadata)
+    internal event Action<string, VoiceMetadata>? MetadataUpdated;
+
+    internal bool TryGet(string voiceId, out VoiceMetadata metadata, string? credentialScope = null)
     {
+        var key = (credentialScope ?? CredentialScope(null)) + ":" + voiceId;
         lock (_gate)
         {
-            if (_entries.TryGetValue(voiceId, out var entry))
+            if (_entries.TryGetValue(key, out var entry))
             {
                 if (_timeProvider.GetElapsedTime(entry.Timestamp) < Lifetime)
                 {
@@ -47,7 +52,7 @@ internal sealed class VoiceMetadataCache(TimeProvider? timeProvider = null)
                     metadata = entry.Metadata;
                     return true;
                 }
-                _entries.Remove(voiceId);
+                _entries.Remove(key);
                 _recency.Remove(entry.Node);
             }
         }
@@ -55,16 +60,18 @@ internal sealed class VoiceMetadataCache(TimeProvider? timeProvider = null)
         return false;
     }
 
-    internal void Put(VoiceMetadata metadata)
+    internal void Put(VoiceMetadata metadata, string? credentialScope = null)
     {
         if (!SettingsValidation.IsValidVoiceIdFormat(metadata.VoiceId))
             return;
+        var scope = credentialScope ?? CredentialScope(null);
+        var key = scope + ":" + metadata.VoiceId;
         lock (_gate)
         {
-            if (_entries.Remove(metadata.VoiceId, out var previous))
+            if (_entries.Remove(key, out var previous))
                 _recency.Remove(previous.Node);
-            var node = _recency.AddLast(metadata.VoiceId);
-            _entries.Add(metadata.VoiceId, new Entry(metadata, _timeProvider.GetTimestamp(), node));
+            var node = _recency.AddLast(key);
+            _entries.Add(key, new Entry(metadata, _timeProvider.GetTimestamp(), node));
             if (_entries.Count > MaximumCount)
             {
                 _entries.Remove(_recency.First!.Value);
@@ -74,8 +81,8 @@ internal sealed class VoiceMetadataCache(TimeProvider? timeProvider = null)
         // Subscribers marshal presentation work themselves; never notify under the cache gate.
         foreach (var subscriber in MetadataUpdated?.GetInvocationList() ?? [])
         {
-            try { ((Action<VoiceMetadata>)subscriber)(metadata); }
-            catch { /* A transient view cannot invalidate a successful public metadata cache update. */ }
+            try { ((Action<string, VoiceMetadata>)subscriber)(scope, metadata); }
+            catch { /* A transient view cannot invalidate a successful metadata cache update. */ }
         }
     }
 

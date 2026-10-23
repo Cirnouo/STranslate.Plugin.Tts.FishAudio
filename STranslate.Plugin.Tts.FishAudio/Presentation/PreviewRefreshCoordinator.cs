@@ -16,7 +16,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     internal const string PreviewUnavailableKey = "STranslate_Plugin_Tts_FishAudio_Preview_Unavailable";
     internal const string PreviewRefreshFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed";
     private const string PreviewPlaybackFailedKey = "STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed";
-    private const string PreviewApiToken = "dummy";
+    private readonly Func<string> _getApiKey;
     private readonly IPluginContext _context;
     private readonly Func<string?> _getCachedVoiceId;
     private readonly Func<string?> _getCachedVoiceSampleUrl;
@@ -51,9 +51,10 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         Func<string, string, int, Action<string>?, string> resolveCoverImageUrl,
         Func<bool> isFacadeDisposed, TimeProvider? timeProvider = null,
         Action<string?>? applyPreparingState = null, Action<Action>? runOnUiThread = null,
-        Action<VoiceSearchItem>? cardRefreshed = null, VoiceMetadataCache? metadataCache = null)
+        Action<VoiceSearchItem>? cardRefreshed = null, VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null)
     {
         _context = context;
+        _getApiKey = getApiKey ?? (() => "");
         _getCachedVoiceId = getCachedVoiceId;
         _getCachedVoiceSampleUrl = getCachedVoiceSampleUrl;
         _getVoiceId = getVoiceId;
@@ -161,7 +162,9 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     {
         try
         {
-            var model = await FishAudioApi.GetModelAsync(_context, PreviewApiToken, target.VoiceId, token);
+            var apiKey = _getApiKey();
+            var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
+            var model = await FishAudioApi.GetModelAsync(_context, FishAudioApi.MetadataApiKey(apiKey), target.VoiceId, token);
             if (!IsCurrentDisplayPreviewOperation(operationId, target)) return null;
             if (model is null)
             {
@@ -170,7 +173,9 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
                 return null;
             }
             // URL expiry/403/404 recovery deliberately bypasses the metadata TTL cache.
-            _metadataCache.Put(VoiceMetadata.FromModel(model, target.VoiceId));
+            _metadataCache.Put(VoiceMetadata.FromModel(model, target.VoiceId), credentialScope);
+            if (!IsCurrentDisplayPreviewOperation(operationId, target)
+                || !string.Equals(_getApiKey(), apiKey, StringComparison.Ordinal)) return null;
             string? url;
             if (target.SearchItem is { } item)
             {
@@ -182,6 +187,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             {
                 var cached = VoiceDiscoveryCoordinator.CreateCachedVoiceInfo(model);
                 if (!_updateSettingsAndSave(settings => IsCurrentDisplayPreviewOperation(operationId, target)
+                    && string.Equals(settings.ApiKey, apiKey, StringComparison.Ordinal)
                     && TryApplyRefreshedCachedVoice(settings, target.VoiceId, cached))) return null;
                 if (!IsCurrentDisplayPreviewOperation(operationId, target)) return null;
                 _applyCachedVoice(cached);

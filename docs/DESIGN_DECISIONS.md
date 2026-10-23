@@ -18,7 +18,7 @@ Moved to [historical DD-003](adr/history/DD-003.md).
 
 ## DD-004: Voice search and voice-by-ID use dummy API Key when user key is invalid
 
-Moved to [current DD-004](adr/current/DD-004.md).
+Moved to [historical DD-004](adr/history/DD-004.md); superseded by [DD-062](adr/current/DD-062.md).
 
 ## DD-005: Auto-save on property change
 
@@ -239,3 +239,7 @@ Moved to [current DD-058](adr/current/DD-058.md).
 ## DD-059: Validate complete input drafts before accepting edits
 
 Moved to [current DD-059](adr/current/DD-059.md).
+
+## DD-062: Prefer configured credentials for voice metadata requests
+
+See [current DD-062](adr/current/DD-062.md).

@@ -27,7 +27,7 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-001 | [Silent credit refresh on startup](history/DD-001.md) | History |
 | DD-002 | [API Key format validation before API call](history/DD-002.md) | History |
 | DD-003 | [API Key persistence — confirm-button-only](history/DD-003.md) | History |
-| DD-004 | [Voice search and voice-by-ID use dummy API Key when user key is invalid](current/DD-004.md) | Current |
+| DD-004 | [Voice search and voice-by-ID use dummy API Key when user key is invalid](history/DD-004.md) | Superseded by DD-062 |
 | DD-005 | [Auto-save on property change](current/DD-005.md) | Current |
 | DD-006 | [Latency text is shown temporarily after manual refresh](current/DD-006.md) | Current |
 | DD-007 | [Config migration for renamed fields](history/DD-007.md) | History |
@@ -85,3 +85,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-059 | [Validate complete input drafts before accepting edits](current/DD-059.md) | Current |
 | DD-060 | [Center voice action glyph outlines rather than font line boxes](current/DD-060.md) | Current |
 | DD-061 | [Keep four device buffers without increasing each refill block](current/DD-061.md) | Current |
+| DD-062 | [Prefer configured credentials for voice metadata requests](current/DD-062.md) | Current |

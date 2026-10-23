@@ -8,6 +8,8 @@ namespace STranslate.Plugin.Tts.FishAudio.FishAudio;
 
 internal static class FishAudioApi
 {
+    internal static string MetadataApiKey(string? apiKey) => string.IsNullOrWhiteSpace(apiKey) ? "dummy" : apiKey;
+
     private const string ApiBase = "https://api.fish.audio";
     private const string CdnBase = "https://public-platform.r2.fish.audio/";
     private static readonly TimeSpan TtsTimeout = TimeSpan.FromSeconds(60);

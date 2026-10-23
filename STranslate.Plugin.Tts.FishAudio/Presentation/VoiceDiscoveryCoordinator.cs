@@ -8,7 +8,7 @@ namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
 internal sealed class VoiceDiscoveryCoordinator : IDisposable
 {
-    private const string SearchApiToken = "dummy";
+    private readonly Func<string> _getApiKey;
     private const int SearchPageSize = 6;
 
     private readonly IPluginContext _context;
@@ -58,9 +58,10 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         Action<bool> setSubmittingVoiceId,
         Func<bool> isFacadeDisposed,
         Action<VoiceSearchItem?>? setByIdResult = null,
-        VoiceMetadataCache? metadataCache = null)
+        VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null)
     {
         _context = context;
+        _getApiKey = getApiKey ?? (() => "");
         _metadataCache = metadataCache ?? new VoiceMetadataCache();
         _getSearchQuery = getSearchQuery;
         _getPageInput = getPageInput;
@@ -148,18 +149,20 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             return;
         }
 
+        var apiKey = _getApiKey();
+        var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
         var operationId = BeginVoiceIdOperation(out var cts);
         _setSubmittingVoiceId(true);
         _setVoiceIdError(null);
 
         try
         {
-            if (_metadataCache.TryGet(voiceId, out var cachedMetadata))
+            if (_metadataCache.TryGet(voiceId, out var cachedMetadata, credentialScope))
             {
                 _setByIdResult(MapMetadata(cachedMetadata));
                 return;
             }
-            var model = await FishAudioApi.GetModelAsync(_context, SearchApiToken, voiceId, cts.Token);
+            var model = await FishAudioApi.GetModelAsync(_context, FishAudioApi.MetadataApiKey(apiKey), voiceId, cts.Token);
 
             if (!IsCurrentVoiceIdOperation(operationId))
                 return;
@@ -170,7 +173,9 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
                 return;
             }
 
-            var result = MapSearchResult(model, voiceId);
+            var result = MapSearchResult(model, credentialScope, voiceId);
+            if (!IsCurrentVoiceIdOperation(operationId))
+                return;
             _setByIdResult(result);
             _setVoiceIdError(null);
         }
@@ -213,12 +218,14 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     private async Task ExecuteSearchAsync(int requestedPage, string query, bool resetOnEmptyResponse = false)
     {
+        var apiKey = _getApiKey();
+        var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
         var operationId = BeginSearchOperation(out var cts);
         _setSearching(true);
         try
         {
             var response = await FishAudioApi.SearchModelsAsync(
-                _context, SearchApiToken, query, SearchPageSize, requestedPage, cts.Token);
+                _context, FishAudioApi.MetadataApiKey(apiKey), query, SearchPageSize, requestedPage, cts.Token);
 
             if (!IsCurrentSearchOperation(operationId))
                 return;
@@ -245,7 +252,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             _setHasSearched(true);
             if (!IsCurrentSearchOperation(operationId))
                 return;
-            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(model => MapSearchResult(model)).ToList();
+            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(model => MapSearchResult(model, credentialScope)).ToList();
             if (!IsCurrentSearchOperation(operationId))
                 return;
             _setSearchResults(results);
@@ -271,10 +278,10 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private static bool IsSelectableVoice(ModelEntity model) =>
         string.IsNullOrWhiteSpace(model.Type) || string.Equals(model.Type, "tts", StringComparison.OrdinalIgnoreCase);
 
-    private VoiceSearchItem MapSearchResult(ModelEntity model, string? voiceId = null)
+    private VoiceSearchItem MapSearchResult(ModelEntity model, string credentialScope, string? voiceId = null)
     {
         var metadata = VoiceMetadata.FromModel(model, voiceId);
-        _metadataCache.Put(metadata);
+        _metadataCache.Put(metadata, credentialScope);
         return MapMetadata(metadata);
     }
 
@@ -334,6 +341,21 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     {
         if (ReferenceEquals(_voiceIdCancellationTokenSource, cts))
             _voiceIdCancellationTokenSource = null;
+    }
+
+    internal void InvalidateCredentials()
+    {
+        Interlocked.Increment(ref _searchOperationId);
+        var cancellation = _searchCancellationTokenSource;
+        _searchCancellationTokenSource = null;
+        cancellation?.Cancel();
+        _setSearching(false);
+        InvalidateVoiceIdInput();
+        _setSearchResults([]);
+        _setHasSearched(false);
+        _pagination = VoiceSearchPagination.Initial;
+        _setSearchPagination(_pagination);
+        _setPageInput("1");
     }
 
     internal void InvalidateOperations()

@@ -154,6 +154,7 @@ internal static class CoverImageCacheSuite
         {
             var settings = new Settings
             {
+                ApiKey = "configured-cover-key",
                 VoiceId = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 CachedVoice = new CachedVoiceInfo { Title = "Streamed", CoverImage = "coverimage/streamed" },
             };
@@ -176,6 +177,7 @@ internal static class CoverImageCacheSuite
             AssertEqual(1, http.GetAsStreamCallCount, "Cover image cache should download through GetAsStreamAsync");
             AssertEqual(0, http.GetAsBytesCallCount, "Cover image cache should not buffer downloads through GetAsBytesAsync");
             AssertEqual(TimeSpan.FromSeconds(10), http.LastGetStreamOptions?.Timeout, "Cover image stream request should set a 10 second timeout");
+            AssertEqual(true, http.LastGetStreamOptions?.Headers is null || !http.LastGetStreamOptions.Headers.ContainsKey("Authorization"), "Cover downloads must not forward configured or dummy authorization");
             AssertEqual(false, File.Exists(cachedFile), "Oversized streamed cover image should not write a cache file");
             AssertEqual(
                 CoverImageCacheService.MaxCachedImageBytes + 1,
