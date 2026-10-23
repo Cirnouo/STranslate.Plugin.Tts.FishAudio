@@ -219,14 +219,19 @@ internal static class RepositoryContractSuite
             "Build script should not expose the removed -Configuration parameter");
 
         var workflow = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "dotnet.yml")));
+        var validationWorkflow = File.ReadAllText(FindRepoFile(Path.Combine(".github", "workflows", "validation.yml")));
         const string recommendedCommand = @".\build.ps1 -Release -Clean -Test";
         AssertEqual(
             true,
-            workflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),
-            "Release workflow should use the recommended -Release build command");
+            workflow.Contains("uses: ./.github/workflows/validation.yml", StringComparison.Ordinal),
+            "Release workflow should call the complete shared validation before publication");
+        AssertEqual(
+            true,
+            validationWorkflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),
+            "Shared release validation should use the recommended -Release build command");
         AssertEqual(
             false,
-            workflow.Contains("-Configuration", StringComparison.Ordinal),
+            (workflow + validationWorkflow).Contains("-Configuration", StringComparison.Ordinal),
             "Release workflow should not use the removed -Configuration parameter");
 
         foreach (var relativePath in new[]

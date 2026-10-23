@@ -12,7 +12,7 @@ Use these terms consistently in code reviews, specifications, API references and
 | Favorite voice | A locally bookmarked Voice ID persisted independently of settings metadata. | Display metadata comes from the same in-memory cache used by search; bookmarking does not select the voice, store audio bytes or modify a provider account. |
 | Voice sample / preview | Provider-supplied sample audio played while browsing voices. | Preview playback does not synthesize the user's text. |
 | Random/default voice | The provider's voice choice when the plugin omits `reference_id`. | Omission is not evidence of free synthesis or stable identity across requests. |
-| API Key | A credential used for authenticated synthesis and credit operations. | Local shape validation is not authentication or entitlement verification. |
+| API Key | A credential used for synthesis, credit and configured account-aware metadata operations. | Keyless voice metadata uses dummy; public sample/cover resources receive no key. Local shape validation is not authentication or entitlement verification. |
 | Credit | The account balance returned by the provider's wallet API. | A delayed or unchanged balance does not prove a synthesis was free. |
 | Synthesis request | One provider operation that turns text into audio. | Transport retries and replacement requests can create additional operations and cost. |
 | Synthesis session | One logical streaming synthesis operation with its own protocol lifetime. | The current ordinary native WebSocket session is single-use; provider finish is separate from device drain. |
@@ -40,5 +40,10 @@ Use these terms consistently in code reviews, specifications, API references and
 | Inline numeric editor | A numeric text label that temporarily becomes an input within the same bounds. | Its draft is separate from the committed setting, and its decimal precision is independent of a slider's interaction step. |
 | Current ADR | A decision with an active implementation or maintenance constraint, possibly amended by another record. | Classification is based on supersession, not date. |
 | Historical ADR | A replaced design retained to explain why behavior changed. | Its recorded rationale is not a current implementation requirement. |
+| Published stable release | A nondraft, nonprerelease GitHub Release that has actually been published. | A local tag, dated changelog section or prepared package does not establish publication. |
+| Net change | The final meaningful difference from the latest published stable release. | Intermediate repairs to an unreleased feature are development history, not separate baseline defects. |
+| Release tag | The annotated `v<version>` identity for an authorized installable publication. | Source/package manifest version, original tag object and peeled commit are distinct identities that must agree. |
+| Draft release | An unpublished GitHub Release used to stage and verify notes and package assets. | Draft creation/upload success is not successful publication. |
+| Publication | The transition of a validated draft to a published release. | Enabling a workflow, merging main or uploading an artifact does not authorize this transition. |
 
 The [current specifications](specs/README.md) define the implemented streaming and preview contracts. Provider capabilities, probe observations, software milestones and physical audio measurements remain separate evidence classes.
