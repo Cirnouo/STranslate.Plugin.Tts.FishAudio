@@ -2,6 +2,14 @@ namespace STranslate.Plugin.Tts.FishAudio.Configuration;
 
 public sealed class CachedVoiceInfo
 {
+    private IReadOnlyList<string> _languages = Array.Empty<string>();
+
+    public IReadOnlyList<string> Languages
+    {
+        get => _languages;
+        set => _languages = VoiceLanguageMetadata.Normalize(value);
+    }
+
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
     public string CoverImage { get; set; } = "";

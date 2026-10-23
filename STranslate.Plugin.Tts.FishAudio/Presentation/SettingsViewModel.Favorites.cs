@@ -280,6 +280,7 @@ public partial class SettingsViewModel
         card.Description = "";
         card.AuthorName = "";
         card.TaskCount = 0;
+        card.Languages = [];
         card.SampleAudioUrl = null;
         card.CoverImage = "";
         card.CoverUrl = "";
@@ -318,6 +319,7 @@ public partial class SettingsViewModel
         card.Description = metadata.Description;
         card.AuthorName = metadata.AuthorName;
         card.TaskCount = metadata.TaskCount;
+        card.Languages = metadata.Languages;
         card.SampleAudioUrl = metadata.SampleAudioUrl;
         card.CoverImage = metadata.CoverImage;
         card.HasMetadata = true;

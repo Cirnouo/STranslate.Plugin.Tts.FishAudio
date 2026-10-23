@@ -122,6 +122,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             CoverImage = item.CoverImage,
             AuthorName = item.AuthorName,
             TaskCount = item.TaskCount,
+            Languages = item.Languages,
             SampleAudioUrl = item.SampleAudioUrl,
         };
         if (!_persistSelectedVoice(item.Id, cached))
@@ -213,6 +214,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         CoverImage = model.CoverImage,
         AuthorName = model.Author?.Nickname ?? "",
         TaskCount = model.TaskCount,
+        Languages = model.Languages,
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
@@ -294,6 +296,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             Description = metadata.Description,
             AuthorName = metadata.AuthorName,
             TaskCount = metadata.TaskCount,
+            Languages = metadata.Languages,
             SampleAudioUrl = metadata.SampleAudioUrl,
             CoverImage = metadata.CoverImage,
         };

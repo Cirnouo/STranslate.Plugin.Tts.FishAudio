@@ -34,6 +34,7 @@ internal static class SettingsMigrator
         "AuthorName",
         "TaskCount",
         "SampleAudioUrl",
+        "Languages",
     ];
 
     internal static Settings Read(JsonElement root)
@@ -218,7 +219,29 @@ internal static class SettingsMigrator
         ReadString(properties, "AuthorName", value => cached.AuthorName = value, settings);
         ReadInt32(properties, "TaskCount", value => cached.TaskCount = value, settings);
         ReadNullableString(properties, "SampleAudioUrl", value => cached.SampleAudioUrl = value, settings);
+        if (ReadCandidate(properties, "Languages", TryReadLanguages, out IReadOnlyList<string> languages, settings) == CandidateState.Valid)
+        {
+            cached.Languages = languages;
+            var original = properties["Languages"][0];
+            settings.NeedsCanonicalSave |= original.ValueKind != JsonValueKind.Array
+                || !original.EnumerateArray().All(item => item.ValueKind == JsonValueKind.String)
+                || !original.EnumerateArray().Select(item => item.GetString()).SequenceEqual(cached.Languages);
+        }
         return cached;
+    }
+
+    private static bool TryReadLanguages(JsonElement element, out IReadOnlyList<string> languages)
+    {
+        languages = Array.Empty<string>();
+        if (element.ValueKind == JsonValueKind.Null)
+            return true;
+        if (element.ValueKind != JsonValueKind.Array)
+            return false;
+
+        languages = VoiceLanguageMetadata.Normalize(element.EnumerateArray()
+            .Where(item => item.ValueKind == JsonValueKind.String)
+            .Select(item => item.GetString()));
+        return true;
     }
 
     private static void ReadString(

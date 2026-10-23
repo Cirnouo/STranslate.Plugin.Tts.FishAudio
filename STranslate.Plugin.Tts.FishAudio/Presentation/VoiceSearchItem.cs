@@ -1,9 +1,18 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 
 namespace STranslate.Plugin.Tts.FishAudio.ViewModel;
 
 public partial class VoiceSearchItem : ObservableObject
 {
+    private IReadOnlyList<string> _languages = Array.Empty<string>();
+
+    public IReadOnlyList<string> Languages
+    {
+        get => _languages;
+        set => SetProperty(ref _languages, VoiceLanguageMetadata.Normalize(value));
+    }
+
     public string Id { get; set; } = "";
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }

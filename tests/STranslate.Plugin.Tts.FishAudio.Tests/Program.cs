@@ -1,3 +1,10 @@
+if (args.Contains("--voice-language-tests"))
+{
+    await VoiceLanguageSuite.RunAllAsync();
+    Console.WriteLine("Voice language metadata tests passed.");
+    return;
+}
+
 if (args.Contains("--ui-locale-contract-tests"))
 {
     RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
@@ -375,4 +382,5 @@ await VoiceCardInkSuite.RunAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
+await VoiceLanguageSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
