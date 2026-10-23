@@ -16,6 +16,56 @@ using static TestAssertions;
 
 internal static class RepositoryContractSuite
 {
+    internal static void UiLocalesHaveCompleteResourcesAndMetadata()
+    {
+        const string prefix = "STranslate_Plugin_Tts_FishAudio_";
+        var keyName = System.Xml.Linq.XName.Get("Key", "http://schemas.microsoft.com/winfx/2006/xaml");
+        Dictionary<string, string> Load(string locale)
+        {
+            var root = System.Xml.Linq.XDocument.Load(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml")).Root!;
+            var entries = root.Elements().ToArray();
+            AssertEqual(105, entries.Length, $"{locale} must have all 105 own resources without fallback");
+            AssertEqual(true, entries.All(entry => entry.Name.LocalName == "String"
+                && ((string?)entry.Attribute(keyName))?.StartsWith(prefix, StringComparison.Ordinal) == true
+                && !string.IsNullOrWhiteSpace(entry.Value)), $"{locale} must have nonempty keyed string resources");
+            AssertEqual(entries.Length, entries.Select(entry => (string)entry.Attribute(keyName)!).Distinct(StringComparer.Ordinal).Count(),
+                $"{locale} must not have duplicate resource keys");
+            return entries.ToDictionary(entry => (string)entry.Attribute(keyName)!, entry => entry.Value, StringComparer.Ordinal);
+        }
+
+        var english = Load("en");
+        string[] protectedTokens = ["S2-Pro", "s2.1-pro-free", "s2.1-pro", "S2", "Fish Audio", "API", "ID", "MP3", "kbps", "dB", "80+", "300", "2026-11-30", "UTC"];
+        foreach (var locale in UiLocales.All)
+        {
+            var resources = Load(locale);
+            AssertEqual(true, english.Keys.Order(StringComparer.Ordinal).SequenceEqual(resources.Keys.Order(StringComparer.Ordinal)),
+                $"{locale} must define exactly the English key set");
+            using var metadata = JsonDocument.Parse(File.ReadAllText(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.json")));
+            var properties = metadata.RootElement.EnumerateObject().ToArray();
+            AssertEqual(true, properties.Select(property => property.Name).Order(StringComparer.Ordinal).SequenceEqual(new[] { "Description", "Name" }),
+                $"{locale} metadata must contain only one Name and Description");
+            AssertEqual(true, properties.All(property => property.Value.ValueKind == JsonValueKind.String
+                && !string.IsNullOrWhiteSpace(property.Value.GetString())), $"{locale} metadata must contain nonempty strings");
+            AssertEqual("Fish Audio TTS", metadata.RootElement.GetProperty("Name").GetString(), "The plugin brand must remain unchanged");
+            // The two added translations retain every source technical token and formatting boundary.
+            if (locale is not ("ru" or "tr"))
+                continue;
+            foreach (var (key, value) in resources)
+            {
+                var source = english[key];
+                foreach (var token in protectedTokens)
+                    AssertEqual(Regex.Matches(source, Regex.Escape(token)).Count, Regex.Matches(value, Regex.Escape(token)).Count,
+                        $"{locale}/{key} must preserve {token}");
+                const string formatting = @"\{\d+[^}]*\}|%[sdif]|https?://\S+|\r?\n";
+                AssertEqual(true, Regex.Matches(source, formatting).Select(match => match.Value)
+                    .SequenceEqual(Regex.Matches(value, formatting).Select(match => match.Value)),
+                    $"{locale}/{key} must preserve placeholders, URLs and newlines");
+                AssertEqual(Regex.Match(source, @"^\s*").Value, Regex.Match(value, @"^\s*").Value, $"{locale}/{key} leading boundary");
+                AssertEqual(Regex.Match(source, @"\s*$").Value, Regex.Match(value, @"\s*$").Value, $"{locale}/{key} trailing boundary");
+            }
+        }
+    }
+
     internal static void Release112MetadataIsComplete()
     {
         var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
@@ -160,7 +210,7 @@ internal static class RepositoryContractSuite
             "Historical DD-036 should retain its superseded free-model cutoff");
 
         string[]? expectedResourceKeys = null;
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",
@@ -291,11 +341,19 @@ internal static class RepositoryContractSuite
             AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the November 30 free-model deadline");
             var guidePath = Path.Combine("docs", "user-guide", Path.GetFileName(relativePath));
             var guide = File.ReadAllText(FindRepoFile(guidePath));
-            AssertEqual(true, guide.Contains(cutoffDate, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");
+            // Guides use readable local dates; overviews keep their ISO date.
+            var guideCutoff = Path.GetFileName(relativePath) switch
+            {
+                "README_EN.md" => "1 December 2026",
+                "README_JA.md" => "2026年12月1日",
+                "README_KO.md" => "2026년 12월 1일",
+                _ => cutoffDate,
+            };
+            AssertEqual(true, guide.Contains(guideCutoff, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");
             AssertEqual(false, readme.Contains(staleFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the August 31 free-model deadline");
         }
 
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",

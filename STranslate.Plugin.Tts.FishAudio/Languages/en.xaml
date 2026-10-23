@@ -77,7 +77,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">Clear cache</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">Cache cleanup timed out. Please try again later.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">Support</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio website</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Project source, issues and contributions</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">Context Conditioning</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio</sys:String>
@@ -120,4 +120,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Copy voice ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Voice ID copied</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Could not copy the voice ID. Please try again.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Unable to open the project repository. Check your default browser settings.</sys:String>
 </ResourceDictionary>

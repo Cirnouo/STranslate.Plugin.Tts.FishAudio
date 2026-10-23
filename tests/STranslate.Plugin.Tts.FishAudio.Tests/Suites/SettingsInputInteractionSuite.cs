@@ -26,28 +26,30 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero" or "hover")) throw new ArgumentException("Unknown settings input test group", nameof(group));
         if (group is null or "zero")
-            foreach (var culture in new[] { "en-US", "de-DE" })
+            foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
                 await RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture));
         if (group is null or "fold-focus")
             foreach (var dark in new[] { false, true })
                 await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark));
         if (group is "precision") SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity();
         if (group is null or "tabs")
-            foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+            foreach (var language in UiLocales.All)
                 foreach (var dark in new[] { false, true })
                     await RunOnStaThreadAsync(() => SelectedTabsKeepAccentThroughNativeStates(language, dark));
         if (group is null or "baseline") await RunOnStaThreadAsync(ByIdUsesUnchangedSearchTextGeometry);
+        if (group is null or "wheel" or "hover") await RunOnStaThreadAsync(NumericWheelRequiresContinuousHover);
+        if (group is null or "wheel" or "hover") await RunOnStaThreadAsync(NumericHoverRearmsWhenPointerRemainsOverTarget);
         if (group is null or "wheel") await RunOnStaThreadAsync(RestingNumericWheelEditsWithoutScrolling);
         if (group is null or "wheel") await RunOnStaThreadAsync(SliderWheelEditsWithoutScrolling);
         if (group is null or "wheel" or "tooltip")
-            foreach (var culture in new[] { "en-US", "de-DE" })
+            foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
                 await RunOnStaThreadAsync(() => SliderWheelUsesNativeValueToolTipAsync(culture));
         if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
         if (group is null or "copy")
-            foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+            foreach (var language in UiLocales.All)
                 await RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language));
     }
 
@@ -70,7 +72,7 @@ internal static class SettingsInputInteractionSuite
             var editor = Logical(view).OfType<InlineNumericEditor>().Single(item => BindingOperations.GetBinding(item, InlineNumericEditor.ValueProperty)?.Path.Path == "Volume");
             var display = (Button)editor.FindName("DisplayButton");
             var input = (TextBox)editor.FindName("EditorBox");
-            var expected = culture == "de-DE" ? "0,00" : "0.00";
+            var expected = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "0,00" : "0.00";
             var failures = new List<string>();
             AssertEqual(.3, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "Temperature").Value, "Precision initialization must preserve a valid fractional bound value");
             AssertEqual(.05, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "TopP").Value, "Zero canonicalization must preserve the positive TopP floor during construction");
@@ -115,7 +117,7 @@ internal static class SettingsInputInteractionSuite
                 track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
                 slider.SetCurrentValue(Slider.ValueProperty, initial);
                 display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                input.Text = culture == "de-DE" ? "-0,00" : "-0.00";
+                input.Text = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,00" : "-0.00";
                 editor.CommitEdit();
                 CheckZero($"{width}/direct entry from {initial}");
             }
@@ -171,7 +173,7 @@ internal static class SettingsInputInteractionSuite
             AssertEqual(zeroSaves, storage.SaveCount, "Canonicalizing an already-zero value must not introduce a redundant save");
             vm.Volume = -.005;
             AssertEqual(-.005, vm.Volume, "The negative rounding midpoint must not be classified as zero");
-            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "The existing midpoint-away-from-zero display rule must remain intact");
+            AssertEqual(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,01" : "-0.01", display.Content, "The existing midpoint-away-from-zero display rule must remain intact");
             vm.Volume = 0d;
             slider.Minimum = .05;
             AssertEqual(.05, slider.Value, "Derived value coercion must retain native dynamic minimum clamping");
@@ -186,7 +188,7 @@ internal static class SettingsInputInteractionSuite
             var negativeTrack = (Track)slider.Template.FindName("PART_Track", slider);
             Wheel(negativeTrack.Thumb, 120);
             AssertEqual(-.01, slider.Value, "A real negative hundredth must remain negative");
-            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "Canonical zero must not erase real negative values");
+            AssertEqual(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,01" : "-0.01", display.Content, "Canonical zero must not erase real negative values");
             AssertEqual(display.Content, ((ToolTip)negativeTrack.Thumb.ToolTip).Content, "Native bubble and label must retain matching negative hundredths");
             slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
             AssertEqual("", string.Join(Environment.NewLine, failures), "All zero-producing routes must publish positive zero with identical text");
@@ -364,6 +366,173 @@ internal static class SettingsInputInteractionSuite
             Near(searchPlaceholder.Padding.Top, idPlaceholder.Padding.Top, "Placeholder top placement must match the unchanged Search field");
             Near(searchPlaceholder.Padding.Bottom, idPlaceholder.Padding.Bottom, "Placeholder bottom placement must match the unchanged Search field");
         }
+    }
+
+    // Removing dwell gating, swallowing early events, or retaining an old
+    // target's partial notch each breaks these real compiled routed controls.
+    private static void NumericWheelRequiresContinuousHover()
+    {
+        var settings = new Settings { SelectedModel = "s2-pro" };
+        var context = CreateContext(settings: settings);
+        var storage = (ContextProxy)(object)context;
+        using var vm = new SettingsViewModel(context, settings);
+        var view = CreateView(vm);
+        Layout(view, 600);
+        var page = new ScrollViewer { Content = view, Height = 180, CanContentScroll = false };
+        page.Measure(new Size(600, 180)); page.Arrange(new Rect(0, 0, 600, 180)); page.UpdateLayout();
+        foreach (var editor in Logical(view).OfType<InlineNumericEditor>())
+        {
+            var property = BindingOperations.GetBinding(editor, InlineNumericEditor.ValueProperty)!.Path.Path;
+            var slider = Logical(view).OfType<NumericSlider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == property);
+            var display = (Button)editor.FindName("DisplayButton");
+            var input = (TextBox)editor.FindName("EditorBox");
+            var track = (Track)slider.Template.FindName("PART_Track", slider);
+            foreach (var target in new UIElement[] { slider, display })
+            {
+                var clock = HoverClockFor(target);
+                LeaveHover(target);
+                var initial = slider.Value;
+                var saves = storage.SaveCount;
+                page.ScrollToTop(); page.UpdateLayout();
+                RawWheel(target, -120); page.UpdateLayout();
+                AssertEqual(initial, slider.Value, "Before entering, wheel must not change the setting");
+                AssertEqual(saves, storage.SaveCount, "Before entering, wheel must not save");
+                AssertEqual(true, page.VerticalOffset > 0, "Before activation, the real ScrollViewer must move normally");
+                target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
+                clock.Advance(249);
+                page.ScrollToTop(); page.UpdateLayout();
+                RawWheel(target, -60); page.UpdateLayout();
+                AssertEqual(initial, slider.Value, "At 249 ms, wheel must not change the value");
+                AssertEqual(true, page.VerticalOffset > 0, "At 249 ms ordinary scrolling remains available");
+                AssertEqual(false, track.Thumb.ToolTip is ToolTip { IsOpen: true }, "Unqualified input must not show a bubble");
+                clock.Advance(1);
+                var qualified = RawWheel(target, 60);
+                AssertEqual(true, qualified.Handled, "At exactly 250 ms, the target owns the routed event");
+                AssertEqual(initial, slider.Value, "An early half notch must not leak into the first qualified half notch");
+                AssertEqual(saves, storage.SaveCount, "A first qualified half notch must not save");
+                RawWheel(target, 60);
+                AssertEqual(Math.Round(initial + .01, 2), Math.Round(slider.Value, 2), "Qualified half notches apply exactly one hundredth");
+                AssertEqual(saves + 1, storage.SaveCount, "A qualified effective change saves exactly once");
+                if (target == slider) AssertEqual(true, track.Thumb.ToolTip is ToolTip { IsOpen: true }, "Qualified slider input uses the native value bubble");
+                slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
+                saves = storage.SaveCount;
+                AssertEqual(true, RawWheel(target, 120).Handled, "A qualified bound still consumes the gesture");
+                AssertEqual(saves, storage.SaveCount, "A bound does not save redundantly");
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                RawWheel(target, 60);
+                LeaveHover(target);
+                target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
+                clock.Advance(249);
+                RawWheel(target, 60);
+                AssertEqual(initial, slider.Value, "Reentering requires a fresh continuous dwell");
+                clock.Advance(1);
+                RawWheel(target, 60);
+                AssertEqual(initial, slider.Value, "Leave/reenter discards the old partial notch");
+                LeaveHover(target);
+                // A template or unload invalidates both elapsed time and remainder.
+                foreach (var reset in new Action[] {
+                    () => target.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent)),
+                    () => { if (target == slider) slider.OnApplyTemplate(); else editor.OnApplyTemplate(); },
+                })
+                {
+                    EstablishHover(target);
+                    RawWheel(target, 60);
+                    reset();
+                    RawWheel(target, 60);
+                    AssertEqual(initial, slider.Value, "Lifecycle reset must discard dwell and fine-wheel remainder");
+                    EstablishHover(target);
+                    RawWheel(target, 60);
+                    AssertEqual(initial, slider.Value, "The first qualified half notch after lifecycle reset remains incomplete");
+                    LeaveHover(target);
+                }
+            }
+            EstablishHover(display);
+            RawWheel(display, 60);
+            display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            editor.CommitEdit();
+            var editingValue = slider.Value;
+            RawWheel(display, 60);
+            AssertEqual(editingValue, slider.Value, "Entering editing retires numeric-label dwell and remainder");
+            EstablishHover(display);
+            RawWheel(display, 60);
+            AssertEqual(editingValue, slider.Value, "Editing reset prevents old half notches from leaking");
+            LeaveHover(display);
+            // Moving between descendants stays inside one slider hover; moving
+            // between the slider and its label starts an independent dwell.
+            EstablishHover(slider);
+            RawWheel(track.Thumb, 60);
+            RawWheel(track.IncreaseRepeatButton, 60);
+            AssertEqual(Math.Round(editingValue + .01, 2), slider.Value, "Thumb and track descendants share one uninterrupted slider hover");
+            LeaveHover(slider);
+            display.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
+            var transferredValue = slider.Value;
+            RawWheel(display, 120);
+            AssertEqual(transferredValue, slider.Value, "Slider dwell cannot authorize a newly entered numeric label");
+            LeaveHover(display);
+            EstablishHover(display);
+            RawWheel(display, 60);
+            LeaveHover(display);
+            slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
+            RawWheel(slider, 60);
+            AssertEqual(transferredValue, slider.Value, "Label dwell and its half notch cannot authorize a newly entered slider");
+            HoverClockFor(slider).Advance(250);
+            RawWheel(slider, 60);
+            AssertEqual(transferredValue, slider.Value, "The first qualified slider half notch must remain independent of the label");
+            LeaveHover(slider);
+        }
+    }
+
+    private static void NumericHoverRearmsWhenPointerRemainsOverTarget()
+    {
+        var settings = new Settings { SelectedModel = "s2-pro", Speed = 1 };
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = CreateView(vm);
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio hover lifecycle theme-state fixture") { Width = 600, Height = 800, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        source.RootVisual = view;
+        Layout(view, 600);
+        var slider = Logical(view).OfType<NumericSlider>().First();
+        var editor = Logical(view).OfType<InlineNumericEditor>().First();
+        var display = (Button)editor.FindName("DisplayButton");
+        // This is an explicit WPF state fixture, not physical pointer evidence.
+        // Hold the real read-only mouse-over property true across lifecycle
+        // callbacks; do not raise MouseEnter to reauthorize after the reset.
+        foreach (var target in new UIElement[] { slider, display })
+        {
+            var clock = HoverClockFor(target);
+            SetMouseOverCache(target, true);
+            var resets = new List<Action> {
+                () => { if (target == slider) slider.OnApplyTemplate(); else { var template = display.Template; display.Template = null; display.Template = template; } },
+                () => { target.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent)); target.RaiseEvent(new RoutedEventArgs(FrameworkElement.LoadedEvent)); },
+            };
+            if (target == display) resets.Add(() => { display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); editor.CommitEdit(); });
+            for (var resetIndex = 0; resetIndex < resets.Count; resetIndex++)
+            {
+                slider.SetCurrentValue(Slider.ValueProperty, 1d);
+                resets[resetIndex]();
+                Console.WriteLine($"[numeric-hover] {target.GetType().Name}/reset-{resetIndex}: mouseOver={target.IsMouseOver}, visible={target.IsVisible}.");
+                AssertEqual(1d, slider.Value, "Lifecycle rearming itself must not change the setting");
+                clock.Advance(249);
+                AssertEqual(false, RawWheel(target, 60).Handled, "A retained pointer must still wait a fresh 250ms after lifecycle reset");
+                clock.Advance(1);
+                AssertEqual(true, RawWheel(target, 60).Handled, "A retained pointer must rearm without a new MouseEnter");
+                AssertEqual(1d, slider.Value, "The early half notch cannot enter the fresh remainder");
+                RawWheel(target, 60);
+                AssertEqual(1.01, slider.Value, "A rearmed target must preserve ordinary fine wheel adjustment");
+            }
+            SetMouseOverCache(target, false);
+            LeaveHover(target);
+        }
+    }
+
+    private static void SetMouseOverCache(UIElement target, bool value)
+    {
+        // IsMouseOver reads WPF's cached CoreFlags bit, rather than the public
+        // dependency-property value. Model that retained native state without
+        // moving the user's pointer or manufacturing a new MouseEnter.
+        var writeFlag = typeof(UIElement).GetMethod("WriteFlag", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var mouseOver = Enum.Parse(writeFlag.GetParameters()[0].ParameterType, "IsMouseOverCache");
+        writeFlag.Invoke(target, [mouseOver, value]);
+        AssertEqual(value, target.IsMouseOver, "The explicit retained-pointer fixture must set the actual WPF mouse-over cache");
     }
 
     private static void RestingNumericWheelEditsWithoutScrolling()
@@ -865,7 +1034,7 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(null, vm.PreparingPreviewVoiceId, "Copying titles must not start preview preparation");
         AssertEqual(0, http.GetCallCount + http.GetAsStreamCallCount + http.PostAsBytesCallCount, "Copying any title must not call Fish Audio");
         foreach (var suffix in new[] { "", "_Success", "_Failed" })
-            AssertNotNull(view.TryFindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId" + suffix), "Every copy action and snackbar string must exist in all five locales");
+            AssertNotNull(view.TryFindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId" + suffix), "Every copy action and snackbar string must exist in all seven UI locales");
     }
 
     private static bool HasButtonAncestor(DependencyObject child)
@@ -875,7 +1044,46 @@ internal static class SettingsInputInteractionSuite
         return false;
     }
 
+    private sealed class HoverClock : TimeProvider
+    {
+        private long _milliseconds;
+        public override long TimestampFrequency => 1000;
+        public override long GetTimestamp() => _milliseconds;
+        internal void Advance(long milliseconds) => _milliseconds += milliseconds;
+    }
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<UIElement, HoverClock> HoverClocks = new();
+    private static UIElement HoverTarget(UIElement target)
+    {
+        for (DependencyObject? current = target; current is not null; current = VisualTreeHelper.GetParent(current))
+        {
+            if (current is NumericSlider slider) return slider;
+            if (current is Button { Name: "DisplayButton" } button) return button;
+        }
+        return target;
+    }
+    private static HoverClock HoverClockFor(UIElement target) => HoverClocks.GetValue(target, owner =>
+    {
+        var clock = new HoverClock();
+        if (owner is NumericSlider slider) slider.WheelTimeProvider = clock;
+        else if (owner is Button button)
+            for (DependencyObject? current = button; current is not null; current = VisualTreeHelper.GetParent(current))
+                if (current is InlineNumericEditor editor) { editor.WheelTimeProvider = clock; break; }
+        return clock;
+    });
+    private static void EstablishHover(UIElement target)
+    {
+        target = HoverTarget(target);
+        var clock = HoverClockFor(target);
+        target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
+        clock.Advance(250);
+    }
+    private static void LeaveHover(UIElement target) => target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
     private static MouseWheelEventArgs Wheel(UIElement target, int delta)
+    {
+        EstablishHover(target);
+        return RawWheel(target, delta);
+    }
+    private static MouseWheelEventArgs RawWheel(UIElement target, int delta)
     {
         var args = new MouseWheelEventArgs(Mouse.PrimaryDevice, 0, delta) { RoutedEvent = Mouse.PreviewMouseWheelEvent };
         target.RaiseEvent(args);

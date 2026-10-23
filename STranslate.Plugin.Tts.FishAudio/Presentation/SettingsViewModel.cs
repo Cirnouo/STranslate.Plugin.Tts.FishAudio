@@ -614,6 +614,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         UpdatePreviewState();
     }
 
+    internal void ReportRepositoryLinkFailure()
+    {
+        if (!_isDisposed)
+            _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed"));
+    }
+
     private void HandlePreviewPlaybackFailed(Exception? exception)
     {
         if (_isDisposed)

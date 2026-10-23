@@ -1,3 +1,45 @@
+if (args.Contains("--ui-locale-contract-tests"))
+{
+    RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
+    RepositoryContractSuite.FreeModelDeadlineDocumentationIsConsistent();
+    PresentationContractSuite.TranslatedReadmesMatchCurrentSourceAndControlNames();
+    PresentationContractSuite.SettingsViewShowsPersistentCreditPlaceholder();
+    PresentationContractSuite.LanguageResourcesMatchApiKeyRollback();
+    PresentationContractSuite.PreviewFailureLanguageResourcesAreComplete();
+    PresentationContractSuite.LanguageResourcesDescribeContextConditioningConsistency();
+    StreamingSettingsSuite.StreamingSettingsUiResourcesAreComplete();
+    Console.WriteLine("Seven UI locale contracts passed.");
+    return;
+}
+
+if (args.Contains("--package-contract-tests"))
+{
+    BuildScriptSuite.PackageMissingRussianXamlFails();
+    BuildScriptSuite.PackageMissingTurkishMetadataFails();
+    BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
+    BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails();
+    BuildScriptSuite.PackageMissingOcticonsNoticeFails();
+    BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
+    Console.WriteLine("Package contract tests passed.");
+    return;
+}
+
+if (args.Contains("--activity-dispatcher-tests"))
+{
+    await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
+    await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
+    await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
+    Console.WriteLine("Activity dispatcher regression tests passed.");
+    return;
+}
+
+if (args.Contains("--repository-link-tests"))
+{
+    await ProjectRepositoryLinkSuite.RunAllAsync();
+    Console.WriteLine("Project repository link tests passed.");
+    return;
+}
+
 if (args.Contains("--credential-display-tests"))
 {
     await CredentialDisplayPreservationSuite.AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync();
@@ -108,15 +150,19 @@ ApiKeyCompatibilitySuite.ApiKeyFormatAcceptsLegacyAndPrefixedKeys();
 ApiKeyCompatibilitySuite.ApiKeyFormatRejectsMalformedKeys();
 ApiKeyCompatibilitySuite.VoiceIdFormatRemainsLegacyOnly();
 await ApiKeyCompatibilitySuite.RequestPathsPreservePreflightAndBearerAsync();
+RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
 RepositoryContractSuite.Release112MetadataIsComplete();
 RepositoryContractSuite.Release111MetadataIsComplete();
 RepositoryContractSuite.Release110MetadataIsComplete();
 RepositoryContractSuite.PackageReferenceUsesSdk1015();
 RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();
 RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
+BuildScriptSuite.PackageMissingRussianXamlFails();
+BuildScriptSuite.PackageMissingTurkishMetadataFails();
 BuildScriptSuite.ConfigurationParameterIsRejected();
 BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
 BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
+BuildScriptSuite.PackageMissingOcticonsNoticeFails();
 BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails();
 BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding();
 BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding();
@@ -148,6 +194,7 @@ OperationActivitySuite.OperationActivityCounterPublishesPendingStateBeforeRethro
 await OperationActivitySuite.OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync();
 OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangingReentrancy();
 await OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync();
+await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
 await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
 await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
 SettingsStorageSuite.ApiKeyEditingPersistsImmediately();
@@ -327,4 +374,5 @@ await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
+await ProjectRepositoryLinkSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

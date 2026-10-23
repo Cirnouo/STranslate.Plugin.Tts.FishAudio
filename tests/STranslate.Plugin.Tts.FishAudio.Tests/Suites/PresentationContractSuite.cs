@@ -86,7 +86,7 @@ internal static class PresentationContractSuite
         AssertEqual(true, xaml.Contains("Text=\"{Binding UserCredit}\"", StringComparison.Ordinal), "Loaded credit should keep displaying the balance binding");
         AssertEqual(true, xaml.Contains("Text=\" $\"", StringComparison.Ordinal), "Loaded credit should keep displaying the dollar symbol");
 
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var localeXaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",
@@ -130,7 +130,7 @@ internal static class PresentationContractSuite
 
     internal static void LanguageResourcesMatchApiKeyRollback()
     {
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",
@@ -157,7 +157,7 @@ internal static class PresentationContractSuite
             "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed",
         };
 
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Languages", $"{locale}.xaml")));
             foreach (var key in keys)
@@ -181,6 +181,8 @@ internal static class PresentationContractSuite
             ["en"] = "Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio",
             ["ja"] = "同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません",
             ["ko"] = "같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다",
+            ["ru"] = "Использует предыдущие фрагменты этого же синтеза для согласованности голоса; аудио, созданное ранее в других запросах, не используется",
+            ["tr"] = "Ses tutarlılığı için aynı sentezin önceki parçalarını kullanır; önceki isteklerde üretilen başka sesleri kullanmaz",
         };
 
         foreach (var (locale, expectedDescription) in expectedDescriptions)
@@ -199,15 +201,15 @@ internal static class PresentationContractSuite
 
     internal static void TranslatedReadmesMatchCurrentSourceAndControlNames()
     {
-        var expectedContextRows = new Dictionary<string, string>
+        var documentationLocales = new Dictionary<string, string>
         {
-            ["README_EN.md"] = "| Context Conditioning | On | Uses earlier chunks of this synthesis, not audio from previous requests. |",
-            ["README_TW.md"] = "| 上下文關聯 | 開啟 | 使用本次合成的前序片段，不引用以前產生的其他音訊。 |",
-            ["README_JA.md"] = "| コンテキスト連携 | オン | 今回の合成の前のチャンクを利用。過去の別音声は参照しません。 |",
-            ["README_KO.md"] = "| 컨텍스트 연동 | 켜짐 | 이번 합성의 앞선 조각을 사용하며 이전 요청의 다른 오디오는 참조하지 않음. |",
+            ["README_EN.md"] = "en",
+            ["README_TW.md"] = "zh-tw",
+            ["README_JA.md"] = "ja",
+            ["README_KO.md"] = "ko",
         };
 
-        foreach (var (fileName, expectedContextRow) in expectedContextRows)
+        foreach (var (fileName, locale) in documentationLocales)
         {
             var readme = File.ReadAllText(FindRepoFile(Path.Combine("docs", fileName)));
 
@@ -215,7 +217,13 @@ internal static class PresentationContractSuite
             AssertEqual(true, readme.Contains("> [!TIP]", StringComparison.Ordinal), $"{fileName} should use the source README tip callout");
             AssertEqual(false, readme.Contains("[!NOTE]", StringComparison.Ordinal), $"{fileName} should remove the random voice note from section 2.5");
             var guide = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", fileName)));
-            AssertEqual(true, guide.Contains(expectedContextRow, StringComparison.Ordinal), $"{fileName} user guide should match the updated context conditioning row");
+            var resources = System.Xml.Linq.XDocument.Load(FindRepoFile(Path.Combine(
+                "STranslate.Plugin.Tts.FishAudio", "Languages", $"{locale}.xaml")));
+            var keyAttribute = System.Xml.Linq.XName.Get("Key", "http://schemas.microsoft.com/winfx/2006/xaml");
+            var controlName = resources.Root!.Elements().Single(element =>
+                (string?)element.Attribute(keyAttribute) == "STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks").Value;
+            AssertEqual(true, guide.Contains(controlName, StringComparison.Ordinal),
+                $"{fileName} user guide should use the localized context conditioning control name");
         }
 
         var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", "README_KO.md")));

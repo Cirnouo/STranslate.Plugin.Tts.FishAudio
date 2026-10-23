@@ -77,7 +77,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">캐시 지우기</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">캐시 정리가 시간 초과되었습니다. 나중에 다시 시도해 주세요.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">지원</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 공식 웹사이트</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">프로젝트 소스 코드, 문제 제보 및 기여</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">컨텍스트 연동</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다</sys:String>
@@ -120,4 +120,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">음성 ID 복사</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">음성 ID를 복사했습니다</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">음성 ID를 복사하지 못했습니다. 다시 시도해 주세요.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">프로젝트 저장소를 열 수 없습니다. 기본 브라우저 설정을 확인해 주세요.</sys:String>
 </ResourceDictionary>

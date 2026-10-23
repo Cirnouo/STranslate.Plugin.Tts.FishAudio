@@ -10,6 +10,7 @@ namespace STranslate.Plugin.Tts.FishAudio.View;
 public sealed class NumericSlider : Slider
 {
     private readonly NumericWheelAdjustment _wheel = new();
+    internal TimeProvider WheelTimeProvider { set => _wheel.TimeProvider = value; }
     private readonly DispatcherTimer _wheelIdle;
     private Thumb? _wheelThumb;
     private Thumb? _draggingThumb;
@@ -39,12 +40,13 @@ public sealed class NumericSlider : Slider
         SetResourceReference(StyleProperty, typeof(Slider));
         _wheelIdle = new DispatcherTimer(DispatcherPriority.Background, Dispatcher) { Interval = TimeSpan.FromSeconds(1) };
         _wheelIdle.Tick += (_, _) => CloseWheelToolTip();
+        Loaded += (_, _) => _wheel.RestartHover(IsMouseOver && IsVisible);
         Unloaded += (_, _) => CloseToolTips();
     }
 
     protected override void OnPreviewMouseWheel(MouseWheelEventArgs args)
     {
-        if (args.Delta == 0) return;
+        if (args.Delta == 0 || !_wheel.IsHoverReady) return;
         args.Handled = true;
         SetCurrentValue(ValueProperty, _wheel.Adjust(Value, Minimum, Maximum, AutoToolTipPrecision, args.Delta));
         if (Template?.FindName("PART_Track", this) is not Track { Thumb: { } thumb }) return;
@@ -84,9 +86,15 @@ public sealed class NumericSlider : Slider
         _wheel.Reset();
     }
 
+    protected override void OnMouseEnter(MouseEventArgs args)
+    {
+        _wheel.BeginHover();
+        base.OnMouseEnter(args);
+    }
+
     protected override void OnMouseLeave(MouseEventArgs args)
     {
-        _wheel.Reset();
+        _wheel.EndHover();
         CloseWheelToolTip();
         base.OnMouseLeave(args);
     }
@@ -95,6 +103,7 @@ public sealed class NumericSlider : Slider
     {
         CloseToolTips();
         base.OnApplyTemplate();
+        _wheel.RestartHover(IsMouseOver && IsVisible);
     }
 
     private void CloseWheelToolTip()
@@ -113,6 +122,6 @@ public sealed class NumericSlider : Slider
             base.OnThumbDragCompleted(new DragCompletedEventArgs(0, 0, true) { Source = thumb });
         _draggingThumb = null;
         _originalThumbToolTip = null;
-        _wheel.Reset();
+        _wheel.EndHover();
     }
 }

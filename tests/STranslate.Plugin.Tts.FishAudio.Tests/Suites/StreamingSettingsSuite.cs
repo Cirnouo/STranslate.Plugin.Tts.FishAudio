@@ -182,7 +182,7 @@ internal static class StreamingSettingsSuite
         var view = File.ReadAllText(FindRepoFile("STranslate.Plugin.Tts.FishAudio/Presentation/View/SettingsView.xaml"));
         AssertEqual(true, view.Contains("SelectedItem=\"{Binding AudioFormat}\"", StringComparison.Ordinal), "Format selector binds persisted value");
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
-        foreach (var locale in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var document = XDocument.Load(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml"));
             foreach (var suffix in new[] { "Format_Description", "Streaming_Failed" })

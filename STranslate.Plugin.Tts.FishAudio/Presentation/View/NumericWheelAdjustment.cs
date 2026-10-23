@@ -6,6 +6,23 @@ namespace STranslate.Plugin.Tts.FishAudio.View;
 internal sealed class NumericWheelAdjustment
 {
     private int _remainder;
+    private long? _hoverStarted;
+    private TimeProvider _timeProvider = TimeProvider.System;
+
+    internal TimeProvider TimeProvider
+    {
+        set { _timeProvider = value; EndHover(); }
+    }
+
+    internal void BeginHover() => _hoverStarted ??= _timeProvider.GetTimestamp();
+    internal void EndHover() { _hoverStarted = null; Reset(); }
+    internal void RestartHover(bool isMouseOver)
+    {
+        EndHover();
+        if (isMouseOver) BeginHover();
+    }
+    internal bool IsHoverReady => _hoverStarted is { } started
+        && _timeProvider.GetElapsedTime(started) >= TimeSpan.FromMilliseconds(250);
 
     internal void Reset() => _remainder = 0;
 

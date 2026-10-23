@@ -42,6 +42,9 @@
             <SubType>Designer</SubType>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <Content Include="Assets\Licenses\Octicons.LICENSE.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="icon.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>

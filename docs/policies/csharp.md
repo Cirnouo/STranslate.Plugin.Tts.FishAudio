@@ -19,7 +19,7 @@ This policy applies to production code and regression tests. Preserve observable
 - Share ID-based favorite/selection state across cards while retaining originating card identity for asynchronous work. An equal ID does not authorize a removed object to publish or execute against its replacement. Publish visible state only after persistence succeeds.
 - Dispatch a versioned activity publisher as a unit rather than queueing a captured lock/unlock value. Re-read current desired state when queued work runs. Verify background completion and retirement with a real WPF command listener; property-only test doubles can miss dispatcher ownership failures.
 - Treat external bytes and JSON as untrusted input. Validate shape and size before expensive processing, preserve protocol order, and fail malformed/truncated data with a diagnostic that does not expose secrets.
-- Persistent UI text uses XAML `DynamicResource`. Transient errors may use translated strings at action time. Update all five existing locales when changing visible behavior.
+- Persistent UI text uses XAML `DynamicResource`. Transient errors may use translated strings at action time. Update all seven supported UI locales (en, zh-cn, zh-tw, ja, ko, ru and tr) when changing visible behavior.
 - Prefer behavior tests with fake transports, clocks, storage and audio devices. Avoid tests that duplicate implementation statements or grep source layout unless a real packaging or repository contract requires it.
 
 See [verification](verification.md), [API evidence](api-evidence.md) and the [architecture specification](../specs/architecture-and-lifecycle.md).

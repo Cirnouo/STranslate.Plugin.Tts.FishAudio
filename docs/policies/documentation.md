@@ -1,6 +1,6 @@
 # Documentation policy
 
-README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources remain localized in all five locales.
+README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources cover all seven host languages: Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Russian and Turkish. README and user-guide translations remain limited to the five documentation languages above.
 
 The table defines the current layout. The root README is Simplified Chinese; localized overviews remain at `docs/README_*.md`, with same-language detailed guides under `docs/user-guide/`. Overviews retain the project icon and badges; other documentation media belongs under `docs/assets/` when needed.
 
@@ -32,6 +32,16 @@ Maintain relative repository links and preserve existing inbound anchors when mo
 Do not create a second glossary or copy policy text into each specification. Link to the canonical document. Existing historical references to removed symbols or contributor files are provenance and must be labeled as such, not turned into requirements to restore those files.
 
 Published changelog sections describe the version that shipped. Follow the [release policy](releases.md#changelog-editing-workflow) before editing CHANGELOG: verify the latest published stable baseline, use canonical English category headings with Chinese prose, and record cumulative net changes rather than development iterations. Do not retroactively rewrite a published section to describe a later refactor. Historical release checks must not require Unreleased to remain empty. Verify the final documentation state after the last edit, including changelog updates, under the [verification policy](verification.md).
+
+## User guidance boundaries
+
+Organize guides around user tasks: first reading, choosing a voice, understanding model/cost choices, adjusting speech, selecting a format and recovering from failure. Lead with the next useful action, keep optional setup after the first successful path, and use short steps or compact comparison tables where they reduce reading effort. Keep the five versions aligned in tasks and consequences rather than forcing a line-for-line translation.
+
+Explain information the reader needs to act or decide: prerequisites, cost and cancellation limits, local-only favorites, meaningful defaults/ranges, non-obvious interactions and concrete recovery steps. A hidden interaction such as the wheel hover delay belongs in a short instruction. Intuitive icons do not need an inventory of glyph shapes, button borders or accessibility labels. Keys and Voice IDs normally come from copy/paste, so direct readers to the official source and explain recovery rather than teaching their character grammar.
+
+Do not turn a user guide into a UI state machine or developer contract. Keep rendering matrices, cache partitions/TTL, callback generations, schemas, transport fields, buffer sizes, test expectations and storage layouts in their canonical English specs, policies or references. Preserve useful user consequences without those implementation details. Troubleshooting states an action that helps the affected task and distinguishes different causes; it must not recommend deleting valid settings or favorites for temporary network problems. Scope free-only precautions to readers who require zero spending without implying that paid use is unavailable.
+
+Preserve existing inbound anchors, cost/network facts and the approved README layout when rewriting guidance. Render-check Markdown emphasis and tables in every language, including CJK punctuation boundaries, and verify links. A screenshot or fixture is not a reason to document all visible controls.
 
 ## Instruction progressive disclosure
 

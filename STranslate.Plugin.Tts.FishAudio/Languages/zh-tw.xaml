@@ -77,7 +77,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">清理快取</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">清理快取逾時，請稍後重試</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">支援</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 官網</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">專案原始碼、問題回報與貢獻</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">上下文關聯</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">使用同一次合成音訊的前序片段保持聲音一致性，不會使用先前產生的其他音訊</sys:String>
@@ -120,4 +120,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">複製聲音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">聲音 ID 已複製</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">無法複製聲音 ID，請重試。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">無法開啟專案儲存庫。請檢查預設瀏覽器設定。</sys:String>
 </ResourceDictionary>
