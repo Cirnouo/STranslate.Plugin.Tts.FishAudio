@@ -2,30 +2,131 @@ name: Validation
 
 on:
   pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
   push:
     branches: [main]
+  workflow_call:
+    outputs:
+      package-artifact:
+        description: Exact package artifact from the successful validation attempt
+        value: ${{ jobs.build-test-package.outputs.package-artifact }}
 
 permissions:
   contents: read
 
 concurrency:
   group: validation-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'push' || github.ref_type != 'tag' }}
 
 jobs:
-  build-test-package:
+  supply-chain-security:
+    name: Supply chain security
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          dotnet-version: "10.0.x"
+          persist-credentials: false
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          dotnet-version: '10.0.x'
+      - name: Audit all maintained NuGet dependency graphs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $projects = @(
+            'STranslate.Plugin.Tts.FishAudio/STranslate.Plugin.Tts.FishAudio.csproj',
+            'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj',
+            'tools/FishAudioProbe/FishAudioProbe.csproj',
+            'tools/FishAudioRelease/FishAudioRelease.csproj'
+          )
+          foreach ($project in $projects) {
+            dotnet restore $project -p:NuGetAudit=true -p:NuGetAuditMode=all -p:NuGetAuditLevel=low '-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905'
+            if ($LASTEXITCODE -ne 0) { throw "NuGet audit/restore failed: $project" }
+          }
+
+  commit-messages:
+    name: Commit messages
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate actual submitted commit subjects
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:COMMIT_SHA -cnotmatch '^[a-f0-9]{40}$') { throw 'Commit identity must be an exact SHA value.' }
+          if ($env:EVENT_NAME -eq 'pull_request') {
+            if ($env:PR_BASE -cnotmatch '^[a-f0-9]{40}$' -or $env:PR_HEAD -cnotmatch '^[a-f0-9]{40}$') { throw 'PR commit identities must be exact SHA values.' }
+            $range = "$($env:PR_BASE)..$($env:PR_HEAD)"
+          } elseif ($env:PUSH_BEFORE -match '^[a-f0-9]{40}$' -and $env:PUSH_BEFORE -ne ('0' * 40)) {
+            $range = "$($env:PUSH_BEFORE)..$($env:COMMIT_SHA)"
+          } else {
+            $range = "$($env:COMMIT_SHA)^!"
+          }
+          $subjects = @(git log --format=%s $range)
+          if ($LASTEXITCODE -ne 0 -or $subjects.Count -eq 0) { throw 'Cannot establish submitted commit range.' }
+          if ($env:EVENT_NAME -eq 'pull_request') { $subjects += $env:PR_TITLE }
+          foreach ($subject in $subjects) {
+            if ($subject -cnotmatch '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^()\r\n]+\))?!?: \S.*$') {
+              throw 'A submitted commit subject does not follow Conventional Commits.'
+            }
+          }
+
+  build-test-package:
+    outputs:
+      package-artifact: ${{ steps.package-artifact.outputs.name }}
+    needs: [supply-chain-security, commit-messages]
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact validation commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up .NET
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          dotnet-version: '10.0.x'
       - name: Build, test, and verify package
         shell: pwsh
         run: .\build.ps1 -Release -Clean -Test
       - name: Verify API probe safety and evidence capture offline
         shell: pwsh
         run: dotnet run --project tools/FishAudioProbe -c Release -- --self-test
+      - name: Verify release protocol offline
+        shell: pwsh
+        run: dotnet run --project tools/FishAudioRelease -c Release -- --self-test
+      - name: Canonicalize package container and verify unchanged payload identity
+        shell: pwsh
+        run: dotnet run --project tools/FishAudioRelease -c Release -- --canonicalize-package
+      - name: Identify this validation attempt artifact
+        id: package-artifact
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        shell: pwsh
+        run: '"name=verified-package-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}" >> $env:GITHUB_OUTPUT'
+      - name: Validate release event, annotated tag and packaged manifest offline
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        shell: pwsh
+        run: dotnet run --project tools/FishAudioRelease -c Release -- --verify
+      - name: Preserve exact verified release package
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.package-artifact.outputs.name }}
+          path: STranslate.Plugin.Tts.FishAudio.spkg
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: false

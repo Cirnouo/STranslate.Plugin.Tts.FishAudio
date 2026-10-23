@@ -1,0 +1,90 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '47 1 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            os: windows-latest
+            build-mode: manual
+          - language: actions
+            os: ubuntu-latest
+            build-mode: none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up .NET 10 for WPF extraction
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          dotnet-version: '10.0.x'
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # reviewed v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          db-location: ${{ runner.temp }}/fish-codeql
+      - name: Build maintained C# projects for extraction
+        if: matrix.language == 'csharp'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($project in @(
+            'STranslate.Plugin.Tts.FishAudio/STranslate.Plugin.Tts.FishAudio.csproj',
+            'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj',
+            'tools/FishAudioProbe/FishAudioProbe.csproj',
+            'tools/FishAudioRelease/FishAudioRelease.csproj'
+          )) {
+            dotnet build $project -c Release --no-incremental -p:EnableAutoPackage=false
+            if ($LASTEXITCODE -ne 0) { throw "CodeQL build failed: $project" }
+          }
+      - name: Analyze maintained code
+        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # reviewed v4
+        with:
+          category: /language:${{ matrix.language }}
+      - name: Verify plugin and tool source extraction
+        if: matrix.language == 'csharp'
+        shell: pwsh
+        env:
+          CODEQL_DATABASE_ROOT: ${{ runner.temp }}/fish-codeql
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead((Join-Path $env:CODEQL_DATABASE_ROOT 'csharp/src.zip'))
+          try {
+            foreach ($source in @(
+              'STranslate.Plugin.Tts.FishAudio/Main.cs',
+              'tests/STranslate.Plugin.Tts.FishAudio.Tests/Program.cs',
+              'tools/FishAudioProbe/Program.cs',
+              'tools/FishAudioRelease/Publisher.cs'
+            )) {
+              $matches = @($archive.Entries | Where-Object { $_.FullName.Replace('\', '/').EndsWith('/' + $source, [StringComparison]::Ordinal) })
+              if ($matches.Count -ne 1) { throw "Missing/ambiguous CodeQL source extraction: $source" }
+            }
+          } finally {
+            $archive.Dispose()
+          }

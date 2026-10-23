@@ -1,67 +1,48 @@
 name: Release
 
-permissions:
-  contents: write
-
 on:
   push:
-    tags:
-      - "v*"
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  release:
+  verify:
+    name: Verify release
+    if: github.event.created && !github.event.deleted && !github.event.forced
+    uses: ./.github/workflows/validation.yml
+    permissions:
+      contents: read
+
+  publish:
+    name: Publish release
+    needs: verify
     runs-on: windows-latest
-
+    timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Setup
-        uses: actions/setup-dotnet@v5
+      - name: Check out verified SHA and complete tag history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          dotnet-version: "10.0.x"
-
-      - name: Build and test
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        with:
+          dotnet-version: '10.0.x'
+      - name: Download package from complete successful validation
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: ${{ needs.verify.outputs.package-artifact }}
+          path: .
+      - name: Validate draft, upload and verify package, then publish
         shell: pwsh
-        run: .\build.ps1 -Release -Clean -Test
-
-      - name: Extract release notes
+        run: dotnet run --project tools/FishAudioRelease -c Release -- --publish
         env:
-          TAG_NAME: ${{ github.ref_name }}
-        shell: pwsh
-        run: |
-          $version = $env:TAG_NAME.TrimStart('v')
-          $escapedVersion = [regex]::Escape($version)
-          $lines = Get-Content CHANGELOG.md
-
-          $start = -1
-          for ($i = 0; $i -lt $lines.Count; $i++) {
-              if ($lines[$i] -match "^## \[$escapedVersion\](?:\s|-|$)") {
-                  $start = $i
-                  break
-              }
-          }
-
-          if ($start -lt 0) {
-              throw "No CHANGELOG.md section found for tag '$env:TAG_NAME'."
-          }
-
-          $end = $lines.Count
-          for ($i = $start + 1; $i -lt $lines.Count; $i++) {
-              if ($lines[$i] -match '^## \[') {
-                  $end = $i
-                  break
-              }
-          }
-
-          $lines[$start..($end - 1)] | Set-Content -Path release-notes.md -Encoding utf8
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
-          body_path: release-notes.md
-          draft: false
-          files: |
-            ./STranslate.Plugin.Tts.FishAudio.spkg
+          GITHUB_TOKEN: ${{ github.token }}

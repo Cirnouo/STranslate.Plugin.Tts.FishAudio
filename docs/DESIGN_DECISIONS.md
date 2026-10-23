@@ -114,7 +114,7 @@ Moved to [current DD-027](adr/current/DD-027.md).
 
 ## DD-028: GitHub Actions publishes tagged releases from the matching changelog section
 
-Moved to [current DD-028](adr/current/DD-028.md).
+Moved to [historical DD-028](adr/history/DD-028.md), superseded by [DD-063](adr/current/DD-063.md).
 
 ## DD-029: README documentation follows the user setup workflow
 

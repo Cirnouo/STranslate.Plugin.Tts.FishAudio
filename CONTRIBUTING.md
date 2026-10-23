@@ -2,6 +2,8 @@
 
 This is the developer entry point for Fish Audio TTS for STranslate. For installation and configuration, use the [user overview](README.md) and [user guide](docs/user-guide/README_EN.md). This project targets Windows/WPF and .NET 10, uses STranslate.Plugin 1.0.15, and maintains the public plugin identity, settings compatibility and localized UI contracts.
 
+The root [AGENTS.md](AGENTS.md) supplies common repository boundaries and a conditional reading map. Follow the canonical owners below for the operation at hand instead of loading or copying every policy into each task.
+
 ## Start with the current contract
 
 Read the [domain glossary](docs/glossary.md) and [current specification index](docs/specs/README.md) before changing behavior. Each specification links its code owners and regression suites:
@@ -23,7 +25,9 @@ Apply the canonical policies rather than copying their rules into a new contribu
 |---|---|
 | [C# maintenance](docs/policies/csharp.md) | Ownership, cancellation, concurrency, settings I/O, localization and diagnostics. |
 | [Documentation](docs/policies/documentation.md) | Document roles, language, links, ADR amendments and historical releases. |
-| [Verification and release](docs/policies/verification.md) | Meaningful tests, final-state checks and distributable dependencies. |
+| [Verification](docs/policies/verification.md) | Meaningful tests, final-state checks and distributable dependencies. |
+| [Versions and releases](docs/policies/releases.md) | Published stable baseline, net changelog categories, release notes and guarded tag publication. |
+| [Repository governance](docs/policies/repository-governance.md) | Conventional subjects, PRs, squash references, real required checks and main rules. |
 | [Streaming verification](docs/policies/streaming-validation.md) | Framing, decoding, backpressure, startup, drain and failure cleanup. |
 | [API evidence and zero-cost testing](docs/policies/api-evidence.md) | Live-run authorization, exact free-model guards, redaction and measured boundaries. |
 
@@ -62,7 +66,7 @@ Keep changes scoped to the behavior being addressed, preserving established publ
 
 Update the relevant current specification in the same change. Record a new ADR when a lasting tradeoff or ownership choice needs rationale, using the next unused permanent number; amend or supersede older decisions precisely. New settings need complete migration, conversion, normalization, copy/rollback, UI and round-trip handling. Follow the C# policy for those contracts.
 
-Maintain the five existing locales for persistent UI text. README and user guides have Simplified Chinese, Traditional Chinese, English, Japanese and Korean versions; other maintenance documents are English, and new user-visible changes go in Chinese under `CHANGELOG.md` Unreleased. Published release sections retain their historical content. Check relative links and assets after moving documentation.
+Maintain the five existing locales for persistent UI text. README and user guides have Simplified Chinese, Traditional Chinese, English, Japanese and Korean versions; other maintenance documents are English, and new user-visible net changes go in Chinese under `CHANGELOG.md` Unreleased with applicable English categories. Verify the latest published stable baseline under the release policy before editing it. Published release sections retain their historical content. Check relative links and assets after moving documentation.
 
 ## Report an issue
 
@@ -72,7 +76,7 @@ Sanitize diagnostics before posting. Do not include API Keys, Authorization head
 
 ## Submit a pull request
 
-Open a focused PR against main and link the issue when one exists. Explain the concrete problem, resulting behavior, compatibility implications and relevant validation. Include commands/results, what file state they cover, and any skipped host/device/live checks. Screenshots are useful for a rendered UI change when they show the changed behavior and contain no secrets; they are not required for unrelated code changes.
+Open a focused PR against main using the [PR template](.github/PULL_REQUEST_TEMPLATE.md) and link the issue when one exists. Explain the concrete problem, resulting behavior, compatibility implications and relevant validation. Include commands/results, what file state they cover, and any skipped host/device/live checks. Keep the PR's own number out of its title; the final squash subject retains `(#PR-number)`, including when explicitly supplied through a CLI. Screenshots are useful for a rendered UI change when they show the changed behavior and contain no secrets; they are not required for unrelated code changes.
 
 Run affected checks after the final code, resource, documentation and changelog edits. Keep generated packages, build intermediates, credentials and local runtime artifacts out of the commit. Respond to review with evidence; update the PR description if its final scope changes. The standard PR/main validation workflow verifies builds and tests; tagged release publication is a separate maintainer action.
 

@@ -51,7 +51,7 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-025 | [Cache cleanup is an explicit text action](current/DD-025.md) | Current |
 | DD-026 | [Cover image cache size is measured from disk](current/DD-026.md) | Current |
 | DD-027 | [Cache cleanup has a busy state with timeout recovery](current/DD-027.md) | Current |
-| DD-028 | [GitHub Actions publishes tagged releases from the matching changelog section](current/DD-028.md) | Current |
+| DD-028 | [GitHub Actions publishes tagged releases from the matching changelog section](history/DD-028.md) | Superseded by DD-063 |
 | DD-029 | [README documentation follows the user setup workflow](current/DD-029.md) | Current |
 | DD-030 | [API Key saves immediately with request-time preflight](current/DD-030.md) | Current |
 | DD-031 | [Temporary s2.1-pro-free model policy and startup normalization](current/DD-031.md) | Current |
@@ -86,3 +86,5 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-060 | [Center voice action glyph outlines rather than font line boxes](current/DD-060.md) | Current |
 | DD-061 | [Keep four device buffers without increasing each refill block](current/DD-061.md) | Current |
 | DD-062 | [Prefer configured credentials for voice metadata requests](current/DD-062.md) | Current |
+| DD-063 | [Guard publication at the tag, host-version and draft-asset boundaries](current/DD-063.md) | Current |
+| DD-064 | [Map main governance to actual Fish Audio validation contexts](current/DD-064.md) | Current |
