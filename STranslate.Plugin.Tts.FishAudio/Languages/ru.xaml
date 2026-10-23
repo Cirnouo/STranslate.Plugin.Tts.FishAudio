@@ -1,0 +1,124 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Account">Аккаунт</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Voice">Голос</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Model">Модель</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Prosody">Просодия</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_AudioOutput">Вывод звука</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Generation">Генерация</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Misc">Прочее</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">Данные аккаунта</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">Баланс:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">Баланс: нажмите «Обновить»</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">Обновить</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">Адрес API</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">Ключ API</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder">Введите ключ API Fish Audio</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentVoice">Выбранный голос</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoVoiceSelected">Голос не выбран</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Search">Поиск</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">По ID</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">Поиск голосов</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">Найти</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Введите название голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">Выбрать</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">Выбран</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">Прослушать</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">Подготовка прослушивания… Нажмите для отмены</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">Остановить прослушивание</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">Пауза</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">Очистить</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">Популярность</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount"> найдено</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">Общее число может быть приблизительным; число страниц обозначает предел доступного поиска. Уточните запрос, чтобы найти другие голоса.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">Подходящие голоса не найдены</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">Предыдущая</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">Следующая</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PageOf">/ </sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Label">ID голоса (полный ID)</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder">Введите ID голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SetVoice">Выбрать голос</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomVoice">Случайный голос</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">Модель синтеза</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">Рекомендуется S2-Pro: 80+ языков и эмоциональные метки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free бесплатно до 2026-11-30 UTC включительно; 80+ языков и эмоциональные метки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">Рекомендуется s2.1-pro: 80+ языков и эмоциональные метки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">Закрыть предложение</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">Скорость</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">Громкость</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">Смещение громкости в dB: положительное значение повышает громкость, отрицательное — понижает</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">Нормализация громкости</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">Поддерживается моделями серии S2</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">Формат аудио</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">Битрейт MP3 (kbps)</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature">Выразительность</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">Высокие значения дают более разнообразный результат, низкие повышают согласованность</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP">Разнообразие</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">Управляет разнообразием при ядерном сэмплировании</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">Режим задержки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">Баланс между задержкой и качеством</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">Приоритет качества</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">Сбалансированный</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">Низкая задержка</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">Нормализация текста</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Преобразует числа, обозначения единиц и другие элементы в текст для чтения</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">Кэш</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">Размер кэша:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">Очистить кэш</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">Время ожидания очистки кэша истекло. Повторите попытку позже.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">Поддержка</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Исходный код проекта, сообщения о проблемах и участие в разработке</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">Учёт контекста</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Использует предыдущие фрагменты этого же синтеза для согласованности голоса; аудио, созданное ранее в других запросах, не используется</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">Вставить</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">Подтвердить</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">Сначала укажите ключ API</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">Неверный формат ключа API</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">Неверный ключ API</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Network_Unavailable">Нет подключения к сети. Проверьте соединение и повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">Время ожидания запроса истекло. Повторите попытку позже.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">Аудио для прослушивания недоступно.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">Не удалось загрузить аудио для прослушивания. Повторите попытку позже.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed">Не удалось обновить ссылку на аудио для прослушивания. Повторите попытку позже.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Текст пуст</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">Сначала введите ID голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">Неверный формат ID голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">Голос не найден</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">Результаты поиска</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">Развернуть результаты поиска</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">Свернуть результаты поиска</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">При медленном соединении MP3 может подойти лучше.</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Не удалось синтезировать речь. Проверьте системное сетевое подключение и состояние сервиса модели.</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Избранное</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Применить</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Добавить в избранное</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Удалить из избранного</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">В избранном пока нет голосов. Нажмите на звёздочку в карточке голоса, чтобы сохранить его.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Развернуть избранные голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Свернуть избранные голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">Можно сохранить не более 300 голосов. Прежде чем добавить новый, удалите один из избранного.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Избранное доступно только для чтения. Проверьте файл избранного и повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Не удалось сохранить избранное. Повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Загрузка данных голоса…</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Не удалось прочитать файл избранного. Существующие записи не удалены. Изменять их можно будет, когда файл снова станет доступен для чтения.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Копировать ID голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">ID голоса скопирован</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Не удалось скопировать ID голоса. Повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Не удалось открыть репозиторий проекта. Проверьте настройки браузера по умолчанию.</sys:String>
+</ResourceDictionary>

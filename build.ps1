@@ -195,6 +195,10 @@ try {
         'Microsoft.NET.StringTools.dll',
         'Assets/Licenses/Octicons.LICENSE.txt'
     )
+    foreach ($locale in @('en', 'zh-cn', 'zh-tw', 'ja', 'ko', 'ru', 'tr')) {
+        $requiredPackageFiles += "Languages/$locale.xaml"
+        $requiredPackageFiles += "Languages/$locale.json"
+    }
     $missingPackageFiles = @($requiredPackageFiles | Where-Object { -not $packageEntryNames.Contains($_) })
     if ($missingPackageFiles.Count -gt 0) {
         throw "Missing required files in .spkg: $($missingPackageFiles -join ', ')"

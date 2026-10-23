@@ -86,7 +86,7 @@ internal static class PresentationContractSuite
         AssertEqual(true, xaml.Contains("Text=\"{Binding UserCredit}\"", StringComparison.Ordinal), "Loaded credit should keep displaying the balance binding");
         AssertEqual(true, xaml.Contains("Text=\" $\"", StringComparison.Ordinal), "Loaded credit should keep displaying the dollar symbol");
 
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var localeXaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",
@@ -130,7 +130,7 @@ internal static class PresentationContractSuite
 
     internal static void LanguageResourcesMatchApiKeyRollback()
     {
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine(
                 "STranslate.Plugin.Tts.FishAudio",
@@ -157,7 +157,7 @@ internal static class PresentationContractSuite
             "STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed",
         };
 
-        foreach (var locale in new[] { "zh-cn", "zh-tw", "en", "ja", "ko" })
+        foreach (var locale in UiLocales.All)
         {
             var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Languages", $"{locale}.xaml")));
             foreach (var key in keys)
@@ -181,6 +181,8 @@ internal static class PresentationContractSuite
             ["en"] = "Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio",
             ["ja"] = "同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません",
             ["ko"] = "같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다",
+            ["ru"] = "Использует предыдущие фрагменты этого же синтеза для согласованности голоса; аудио, созданное ранее в других запросах, не используется",
+            ["tr"] = "Ses tutarlılığı için aynı sentezin önceki parçalarını kullanır; önceki isteklerde üretilen başka sesleri kullanmaz",
         };
 
         foreach (var (locale, expectedDescription) in expectedDescriptions)

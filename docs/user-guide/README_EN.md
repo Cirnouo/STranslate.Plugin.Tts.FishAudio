@@ -29,7 +29,7 @@ For manual installation, download `STranslate.Plugin.Tts.FishAudio.spkg` from [R
 
 Prefer stable STranslate; the verified compatibility baseline is v2.0.10. After an update, check your saved model, format and networking settings. See the [changelog](../../CHANGELOG.md) for changes.
 
-The interface follows the host: Simplified Chinese, Traditional Chinese, English, Japanese or Korean. There is no plugin language selector. Interface language differs from the languages a model can read; see the [official documentation](https://docs.fish.audio).
+The interface follows the host: Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Russian or Turkish. There is no plugin language selector. Interface language differs from the languages a model can read; see the [official documentation](https://docs.fish.audio).
 
 ## 2. Choose and manage voices
 

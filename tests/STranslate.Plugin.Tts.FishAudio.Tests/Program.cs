@@ -1,5 +1,23 @@
+if (args.Contains("--ui-locale-contract-tests"))
+{
+    RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
+    RepositoryContractSuite.FreeModelDeadlineDocumentationIsConsistent();
+    PresentationContractSuite.TranslatedReadmesMatchCurrentSourceAndControlNames();
+    PresentationContractSuite.SettingsViewShowsPersistentCreditPlaceholder();
+    PresentationContractSuite.LanguageResourcesMatchApiKeyRollback();
+    PresentationContractSuite.PreviewFailureLanguageResourcesAreComplete();
+    PresentationContractSuite.LanguageResourcesDescribeContextConditioningConsistency();
+    StreamingSettingsSuite.StreamingSettingsUiResourcesAreComplete();
+    Console.WriteLine("Seven UI locale contracts passed.");
+    return;
+}
+
 if (args.Contains("--package-contract-tests"))
 {
+    BuildScriptSuite.PackageMissingRussianXamlFails();
+    BuildScriptSuite.PackageMissingTurkishMetadataFails();
+    BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
+    BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails();
     BuildScriptSuite.PackageMissingOcticonsNoticeFails();
     BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
     Console.WriteLine("Package contract tests passed.");
@@ -132,12 +150,15 @@ ApiKeyCompatibilitySuite.ApiKeyFormatAcceptsLegacyAndPrefixedKeys();
 ApiKeyCompatibilitySuite.ApiKeyFormatRejectsMalformedKeys();
 ApiKeyCompatibilitySuite.VoiceIdFormatRemainsLegacyOnly();
 await ApiKeyCompatibilitySuite.RequestPathsPreservePreflightAndBearerAsync();
+RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
 RepositoryContractSuite.Release112MetadataIsComplete();
 RepositoryContractSuite.Release111MetadataIsComplete();
 RepositoryContractSuite.Release110MetadataIsComplete();
 RepositoryContractSuite.PackageReferenceUsesSdk1015();
 RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts();
 RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
+BuildScriptSuite.PackageMissingRussianXamlFails();
+BuildScriptSuite.PackageMissingTurkishMetadataFails();
 BuildScriptSuite.ConfigurationParameterIsRejected();
 BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
 BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();

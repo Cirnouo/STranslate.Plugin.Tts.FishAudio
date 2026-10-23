@@ -1,0 +1,124 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Account">Hesap</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Voice">Ses</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Model">Model</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Prosody">Prozodi</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_AudioOutput">Ses çıkışı</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Generation">Üretim</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Group_Misc">Diğer</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_AccountInfo">Hesap bilgileri</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit">Bakiye:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded">Bakiye: Yenile&apos;ye tıklayın</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Refresh">Yenile</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Url">API adresi</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey">API anahtarı</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder">Fish Audio API anahtarını girin</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CurrentVoice">Seçili ses</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoVoiceSelected">Ses seçilmedi</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Search">Arama</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_ById">ID ile</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchVoice">Ses ara</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search">Ara</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchPlaceholder">Ses adı girin</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Select">Seç</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Selected">Seçili</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PlaySample">Önizle</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading">Önizleme hazırlanıyor… İptal etmek için tıklayın</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Stop">Önizlemeyi durdur</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PauseSample">Duraklat</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearVoice">Temizle</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Popularity">Popülerlik</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ResultCount"> sonuç</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchWindowHint">Toplam sayı tahmini olabilir; sayfa sayısı erişilebilen üst sınırı gösterir. Daha fazla ses bulmak için aramanızı daraltın.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NoResults">Eşleşen ses bulunamadı</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Prev">Önceki</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Next">Sonraki</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_PageOf">/ </sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Label">Ses ID&apos;si (tam ID)</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder">Ses ID&apos;sini girin</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SetVoice">Sesi seç</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RandomVoice">Rastgele ses</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine">Sentez modeli</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description">Önerilen model: S2-Pro; 80+ dil ve duygu etiketleri</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Free">s2.1-pro-free, 2026-11-30 UTC günü sonuna kadar ücretsiz; 80+ dil ve duygu etiketleri</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Engine_Description_Paid">Önerilen model: s2.1-pro; 80+ dil ve duygu etiketleri</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Promo_Close">Tanıtımı kapat</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Speed">Hız</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume">Ses düzeyi</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Volume_Description">Ses düzeyi farkı (dB): pozitif değerler artırır, negatif değerler azaltır</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness">Ses yüksekliğini normalleştir</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_NormalizeLoudness_Description">S2 serisi modellerde desteklenir</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format">Çıkış biçimi</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Mp3Bitrate">MP3 bit hızı (kbps)</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature">İfade gücü</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Temperature_Description">Yüksek değerler daha çeşitli, düşük değerler daha tutarlı sonuçlar üretir</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP">Çeşitlilik</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_TopP_Description">Çekirdek örnekleme çeşitliliğini ayarlar</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency">Gecikme modu</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Description">Gecikme ile kalite arasındaki denge</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Normal">Kalite öncelikli</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Balanced">Dengeli</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Latency_Low">Düşük gecikme</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize">Metin normalleştirme</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Normalize_Description">Sayıları, birim simgelerini vb. okunabilir metne dönüştürür</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Cache">Önbellek</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CacheUsage">Önbellek kullanımı:</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">Önbelleği temizle</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">Önbellek temizleme işlemi zaman aşımına uğradı. Daha sonra yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">Destek</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Proje kaynak kodu, sorun bildirimleri ve katkılar</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">Bağlam kullanımı</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">Ses tutarlılığı için aynı sentezin önceki parçalarını kullanır; önceki isteklerde üretilen başka sesleri kullanmaz</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Paste">Yapıştır</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Confirm">Onayla</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Empty">Önce API anahtarını girin</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat">API anahtarının biçimi geçersiz</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ApiKey_Invalid">API anahtarı yanlış</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Network_Unavailable">Ağ bağlantısı yok. Bağlantınızı kontrol edip yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Request_Timeout">İstek zaman aşımına uğradı. Daha sonra yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_Unavailable">Önizleme sesi mevcut değil.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_PlaybackFailed">Önizleme sesi yüklenemedi. Daha sonra yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Preview_RefreshFailed">Önizleme sesinin bağlantısı yenilenemedi. Daha sonra yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Text_Empty">Metin boş</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_Empty">Önce ses ID&apos;sini girin</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat">Ses ID&apos;sinin biçimi geçersiz</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_NotFound">Ses bulunamadı</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_SearchResults">Arama sonuçları</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ExpandSearchResults">Arama sonuçlarını genişlet</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CollapseSearchResults">Arama sonuçlarını daralt</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Format_Description">Yavaş ağlarda MP3 daha uygun olabilir.</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Konuşma sentezi başarısız oldu. Sistem ağ bağlantısını ve model hizmetinin durumunu kontrol edin.</sys:String>
+
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favoriler</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Uygula</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Favorilere ekle</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Favorilerden kaldır</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">Henüz favori ses yok. Kaydetmek için ses kartındaki yıldıza tıklayın.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Favori sesleri genişlet</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Favori sesleri daralt</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">En fazla 300 ses kaydedebilirsiniz. Yeni bir ses eklemeden önce favorilerden birini kaldırın.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Favoriler şu anda salt okunur. Favoriler dosyasını kontrol edip yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Favoriler kaydedilemedi. Yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Ses bilgileri yükleniyor…</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Favoriler dosyası okunamadı. Mevcut favoriler korunur; dosya yeniden okunabilir olana kadar değişiklik yapılamaz.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Ses ID&apos;sini kopyala</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Ses ID&apos;si kopyalandı</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Ses ID&apos;si kopyalanamadı. Yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Proje deposu açılamadı. Varsayılan tarayıcı ayarlarınızı kontrol edin.</sys:String>
+</ResourceDictionary>

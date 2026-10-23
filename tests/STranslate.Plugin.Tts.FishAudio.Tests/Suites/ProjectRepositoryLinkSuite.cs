@@ -21,7 +21,7 @@ internal static class ProjectRepositoryLinkSuite
 {
     internal static async Task RunAllAsync()
     {
-        foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+        foreach (var language in UiLocales.All)
             await RunOnStaThreadAsync(() => CompiledSupportUsesProjectRepository(language));
     }
 

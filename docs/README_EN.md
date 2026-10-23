@@ -30,7 +30,7 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 - **Audio formats**: PCM is the default; choose MP3 and its bitrate for slower connections.
 - **Synthesis controls**: Adjust model, speed, volume, loudness normalization, expressiveness, diversity and latency mode.
 - **Account and cache**: View and refresh API credits and manage the cover-image cache shared by all voice entry points.
-- **Interface languages**: 简体中文, 繁體中文, English, 日本語 and 한국어.
+- **Interface languages**: 简体中文, 繁體中文, English, 日本語, 한국어, Русский and Türkçe.
 
 ## Installation
 

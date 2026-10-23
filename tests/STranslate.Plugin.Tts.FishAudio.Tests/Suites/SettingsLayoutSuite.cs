@@ -24,7 +24,7 @@ internal static class SettingsLayoutSuite
     internal static async Task InlineNumericInteractionsAsync()
     {
         // Every locale retains the same shared STA and five-second action
-        // deadline. CI must not fit six complete UI fixtures into one action.
+        // deadline. CI must not fit eight complete UI fixtures into one action.
         foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
             await RunOnStaThreadAsync(() => InlineNumericEditorSuite.RunForCulture(CreateThemedView, Layout, language, culture));
     }
@@ -184,7 +184,7 @@ internal static class SettingsLayoutSuite
         AssertEqual(referenceIcon.Margin, icon.Margin, "Favorite Voices must use the same tab icon spacing");
         AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == "Favorites"),
             "The tab must display the localized Favorite Voices label");
-        foreach (var (locale, label) in new[] { ("zh-cn", "收藏夹"), ("zh-tw", "收藏夾"), ("ja", "お気に入り"), ("ko", "즐겨찾기") })
+        foreach (var (locale, label) in new[] { ("zh-cn", "收藏夹"), ("zh-tw", "收藏夾"), ("ja", "お気に入り"), ("ko", "즐겨찾기"), ("ru", "Избранное"), ("tr", "Favoriler"), ("en", "Favorites") })
         {
             view.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
@@ -193,6 +193,11 @@ internal static class SettingsLayoutSuite
             DrainBindings();
             AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == label),
                 $"Changing to {locale} must update the compiled tab label");
+            var support = (iNKORE.UI.WPF.Modern.Controls.SettingsCard)view.FindName("SupportCard");
+            AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Support_Description"), support.Description,
+                $"Changing to {locale} must update the compiled Support description");
+            AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Tab_Search"), ((TextBlock)view.FindName("SearchTabLabel")).Text,
+                $"Changing to {locale} must update the compiled Search label");
         }
     }
 

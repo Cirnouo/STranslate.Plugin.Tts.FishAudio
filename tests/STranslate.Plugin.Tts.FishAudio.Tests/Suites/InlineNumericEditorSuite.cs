@@ -23,7 +23,7 @@ internal static class InlineNumericEditorSuite
     // Breaks if the real view loses inline editing, commits drafts prematurely,
     // re-snaps typed precision, or lets the native input change row geometry.
     internal static IReadOnlyList<(string Language, string Culture)> Cultures { get; } =
-        [("en", "en-US"), ("zh-cn", "zh-CN"), ("zh-tw", "zh-TW"), ("ja", "ja-JP"), ("ko", "ko-KR"), ("en", "de-DE")];
+        [("en", "en-US"), ("zh-cn", "zh-CN"), ("zh-tw", "zh-TW"), ("ja", "ja-JP"), ("ko", "ko-KR"), ("ru", "ru-RU"), ("tr", "tr-TR"), ("en", "de-DE")];
 
     internal static void RunForCulture(Func<SettingsViewModel, SettingsView> createView, Action<FrameworkElement, double> layout, string language, string culture)
     {
@@ -106,7 +106,7 @@ internal static class InlineNumericEditorSuite
                 // Parsing edge cases and interaction paths are culture-independent;
                 // run the full matrix for dot/comma cultures while every
                 // localized view above still commits all four values.
-                if (culture is "en-US" or "de-DE")
+                if (culture is "en-US" or "de-DE" or "ru-RU" or "tr-TR")
                 {
                     foreach (var invalid in new[] { "", "-", "NaN", "Infinity", "1e999", "1e0", "+0.8", " 0.8", "0.8 ", "0.800", minimum < 0 ? "000.8" : "00.8", (minimum - 0.01).ToString(CultureInfo.InvariantCulture), (maximum + 0.01).ToString(CultureInfo.InvariantCulture) })
                     {

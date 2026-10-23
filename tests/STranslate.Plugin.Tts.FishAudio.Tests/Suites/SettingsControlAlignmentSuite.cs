@@ -22,7 +22,7 @@ internal static class SettingsControlAlignmentSuite
 {
     internal static async Task RunAllAsync()
     {
-        foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+        foreach (var language in UiLocales.All)
             await RunOnStaThreadAsync(() => BrowseTabPositionsStayFixed(language));
         await RunOnStaThreadAsync(SliderStartsAtNativeContentAnchor);
         await RunOnStaThreadAsync(EmptyBrowseRowsKeepModelPosition);

@@ -1,6 +1,6 @@
 # Documentation policy
 
-README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources remain localized in all five locales.
+README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources cover all seven host languages: Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Russian and Turkish. README and user-guide translations remain limited to the five documentation languages above.
 
 The table defines the current layout. The root README is Simplified Chinese; localized overviews remain at `docs/README_*.md`, with same-language detailed guides under `docs/user-guide/`. Overviews retain the project icon and badges; other documentation media belongs under `docs/assets/` when needed.
 

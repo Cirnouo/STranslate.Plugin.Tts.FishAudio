@@ -66,7 +66,7 @@ Keep changes scoped to the behavior being addressed, preserving established publ
 
 Update the relevant current specification in the same change. Record a new ADR when a lasting tradeoff or ownership choice needs rationale, using the next unused permanent number; amend or supersede older decisions precisely. New settings need complete migration, conversion, normalization, copy/rollback, UI and round-trip handling. Follow the C# policy for those contracts.
 
-Maintain the five existing locales for persistent UI text. README and user guides have Simplified Chinese, Traditional Chinese, English, Japanese and Korean versions; other maintenance documents are English, and new user-visible net changes go in Chinese under `CHANGELOG.md` Unreleased with applicable English categories. Verify the latest published stable baseline under the release policy before editing it. Published release sections retain their historical content. Check relative links and assets after moving documentation.
+Maintain all seven host UI locales (Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Russian and Turkish) for persistent UI text. README and user guides have Simplified Chinese, Traditional Chinese, English, Japanese and Korean versions; other maintenance documents are English, and new user-visible net changes go in Chinese under `CHANGELOG.md` Unreleased with applicable English categories. Verify the latest published stable baseline under the release policy before editing it. Published release sections retain their historical content. Check relative links and assets after moving documentation.
 
 ## Community and reporting
 

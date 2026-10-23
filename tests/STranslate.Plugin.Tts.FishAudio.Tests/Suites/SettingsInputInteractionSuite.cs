@@ -28,14 +28,14 @@ internal static class SettingsInputInteractionSuite
     {
         if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero" or "hover")) throw new ArgumentException("Unknown settings input test group", nameof(group));
         if (group is null or "zero")
-            foreach (var culture in new[] { "en-US", "de-DE" })
+            foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
                 await RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture));
         if (group is null or "fold-focus")
             foreach (var dark in new[] { false, true })
                 await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark));
         if (group is "precision") SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity();
         if (group is null or "tabs")
-            foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+            foreach (var language in UiLocales.All)
                 foreach (var dark in new[] { false, true })
                     await RunOnStaThreadAsync(() => SelectedTabsKeepAccentThroughNativeStates(language, dark));
         if (group is null or "baseline") await RunOnStaThreadAsync(ByIdUsesUnchangedSearchTextGeometry);
@@ -44,12 +44,12 @@ internal static class SettingsInputInteractionSuite
         if (group is null or "wheel") await RunOnStaThreadAsync(RestingNumericWheelEditsWithoutScrolling);
         if (group is null or "wheel") await RunOnStaThreadAsync(SliderWheelEditsWithoutScrolling);
         if (group is null or "wheel" or "tooltip")
-            foreach (var culture in new[] { "en-US", "de-DE" })
+            foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
                 await RunOnStaThreadAsync(() => SliderWheelUsesNativeValueToolTipAsync(culture));
         if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
         if (group is null or "copy")
-            foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
+            foreach (var language in UiLocales.All)
                 await RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language));
     }
 
@@ -72,7 +72,7 @@ internal static class SettingsInputInteractionSuite
             var editor = Logical(view).OfType<InlineNumericEditor>().Single(item => BindingOperations.GetBinding(item, InlineNumericEditor.ValueProperty)?.Path.Path == "Volume");
             var display = (Button)editor.FindName("DisplayButton");
             var input = (TextBox)editor.FindName("EditorBox");
-            var expected = culture == "de-DE" ? "0,00" : "0.00";
+            var expected = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "0,00" : "0.00";
             var failures = new List<string>();
             AssertEqual(.3, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "Temperature").Value, "Precision initialization must preserve a valid fractional bound value");
             AssertEqual(.05, Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "TopP").Value, "Zero canonicalization must preserve the positive TopP floor during construction");
@@ -117,7 +117,7 @@ internal static class SettingsInputInteractionSuite
                 track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
                 slider.SetCurrentValue(Slider.ValueProperty, initial);
                 display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                input.Text = culture == "de-DE" ? "-0,00" : "-0.00";
+                input.Text = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,00" : "-0.00";
                 editor.CommitEdit();
                 CheckZero($"{width}/direct entry from {initial}");
             }
@@ -173,7 +173,7 @@ internal static class SettingsInputInteractionSuite
             AssertEqual(zeroSaves, storage.SaveCount, "Canonicalizing an already-zero value must not introduce a redundant save");
             vm.Volume = -.005;
             AssertEqual(-.005, vm.Volume, "The negative rounding midpoint must not be classified as zero");
-            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "The existing midpoint-away-from-zero display rule must remain intact");
+            AssertEqual(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,01" : "-0.01", display.Content, "The existing midpoint-away-from-zero display rule must remain intact");
             vm.Volume = 0d;
             slider.Minimum = .05;
             AssertEqual(.05, slider.Value, "Derived value coercion must retain native dynamic minimum clamping");
@@ -188,7 +188,7 @@ internal static class SettingsInputInteractionSuite
             var negativeTrack = (Track)slider.Template.FindName("PART_Track", slider);
             Wheel(negativeTrack.Thumb, 120);
             AssertEqual(-.01, slider.Value, "A real negative hundredth must remain negative");
-            AssertEqual(culture == "de-DE" ? "-0,01" : "-0.01", display.Content, "Canonical zero must not erase real negative values");
+            AssertEqual(CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator == "," ? "-0,01" : "-0.01", display.Content, "Canonical zero must not erase real negative values");
             AssertEqual(display.Content, ((ToolTip)negativeTrack.Thumb.ToolTip).Content, "Native bubble and label must retain matching negative hundredths");
             slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
             AssertEqual("", string.Join(Environment.NewLine, failures), "All zero-producing routes must publish positive zero with identical text");
@@ -1034,7 +1034,7 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(null, vm.PreparingPreviewVoiceId, "Copying titles must not start preview preparation");
         AssertEqual(0, http.GetCallCount + http.GetAsStreamCallCount + http.PostAsBytesCallCount, "Copying any title must not call Fish Audio");
         foreach (var suffix in new[] { "", "_Success", "_Failed" })
-            AssertNotNull(view.TryFindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId" + suffix), "Every copy action and snackbar string must exist in all five locales");
+            AssertNotNull(view.TryFindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId" + suffix), "Every copy action and snackbar string must exist in all seven UI locales");
     }
 
     private static bool HasButtonAncestor(DependencyObject child)

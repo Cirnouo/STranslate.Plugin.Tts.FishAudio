@@ -2,7 +2,7 @@
 
 Status: current Unreleased implementation. The plugin targets .NET 10 Windows/WPF and references STranslate.Plugin 1.0.15. The distributable version is owned by `STranslate.Plugin.Tts.FishAudio/plugin.json`, independently of the SDK version and settings schema. The verified host baseline is STranslate v2.0.10; no unsupported minimum-host-version manifest field is invented.
 
-Preview and formal streaming audio depend on NAudio.Core and NAudio.WinMM 2.3.0. Streaming MessagePack 3.1.12 also requires MessagePack.dll, MessagePack.Annotations.dll and Microsoft.NET.StringTools.dll. Package verification includes these private runtime assemblies alongside the plugin and five locale resources without bundling the host SDK/UI framework. Normal regression tests inject outputs and do not require a physical audio device.
+Preview and formal streaming audio depend on NAudio.Core and NAudio.WinMM 2.3.0. Streaming MessagePack 3.1.12 also requires MessagePack.dll, MessagePack.Annotations.dll and Microsoft.NET.StringTools.dll. Package verification includes these private runtime assemblies alongside the plugin, all seven UI XAML dictionaries and their seven localized metadata JSON files (en, zh-cn, zh-tw, ja, ko, ru and tr), and the Octicons license notice without bundling the host SDK/UI framework. Normal regression tests inject outputs and do not require a physical audio device.
 
 [build.ps1](../../build.ps1) defaults to Debug and exposes only -Release as its configuration switch. -Test runs the executable regression project after building and checking the package. Debug packaging invokes the SDK target; Release uses automatic packaging. Output directories isolate Debug and Release, and the distributable is copied to the repository root.
 
