@@ -398,7 +398,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         ApplyCachedVoice(settings.CachedVoice);
 
         PropertyChanged += OnPropertyChanged;
-        _voiceMetadataCache.MetadataUpdated += OnVoiceMetadataUpdated;
+        SubscribeToVoiceMetadataUpdates();
         if (startupCreditRefreshCycle is not null)
             AttachStartupCreditRefresh(startupCreditRefreshCycle);
     }
@@ -502,15 +502,24 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         CachedVoiceInfo cached) =>
         PreviewRefreshCoordinator.TryApplyRefreshedCachedVoice(settings, expectedVoiceId, cached);
 
-    internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached, string? expectedApiKey = null)
+    internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached, string? expectedApiKey = null,
+        object? expectedCredentialIdentity = null)
     {
-        var apiKey = expectedApiKey ?? _settings.ApiKey;
+        string apiKey;
+        object credentialIdentity;
+        lock (_settings)
+        {
+            apiKey = expectedApiKey ?? _settings.ApiKey;
+            credentialIdentity = expectedCredentialIdentity ?? _settings.CredentialIdentity;
+        }
         RunOnUiThread(() =>
         {
-            if (_isDisposed
-                || !string.Equals(_settings.ApiKey, apiKey, StringComparison.Ordinal)
-                || !string.Equals(VoiceId, expectedVoiceId, StringComparison.Ordinal)
-                || !string.Equals(_settings.VoiceId, expectedVoiceId, StringComparison.Ordinal))
+            bool isCurrent;
+            lock (_settings)
+                isCurrent = ReferenceEquals(_settings.CredentialIdentity, credentialIdentity)
+                    && string.Equals(_settings.ApiKey, apiKey, StringComparison.Ordinal)
+                    && string.Equals(_settings.VoiceId, expectedVoiceId, StringComparison.Ordinal);
+            if (_isDisposed || !isCurrent || !string.Equals(VoiceId, expectedVoiceId, StringComparison.Ordinal))
             {
                 return;
             }
@@ -790,10 +799,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 if (_suppressSettingsSave)
                     return;
                 var previousKey = _settings.ApiKey;
-                var previousVoice = _settings.CachedVoice;
                 try
                 {
-                    if (!UpdateSettingsAndSave(settings => { settings.ApiKey = ApiKey; settings.CachedVoice = null; }))
+                    if (!UpdateSettingsAndSave(settings => settings.ApiKey = ApiKey))
                     {
                         RestoreApiKeyDraft(_settings.ApiKey);
                         return;
@@ -804,18 +812,22 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                     if (_settingsWriteLease is null)
                     {
                         _settings.ApiKey = previousKey;
-                        _settings.CachedVoice = previousVoice;
                     }
                     RestoreApiKeyDraft(_settings.ApiKey);
                     throw;
                 }
+                if (_settingsWriteLease is null && !string.Equals(previousKey, _settings.ApiKey, StringComparison.Ordinal))
+                {
+                    // The legacy facade saves the same settings object directly.
+                    // Its publication identity changes only after that save succeeds.
+                    lock (_settings)
+                        _settings.CredentialIdentity = new object();
+                }
+                SubscribeToVoiceMetadataUpdates();
                 _voiceDiscoveryCoordinator.InvalidateCredentials();
                 _previewRefreshCoordinator.CancelDisplayPreviewOperation();
                 _previewPlayback.Stop();
                 CancelFavoritePageLoad();
-                foreach (var card in FavoriteResults)
-                    ResetMetadataPlaceholder(card);
-                ApplyCachedVoice(null);
                 return;
             case nameof(VoiceId):
                 SyncFavoriteState();
@@ -896,7 +908,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         lock (_favoritesPersistenceGate)
             _isDisposed = true;
         CancelFavoritePageLoad();
-        _voiceMetadataCache.MetadataUpdated -= OnVoiceMetadataUpdated;
+        _voiceMetadataCache.MetadataUpdated -= _metadataUpdatedHandler;
         _favoriteStore.Dispose();
         _creditRefreshCoordinator.InvalidateStartupCreditRefresh();
         PropertyChanged -= OnPropertyChanged;

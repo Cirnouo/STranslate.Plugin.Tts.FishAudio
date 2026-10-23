@@ -31,9 +31,9 @@ internal static class VoiceCredentialScopeSuite
             foreach (var action in queued.ToArray()) action();
             AssertEqual(false, cache.TryGet(Id, out _, scopeB), "A's captured cache scope cannot populate B's cache partition");
             AssertEqual(false, view.ByIdResults.Single().HasMetadata, "Queued A events must recheck accepted credentials before UI publication");
-            AssertEqual(Id, view.CachedVoiceId, "Removing account metadata must preserve selected identity");
-            AssertEqual(Id, view.CachedVoiceTitle, "A selected voice without metadata displays its ID, not Random voice");
-            AssertEqual(null, view.CachedVoiceSampleUrl, "ID-only selection cannot retain A's sample URL");
+            AssertEqual(Id, view.CachedVoiceId, "Accepted key edits preserve selected identity");
+            AssertEqual("Private A", view.CachedVoiceTitle, "Queued old-account events cannot replace retained selected metadata");
+            AssertEqual(null, view.CachedVoiceSampleUrl, "Queued old-account events cannot add a sample to the retained snapshot");
         }
         finally { SettingsViewModel.UiThreadInvokerOverride = null; }
     }
@@ -48,6 +48,7 @@ internal static class VoiceCredentialScopeSuite
             var context = CreateContext(settings: settings, httpService: service);
             var runtime = SettingsStore.Load(context, DateTimeOffset.UtcNow, out var lease);
             using var view = new SettingsViewModel(context, runtime, null, null, settingsWriteLease: lease);
+            var credentialIdentity = runtime.CredentialIdentity;
             if (retired) SettingsStore.Retire(runtime, lease);
             else ((ContextProxy)(object)context).SaveSettings = _ => throw new IOException("Synthetic save failure");
             try { view.ApiKey = "rejected-account"; }
@@ -55,6 +56,7 @@ internal static class VoiceCredentialScopeSuite
             AssertEqual("accepted-account", runtime.ApiKey, "Rejected key persistence must preserve accepted settings");
             AssertEqual("accepted-account", view.ApiKey, "Rejected key persistence must restore the visible draft");
             AssertEqual("Accepted voice", view.CachedVoiceTitle, "Rejected key edits cannot clear accepted metadata");
+            AssertEqual(true, ReferenceEquals(credentialIdentity, runtime.CredentialIdentity), "Failed or retired key saves cannot change publication identity");
             await view.SearchVoicesCommand.ExecuteAsync(null);
             AssertEqual("Bearer accepted-account", AssertHeaders(http.LastGetOptions, "Accepted metadata request")["Authorization"], "Metadata must derive credentials from accepted settings");
         }
@@ -96,6 +98,7 @@ internal static class VoiceCredentialScopeSuite
     internal static async Task ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync()
     {
         using var network = OverrideNetworkAvailability(true);
+        foreach (var earlierSubscriber in new[] { false, true })
         foreach (var favorite in new[] { false, true })
         {
             var cache = new VoiceMetadataCache();
@@ -104,19 +107,26 @@ internal static class VoiceCredentialScopeSuite
             var (service, http) = TestHttpServiceProxy.Create();
             http.GetResponseJson = "{\"_id\":\"" + Id + "\",\"title\":\"Refreshed A\",\"samples\":[{\"audio\":\"https://platform.r2.fish.audio/a.mp3\"}]}";
             var player = new TestPreviewAudioPlayer();
-            using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings, null, null,
-                previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
             var card = new VoiceSearchItem { Id = Id, Title = "Favorite A", SampleAudioUrl = PreviewSuite.CreateExpiredPreviewUrl("favorite-a.mp3") };
+            SettingsViewModel? view = null;
+            string? cardAtKeyChange = null;
+            Action<string, VoiceMetadata> changeKey = (_, _) =>
+            {
+                view!.ApiKey = "preview-b";
+                view.ApiKey = "preview-a";
+                cardAtKeyChange = System.Text.Json.JsonSerializer.Serialize(card);
+            };
+            if (earlierSubscriber) cache.MetadataUpdated += changeKey;
+            using var ownedView = view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings, null, null,
+                previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
             view.FavoriteResults = [card];
-            cache.MetadataUpdated += (_, _) => view.ApiKey = "preview-b";
+            if (!earlierSubscriber) cache.MetadataUpdated += changeKey;
             if (favorite) await view.ToggleSearchItemPreviewCommand.ExecuteAsync(card);
             else await view.ToggleDisplayPreviewCommand.ExecuteAsync(null);
-            AssertEqual("preview-b", settings.ApiKey, "The cache event must reach the reentrant accepted-key edit");
-            AssertEqual(false, card.HasMetadata, "An old preview continuation cannot refill B's retained favorite placeholder");
-            AssertEqual(Id, card.Title, "Old preview title must not overwrite the reset favorite ID");
-            AssertEqual(null, card.SampleAudioUrl, "Old preview sample must not restore after key change");
-            AssertEqual(null, settings.CachedVoice, "Old selected preview must not persist A metadata under B");
-            AssertEqual(Id, view.CachedVoiceTitle, "Selected voice remains an ID-only B projection");
+            AssertEqual("preview-a", settings.ApiKey, "The cache event must reach both reentrant accepted-key edits");
+            AssertEqual(cardAtKeyChange, System.Text.Json.JsonSerializer.Serialize(card), "An old preview continuation cannot modify the card after the accepted-key boundary");
+            AssertEqual("Selected A", settings.CachedVoice?.Title, "Old selected preview cannot overwrite the retained snapshot under B");
+            AssertEqual("Selected A", view.CachedVoiceTitle, "Selected display survives the key edit without late preview publication");
             AssertEqual(0, player.PlayCallCount, "An invalidated credential preview cannot start playback");
         }
     }
@@ -132,7 +142,7 @@ internal static class VoiceCredentialScopeSuite
             view.ApplyRefreshedCachedVoice(Id, new() { Title = "Late startup A", SampleAudioUrl = "https://platform.r2.fish.audio/a.mp3" }, "startup-a");
             view.ApiKey = "startup-b";
             foreach (var action in queued.ToArray()) action();
-            AssertEqual(Id, view.CachedVoiceTitle, "Deferred startup UI publication must reject replaced credentials");
+            AssertEqual("Old", view.CachedVoiceTitle, "Deferred startup UI publication must reject replaced credentials while retaining the existing display");
             AssertEqual(null, view.CachedVoiceSampleUrl, "Deferred startup UI publication cannot restore an old sample");
         }
         finally { SettingsViewModel.UiThreadInvokerOverride = null; }

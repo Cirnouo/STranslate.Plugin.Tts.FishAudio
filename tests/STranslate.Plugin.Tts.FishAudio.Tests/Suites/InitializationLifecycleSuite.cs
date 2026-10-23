@@ -601,29 +601,38 @@ internal static class InitializationLifecycleSuite
     internal static async Task StartupMetadataRejectsChangedCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(true);
-        var settings = new Settings { ApiKey = "first-startup-account", VoiceId = "fedcba9876543210fedcba9876543210" };
-        var (service, http) = TestHttpServiceProxy.Create();
-        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (url, _, _) =>
+        foreach (var returnToOriginal in new[] { false, true })
         {
-            if (url == FishAudioClock.TimeApiUrl) return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
-            started.TrySetResult();
-            return response.Task;
-        };
-        Settings? runtime = null;
-        using var plugin = new Main((context, candidate, lease, cycle) =>
-        {
-            runtime = candidate;
-            return new SettingsViewModel(context, candidate, null, null, startupCreditRefreshCycle: cycle, settingsWriteLease: lease);
-        });
-        plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        var view = plugin.GetOrCreateSettingsViewModel();
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        view.ApiKey = "next-startup-account";
-        response.SetResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Late private voice\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-        AssertEqual(null, runtime!.CachedVoice, "Startup cannot persist metadata captured under a replaced key");
+            var settings = new Settings { ApiKey = "first-startup-account", VoiceId = "fedcba9876543210fedcba9876543210",
+                CachedVoice = new() { Title = "Retained startup snapshot" } };
+            var (service, http) = TestHttpServiceProxy.Create();
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            http.GetAsyncHandler = (url, _, _) =>
+            {
+                if (url == FishAudioClock.TimeApiUrl) return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+                started.TrySetResult();
+                return response.Task;
+            };
+            Settings? runtime = null;
+            using var plugin = new Main((context, candidate, lease, cycle) =>
+            {
+                runtime = candidate;
+                return new SettingsViewModel(context, candidate, null, null, startupCreditRefreshCycle: cycle, settingsWriteLease: lease);
+            });
+            var context = CreateContext(settings: settings, httpService: service);
+            plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            var view = plugin.GetOrCreateSettingsViewModel();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            view.ApiKey = "next-startup-account";
+            if (returnToOriginal) view.ApiKey = "first-startup-account";
+            var saves = ((ContextProxy)(object)context).SaveCount;
+            response.SetResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Late private voice\"}");
+            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            AssertEqual("Retained startup snapshot", runtime!.CachedVoice?.Title, "Startup cannot overwrite retained metadata captured under a replaced credential identity, including A to B to A");
+            AssertEqual("Retained startup snapshot", view.CachedVoiceTitle, "Late startup metadata cannot alter the preserved selected display");
+            AssertEqual(saves, ((ContextProxy)(object)context).SaveCount, "Late startup metadata cannot write storage after any accepted credential change");
+        }
     }
 
     internal static async Task StartupVoiceUiApplyRechecksExpectedVoiceIdAsync()

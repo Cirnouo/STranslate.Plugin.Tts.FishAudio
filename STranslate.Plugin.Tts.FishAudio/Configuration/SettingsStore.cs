@@ -158,7 +158,9 @@ public static class SettingsStore
                 Copy(updatedSettings, storageSettings);
                 SaveCore(context, updatedSettings);
                 storageSettings.NeedsCanonicalSave = updatedSettings.NeedsCanonicalSave;
-                Copy(updatedSettings, settings);
+                Copy(updatedSettings, settings, publishCredentialChange: true);
+                lock (storageSettings)
+                    storageSettings.CredentialIdentity = updatedSettings.CredentialIdentity;
             }
             catch
             {
@@ -248,18 +250,24 @@ public static class SettingsStore
             return Clone(settings);
     }
 
-    private static void Copy(Settings source, Settings target)
+    private static void Copy(Settings source, Settings target, bool publishCredentialChange = false)
     {
         // Publishing a complete runtime copy and capturing it use the same short
         // object-local lock, never a host callback or the global persistence gate.
         lock (target)
+        {
+            if (publishCredentialChange)
+                source.CredentialIdentity = string.Equals(source.ApiKey, target.ApiKey, StringComparison.Ordinal)
+                    ? target.CredentialIdentity : new object();
             CopyCore(source, target);
+        }
     }
 
     private static void CopyCore(Settings source, Settings target)
     {
         target.SchemaVersion = source.SchemaVersion;
         target.ApiKey = source.ApiKey;
+        target.CredentialIdentity = source.CredentialIdentity;
         target.VoiceId = source.VoiceId;
         target.SelectedModel = source.SelectedModel;
         target.Speed = source.Speed;

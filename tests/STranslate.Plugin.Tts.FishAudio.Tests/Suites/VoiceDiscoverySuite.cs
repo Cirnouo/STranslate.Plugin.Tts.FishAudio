@@ -46,7 +46,7 @@ internal static class VoiceDiscoverySuite
         }
     }
 
-    internal static async Task CredentialChangesInvalidateMetadataAndPendingSearchAsync()
+    internal static async Task CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync()
     {
         var settings = new Settings { ApiKey = "first-account" };
         var (service, http) = TestHttpServiceProxy.Create();
@@ -60,8 +60,8 @@ internal static class VoiceDiscoverySuite
         var calls = http.GetCallCount;
         view.ApiKey = "second-account";
         AssertEqual(id, settings.VoiceId, "Key edits retain selected voice identity");
-        AssertEqual(null, settings.CachedVoice, "Key edits remove saved metadata from the prior account");
-        AssertEqual(0, view.ByIdResults.Count, "Changing credentials must remove retained detail cards");
+        AssertEqual("Private voice", settings.CachedVoice?.Title, "Key edits retain the selected display snapshot");
+        AssertEqual("Private voice", view.ByIdResults.Single().Title, "Changing credentials retains the inspected detail card");
         await view.SubmitVoiceIdCommand.ExecuteAsync(null);
         AssertEqual(calls + 1, http.GetCallCount, "The new account must not reuse the old metadata cache");
         AssertEqual("Bearer second-account", AssertHeaders(http.LastGetOptions, "New credential headers")["Authorization"], "New lookup uses new credentials");

@@ -25,7 +25,7 @@ After updating, check your saved model, audio format and networking settings. Ke
 
 Search, lookup by ID and previews work without an API Key. Synthesis and credit queries require a usable key. The plugin accepts legacy 32-character lowercase hexadecimal keys and newer `sk-fish-` keys followed by 43 permitted characters. Passing the local shape check does not establish authentication or sufficient credits.
 
-Without a configured key, voice list/detail requests use `dummy`; once configured, they use the entered key, including Favorites loading, startup voice refresh and preview-link recovery. A rejected key is not retried with `dummy`. Sample and cover downloads carry no key. Changing the key cancels old queries and clears retained voice display metadata while preserving the selected Voice ID and favorite IDs. The shared in-memory metadata cache isolates entries by credential; another credential's entries are not reused.
+Without a configured key, voice list/detail requests use `dummy`; once configured, they use the entered key, including Favorites loading, startup voice refresh and preview-link recovery. A rejected key is not retried with `dummy`. Sample and cover downloads carry no key. Changing the key cancels old queries while retaining displayed Search/By-ID results, Favorites and selected voice information; subsequent lookups use the new key. The shared in-memory metadata cache isolates entries by credential; another credential's entries are not reused.
 
 The interface follows STranslate's language automatically: Simplified Chinese, Traditional Chinese, English, Japanese or Korean. There is no separate plugin language selector. Interface language and the language of text being read are independent; consult official model language support.
 

@@ -25,7 +25,7 @@ internal static class FavoriteVoicesSuite
             await view.PendingFavoriteMetadataTask;
             AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(key) ? "dummy" : key)}", AssertHeaders(http.LastGetOptions, "Favorite detail headers")["Authorization"], "Favorite metadata uses configured credentials or blank fallback");
             view.ApiKey = "next-favorite-account";
-            AssertEqual(false, view.FavoriteResults.Single().HasMetadata, "Key edits clear retained favorite metadata but keep its ID");
+        AssertEqual(true, view.FavoriteResults.Single().HasMetadata, "Key edits preserve already displayed favorite metadata");
             var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             http.GetAsyncHandler = (_, _, _) => pending.Task;
             view.SwitchToFavoritesCommand.Execute(null);

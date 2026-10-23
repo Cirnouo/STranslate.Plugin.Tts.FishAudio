@@ -346,16 +346,17 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     internal void InvalidateCredentials()
     {
         Interlocked.Increment(ref _searchOperationId);
-        var cancellation = _searchCancellationTokenSource;
+        Interlocked.Increment(ref _voiceIdOperationId);
+        var searchCancellation = _searchCancellationTokenSource;
+        var voiceIdCancellation = _voiceIdCancellationTokenSource;
         _searchCancellationTokenSource = null;
-        cancellation?.Cancel();
+        _voiceIdCancellationTokenSource = null;
+        // Retain displayed results and the committed navigation state. Later explicit
+        // requests capture the accepted key and use its separate metadata-cache scope.
         _setSearching(false);
-        InvalidateVoiceIdInput();
-        _setSearchResults([]);
-        _setHasSearched(false);
-        _pagination = VoiceSearchPagination.Initial;
-        _setSearchPagination(_pagination);
-        _setPageInput("1");
+        _setSubmittingVoiceId(false);
+        searchCancellation?.Cancel();
+        voiceIdCancellation?.Cancel();
     }
 
     internal void InvalidateOperations()
