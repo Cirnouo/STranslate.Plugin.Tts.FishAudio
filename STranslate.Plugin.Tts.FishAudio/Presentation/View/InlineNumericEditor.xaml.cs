@@ -26,13 +26,25 @@ public partial class InlineNumericEditor : UserControl
     public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
     internal bool IsEditing { get; private set; }
     private readonly NumericWheelAdjustment _wheel = new();
+    internal TimeProvider WheelTimeProvider { set => _wheel.TimeProvider = value; }
+    private bool _observingDisplayTemplate;
+    private readonly System.ComponentModel.DependencyPropertyDescriptor _displayTemplate =
+        System.ComponentModel.DependencyPropertyDescriptor.FromProperty(Control.TemplateProperty, typeof(Button));
 
     public InlineNumericEditor()
     {
         InitializeComponent();
         DataObject.AddPastingHandler(EditorBox, EditorBox_Pasting);
+        DisplayButton.Loaded += (_, _) => { ObserveDisplayTemplate(); RestartDisplayHover(); };
+        DisplayButton.Unloaded += (_, _) =>
+        {
+            _wheel.EndHover();
+            if (!_observingDisplayTemplate) return;
+            _displayTemplate.RemoveValueChanged(DisplayButton, DisplayTemplateChanged);
+            _observingDisplayTemplate = false;
+        };
         RefreshDisplay();
-        Unloaded += (_, _) => { _wheel.Reset(); EndEdit(commit: false); };
+        Unloaded += (_, _) => { EndEdit(commit: false); _wheel.EndHover(); };
     }
 
     private static void OnValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
@@ -60,7 +72,7 @@ public partial class InlineNumericEditor : UserControl
     private void DisplayButton_Click(object sender, RoutedEventArgs args)
     {
         if (IsEditing) return;
-        _wheel.Reset();
+        _wheel.EndHover();
         EditorBox.Text = DisplayButton.Content?.ToString() ?? "";
         IsEditing = true;
         DisplayButton.Visibility = Visibility.Collapsed;
@@ -73,12 +85,32 @@ public partial class InlineNumericEditor : UserControl
 
     private void DisplayButton_PreviewMouseWheel(object sender, MouseWheelEventArgs args)
     {
-        if (IsEditing || args.Delta == 0) return;
+        if (IsEditing || args.Delta == 0 || !_wheel.IsHoverReady) return;
         args.Handled = true;
         SetCurrentValue(ValueProperty, _wheel.Adjust(Value, Minimum, Maximum, DecimalPlaces, args.Delta));
     }
 
-    private void DisplayButton_MouseLeave(object sender, MouseEventArgs args) => _wheel.Reset();
+    private void ObserveDisplayTemplate()
+    {
+        if (_observingDisplayTemplate) return;
+        _displayTemplate.AddValueChanged(DisplayButton, DisplayTemplateChanged);
+        _observingDisplayTemplate = true;
+    }
+
+    private void DisplayTemplateChanged(object? sender, EventArgs args) => RestartDisplayHover();
+
+    private void RestartDisplayHover() =>
+        _wheel.RestartHover(DisplayButton is { IsMouseOver: true, IsVisible: true } && !IsEditing);
+
+    private void DisplayButton_MouseEnter(object sender, MouseEventArgs args) => _wheel.BeginHover();
+    private void DisplayButton_MouseLeave(object sender, MouseEventArgs args) => _wheel.EndHover();
+
+    public override void OnApplyTemplate()
+    {
+        _wheel.EndHover();
+        base.OnApplyTemplate();
+        RestartDisplayHover();
+    }
 
     internal void CommitEdit() => EndEdit(commit: true);
 
@@ -91,6 +123,7 @@ public partial class InlineNumericEditor : UserControl
         EditorBox.Visibility = Visibility.Collapsed;
         DisplayButton.Visibility = Visibility.Visible;
         RefreshDisplay();
+        RestartDisplayHover();
     }
 
     private bool TryParseDraft(string text, out double value)

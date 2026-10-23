@@ -12,7 +12,7 @@
                 Padding="0" BorderThickness="0" Background="Transparent" BorderBrush="Transparent"
                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 Foreground="{DynamicResource TextFillColorPrimaryBrush}" Click="DisplayButton_Click"
-                PreviewMouseWheel="DisplayButton_PreviewMouseWheel" MouseLeave="DisplayButton_MouseLeave">
+                PreviewMouseWheel="DisplayButton_PreviewMouseWheel" MouseEnter="DisplayButton_MouseEnter" MouseLeave="DisplayButton_MouseLeave">
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="4">
