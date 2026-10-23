@@ -6,7 +6,7 @@ The migration baseline was v1.1.2 behavior with SDK 1.0.15. Current Unreleased c
 
 Each migrated record retains its original rationale, identifies successors and states the current interpretation when applicable. Historical file/type names in the recorded rationale are provenance; the implementation-basis links and current specs locate today's owners. No record establishes a successful live TTS or physical audio measurement.
 
-See the [glossary](../glossary.md), [current behavior specs](../specs/README.md) and [documentation policy](../policies/documentation.md). The [legacy index](../DESIGN_DECISIONS.md) retains old heading anchors.
+See the [glossary](../glossary.md), [current behavior specs](../specs/README.md) and [documentation policy](../policies/documentation.md).
 
 ## Replacement relationships
 

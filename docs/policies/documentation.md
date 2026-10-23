@@ -16,7 +16,6 @@ The table defines the current layout. The root README is Simplified Chinese; loc
 | `docs/adr/current/` | Decisions with active constraints, including explicitly scoped amendments. |
 | `docs/adr/history/` | Superseded decisions and the rationale needed to understand them. |
 | `docs/adr/README.md` | Complete numbered ADR register and replacement relationships. |
-| `docs/DESIGN_DECISIONS.md` | Legacy forwarding index with preserved old anchors. |
 | `docs/references/` | English provider API/SDK contracts, source versions and representation limits, separate from implemented product behavior. |
 | `docs/evidences/` | Dated, sanitized reproducible observations and raw evidence; original request/response language is preserved. |
 | `docs/assets/` | Documentation icons and future media assets, with stable relative references when files move. |
@@ -25,7 +24,7 @@ Keep facts in their appropriate home. A provider may support a format or endpoin
 
 Every specification states its implementation baseline and links to relevant code and tests. Update it in the code change that changes behavior. Use explicit labels for current behavior, limitations, proposals and observed provider behavior; do not mix them in one normative paragraph.
 
-ADR numbers are permanent and never reused. Move a fully replaced record to history, preserve its rationale and add successor links in both directions. A partially amended decision stays current with a precise current interpretation; identify which date, format rule or ownership detail was replaced. Do not classify decisions solely by their age. The legacy index carries links rather than duplicate decision bodies.
+ADR numbers are permanent and never reused. Move a fully replaced record to history, preserve its rationale and add successor links in both directions. A partially amended decision stays current with a precise current interpretation; identify which date, format rule or ownership detail was replaced. Do not classify decisions solely by their age.
 
 Maintain relative repository links and preserve existing inbound anchors when moving a document. Cite immutable upstream source revisions or versioned packages for precise API assertions. Keep personal machine paths, temporary output, credentials, full signed media URLs, local tool state and conversation transcripts out of reusable documents.
 
