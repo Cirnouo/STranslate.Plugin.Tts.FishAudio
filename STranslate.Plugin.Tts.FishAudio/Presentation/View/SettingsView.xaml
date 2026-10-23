@@ -84,6 +84,21 @@
             </Setter>
         </Style>
         <Style x:Key="ResultToggleStyle" TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+            <!-- WPF displays FocusVisualStyle for keyboard navigation only.
+                 IsKeyboardFocused also remains true after a mouse click. -->
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style TargetType="Control">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Control">
+                                    <Border BorderBrush="{DynamicResource TextFillColorPrimaryBrush}" BorderThickness="1" CornerRadius="4" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
             <Setter Property="Width" Value="32" />
             <Setter Property="Height" Value="28" />
             <Setter Property="MinWidth" Value="0" />
@@ -109,9 +124,6 @@
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter TargetName="ToggleBorder" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

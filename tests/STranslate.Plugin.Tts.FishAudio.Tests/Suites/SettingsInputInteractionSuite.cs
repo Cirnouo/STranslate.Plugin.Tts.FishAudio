@@ -21,7 +21,10 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is not (null or "tabs" or "baseline" or "wheel" or "favorites" or "copy")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is not (null or "tabs" or "baseline" or "wheel" or "favorites" or "copy" or "fold-focus")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is null or "fold-focus")
+            foreach (var dark in new[] { false, true })
+                await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark));
         if (group is null or "tabs")
             foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
                 foreach (var dark in new[] { false, true })
@@ -39,6 +42,68 @@ internal static class SettingsInputInteractionSuite
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         Layout(view, 600);
         return view;
+    }
+
+    private static void FoldControlsSeparateFocusFromPointerState(bool dark)
+    {
+        var settings = new Settings();
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        vm.HasSearched = true;
+        vm.FavoriteCount = 1;
+        var view = CreateView(vm);
+        view.Resources["AccentFillColorDefaultBrush"] = new SolidColorBrush(Color.FromRgb(0x00, 0x67, 0xC0));
+        view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+        ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+        foreach (var width in new[] { 400d, 600d })
+        foreach (var name in new[] { "VoiceSearchResultsToggle", "FavoriteVoicesToggle" })
+        {
+            vm.BrowseMode = name == "VoiceSearchResultsToggle" ? VoiceBrowseMode.Search : VoiceBrowseMode.Favorites;
+            var toggle = (ToggleButton)view.FindName(name);
+            Layout(view, width);
+            var border = (Border)toggle.Template.FindName("ToggleBorder", toggle);
+            var size = toggle.RenderSize;
+            var padding = border.Padding;
+            AssertEqual(true, toggle.Focusable && KeyboardNavigation.GetIsTabStop(toggle), "Fold controls must remain reachable by keyboard");
+            AssertNotNull(toggle.FocusVisualStyle, "Fold controls must retain a keyboard navigation focus adorner");
+            var focus = new Control { Style = toggle.FocusVisualStyle, Width = 32, Height = 28, Resources = view.Resources };
+            Layout(focus, 32);
+            var bitmap = new RenderTargetBitmap(32, 28, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(focus);
+            var pixels = new byte[32 * 28 * 4];
+            bitmap.CopyPixels(pixels, 32 * 4, 0);
+            var visibleFocusInk = Enumerable.Range(0, 32 * 28).Any(index =>
+                pixels[index * 4 + 3] > 128 && (dark
+                    ? pixels[index * 4] + pixels[index * 4 + 1] + pixels[index * 4 + 2] > 384
+                    : pixels[index * 4] + pixels[index * 4 + 1] + pixels[index * 4 + 2] < 384));
+            AssertEqual(true, visibleFocusInk, "The keyboard focus adorner must render a contrasting outline in both themes");
+            // A mouse click also grants IsKeyboardFocused. Reproduce that native
+            // state without stealing OS focus or driving a user's desktop.
+            SetNativeState(toggle, "IsKeyboardFocusedPropertyKey", true, typeof(UIElement));
+            foreach (var expanded in new[] { false, true })
+            {
+                toggle.IsChecked = expanded;
+                foreach (var (over, pressed, resource) in new[]
+                {
+                    (true, false, "SubtleFillColorSecondaryBrush"),
+                    (true, true, "SubtleFillColorTertiaryBrush"),
+                    (false, false, ""),
+                })
+                {
+                    SetNativeState(toggle, "IsMouseOverPropertyKey", over, typeof(UIElement));
+                    SetNativeState(toggle, "IsPressedPropertyKey", pressed, typeof(ButtonBase));
+                    Layout(view, width);
+                    AssertEqual(0, RenderFill(border.BorderBrush).A, "Mouse-acquired focus must not leave an accent border after the pointer moves away");
+                    if (resource.Length > 0)
+                        AssertEqual(view.FindResource(resource), border.Background, "Fold hover and pressed feedback must retain their theme brush");
+                    else
+                        AssertEqual(0, RenderFill(border.Background).A, "A focused fold control must return to its resting surface");
+                    AssertEqual(size, toggle.RenderSize, "Focus and pointer states must not resize fold controls");
+                    AssertEqual(padding, border.Padding, "Focus and pointer states must not move fold content");
+                    AssertEqual(toggle.ToolTip, AutomationProperties.GetName(toggle), "Expanded and collapsed names must match their localized tooltip");
+                }
+            }
+            SetNativeState(toggle, "IsKeyboardFocusedPropertyKey", false, typeof(UIElement));
+        }
     }
 
     private static void SelectedTabsKeepAccentThroughNativeStates(string language, bool dark)
