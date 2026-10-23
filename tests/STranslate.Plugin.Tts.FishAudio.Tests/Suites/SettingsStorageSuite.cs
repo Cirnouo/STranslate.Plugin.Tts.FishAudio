@@ -259,7 +259,7 @@ internal static class SettingsStorageSuite
             Latency = "turbo",
             Mp3Bitrate = 320,
             Speed = 1.075,
-            Volume = -0.05,
+            Volume = -0.055,
             Temperature = 0.724,
             TopP = 0.726,
         };
@@ -269,7 +269,7 @@ internal static class SettingsStorageSuite
         AssertEqual(Settings.DefaultLatency, settings.Latency, "Invalid latency should normalize to default");
         AssertEqual(Settings.DefaultMp3Bitrate, settings.Mp3Bitrate, "Invalid bitrate should normalize to default");
         AssertEqual(1.08, settings.Speed, "Speed midpoint should round to displayed hundredths away from zero");
-        AssertEqual(-0.1, settings.Volume, "Negative volume midpoint should snap to 0.1 away from zero");
+        AssertEqual(-0.06, settings.Volume, "Negative volume midpoint must round to displayed hundredths away from zero");
         AssertEqual(0.72, settings.Temperature, "Temperature should retain displayed hundredths independently of slider ticks");
         AssertEqual(0.73, settings.TopP, "TopP should retain displayed hundredths independently of slider ticks");
 

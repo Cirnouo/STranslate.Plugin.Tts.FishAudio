@@ -1084,7 +1084,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.TopSpeed_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" Width="270" Height="32" HorizontalAlignment="Left">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="2.0" Minimum="0.5" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding Speed}" />
+                <view:NumericSlider Width="180" IsSnapToTickEnabled="True" Maximum="2.0" Minimum="0.5" TickFrequency="0.01" SmallChange="0.01" AutoToolTipPrecision="2" AutoToolTipPlacement="TopLeft" Value="{Binding Speed}" />
                 <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Speed}" Minimum="0.5" Maximum="2" DecimalPlaces="2"
                                           Label="{DynamicResource STranslate_Plugin_Tts_FishAudio_Speed}" />
             </StackPanel>
@@ -1095,8 +1095,8 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Speaker2_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" Width="270" Height="32" HorizontalAlignment="Left">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="10" Minimum="-10" TickFrequency="0.1" AutoToolTipPrecision="1" Value="{Binding Volume}" />
-                <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Volume}" Minimum="-10" Maximum="10" DecimalPlaces="1" Unit="dB"
+                <view:NumericSlider Width="180" IsSnapToTickEnabled="True" Maximum="10" Minimum="-10" TickFrequency="0.01" SmallChange="0.01" AutoToolTipPrecision="2" AutoToolTipPlacement="TopLeft" Value="{Binding Volume}" />
+                <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Volume}" Minimum="-10" Maximum="10" DecimalPlaces="2" Unit="dB"
                                           Label="{DynamicResource STranslate_Plugin_Tts_FishAudio_Volume}" />
             </StackPanel>
         </ui:SettingsCard>
@@ -1124,7 +1124,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Sparkle_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" Width="270" Height="32" HorizontalAlignment="Left">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding Temperature}" />
+                <view:NumericSlider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0" TickFrequency="0.01" SmallChange="0.01" AutoToolTipPrecision="2" AutoToolTipPlacement="TopLeft" Value="{Binding Temperature}" />
                 <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Temperature}" Minimum="0" Maximum="1" DecimalPlaces="2"
                                           Label="{DynamicResource STranslate_Plugin_Tts_FishAudio_Temperature}" />
             </StackPanel>
@@ -1138,7 +1138,7 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Diversity_24_Regular}" />
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" Width="270" Height="32" HorizontalAlignment="Left">
-                <Slider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0.05" TickFrequency="0.05" AutoToolTipPrecision="2" Value="{Binding TopP}" />
+                <view:NumericSlider Width="180" IsSnapToTickEnabled="True" Maximum="1.0" Minimum="0.05" TickFrequency="0.01" SmallChange="0.01" AutoToolTipPrecision="2" AutoToolTipPlacement="TopLeft" Value="{Binding TopP}" />
                 <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding TopP}" Minimum="0.05" Maximum="1" DecimalPlaces="2"
                                           Label="{DynamicResource STranslate_Plugin_Tts_FishAudio_TopP}" />
             </StackPanel>

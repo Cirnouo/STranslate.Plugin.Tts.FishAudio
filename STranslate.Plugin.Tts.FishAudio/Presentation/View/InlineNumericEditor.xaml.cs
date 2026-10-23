@@ -25,14 +25,14 @@ public partial class InlineNumericEditor : UserControl
     public string Unit { get => (string)GetValue(UnitProperty); set => SetValue(UnitProperty, value); }
     public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
     internal bool IsEditing { get; private set; }
-    private int _wheelRemainder;
+    private readonly NumericWheelAdjustment _wheel = new();
 
     public InlineNumericEditor()
     {
         InitializeComponent();
         DataObject.AddPastingHandler(EditorBox, EditorBox_Pasting);
         RefreshDisplay();
-        Unloaded += (_, _) => { _wheelRemainder = 0; EndEdit(commit: false); };
+        Unloaded += (_, _) => { _wheel.Reset(); EndEdit(commit: false); };
     }
 
     private static void OnValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
@@ -60,7 +60,7 @@ public partial class InlineNumericEditor : UserControl
     private void DisplayButton_Click(object sender, RoutedEventArgs args)
     {
         if (IsEditing) return;
-        _wheelRemainder = 0;
+        _wheel.Reset();
         EditorBox.Text = DisplayButton.Content?.ToString() ?? "";
         IsEditing = true;
         DisplayButton.Visibility = Visibility.Collapsed;
@@ -75,22 +75,10 @@ public partial class InlineNumericEditor : UserControl
     {
         if (IsEditing || args.Delta == 0) return;
         args.Handled = true;
-        if ((args.Delta > 0 && Value >= Maximum) || (args.Delta < 0 && Value <= Minimum))
-        {
-            _wheelRemainder = 0;
-            return;
-        }
-        var accumulated = (long)_wheelRemainder + args.Delta;
-        var notches = accumulated / Mouse.MouseWheelDeltaForOneLine;
-        _wheelRemainder = (int)(accumulated % Mouse.MouseWheelDeltaForOneLine);
-        if (notches == 0) return;
-        var step = DecimalPlaces == 1 ? .1m : .01m;
-        var next = Math.Clamp((decimal)Value + notches * step, (decimal)Minimum, (decimal)Maximum);
-        if (next == (decimal)Minimum || next == (decimal)Maximum) _wheelRemainder = 0;
-        SetCurrentValue(ValueProperty, (double)Math.Round(next, DecimalPlaces, MidpointRounding.AwayFromZero));
+        SetCurrentValue(ValueProperty, _wheel.Adjust(Value, Minimum, Maximum, DecimalPlaces, args.Delta));
     }
 
-    private void DisplayButton_MouseLeave(object sender, MouseEventArgs args) => _wheelRemainder = 0;
+    private void DisplayButton_MouseLeave(object sender, MouseEventArgs args) => _wheel.Reset();
 
     internal void CommitEdit() => EndEdit(commit: true);
 
