@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem with the Fish Audio plugin.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For suspected security vulnerabilities, use [private reporting](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/security/advisories/new), not this public form. See the [security policy](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/blob/main/SECURITY.md).
+  - type: checkboxes
+    id: preparation
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and checked the user guide.
+          required: true
+        - label: I removed API keys, Authorization headers, proxy credentials, account identifiers, private text and full signed URLs from this report and its attachments.
+          required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include plugin, STranslate and Windows versions. Add the model, audio format, output device and relevant network conditions when applicable. Do not paste a settings file.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected operation
+      options:
+        - Installation or configuration
+        - Voice search or favorites
+        - Preview
+        - Formal speech
+        - Other or uncertain
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Use safe test data and the smallest reproduction you have. Do not make additional paid requests solely to fill out this form.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Optional error text, logs or screenshots that help explain the problem. Inspect every attachment for secrets and private information.
