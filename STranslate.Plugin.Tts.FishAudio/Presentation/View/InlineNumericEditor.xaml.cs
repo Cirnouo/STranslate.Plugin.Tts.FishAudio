@@ -102,7 +102,7 @@ public partial class InlineNumericEditor : UserControl
                 && !double.TryParse(text, style, CultureInfo.InvariantCulture, out value))
             || !double.IsFinite(value) || value < Minimum || value > Maximum)
             return false;
-        value = (double)Math.Round((decimal)value, DecimalPlaces, MidpointRounding.AwayFromZero);
+        value = Configuration.SettingsNormalizer.RoundToPrecision((decimal)value, DecimalPlaces);
         return true;
     }
 

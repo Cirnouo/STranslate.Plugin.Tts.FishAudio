@@ -110,8 +110,19 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial double Speed { get; set; }
 
-    [ObservableProperty]
-    public partial double Volume { get; set; }
+    private double _volume;
+    public double Volume
+    {
+        get => _volume;
+        set
+        {
+            // Canonicalize before SetProperty's equality check and auto-save;
+            // WPF may publish its uncoerced value through a two-way binding.
+            var canonical = value is > -.005 and < .005
+                && SettingsNormalizer.RoundToPrecision((decimal)value, 2) == 0d ? 0d : value;
+            SetProperty(ref _volume, canonical);
+        }
+    }
 
     [ObservableProperty]
     public partial bool NormalizeLoudness { get; set; }

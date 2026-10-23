@@ -15,6 +15,23 @@ public sealed class NumericSlider : Slider
     private Thumb? _draggingThumb;
     private object? _originalThumbToolTip;
 
+    static NumericSlider()
+    {
+        var nativeCoerce = ValueProperty.GetMetadata(typeof(Slider)).CoerceValueCallback;
+        ValueProperty.OverrideMetadata(typeof(NumericSlider), new FrameworkPropertyMetadata(0d, null, (sender, value) =>
+        {
+            var bounded = nativeCoerce?.Invoke(sender, value) ?? value;
+            var slider = (NumericSlider)sender;
+            // Canonicalize before WPF compares dependency-property values:
+            // +0 and -0 compare equal. All four controls use hundredths even
+            // before their XAML tooltip properties have been initialized.
+            return slider.Minimum <= 0 && slider.Maximum >= 0
+                && bounded is double numeric && numeric is > -.005 and < .005
+                && Configuration.SettingsNormalizer.RoundToPrecision((decimal)numeric, 2) == 0d
+                ? 0d : bounded;
+        }));
+    }
+
     public NumericSlider()
     {
         // Implicit styles use the exact runtime type; retain the host's Slider
