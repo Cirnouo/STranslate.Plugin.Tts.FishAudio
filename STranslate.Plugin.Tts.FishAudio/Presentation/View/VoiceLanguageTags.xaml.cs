@@ -118,6 +118,17 @@ public partial class VoiceLanguageTags : UserControl
         InvalidateMeasure();
     }
 
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs args)
+    {
+        base.OnPropertyChanged(args);
+        if (args.Property == FontFamilyProperty || args.Property == FontWeightProperty
+            || args.Property == FontStyleProperty || args.Property == FontStretchProperty)
+        {
+            _naturalWidths = null;
+            InvalidateMeasure();
+        }
+    }
+
     private void FitInlinePrefix(double width)
     {
         if (_naturalWidths is null)

@@ -40,6 +40,7 @@ internal static class VoiceLanguageTagsSuite
         await RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow);
         await RunOnStaThreadAsync(ResponsivePrefixFitsOneRowWithoutACap);
         await RunOnStaThreadAsync(FitThresholdsAndLongLabels);
+        await RunOnStaThreadAsync(InheritedFontMetricsRefreshTheSameInstance);
         await RunOnStaThreadAsync(PopupOwnsInputAndLifetime);
         await RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup);
         foreach (var dark in new[] { false, true })
@@ -304,17 +305,75 @@ internal static class VoiceLanguageTagsSuite
         }
     }
 
+    private static void InheritedFontMetricsRefreshTheSameInstance()
+    {
+        const double width = 300;
+        var tags = new VoiceLanguageTags { Languages = Codes };
+        var host = new ContentControl { Content = tags, FontFamily = new FontFamily("Arial") };
+        AddResources(host, "en");
+        SettingsLayoutSuite.Layout(host, width);
+        foreach (var change in new Action<Control>[]
+        {
+            control => control.FontFamily = new FontFamily("Consolas"),
+            control => control.FontWeight = FontWeights.Bold,
+            control => control.FontStyle = FontStyles.Italic,
+            control => control.FontStretch = FontStretches.Expanded,
+            control => { control.FontFamily = new FontFamily("Arial"); control.FontWeight = FontWeights.Normal; control.FontStyle = FontStyles.Normal; control.FontStretch = FontStretches.Normal; },
+        })
+        {
+            change(host);
+            SettingsLayoutSuite.Layout(host, width);
+            var fresh = new VoiceLanguageTags { Languages = Codes };
+            var reference = new ContentControl { Content = fresh, FontFamily = host.FontFamily, FontWeight = host.FontWeight,
+                FontStyle = host.FontStyle, FontStretch = host.FontStretch };
+            AddResources(reference, "en");
+            SettingsLayoutSuite.Layout(reference, width);
+            var visible = InlinePills(tags);
+            var expected = InlinePills(fresh);
+            AssertEqual(expected.Length, visible.Length, "Inherited font changes recompute the maximal prefix on the same instance");
+            for (var index = 0; index < visible.Length; index++)
+            {
+                AssertEqual(expected[index].Width, visible[index].Width, "Inherited font metrics refresh each natural capsule width");
+                if (visible.Length <= 1) continue;
+                var text = Visuals(visible[index]).OfType<TextBlock>().Single();
+                var full = new TextBlock { Text = text.Text, FontSize = text.FontSize, FontFamily = text.FontFamily,
+                    FontWeight = text.FontWeight, FontStyle = text.FontStyle, FontStretch = text.FontStretch };
+                typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [full, VisualTreeHelper.GetDpi(text)]);
+                full.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                AssertEqual(true, text.ActualWidth + .01 >= full.DesiredSize.Width, "Changed-font multi-pill names retain their full text viewport");
+                AssertEqual(false, HasEllipsis(VisualTreeHelper.GetDrawing(text)), "Changed-font fitting prefixes draw every full name");
+            }
+            var suffix = ((Panel)tags.FindName("PopupPanel")).Children.OfType<ContentControl>().Select(item => ((VoiceLanguageLabel)item.Content).Code);
+            AssertEnumerableEqual(Codes, visible.Select(item => ((VoiceLanguageLabel)item.Content).Code).Concat(suffix), "Font changes preserve exact inline/popup union and provider order");
+        }
+    }
+
+    private static ContentControl[] InlinePills(VoiceLanguageTags tags) => ((Panel)tags.FindName("InlinePanel")).Children
+        .OfType<ContentControl>().Where(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible).ToArray();
+
     private static void RenderCompiledCards(double width, double dpi, bool dark, string? proofDirectory)
     {
-        var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Nora · Warm and Gentle Audiobook Narration Voice", Description = "Soft and clear, for audiobooks and everyday conversation.", AuthorName = "Nora Studio", Languages = Codes } };
+        var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Nora · Warm and Gentle Audiobook Narration Voice", Description = "Soft and clear, for audiobooks and everyday conversation.", AuthorName = "Nora Studio", Languages = Codes, SampleAudioUrl = "https://example.invalid/sample.mp3" } };
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-        var card = new VoiceSearchItem { Id = AppliedKey, Title = settings.CachedVoice.Title!, Description = settings.CachedVoice.Description!, AuthorName = "Nora Studio", Languages = Codes, SampleAudioUrl = "https://example.invalid/sample.mp3" };
+        var localCover = FindRepoFile("STranslate.Plugin.Tts.FishAudio/Assets/Flags/language.png");
+        vm.CachedVoiceCoverUrl = localCover;
+        var card = new VoiceSearchItem { Id = AppliedKey, Title = settings.CachedVoice.Title!, Description = settings.CachedVoice.Description!, AuthorName = "Nora Studio", Languages = Codes, CoverUrl = localCover, SampleAudioUrl = "https://example.invalid/sample.mp3" };
         vm.SearchResults = [card]; vm.ByIdResults = [card]; vm.FavoriteResults = [card]; vm.HasSearched = true;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         view.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
         view.SetResourceReference(Control.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+        var desktopScale = VisualTreeHelper.GetDpi(new DrawingVisual());
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio rendered language Popup fixture")
+        {
+            Width = (int)Math.Ceiling(width * desktopScale.DpiScaleX), Height = (int)Math.Ceiling(1200 * desktopScale.DpiScaleY),
+            WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120,
+        });
+        // Keep the entire render phase under a finite native client allocation.
+        // Inherited-font invalidations can otherwise let an unhosted root receive
+        // an automatic infinite-width layout during the dispatcher drain.
+        source.RootVisual = view;
         typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
@@ -322,6 +381,16 @@ internal static class VoiceLanguageTagsSuite
             SettingsLayoutSuite.Layout(view, width);
             var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
             AssertEqual(2, tags.Length, "Selected and every active browsing mode use the same language-row contract");
+            var selectedTags = tags.Single(item => ReferenceEquals(item.DataContext, vm));
+            var selectedCard = CardBorder(selectedTags);
+            AssertEqual(48d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Width == 48).ActualWidth,
+                "Selected-card fixture reserves the real cover geometry using a local resource");
+            AssertEqual(36d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
+                "Selected-card fixture reserves the visible preview action without playing audio");
+            AssertEqual(true, selectedTags.ActualWidth <= selectedCard.ActualWidth - 201,
+                "The fully populated selected-card content allocation accounts for cover, actions, border and padding");
+            if (width == 320) AssertEqual(1, InlinePills(selectedTags).Length,
+                $"At the minimum width the fully populated selected card retains one named pill and exact remaining access ({mode}/{dpi}/{dark}: width={selectedTags.ActualWidth}, panel={((Panel)selectedTags.FindName("InlinePanel")).ActualWidth}, valid={selectedTags.IsMeasureValid}, rootValid={view.IsMeasureValid})");
             foreach (var tag in tags)
             {
                 var inline = (Panel)tag.FindName("InlinePanel");
@@ -360,9 +429,6 @@ internal static class VoiceLanguageTagsSuite
             }
         }
         vm.BrowseMode = VoiceBrowseMode.ById;
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio rendered language Popup fixture")
-        { Width = (int)width, Height = 1200, WindowStyle = 0, PositionX = 120, PositionY = 120 });
-        source.RootVisual = view;
         SettingsLayoutSuite.Layout(view, width);
         var nativeTags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
         nativeTags[0].OpenPopup();
