@@ -31,7 +31,7 @@ public static class SettingsNormalizer
 
         changed |= NormalizeRangeAndPrecision(settings.Speed, 0.5, 2.0, 2, Settings.DefaultSpeed, out var speed);
         settings.Speed = speed;
-        changed |= NormalizeRangeAndPrecision(settings.Volume, -10.0, 10.0, 1, Settings.DefaultVolume, out var volume);
+        changed |= NormalizeRangeAndPrecision(settings.Volume, -10.0, 10.0, 2, Settings.DefaultVolume, out var volume);
         settings.Volume = volume;
         changed |= NormalizeRangeAndPrecision(settings.Temperature, 0.0, 1.0, 2, Settings.DefaultTemperature, out var temperature);
         settings.Temperature = temperature;

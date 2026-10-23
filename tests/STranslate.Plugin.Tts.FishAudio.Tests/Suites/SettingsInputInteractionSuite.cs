@@ -1,12 +1,17 @@
 using System.Reflection;
+using System.Diagnostics;
+using System.Globalization;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using iNKORE.UI.WPF.Modern;
 using iNKORE.UI.WPF.Modern.Controls;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -21,16 +26,22 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is not (null or "tabs" or "baseline" or "wheel" or "favorites" or "copy" or "fold-focus")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus")) throw new ArgumentException("Unknown settings input test group", nameof(group));
         if (group is null or "fold-focus")
             foreach (var dark in new[] { false, true })
                 await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark));
+        if (group is "precision") SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity();
         if (group is null or "tabs")
             foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
                 foreach (var dark in new[] { false, true })
                     await RunOnStaThreadAsync(() => SelectedTabsKeepAccentThroughNativeStates(language, dark));
         if (group is null or "baseline") await RunOnStaThreadAsync(ByIdUsesUnchangedSearchTextGeometry);
         if (group is null or "wheel") await RunOnStaThreadAsync(RestingNumericWheelEditsWithoutScrolling);
+        if (group is null or "wheel") await RunOnStaThreadAsync(SliderWheelEditsWithoutScrolling);
+        if (group is null or "wheel" or "tooltip")
+            foreach (var culture in new[] { "en-US", "de-DE" })
+                await RunOnStaThreadAsync(() => SliderWheelUsesNativeValueToolTipAsync(culture));
+        if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
         if (group is null or "copy")
             foreach (var language in new[] { "en", "zh-cn", "zh-tw", "ja", "ko" })
@@ -226,7 +237,7 @@ internal static class SettingsInputInteractionSuite
             var input = (TextBox)editor.FindName("EditorBox");
             var unit = (TextBlock)editor.FindName("UnitText");
             var slider = Logical(view).OfType<Slider>().Single(slider => BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path == property);
-            var step = property == "Volume" ? .1 : .01;
+            var step = .01;
             var initial = editor.Value;
             foreach (var width in new[] { 400d, 600d })
             {
@@ -296,6 +307,302 @@ internal static class SettingsInputInteractionSuite
                 AssertEqual(bubbles + 1, pageWheels, "Ordinary card space must retain the page bubble path");
             }
         }
+    }
+
+    // Missing preview ownership, using drag ticks, losing bindings or sharing
+    // partial notches across hover sessions each breaks an observable assertion.
+    private static void SliderWheelEditsWithoutScrolling()
+    {
+        var settings = new Settings { SelectedModel = "s2-pro", Speed = 1, Volume = 0, Temperature = .7, TopP = .7 };
+        var context = CreateContext(settings: settings);
+        var storage = (ContextProxy)(object)context;
+        string? saved = null;
+        storage.SaveSettings = value => saved = JsonSerializer.Serialize(value);
+        using var vm = new SettingsViewModel(context, settings);
+        var view = CreateView(vm);
+        var page = new Border { Child = view };
+        var pageWheels = 0;
+        page.MouseWheel += (_, _) => pageWheels++;
+        foreach (var (property, initial, increased, decreased, minimum, maximum, belowMaximum, aboveMinimum, tick) in new[]
+        {
+            ("Speed", 1d, 1.01, .99, .5, 2d, 1.99, .51, .01),
+            ("Volume", 0d, .01, -.01, -10d, 10d, 9.99, -9.99, .01),
+            ("Temperature", .7, .71, .69, 0d, 1d, .99, .01, .01),
+            ("TopP", .7, .71, .69, .05, 1d, .99, .06, .01),
+        })
+        {
+            var editor = Logical(view).OfType<InlineNumericEditor>().Single(item => BindingOperations.GetBinding(item, InlineNumericEditor.ValueProperty)?.Path.Path == property);
+            var slider = Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == property);
+            var display = (Button)editor.FindName("DisplayButton");
+            var input = (TextBox)editor.FindName("EditorBox");
+            void AssertValue(double expected)
+            {
+                AssertEqual(expected, slider.Value, $"{property}: wheel must preserve precise slider values");
+                AssertEqual(expected, editor.Value, $"{property}: wheel must synchronize the numeric editor");
+                AssertEqual(expected, (double)typeof(SettingsViewModel).GetProperty(property)!.GetValue(vm)!, $"{property}: wheel must update the bound VM");
+                AssertEqual(expected, (double)typeof(Settings).GetProperty(property)!.GetValue(settings)!, $"{property}: wheel must update settings");
+            }
+            foreach (var width in new[] { 400d, 600d })
+            {
+                Layout(view, width);
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                Slider.IncreaseSmall.Execute(null, slider);
+                AssertEqual(true, Math.Abs(slider.Value - increased) < .000001, "Native small-increment keyboard actions must agree with the fine slider step");
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                // Route from real template descendants, as a physical track or
+                // thumb hit does, rather than invoking a private handler.
+                var sources = new UIElement[] { track, Visuals(track.Thumb).OfType<UIElement>().Last(), Visuals(track.DecreaseRepeatButton).OfType<UIElement>().Last(), Visuals(track.IncreaseRepeatButton).OfType<UIElement>().Last() };
+                foreach (var source in sources)
+                {
+                    slider.SetCurrentValue(Slider.ValueProperty, initial);
+                    var saves = storage.SaveCount;
+                    var bubbles = pageWheels;
+                    AssertEqual(true, Wheel(source, 120).Handled, "Slider thumb/track preview must consume the wheel");
+                    AssertValue(increased);
+                    AssertEqual(saves + 1, storage.SaveCount, "An effective slider notch must persist exactly once");
+                    AssertEqual(bubbles, pageWheels, "Slider wheel ownership must prevent page scrolling");
+                    var loaded = JsonSerializer.Deserialize<Settings>(saved!)!;
+                    SettingsStore.Load(CreateContext(settings: loaded), new DateTimeOffset(2026, 10, 23, 0, 0, 0, TimeSpan.Zero));
+                    using (var reopened = new SettingsViewModel(CreateContext(settings: loaded), loaded))
+                        AssertEqual(increased, (double)typeof(SettingsViewModel).GetProperty(property)!.GetValue(reopened)!, "Off-tick slider wheel values must survive save and reload");
+                    Wheel(source, -240);
+                    AssertValue(decreased);
+                    Wheel(source, 120);
+                    AssertValue(initial);
+                    saves = storage.SaveCount;
+                    AssertEqual(true, Wheel(source, 60).Handled, "Incomplete slider notches must also prevent page scrolling");
+                    AssertValue(initial);
+                    AssertEqual(saves, storage.SaveCount, "A half notch must not persist an unchanged value");
+                    Wheel(source, 60);
+                    AssertValue(increased);
+                    Wheel(source, -120);
+                    Wheel(source, 60);
+                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                    Wheel(source, 60);
+                    AssertValue(initial);
+                    Wheel(source, -60);
+                    AssertValue(initial);
+                    Wheel(source, -120);
+                    AssertValue(decreased);
+                    slider.SetCurrentValue(Slider.ValueProperty, maximum);
+                    saves = storage.SaveCount;
+                    AssertEqual(true, Wheel(source, 240).Handled, "Upper-bound slider notches must remain consumed");
+                    Wheel(source, 60);
+                    AssertValue(maximum);
+                    AssertEqual(saves, storage.SaveCount, "Outward upper-bound input must not save");
+                    Wheel(source, -120);
+                    AssertValue(belowMaximum);
+                    Wheel(source, int.MaxValue);
+                    AssertValue(maximum);
+                    slider.SetCurrentValue(Slider.ValueProperty, minimum);
+                    saves = storage.SaveCount;
+                    AssertEqual(true, Wheel(source, -240).Handled, "Lower-bound slider notches must remain consumed");
+                    Wheel(source, -60);
+                    AssertValue(minimum);
+                    AssertEqual(saves, storage.SaveCount, "Outward lower-bound input must not save");
+                    Wheel(source, 120);
+                    AssertValue(aboveMinimum);
+                    Wheel(source, int.MinValue);
+                    AssertValue(minimum);
+                    AssertEqual(bubbles, pageWheels, "Neither partial notches nor bounds may leak page movement");
+                }
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                input.Text = minimum.ToString(System.Globalization.CultureInfo.CurrentCulture);
+                var draftSaves = storage.SaveCount;
+                Wheel(track.Thumb, 120);
+                AssertValue(increased);
+                AssertEqual(Visibility.Collapsed, input.Visibility, "A slider wheel value supersedes an active stale draft");
+                editor.CommitEdit();
+                AssertValue(increased);
+                AssertEqual(draftSaves + 1, storage.SaveCount, "Later editor blur must not overwrite or re-save the slider value");
+                foreach (var bound in new[] { minimum, maximum })
+                {
+                    slider.SetCurrentValue(Slider.ValueProperty, bound);
+                    display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    input.Text = initial.ToString(System.Globalization.CultureInfo.CurrentCulture);
+                    var draft = input.Text;
+                    draftSaves = storage.SaveCount;
+                    var bubbles = pageWheels;
+                    AssertEqual(true, Wheel(track.Thumb, bound == minimum ? -120 : 120).Handled, "An unchanged slider bound still owns the wheel during editing");
+                    AssertValue(bound);
+                    AssertEqual(Visibility.Visible, input.Visibility, "An unchanged bound creates no newer value to supersede an active draft");
+                    AssertEqual(draft, input.Text, "An outward bound gesture must retain the draft until its ordinary completion");
+                    AssertEqual(draftSaves, storage.SaveCount, "An unchanged bound must not save the draft");
+                    AssertEqual(bubbles, pageWheels, "An unchanged bound must not scroll even during editing");
+                    editor.CommitEdit();
+                    AssertValue(initial);
+                    AssertEqual(draftSaves + 1, storage.SaveCount, "The still-current valid draft retains its normal blur commit");
+                }
+                Wheel(display, 60);
+                Wheel(track.Thumb, 60);
+                AssertValue(initial);
+                Wheel(track.IncreaseRepeatButton, 60);
+                AssertValue(increased);
+                display.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                slider.SetCurrentValue(Slider.ValueProperty, initial);
+                Wheel(display, 60);
+                AssertValue(initial);
+                display.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                AssertEqual(tick, slider.TickFrequency, "Wheel and dragging must share hundredth steps");
+                AssertEqual(true, slider.IsSnapToTickEnabled, "Dragging must retain snapping");
+            }
+        }
+    }
+
+    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture)
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            var settings = new Settings { SelectedModel = "s2-pro", Speed = 1, Volume = -9.37, Temperature = .7, TopP = .7 };
+            var context = CreateContext(settings: settings);
+            var storage = (ContextProxy)(object)context;
+            using var vm = new SettingsViewModel(context, settings);
+            var view = CreateView(vm);
+            using var source = new HwndSource(new HwndSourceParameters("Fish Audio native tooltip fixture") { Width = 600, Height = 800, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+            source.RootVisual = view;
+            Layout(view, 600);
+            foreach (var slider in Logical(view).OfType<Slider>().ToArray())
+            {
+                var nativePeer = new Slider();
+                var row = (Panel)slider.Parent;
+                row.Children.Add(nativePeer);
+                Layout(view, 600);
+                AssertEqual(nativePeer.Template, slider.Template, "The wheel-capable slider must retain the same resolved native theme template as Slider");
+                row.Children.Remove(nativePeer);
+                Layout(view, 600);
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                var thumb = track.Thumb;
+                var initial = slider.Value;
+                var originalToolTip = new object();
+                thumb.ToolTip = originalToolTip;
+                var saves = storage.SaveCount;
+                Wheel(track.DecreaseRepeatButton, 60);
+                var toolTip = thumb.ToolTip as ToolTip;
+                AssertNotNull(toolTip, "Wheel over the actual slider must show its native current-value tooltip");
+                AssertEqual(true, toolTip!.IsOpen, "A partial notch must display the current value immediately");
+                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "The tooltip must use two decimal places in the display culture");
+                AssertEqual(thumb, toolTip.PlacementTarget, "The value bubble must remain anchored to the actual thumb");
+                AssertEqual(PlacementMode.Custom, toolTip.Placement, "Wheel must use the same native placement as dragging");
+                AssertEqual(saves, storage.SaveCount, "Showing a value bubble must not save or re-snap a partial notch");
+                Wheel(thumb, 60);
+                AssertEqual((double)((decimal)initial + .01m), slider.Value, "Updating the bubble must not apply an additional native drag step");
+                AssertEqual(saves + 1, storage.SaveCount, "Refreshing the native tooltip must not duplicate a wheel save");
+                AssertEqual(slider.Value.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An open bubble must track the current wheel value");
+                Layout(view, 600);
+                var wheelTemplate = toolTip.Template;
+                var wheelPlacement = toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point());
+                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                AssertEqual(toolTip, thumb.ToolTip, "Real dragging must reuse the native bubble rather than open a second one");
+                AssertEqual(wheelTemplate, toolTip.Template, "Dragging and wheel input must have exactly the same resolved appearance");
+                AssertEqual(wheelPlacement[0].Point, toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point())[0].Point, "The native wheel and drag popup anchors must agree");
+                Wheel(thumb, -120);
+                AssertEqual(initial, slider.Value, "Wheel during a real drag must adjust only once");
+                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Wheel during dragging must refresh the current native bubble");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                AssertEqual(true, toolTip.IsOpen, "Leaving while dragging must retain native drag ownership");
+                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                AssertEqual(false, toolTip.IsOpen, "Completing a real drag must close its native bubble");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Wheel-to-drag transition must preserve the original thumb tooltip");
+                var distance = .01 / (slider.Maximum - slider.Minimum) * (track.ActualWidth - thumb.ActualWidth);
+                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                AssertEqual(true, Math.Abs(slider.Value - (double)((decimal)initial + .01m)) < .000001, "Actual native thumb dragging must allow one-hundredth increments");
+                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                Wheel(thumb, -120);
+                AssertEqual(true, toolTip.IsOpen, "Wheel after dragging must reopen the same native bubble");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                AssertEqual(false, toolTip.IsOpen, "Leaving the slider must close a wheel-owned bubble immediately");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Leaving must restore the original thumb tooltip");
+                Wheel(thumb, 120);
+                slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+                AssertEqual(false, toolTip.IsOpen, "Unloading must close an open wheel bubble");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Unloading must restore the original tooltip");
+                slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
+                saves = storage.SaveCount;
+                Wheel(track.IncreaseRepeatButton, 120);
+                AssertEqual(slider.Maximum.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An outward bound gesture must show the current bounded value");
+                AssertEqual(saves, storage.SaveCount, "Showing a bound tooltip must not save");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+            }
+            var idleSlider = Logical(view).OfType<Slider>().First();
+            var idleThumb = ((Track)idleSlider.Template.FindName("PART_Track", idleSlider)).Thumb;
+            var idleOriginal = idleThumb.ToolTip;
+            Wheel(idleThumb, 120);
+            var idleToolTip = (ToolTip)idleThumb.ToolTip;
+            AssertEqual(true, idleToolTip.IsOpen, "The idle lifecycle starts with a visible value bubble");
+            var idle = Stopwatch.StartNew();
+            while (idleToolTip.IsOpen && idle.Elapsed < TimeSpan.FromSeconds(2))
+                await Task.Delay(20);
+            AssertEqual(false, idleToolTip.IsOpen, "A wheel-owned bubble must disappear after a bounded idle interval");
+            AssertEqual(true, idle.Elapsed >= TimeSpan.FromMilliseconds(700), "The bubble must remain visible long enough to read the wheel value");
+            AssertEqual(idleOriginal, idleThumb.ToolTip, "Idle close must restore the original tooltip");
+        }
+        finally { CultureInfo.CurrentCulture = previousCulture; }
+    }
+
+    private static async Task SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync()
+    {
+        var settings = new Settings { SelectedModel = "s2-pro", Speed = 1 };
+        var context = CreateContext(settings: settings);
+        var storage = (ContextProxy)(object)context;
+        using var vm = new SettingsViewModel(context, settings);
+        var view = CreateView(vm);
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio tooltip ownership fixture") { Width = 600, Height = 800, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        source.RootVisual = view;
+        Layout(view, 600);
+        var slider = Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == "Speed");
+        var track = (Track)slider.Template.FindName("PART_Track", slider);
+        var originalToolTip = new object();
+        track.Thumb.ToolTip = originalToolTip;
+        var dragStarts = 0;
+        var dragCompletions = 0;
+        slider.AddHandler(Thumb.DragStartedEvent, new DragStartedEventHandler((_, _) => dragStarts++));
+        slider.AddHandler(Thumb.DragCompletedEvent, new DragCompletedEventHandler((_, _) => dragCompletions++));
+        var saves = storage.SaveCount;
+        Wheel(track.Thumb, 120);
+        var toolTip = (ToolTip)track.Thumb.ToolTip;
+        await Task.Delay(650);
+        AssertEqual(true, toolTip.IsOpen, "The native wheel bubble must survive dispatcher processing");
+        Wheel(track.IncreaseRepeatButton, 120);
+        await Task.Delay(650);
+        AssertEqual(true, toolTip.IsOpen, "A repeated wheel gesture must restart the idle deadline without a queued native close");
+        AssertEqual(1.02.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Repeated wheel input must keep the current native bubble content");
+        AssertEqual(0, dragStarts, "Wheel feedback must not raise synthetic routed drag events");
+        AssertEqual(0, dragCompletions, "Wheel refresh must not publish synthetic drag completions");
+        AssertEqual(saves + 2, storage.SaveCount, "Repeated bubble refresh must save exactly once per effective notch");
+        track.Thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+        Wheel(track.Thumb, -120);
+        await Task.Delay(1100);
+        AssertEqual(true, toolTip.IsOpen, "A wheel idle deadline must not close a bubble owned by an active drag");
+        AssertEqual(1, dragStarts, "Only the actual routed drag start must reach drag listeners");
+        track.Thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+        AssertEqual(false, toolTip.IsOpen, "Actual drag completion retains ownership of closing its bubble");
+        AssertEqual(originalToolTip, track.Thumb.ToolTip, "Drag completion after wheel refresh must restore the original tooltip");
+        AssertEqual(1, dragCompletions, "Only the actual routed completion must reach drag listeners");
+        Wheel(track.Thumb, 60);
+        var beforeTemplate = slider.Value;
+        var nativeTemplate = slider.Template;
+        slider.Template = null;
+        slider.ApplyTemplate();
+        slider.Template = nativeTemplate;
+        Layout(view, 600);
+        AssertEqual(false, toolTip.IsOpen, "Reapplying a template must close the old thumb's bubble");
+        AssertEqual(originalToolTip, track.Thumb.ToolTip, "The removed thumb must regain its original tooltip");
+        var replacement = (Track)slider.Template.FindName("PART_Track", slider);
+        AssertEqual(false, ReferenceEquals(track.Thumb, replacement.Thumb), "The template lifecycle fixture must create a replacement thumb");
+        Wheel(replacement.Thumb, 60);
+        AssertEqual(beforeTemplate, slider.Value, "A replacement template must discard the old hover's half notch");
+        var replacementToolTip = (ToolTip)replacement.Thumb.ToolTip;
+        AssertEqual(replacement.Thumb, replacementToolTip.PlacementTarget, "The native popup must follow the replacement thumb");
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        AssertEqual(true, replacementToolTip.IsOpen, "The replacement thumb's popup must remain open through native dispatcher work");
+        slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+        AssertEqual(false, replacementToolTip.IsOpen, "The replacement thumb's popup must close on unload");
     }
 
     private static void EmptyFavoritesStayVisibleOutsideCollapsedResults()

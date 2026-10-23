@@ -172,16 +172,6 @@ internal static class PresentationContractSuite
         }
     }
 
-    internal static void SettingsViewSliderTooltipsMatchDisplayedPrecision()
-    {
-        var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Presentation", "View", "SettingsView.xaml")));
-
-        AssertSliderTooltipPrecision(xaml, "Speed", "2");
-        AssertSliderTooltipPrecision(xaml, "Volume", "1");
-        AssertSliderTooltipPrecision(xaml, "Temperature", "2");
-        AssertSliderTooltipPrecision(xaml, "TopP", "2");
-    }
-
     internal static void LanguageResourcesDescribeContextConditioningConsistency()
     {
         var expectedDescriptions = new Dictionary<string, string>
@@ -232,19 +222,4 @@ internal static class PresentationContractSuite
         AssertEqual(false, koreanReadme.Contains("컨텍스트 연결", StringComparison.Ordinal), "Korean README should not use a different context conditioning label");
     }
 
-    internal static void AssertSliderTooltipPrecision(string xaml, string bindingName, string expectedPrecision)
-    {
-        var bindingIndex = xaml.IndexOf($"Value=\"{{Binding {bindingName}}}\"", StringComparison.Ordinal);
-        AssertEqual(true, bindingIndex >= 0, $"{bindingName} slider should bind to {bindingName}");
-
-        var sliderStart = xaml.LastIndexOf("<Slider", bindingIndex, StringComparison.Ordinal);
-        var sliderEnd = xaml.IndexOf("/>", bindingIndex, StringComparison.Ordinal);
-        AssertEqual(true, sliderStart >= 0 && sliderEnd > bindingIndex, $"{bindingName} binding should be inside a Slider element");
-
-        var sliderXaml = xaml.Substring(sliderStart, sliderEnd - sliderStart);
-        AssertEqual(
-            true,
-            sliderXaml.Contains($"AutoToolTipPrecision=\"{expectedPrecision}\"", StringComparison.Ordinal),
-            $"{bindingName} slider tooltip should show {expectedPrecision} decimal places");
-    }
 }

@@ -44,17 +44,17 @@ internal static class InlineNumericEditorSuite
             AssertEqual(4, editors.Count, "All four actual settings sliders must have a reusable clickable numeric editor");
             foreach (var (property, draft, expected, minimum, maximum, step, format) in new[]
             {
-                ("Speed", "0.83", 0.83, 0.5, 2d, 0.05, "F2"),
-                ("Volume", "-9.3", -9.3, -10d, 10d, 0.1, "F1"),
-                ("Temperature", "0.82", 0.82, 0d, 1d, 0.05, "F2"),
-                ("TopP", "0.82", 0.82, 0.05, 1d, 0.05, "F2"),
+                ("Speed", "0.83", 0.83, 0.5, 2d, 0.01, "F2"),
+                ("Volume", "-9.37", -9.37, -10d, 10d, 0.01, "F2"),
+                ("Temperature", "0.82", 0.82, 0d, 1d, 0.01, "F2"),
+                ("TopP", "0.82", 0.82, 0.05, 1d, 0.01, "F2"),
             })
             {
                 var editor = editors.Single(e => BindingOperations.GetBinding(e, ValueProperty(e))?.Path.Path == property);
                 var display = Descendants(editor).OfType<Button>().Single();
                 var input = Descendants(editor).OfType<TextBox>().Single();
                 var slider = Descendants(view).OfType<Slider>().Single(s => BindingOperations.GetBinding(s, Slider.ValueProperty)?.Path.Path == property);
-                AssertEqual(step, slider.TickFrequency, "Manual precision must preserve the existing drag tick interval");
+                AssertEqual(step, slider.TickFrequency, "Dragging and direct entry must both allow hundredths");
                 AssertEqual(true, slider.IsSnapToTickEnabled, "Slider dragging must continue to snap to ticks");
                 foreach (var width in new[] { 400d, 600d })
                 {
@@ -67,7 +67,7 @@ internal static class InlineNumericEditorSuite
                     if (width == 400)
                     {
                         var savesBeforeGrammar = storage.SaveCount;
-                        AssertInputGrammar(input, minimum, format == "F1" ? 1 : 2);
+                        AssertInputGrammar(input, minimum, 2);
                         AssertEqual(savesBeforeGrammar, storage.SaveCount, "Partial typing, rejection, and paste must remain isolated drafts until commit");
                     }
                     layout(view, width);
@@ -85,7 +85,7 @@ internal static class InlineNumericEditorSuite
                         focusedThemeState.Setters.Add(new Setter(nativeSetter.Property, nativeSetter.Value));
                         input.Style = focusedThemeState;
                         layout(view, width);
-                        AssertNumericViewport(input, "1.23", "-10.0");
+                        AssertNumericViewport(input, "1.23", "-10.00");
                         input.Style = previousStyle;
                         layout(view, width);
                     }
@@ -172,7 +172,7 @@ internal static class InlineNumericEditorSuite
             SettingsStore.Load(CreateContext(settings: loaded), new DateTimeOffset(2026, 10, 21, 0, 0, 0, TimeSpan.Zero));
             using var reopened = new SettingsViewModel(CreateContext(settings: loaded), loaded);
             AssertEqual(0.83, reopened.Speed, "Manual speed must survive persisted settings reload");
-            AssertEqual(-9.3, reopened.Volume, "Manual volume must survive persisted settings reload");
+            AssertEqual(-9.37, reopened.Volume, "Manual hundredth-decibel volume must survive persisted settings reload");
             AssertEqual(0.82, reopened.Temperature, "Manual temperature must survive persisted settings reload");
             AssertEqual(0.82, reopened.TopP, "Manual TopP must reopen as 0.82 rather than 0.80");
             var reopenedView = createView(reopened);
@@ -189,7 +189,7 @@ internal static class InlineNumericEditorSuite
     {
         var original = input.Text;
         var separator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-        AssertEqual(minimum < 0 ? 5 : 4, input.MaxLength, "Numeric input capacity must match the complete signed fixed-precision format");
+        AssertEqual(minimum < 0 ? 6 : 4, input.MaxLength, "Numeric input capacity must match the complete signed fixed-precision format");
         try
         {
             input.Text = "0";
@@ -234,8 +234,8 @@ internal static class InlineNumericEditorSuite
             }
             input.Text = "0.8";
             input.SelectAll();
-            Paste(input, minimum < 0 ? "-10.0" : "0.82", accepted: true);
-            AssertEqual(minimum < 0 ? "-10.0" : "0.82", input.Text, "A legal full-capacity paste must replace the selection intact");
+            Paste(input, minimum < 0 ? "-10.00" : "0.82", accepted: true);
+            AssertEqual(minimum < 0 ? "-10.00" : "0.82", input.Text, "A legal full-capacity paste must replace the selection intact");
             input.SelectAll();
             Paste(input, $"0{separator}8", accepted: true);
             if (separator != ",") { input.SelectAll(); Paste(input, "0,8", accepted: false); }
