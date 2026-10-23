@@ -201,10 +201,10 @@ internal static class PresentationContractSuite
     {
         var expectedContextRows = new Dictionary<string, string>
         {
-            ["README_EN.md"] = "| Context conditioning | On | Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio. |",
-            ["README_TW.md"] = "| 上下文關聯 | 開啟 | 使用同一次合成音訊的前序片段保持聲音一致性，不會使用先前產生的其他音訊。 |",
-            ["README_JA.md"] = "| コンテキスト連携 | オン | 同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません。 |",
-            ["README_KO.md"] = "| 컨텍스트 연동 | 켜짐 | 같은 합성 오디오 안의 앞선 조각을 사용해 보이스 일관성을 유지하며, 이전에 생성한 다른 오디오는 참조하지 않습니다. |",
+            ["README_EN.md"] = "| Context Conditioning | On | Uses earlier chunks of this synthesis, not audio from previous requests. |",
+            ["README_TW.md"] = "| 上下文關聯 | 開啟 | 使用本次合成的前序片段，不引用以前產生的其他音訊。 |",
+            ["README_JA.md"] = "| コンテキスト連携 | オン | 今回の合成の前のチャンクを利用。過去の別音声は参照しません。 |",
+            ["README_KO.md"] = "| 컨텍스트 연동 | 켜짐 | 이번 합성의 앞선 조각을 사용하며 이전 요청의 다른 오디오는 참조하지 않음. |",
         };
 
         foreach (var (fileName, expectedContextRow) in expectedContextRows)
@@ -214,12 +214,13 @@ internal static class PresentationContractSuite
             AssertEqual(false, readme.Contains("s2-pro-free-promo.webp", StringComparison.Ordinal), $"{fileName} should not reference the removed README promo image");
             AssertEqual(true, readme.Contains("> [!TIP]", StringComparison.Ordinal), $"{fileName} should use the source README tip callout");
             AssertEqual(false, readme.Contains("[!NOTE]", StringComparison.Ordinal), $"{fileName} should remove the random voice note from section 2.5");
-            AssertEqual(true, readme.Contains(expectedContextRow, StringComparison.Ordinal), $"{fileName} should match the updated context conditioning row");
+            var guide = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", fileName)));
+            AssertEqual(true, guide.Contains(expectedContextRow, StringComparison.Ordinal), $"{fileName} user guide should match the updated context conditioning row");
         }
 
-        var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "README_KO.md")));
-        AssertEqual(true, koreanReadme.Contains("컨텍스트 연동", StringComparison.Ordinal), "Korean README should use the localized control name for context conditioning");
-        AssertEqual(false, koreanReadme.Contains("컨텍스트 연결", StringComparison.Ordinal), "Korean README should not use a different context conditioning label");
+        var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", "README_KO.md")));
+        AssertEqual(true, koreanReadme.Contains("컨텍스트 연동", StringComparison.Ordinal), "Korean user guide should use the localized control name for context conditioning");
+        AssertEqual(false, koreanReadme.Contains("컨텍스트 연결", StringComparison.Ordinal), "Korean user guide should not use a different context conditioning label");
     }
 
 }

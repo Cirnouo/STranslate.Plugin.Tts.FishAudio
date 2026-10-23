@@ -2,12 +2,12 @@
 
 README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources remain localized in all five locales.
 
-The table defines document roles and the target layout. Some destinations are introduced by later documentation changes; listing a destination here does not claim that it already exists. Until the user-guide/assets migration, localized user READMEs remain at `docs/README_*.md` and existing screenshots remain under `docs/images/`.
+The table defines the current layout. The root README is Simplified Chinese; localized overviews remain at `docs/README_*.md`, with same-language detailed guides under `docs/user-guide/`. Overviews retain the project icon and badges; other documentation media belongs under `docs/assets/` when needed.
 
 | Location | Purpose |
 |---|---|
 | `README.md` and `docs/user-guide/` | User entry and detailed setup/configuration guidance in five languages. |
-| `CONTRIBUTING.md` | The designated English unified developer entry when introduced; links to canonical policies/specs rather than duplicating them. |
+| `CONTRIBUTING.md` | The designated English unified developer and contribution entry; links to canonical policies/specs rather than duplicating them. |
 | `CHANGELOG.md` | Chinese user-visible net changes under Unreleased and immutable historical release sections. |
 | `docs/glossary.md` | Canonical domain terms without implementation recipes. |
 | `docs/specs/` | Current implemented behavior, ownership, compatibility and known limitations. |
