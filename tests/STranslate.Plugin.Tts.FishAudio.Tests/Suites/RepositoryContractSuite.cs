@@ -284,7 +284,9 @@ internal static class RepositoryContractSuite
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
             AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the November 30 free-model deadline");
-            AssertEqual(true, readme.Contains(cutoffDate, StringComparison.Ordinal), $"{relativePath} should identify the December 1 cutoff");
+            var guidePath = Path.Combine("docs", "user-guide", Path.GetFileName(relativePath));
+            var guide = File.ReadAllText(FindRepoFile(guidePath));
+            AssertEqual(true, guide.Contains(cutoffDate, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");
             AssertEqual(false, readme.Contains(staleFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the August 31 free-model deadline");
         }
 

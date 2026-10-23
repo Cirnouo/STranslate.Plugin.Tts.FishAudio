@@ -1,14 +1,7 @@
 <div align="center">
-  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio">
-    <img src="images/icon.svg" alt="Fish Audio TTS" width="128" height="128" />
-  </a>
-
+  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="assets/icon.svg" alt="Fish Audio TTS" width="80" height="80" /></a>
   <h1>Fish Audio TTS</h1>
-
-  <p>
-    <a href="https://fish.audio">Fish Audio</a> Text-to-Speech plugin for <a href="https://github.com/ZGGSONG/STranslate">STranslate</a>
-  </p>
-
+  <p><a href="https://fish.audio">Fish Audio</a> speech synthesis for <a href="https://github.com/ZGGSONG/STranslate">STranslate</a>.</p>
   <p>
     <img alt="License" src="https://img.shields.io/github/license/Cirnouo/STranslate.Plugin.Tts.FishAudio?style=flat-square" />
     <img alt="Release" src="https://img.shields.io/github/v/release/Cirnouo/STranslate.Plugin.Tts.FishAudio?style=flat-square" />
@@ -16,241 +9,99 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-
-  <p>
-    <a href="../README.md">简体中文</a> | <a href="README_TW.md">繁體中文</a> | <b>English</b> | <a href="README_JA.md">日本語</a> | <a href="README_KO.md">한국어</a>
-  </p>
+  <p><a href="../README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <b>English</b> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a></p>
 </div>
-
----
-
-<div align="center">
-  <img src="images/overview.png" alt="Plugin overview" width="700" />
-</div>
-
-## 1 Feature Overview
-
-- **High-quality synthesis**: Supports Fish Audio s2.1-pro-free / s2.1-pro / s2-pro / s1 synthesis models and 80+ languages
-- **Voice selection**: Search by name or enter a voice ID directly; supports preview, selection, clearing, and paginated browsing
-- **Synthesis controls**: Supports speed, volume, loudness normalization, MP3 bitrate, expressiveness, diversity, latency mode, text normalization, and context conditioning
-- **Emotion markup**: Add Fish Audio emotion markers in text, such as `[laugh]` for S2-Pro or `(happy)` for S1
-- **Voice community**: Browse public voices from the Fish Audio creator community, then quickly apply a matching voice through in-plugin search, preview, or voice ID setup
-- **Localization**: Simplified Chinese, Traditional Chinese, English, Japanese, Korean
-
-## 2 Quick Start
-
-### 2.1 Installation
-
-Installing from the STranslate plugin marketplace is recommended
-
-**STranslate Plugin Marketplace**
-
-1. Open STranslate
-2. Go to **Settings -> Plugins -> Marketplace**
-3. Search for or find **Fish Audio TTS**, then download and install it
-
-**Manual install**
-
-1. Open the [Releases](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/releases) page
-2. Download the latest `STranslate.Plugin.Tts.FishAudio.spkg`
-3. In STranslate, go to **Settings -> Plugins -> Install**
-4. Select the downloaded `.spkg` file
-
-### 2.2 Get and Set an API Key
 
 > [!TIP]
-> Register with a `.edu` email and complete student verification to receive 5 USD in credits. Entry: [Fish Audio Students](https://fish.audio/students/).
-
-Register with an email address and sign in to Fish Audio, open [Developer > API Keys](https://fish.audio/app/api-keys), click **Create new key**, then copy the key
-
-<!-- Screenshot: images/fish-audio-api-keys.png
-     Content: Fish Audio API Keys page, highlighting where to create or copy an API Key. Hide any real API Key. -->
-<div>
-  <img src="images/fish-audio-api-keys.png" alt="Fish Audio API Keys page" width="700" />
-</div>
-
-Paste it into the plugin settings **API Key** input
-
-<div>
-  <img src="images/plugin-api-key-input.png" alt="STranslate Fish Audio Plugin API Key input" width="360" />
-</div>
-
-### 2.3 Buy API Credits
+> Register with a `.edu` email and complete student verification to receive **US$5 in credits**. [Apply](https://fish.audio/students/)
 
 > [!TIP]
-> The S2.1 Pro model is free for a limited time through `2026-11-30`. Select `s2.1-pro-free` in the plugin to use it. Details: [Fish Audio S2.1 Pro: Free Text-to-Speech API for Developers](https://fish.audio/blog/s2-1-pro-free-api/)
+> S2.1 Pro is free through **2026-11-30 UTC**. Select `s2.1-pro-free` in the plugin. [Promotion details](https://fish.audio/blog/s2-1-pro-free-api/)
 
-Fish Audio TTS consumes Fish Audio API credits. You can purchase credits at [Developer > Console](https://fish.audio/app/developers/billing/)
+> [!IMPORTANT]
+> S1 retires on **December 31, 2026**. After that date, API requests using model `s1` will be served by S2.1 Pro at the same price. Switch to `s2.1-pro` before then. [Official details](https://docs.fish.audio/api-reference/endpoint/websocket/tts-live)
 
-<!-- Screenshot: images/fish-audio-billing.png
-     Content: Fish Audio Billing/Balance/Purchase Credits entry, highlighting where to buy or top up credits. -->
-<div>
-  <img src="images/fish-audio-billing.png" alt="Fish Audio API credit purchase entry" width="700" />
-</div>
+Eligibility and promotion conditions are subject to the official Fish Audio pages.
 
-### 2.4 Get a Voice
+## Features
 
-The voice determines the timbre used for the final reading.
+- **Voice discovery**: Search by name, browse pages and preview voices, look up a voice ID before applying it, and star voices to keep local favorites.
+- **Streaming speech**: Send text in segments while receiving and playing audio; long text can start before the whole synthesis finishes.
+- **Audio formats**: PCM is the default; choose MP3 and its bitrate for slower connections.
+- **Synthesis controls**: Adjust model, speed, volume, loudness normalization, expressiveness, diversity and latency mode.
+- **Account and cache**: View and refresh API credits and manage the cover-image cache shared by all voice entry points.
+- **Interface languages**: 简体中文, 繁體中文, English, 日本語 and 한국어.
 
-The Fish Audio voice community contains public voices shared by creators. You can browse and preview voices on the website by name, character, or language, then return to the plugin to search for the same voice or copy its voice ID directly. Entry: [Creative > Discover](https://fish.audio/app/discovery)
+## Installation
 
-<div>
-  <img src="images/fish-audio-voice-community.png" alt="Fish Audio voice community" width="700" />
-</div>
+### Plugin marketplace (recommended)
 
-### 2.5 Set a Voice
+1. Open STranslate and go to **Settings → Plugins → Marketplace**.
+2. Search for **Fish Audio TTS**, then download and install it.
 
-The plugin offers **Search by Name** and **Set Directly by ID**
+### Manual installation
 
-#### 2.5.1 Search by Name
+1. Download `STranslate.Plugin.Tts.FishAudio.spkg` from [Releases](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/releases).
+2. Import it through **Settings → Plugins → Install** in STranslate.
 
-Enter a voice name on the plugin's **Search** tab, then click the search icon or press `Enter`. The result list supports preview and pagination; click **Select** to apply the voice.
+## Quick start
 
-<div>
-  <img src="images/plugin-voice-search.png" alt="STranslate Fish Audio Plugin voice search" width="360" />
-</div>
+1. Enter your [Fish Audio API Key](https://fish.audio/app/api-keys) in the plugin settings.
+2. Search and preview voices, then use the tick for **Apply**; you can also query an ID with its magnifier or choose from **Favorites**. The cross clears an applied voice.
+3. Choose a synthesis model and audio format, adjust parameters as needed, then read text aloud in STranslate.
 
-#### 2.5.2 Set Directly by ID
+## User guide
 
-Open the target voice detail page in the voice community, click the more menu (`...`) in the page action area, then choose `Copy Model ID`. Fish Audio currently still uses "Model ID" for this menu item; the copied value is the voice ID required by the plugin.
+[Read the complete user guide →](user-guide/README_EN.md)
 
-<!-- Screenshot: images/fish-audio-voice-id.png
-     Content: Fish Audio voice detail page, highlighting where to copy the voice ID. Do not expose account information. -->
-<div>
-  <img src="images/fish-audio-voice-id.png" alt="Get a voice ID from a Fish Audio voice page" width="550" />
-</div>
+Detailed guidance covers installation, first setup, voice selection, every setting, PCM / MP3, networking and proxies, and troubleshooting.
 
-Return to the plugin's **By ID** tab, paste the ID, then click the confirm button. The plugin loads the voice information and applies that voice.
-
-<div>
-  <img src="images/plugin-voice-id.png" alt="STranslate Fish Audio Plugin voice ID input" width="360" />
-</div>
-
-## 3 Configuration
-
-<details>
-<summary><b>Parameter Reference</b> (click to expand)</summary>
-
-| Setting | Default | Description |
-| :-- | :--: | :-- |
-| API Key | - | Fish Audio API key, required. |
-| Voice ID | Random Voice | Search to select or enter manually. When empty, a random voice is used. |
-| Synthesis model | `s2.1-pro-free` during the free period, then `s2.1-pro` | Through 2026-11-30 UTC: `s2.1-pro-free`, `s2.1-pro`, `s2-pro`, `s1`; starting 2026-12-01 UTC, the free model is hidden. |
-| MP3 bitrate | `192 kbps` | Available values: `64`, `128`, `192`. |
-| Speed | `1.0` | Range `0.5` to `2.0`. |
-| Volume | `0 dB` | Range `-10 dB` to `+10 dB`. |
-| Loudness normalization | On | Available for `s2.1-pro-free`, `s2.1-pro`, and `s2-pro`; shown disabled for `s1`. |
-| Expressiveness | `0.7` | Range `0` to `1`. |
-| Diversity | `0.7` | Range `0` to `1`. |
-| Latency mode | Quality first | Quality first / Balanced / Low latency. |
-| Text normalization | Off | Converts numbers, unit symbols, and similar content into text that is easier to read aloud. |
-| Context conditioning | On | Uses earlier chunks from the same synthesis to maintain voice consistency; it does not reference previously generated audio. |
-
-</details>
-
-## 4 Advanced Usage
-
-### 4.1 Emotion Control
-
-Fish Audio controls emotion through inline markers in the text, with no extra API parameters required. Write the markers directly into the text to be synthesized. Common uses include changing sentence emotion, adjusting tone intensity, or inserting vocal effects such as laughter, gasps, and whispers.
-
-**S2 series models** (recommended) use square brackets and natural-language descriptions. Sentence-level emotion is usually placed at the start of a sentence, while tone or sound-effect markers can be placed where they should take effect:
-
-```text
-[angry] This is unacceptable!
-I can't believe [gasp] you actually did it [laugh]
-[whisper] This is a secret
-```
-
-**S1** uses parentheses and a fixed tag set, usually placed at the start of a sentence:
-
-```text
-(happy) The weather is great today!
-(sad)(whispering) I miss you
-```
-
-Use one main emotion per sentence when possible, and avoid stacking too many markers in very short text. For the complete tag list, composition guidance, and troubleshooting notes, see the official documentation: [Emotion Control](https://docs.fish.audio/developer-guide/core-features/emotions).
-
-### 4.2 Fine-grained Control
-
-Fine-grained control specifies the exact pronunciation of a word, character, or phrase. It is useful for names, brands, polyphonic Chinese characters, technical terms, or Japanese pitch-accent control. Wrap the target pronunciation with `<|phoneme_start|>` and `<|phoneme_end|>`, and keep normal punctuation and surrounding text outside the tags.
-
-English uses CMU Arpabet, usually replacing a single word:
-
-```text
-I am an <|phoneme_start|>EH1 N JH AH0 N IH1 R<|phoneme_end|>.
-```
-
-Chinese uses pinyin with tone numbers, one tag per syllable:
-
-```text
-我是一个<|phoneme_start|>gong1<|phoneme_end|><|phoneme_start|>cheng2<|phoneme_end|><|phoneme_start|>shi1<|phoneme_end|>。
-```
-
-Japanese uses OpenJTalk-style romanized phonemes and pitch numbers, usually wrapping a short phrase:
-
-```text
-<|phoneme_start|>ha0shi1ga0<|phoneme_end|>見えます。
-```
-
-For the full format, symbol tables, and generation tools, see the official documentation: [Fine-grained Control](https://docs.fish.audio/developer-guide/core-features/fine-grained-control), [English Phoneme Control](https://docs.fish.audio/developer-guide/core-features/fine-grained-control/english), [Chinese Phoneme Control](https://docs.fish.audio/developer-guide/core-features/fine-grained-control/chinese), [Japanese Phoneme Control](https://docs.fish.audio/developer-guide/core-features/fine-grained-control/japanese).
+[Configuration](user-guide/README_EN.md#configuration) · [Audio formats](user-guide/README_EN.md#audio-formats) · [Network and proxy](user-guide/README_EN.md#network-and-proxy) · [Troubleshooting](user-guide/README_EN.md#troubleshooting)
 
 ## FAQ
 
 **Q: Does it charge if I don't set a voice?**
 
-A: Yes. When no voice is set, Fish Audio generates audio with a random voice and still consumes API credits
+A: Charging depends on the selected synthesis model. Fish Audio uses a random voice when none is set; paid models still consume API credits, while free models follow the official promotion conditions.
 
 **Q: Does preview playback charge credits?**
 
-A: No. Preview playback uses the voice's public audio and does not call the TTS API, so it also works without a configured API Key
+A: No. The plugin plays the public audio supplied with the voice and does not call TTS, so preview also works without an API Key.
 
 **Q: Why doesn't the balance change immediately after playback?**
 
-A: Fish Audio's balance deduction may be delayed. Refreshing the balance immediately after playback may briefly show the old balance
+A: Fish Audio deductions may be delayed. Refreshing immediately after playback may briefly show the previous balance.
 
-**Q: Do I need to configure an API Key before voice search?**
+**Q: Do I need an API Key before searching for voices?**
 
-A: Voice search, voice lookup by ID, and preview playback can all be used without a configured API Key. Real synthesis still requires a correctly formatted, usable API Key and available balance
+A: Voice search, lookup by ID and preview work without an API Key. Synthesis requires a valid API Key; paid models also require sufficient API credits.
 
-**Q: Will clearing the cache affect the selected voice?**
+**Q: Will clearing the cache affect my selected voice?**
 
-A: No. Clearing the cache only removes voice cover image cache files. The voice ID and selected voice information remain intact, and the cover is reloaded the next time it is shown
+A: No. It only removes cached voice cover images. Your voice ID and selected voice information remain; covers load again when next displayed.
 
-## Build
+## Official Fish Audio resources
+
+For accounts, the voice community, model capabilities, parameter guidance and billing rules, consult the official Fish Audio pages.
+
+[Website](https://fish.audio) · [API keys](https://fish.audio/app/api-keys) · [Voice community](https://fish.audio/app/discovery) · [Documentation](https://docs.fish.audio) · [API pricing](https://docs.fish.audio/developer-guide/models-pricing/pricing-and-rate-limits)
+
+## Development
+
+Start with the [development and contribution guide](../CONTRIBUTING.md) for setup, required reading, build verification and submission requirements.
+
+Quick verification: on Windows with the .NET 10 SDK, run:
 
 ```powershell
-# Recommended: Release build + regression tests, then clean intermediates
 .\build.ps1 -Release -Clean -Test
-
-# Debug build (default configuration; pre-cleans intermediates)
-.\build.ps1
-
-# Clean intermediates after a Debug build
-.\build.ps1 -Clean
-
-# Clean intermediates after a Debug build and regression tests
-.\build.ps1 -Clean -Test
 ```
 
-Build output is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root
+The package is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the repository root.
 
-Debug is the default when `-Release` is omitted. `-CleanOnly` cleans without building.
+## Feedback and contributions
 
-<details>
-<summary><b>Environment Requirements</b></summary>
-
-- .NET 10.0 SDK
-- Windows (WPF project)
-
-</details>
-
-## Credits
-
-- [STranslate](https://github.com/ZGGSONG/STranslate) - a ready-to-use translation and OCR tool
-- [Fish Audio](https://fish.audio) - the speech synthesis API provider
-- [iNKORE WPF Modern UI](https://github.com/iNKORE-NET/UI.WPF.Modern) - a modern UI control library for WPF
+[Report an issue or suggestion](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) · [Changelog](../CHANGELOG.md) · [Contribute](../CONTRIBUTING.md)
 
 ## License
 
-[MIT](LICENSE)
+[MIT License](../LICENSE)

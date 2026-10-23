@@ -1,12 +1,13 @@
-# Changelog
+# 更新日志
 
-All notable changes to this project will be documented in this file.
+本文件记录本项目的重要变更。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/).
+编排格式参考 [Keep a Changelog](https://keepachangelog.com/)。
 
 ## [Unreleased]
 
 ### 新增
+- 新增五语详细用户指南与统一的英文 CONTRIBUTING 开发／贡献入口；README 保留功能概览、简要安装、公告与五项 FAQ，并链接同语言指南和无地区标识的 Fish Audio 官方资源。
 - 所有声音卡片支持点击声音名称复制声音 ID，并以悬浮消息气泡提示结果；作者名和描述不参与复制，复制不改变声音选择、收藏或试听。
 - 语速、音量、表现力和多样性统一以 0.01 进行拖动、数值输入及悬停滚轮调节，音量也保留两位小数；滑条滚轮调节显示原生数值气泡，限制在原范围内并阻止页面滚动，编辑中的数值输入框保留普通页面滚动。
 - 语速、音量、表现力和核采样多样性滑块右侧的数字支持原位点击编辑：输入框与文字尺寸一致，失去焦点或按 Enter 保存并同步滑块，Escape 或无效输入恢复原值，单位保持独立；手动输入按原显示精度保存，不再按滑块步进截断。
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### 变更
 - 声音搜索、ID 查询、收藏信息、启动已选声音刷新及试听链接恢复优先使用已填写的 API Key，仅未填写时使用 dummy；不因鉴权失败回退。成功保存新 Key 后按凭据隔离信息缓存、清除旧显示结果并取消待处理请求，保留声音选择和收藏 ID；保存失败恢复原 Key；试听音频及封面下载继续不携带鉴权。
+- README 保留居中 80px 图标和 badges，公告使用无总标题的连续 callout；文档图标迁入 docs/assets，移除原 docs/images 中的九张截图。
 - 响度归一化改为对已确认支持的 S2 系列显示完整卡片，其他模型直接隐藏并保留原值；Drama 3 能力尚未明确，不宣称已验证不支持。
 - API Key 与声音 ID 的粘贴按钮内嵌到输入框右侧并预留文字空间；ID 查询使用与搜索一致的放大镜。声音应用改为统一的无边框 Tick／Cross 图标，同一声音在已选、搜索、ID 与收藏卡片中同步状态，可从任意匹配卡片取消应用；搜索与收藏翻页改为无边框左右尖括号图标。
 - PCM 模式隐藏整个 MP3 比特率设置卡片，切回 MP3 恢复原值；正式朗读统一使用系统代理，不提供插件代理设置，旧代理字段不再生效或继续保存。
