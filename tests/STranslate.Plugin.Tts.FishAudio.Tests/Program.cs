@@ -1,3 +1,10 @@
+if (args.Contains("--page-entry-tests"))
+{
+    await PageEntrySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--page-entry-tests") + 1));
+    Console.WriteLine("Page entry tests passed.");
+    return;
+}
+
 if (args.Contains("--voice-language-tags-tests"))
 {
     BuildScriptSuite.PackageMissingFlagIconsNoticeFails();
@@ -393,4 +400,5 @@ await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
 await VoiceLanguageSuite.RunAllAsync();
 await VoiceLanguageTagsSuite.RunAllAsync();
+await PageEntrySuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

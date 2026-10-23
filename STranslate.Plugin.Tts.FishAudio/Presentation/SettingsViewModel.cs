@@ -259,6 +259,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string PageInput { get; set; }
 
+    public int SearchPageInputMaximum => _voiceDiscoveryCoordinator.PageInputMaximum;
+
     // ── 缓存 ──
 
     [ObservableProperty]
@@ -768,6 +770,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void ApplySearchPagination(VoiceSearchPagination pagination)
     {
+        // Publish the canonical bound before any new page draft reaches the view.
+        OnPropertyChanged(nameof(SearchPageInputMaximum));
         SearchPage = pagination.Page;
         SearchTotalPages = pagination.LastAccessiblePage
             ?? (pagination.HasNextPage ? checked(pagination.Page + 1) : pagination.Page);

@@ -12,10 +12,12 @@ internal sealed record VoiceSearchPagination(
 {
     internal static VoiceSearchPagination Initial { get; } = new(1, null, false, 1, false, false);
 
+    internal int InputMaximum(int highestVisitedPage = 1) =>
+        (int)Math.Clamp(LastAccessiblePage
+            ?? Math.Max(highestVisitedPage, HasNextPage ? (long)Page + 1 : Page), 1, int.MaxValue);
+
     internal bool CanRequestPage(int requestedPage, int highestVisitedPage = 1) =>
-        requestedPage >= 1
-        && requestedPage <= (LastAccessiblePage
-            ?? Math.Max(highestVisitedPage, HasNextPage ? (long)Page + 1 : Page));
+        requestedPage >= 1 && requestedPage <= InputMaximum(highestVisitedPage);
 
     internal static VoiceSearchPagination FromResponse(ModelListResponse response, int page, int pageSize)
     {
