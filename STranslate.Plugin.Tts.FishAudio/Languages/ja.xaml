@@ -121,4 +121,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">音声 ID をコピーしました</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">音声 ID をコピーできませんでした。もう一度お試しください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">プロジェクトのリポジトリを開けませんでした。既定のブラウザー設定を確認してください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">ja</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">その他の言語</sys:String>
 </ResourceDictionary>

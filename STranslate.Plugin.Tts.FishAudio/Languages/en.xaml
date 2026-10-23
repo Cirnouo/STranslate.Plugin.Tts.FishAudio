@@ -121,4 +121,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Voice ID copied</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Could not copy the voice ID. Please try again.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Unable to open the project repository. Check your default browser settings.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">en</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">More languages</sys:String>
 </ResourceDictionary>

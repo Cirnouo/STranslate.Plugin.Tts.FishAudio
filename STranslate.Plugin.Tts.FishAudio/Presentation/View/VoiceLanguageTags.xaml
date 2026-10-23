@@ -1,0 +1,76 @@
+<UserControl x:Class="STranslate.Plugin.Tts.FishAudio.View.VoiceLanguageTags"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:view="clr-namespace:STranslate.Plugin.Tts.FishAudio.View"
+    Focusable="False">
+    <UserControl.Resources>
+        <DataTemplate x:Key="LanguagePill">
+            <Border BorderThickness="1" CornerRadius="10.25" Padding="5,1,7,1" Height="20.5"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <view:LanguageFlagImage Source="{Binding Flag}" Width="14" Height="10.5" VerticalAlignment="Center" Stretch="Fill"
+                           Focusable="False" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="4,0,0,0" FontSize="11" LineHeight="16.5" LineStackingStrategy="BlockLineHeight"
+                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="PopupLanguagePill">
+            <Border BorderThickness="1" CornerRadius="13" Padding="5,3,7,3"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    Background="{DynamicResource FlyoutPresenterBackground}">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <view:LanguageFlagImage Source="{Binding Flag}" Width="14" Height="10.5" VerticalAlignment="Center" Stretch="Fill"
+                           Focusable="False" />
+                    <TextBlock Grid.Column="1" Text="{Binding Name}" Margin="4,0,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="BlockLineHeight"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid>
+        <StackPanel x:Name="InlinePanel" Orientation="Horizontal" Height="20.5" Margin="0,7,0,5" ClipToBounds="True">
+            <view:LanguageMoreButton x:Name="MoreButton" MinWidth="30" Height="20.5" FontSize="11" Padding="4,1" Cursor="Hand"
+                    Background="Transparent" BorderThickness="0" MinHeight="0" Click="More_Click"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                <Button.Template>
+                    <ControlTemplate TargetType="view:LanguageMoreButton">
+                        <Border x:Name="Surface" CornerRadius="4" Background="{TemplateBinding Background}"
+                                BorderThickness="1" BorderBrush="Transparent" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource TextFillColorPrimaryBrush}"/></Trigger>
+                            <Trigger Property="IsExpanded" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <TextBlock x:Name="MoreCountLabel" Text="+0" FontSize="11" VerticalAlignment="Center" />
+            </view:LanguageMoreButton>
+        </StackPanel>
+        <Popup x:Name="LanguagePopup" PlacementTarget="{Binding ElementName=MoreButton}" Placement="Custom"
+               StaysOpen="True" AllowsTransparency="True" Focusable="False">
+            <Border x:Name="PopupSurface" Width="290" Padding="12" CornerRadius="8" BorderThickness="1"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    Background="{DynamicResource FlyoutPresenterBackground}"
+                    TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBlock x:Name="RemainingCount" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="8,0,0,0"
+                                   FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Languages_More}" FontSize="12" FontWeight="Medium" TextWrapping="Wrap"/>
+                    </DockPanel>
+                    <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                  Focusable="True" KeyboardNavigation.TabNavigation="Cycle"
+                                  AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Languages_More}">
+                        <view:LanguageWrapPanel x:Name="PopupPanel" HorizontalGap="6" VerticalGap="7"/>
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

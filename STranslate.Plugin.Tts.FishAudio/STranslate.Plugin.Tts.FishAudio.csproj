@@ -45,6 +45,10 @@
         <Content Include="Assets\Licenses\Octicons.LICENSE.txt">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
+        <Content Include="Assets\Licenses\flag-icons.LICENSE.txt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <EmbeddedResource Include="Assets\Flags\countries.png;Assets\Flags\countries.json;Assets\Flags\language.png" />
         <Content Include="icon.png">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>

@@ -121,4 +121,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">ID голоса скопирован</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Не удалось скопировать ID голоса. Повторите попытку.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Не удалось открыть репозиторий проекта. Проверьте настройки браузера по умолчанию.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">ru</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">Другие языки</sys:String>
 </ResourceDictionary>
