@@ -17,12 +17,43 @@ internal static class SettingsInputBindingSuite
     {
         SettingsView view = null!;
         var phase = Stopwatch.StartNew();
+        var constructionFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Console.WriteLine("[settings-input] View construction queued.");
-        await RunOnStaThreadAsync(() =>
+        try
         {
-            Console.WriteLine($"[settings-input] View construction entered after {phase.ElapsedMilliseconds}ms.");
-            view = new SettingsView();
-        });
+            await RunOnStaThreadAsync(() =>
+            {
+                Console.WriteLine($"[settings-input] View construction entered after {phase.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
+                try
+                {
+                    view = new SettingsView();
+                    Console.WriteLine($"[settings-input] Constructor returned after {phase.ElapsedMilliseconds}ms.");
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine($"[settings-input] Constructor faulted with {exception.GetType().Name} after {phase.ElapsedMilliseconds}ms.");
+                    throw;
+                }
+                finally
+                {
+                    constructionFinished.TrySetResult();
+                }
+            });
+        }
+        catch (TimeoutException)
+        {
+            Console.WriteLine($"[settings-input] Original construction deadline failed after {phase.ElapsedMilliseconds}ms; observing the same action without retrying it.");
+            try
+            {
+                await constructionFinished.Task.WaitAsync(TimeSpan.FromSeconds(20));
+                Console.WriteLine($"[settings-input] Timed-out action exited after {phase.ElapsedMilliseconds}ms; preserving the original failed deadline.");
+            }
+            catch (TimeoutException)
+            {
+                Console.WriteLine($"[settings-input] Timed-out action remains incomplete after {phase.ElapsedMilliseconds}ms.");
+            }
+            throw;
+        }
         Console.WriteLine($"[settings-input] View construction completed after {phase.ElapsedMilliseconds}ms.");
 
         phase.Restart();
