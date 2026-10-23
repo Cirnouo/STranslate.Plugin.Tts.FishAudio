@@ -10,6 +10,34 @@ using static TestAssertions;
 
 internal static class FavoriteVoicesSuite
 {
+    internal static async Task FavoriteRequestsUseCurrentCredentialAsync()
+    {
+        foreach (var key in new[] { "configured-favorite-key", "", " \t" })
+        {
+            var directory = CreateTempDirectory();
+            using (var store = new FavoriteVoiceStore(directory))
+                store.SetFavorite(Id(1), true);
+            var settings = new Settings { ApiKey = key };
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = Detail(1, "Favorite");
+            using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings);
+            view.SwitchToFavoritesCommand.Execute(null);
+            await view.PendingFavoriteMetadataTask;
+            AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(key) ? "dummy" : key)}", AssertHeaders(http.LastGetOptions, "Favorite detail headers")["Authorization"], "Favorite metadata uses configured credentials or blank fallback");
+            view.ApiKey = "next-favorite-account";
+            AssertEqual(false, view.FavoriteResults.Single().HasMetadata, "Key edits clear retained favorite metadata but keep its ID");
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            http.GetAsyncHandler = (_, _, _) => pending.Task;
+            view.SwitchToFavoritesCommand.Execute(null);
+            var oldLoad = view.PendingFavoriteMetadataTask;
+            view.ApiKey = "";
+            pending.SetResult(Detail(1, "Late private favorite"));
+            await oldLoad;
+            AssertEqual(false, view.FavoriteResults.Single().HasMetadata, "Old-account favorite responses must not republish metadata");
+            AssertEqual(Id(1), view.FavoriteResults.Single().Id, "Key edits preserve favorite IDs");
+        }
+    }
+
     internal static void FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication()
     {
         var directory = CreateTempDirectory();

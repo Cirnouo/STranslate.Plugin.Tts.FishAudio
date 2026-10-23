@@ -553,45 +553,77 @@ internal static class InitializationLifecycleSuite
 
     internal static async Task StartupRefreshSelectedVoiceMetadataAsync()
     {
+        foreach (var apiKey in new[] { "configured-startup-key", "", " \t" })
+        {
+            using var network = OverrideNetworkAvailability(true);
+            var settings = new Settings
+            {
+                ApiKey = apiKey,
+                VoiceId = "fedcba9876543210fedcba9876543210",
+                CachedVoice = new CachedVoiceInfo { Title = "Old", CoverImage = "old" },
+            };
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Fresh Voice\",\"description\":\"Fresh description\",\"cover_image\":\"fresh-cover\",\"samples\":[{\"audio\":\"https://audio.example/fresh.mp3\"}],\"task_count\":42,\"author\":{\"nickname\":\"Fresh Author\"}}";
+            var context = CreateContext(settings: settings, httpService: httpService);
+            var proxy = (ContextProxy)(object)context;
+            var plugin = new Main();
+
+            plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+            AssertEqual(true, http.LastGetUrl?.Contains("/model/fedcba9876543210fedcba9876543210", StringComparison.Ordinal), "Startup refresh should call Get Model for the selected voice");
+            var headers = AssertHeaders(http.LastGetOptions, "Startup voice refresh should send Authorization headers");
+            AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(apiKey) ? "dummy" : apiKey)}", headers["Authorization"], "Startup voice refresh should use the configured key without TTS validation");
+            AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update cached voice title");
+            AssertEqual("Fresh description", settings.CachedVoice?.Description, "Startup voice refresh should update cached voice description");
+            AssertEqual("fresh-cover", settings.CachedVoice?.CoverImage, "Startup voice refresh should update cached voice image");
+            AssertEqual("Fresh Author", settings.CachedVoice?.AuthorName, "Startup voice refresh should update cached voice author");
+            AssertEqual(42, settings.CachedVoice?.TaskCount, "Startup voice refresh should update cached voice task count");
+            AssertEqual("https://audio.example/fresh.mp3", settings.CachedVoice?.SampleAudioUrl, "Startup voice refresh should update cached sample URL");
+            AssertEqual(1, proxy.SaveCount, "Successful startup voice refresh should save updated cached voice");
+
+            network.Set(false);
+            settings = new Settings
+            {
+                VoiceId = "0123456789abcdef0123456789abcdef",
+                CachedVoice = new CachedVoiceInfo { Title = "Keep" },
+            };
+            (httpService, http) = TestHttpServiceProxy.Create();
+            plugin = new Main();
+            plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+            AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
+            AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
+        }
+    }
+
+    internal static async Task StartupMetadataRejectsChangedCredentialsAsync()
+    {
         using var network = OverrideNetworkAvailability(true);
-        var settings = new Settings
+        var settings = new Settings { ApiKey = "first-startup-account", VoiceId = "fedcba9876543210fedcba9876543210" };
+        var (service, http) = TestHttpServiceProxy.Create();
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        http.GetAsyncHandler = (url, _, _) =>
         {
-            VoiceId = "fedcba9876543210fedcba9876543210",
-            CachedVoice = new CachedVoiceInfo { Title = "Old", CoverImage = "old" },
+            if (url == FishAudioClock.TimeApiUrl) return Task.FromResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
+            started.TrySetResult();
+            return response.Task;
         };
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Fresh Voice\",\"description\":\"Fresh description\",\"cover_image\":\"fresh-cover\",\"samples\":[{\"audio\":\"https://audio.example/fresh.mp3\"}],\"task_count\":42,\"author\":{\"nickname\":\"Fresh Author\"}}";
-        var context = CreateContext(settings: settings, httpService: httpService);
-        var proxy = (ContextProxy)(object)context;
-        var plugin = new Main();
-
-        plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-
-        AssertEqual(true, http.LastGetUrl?.Contains("/model/fedcba9876543210fedcba9876543210", StringComparison.Ordinal), "Startup refresh should call Get Model for the selected voice");
-        var headers = AssertHeaders(http.LastGetOptions, "Startup voice refresh should send Authorization headers");
-        AssertEqual("Bearer dummy", headers["Authorization"], "Startup voice refresh should use the dummy token");
-        AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update cached voice title");
-        AssertEqual("Fresh description", settings.CachedVoice?.Description, "Startup voice refresh should update cached voice description");
-        AssertEqual("fresh-cover", settings.CachedVoice?.CoverImage, "Startup voice refresh should update cached voice image");
-        AssertEqual("Fresh Author", settings.CachedVoice?.AuthorName, "Startup voice refresh should update cached voice author");
-        AssertEqual(42, settings.CachedVoice?.TaskCount, "Startup voice refresh should update cached voice task count");
-        AssertEqual("https://audio.example/fresh.mp3", settings.CachedVoice?.SampleAudioUrl, "Startup voice refresh should update cached sample URL");
-        AssertEqual(1, proxy.SaveCount, "Successful startup voice refresh should save updated cached voice");
-
-        network.Set(false);
-        settings = new Settings
+        Settings? runtime = null;
+        using var plugin = new Main((context, candidate, lease, cycle) =>
         {
-            VoiceId = "0123456789abcdef0123456789abcdef",
-            CachedVoice = new CachedVoiceInfo { Title = "Keep" },
-        };
-        (httpService, http) = TestHttpServiceProxy.Create();
-        plugin = new Main();
-        plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            runtime = candidate;
+            return new SettingsViewModel(context, candidate, null, null, startupCreditRefreshCycle: cycle, settingsWriteLease: lease);
+        });
+        plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+        var view = plugin.GetOrCreateSettingsViewModel();
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        view.ApiKey = "next-startup-account";
+        response.SetResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Late private voice\"}");
         await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-
-        AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
-        AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
+        AssertEqual(null, runtime!.CachedVoice, "Startup cannot persist metadata captured under a replaced key");
     }
 
     internal static async Task StartupVoiceUiApplyRechecksExpectedVoiceIdAsync()
@@ -975,10 +1007,12 @@ internal static class InitializationLifecycleSuite
         AssertEqual("Old Voice", contextProxy.Settings.CachedVoice?.Title, "A failed startup voice save should roll back the host-owned cached metadata");
         AssertEqual("Old Voice", backingStore.Load().CachedVoice?.Title, "A failed startup voice save should preserve cached metadata in backing storage");
 
-        viewModel.ApiKey = DraftKey;
+        var acceptedApiKey = viewModel.ApiKey;
+        viewModel.Speed = 1.2;
         var savedSnapshot = backingStore.Load();
         AssertEqual(2, contextProxy.SaveCount, "A later ViewModel edit should still save after startup voice rollback");
-        AssertEqual(DraftKey, savedSnapshot.ApiKey, "A later ViewModel edit should persist after startup voice rollback");
+        AssertEqual(1.2, savedSnapshot.Speed, "A later independent ViewModel edit should persist after startup voice rollback");
+        AssertEqual(acceptedApiKey, savedSnapshot.ApiKey, "An independent later save must preserve the accepted API Key");
         AssertEqual("Old Voice", savedSnapshot.CachedVoice?.Title, "A later save should not resurrect rolled-back startup voice metadata");
     }
 

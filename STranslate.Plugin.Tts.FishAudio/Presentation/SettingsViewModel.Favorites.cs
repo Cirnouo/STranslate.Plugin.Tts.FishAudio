@@ -186,7 +186,7 @@ public partial class SettingsViewModel
         {
             var card = previous.GetValueOrDefault(id) ?? new VoiceSearchItem { Id = id };
             card.IsFavorite = true;
-            if (_voiceMetadataCache.TryGet(id, out var metadata))
+            if (_voiceMetadataCache.TryGet(id, out var metadata, VoiceMetadataCache.CredentialScope(_settings.ApiKey)))
                 ApplyMetadata(card, metadata);
             else
                 ResetMetadataPlaceholder(card);
@@ -224,7 +224,9 @@ public partial class SettingsViewModel
     {
         try
         {
-            var model = await FishAudioApi.GetModelAsync(_context, "dummy", card.Id, token);
+            var apiKey = _settings.ApiKey;
+            var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
+            var model = await FishAudioApi.GetModelAsync(_context, FishAudioApi.MetadataApiKey(apiKey), card.Id, token);
             if (!IsCurrentFavoriteCard(card, generation))
                 return;
             if (model is null || (!string.IsNullOrWhiteSpace(model.Type) && !string.Equals(model.Type, "tts", StringComparison.OrdinalIgnoreCase)))
@@ -234,7 +236,7 @@ public partial class SettingsViewModel
                 return;
             }
             var metadata = VoiceMetadata.FromModel(model, card.Id);
-            _voiceMetadataCache.Put(metadata);
+            _voiceMetadataCache.Put(metadata, credentialScope);
             if (IsCurrentFavoriteCard(card, generation))
                 ApplyMetadata(card, metadata);
         }
@@ -282,9 +284,9 @@ public partial class SettingsViewModel
         card.CoverUrl = "";
     }
 
-    private void OnVoiceMetadataUpdated(VoiceMetadata metadata) => RunOnUiThread(() =>
+    private void OnVoiceMetadataUpdated(string credentialScope, VoiceMetadata metadata) => RunOnUiThread(() =>
     {
-        if (_isDisposed)
+        if (_isDisposed || credentialScope != VoiceMetadataCache.CredentialScope(_settings.ApiKey))
             return;
         foreach (var card in GetVoiceCards().Where(card => card.Id == metadata.VoiceId))
             ApplyMetadata(card, metadata);

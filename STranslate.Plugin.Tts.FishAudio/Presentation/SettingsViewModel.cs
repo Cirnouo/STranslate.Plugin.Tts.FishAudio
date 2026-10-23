@@ -339,7 +339,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             setSubmittingVoiceId: value => IsSubmittingVoiceId = value,
             isFacadeDisposed: () => _isDisposed,
             setByIdResult: item => ByIdResults = item is null ? [] : [item],
-            metadataCache: _voiceMetadataCache);
+            metadataCache: _voiceMetadataCache, getApiKey: () => _settings.ApiKey);
         _previewRefreshCoordinator = new PreviewRefreshCoordinator(
             context: context,
             getCachedVoiceId: () => CachedVoiceId,
@@ -356,7 +356,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             isFacadeDisposed: () => _isDisposed,
             applyPreparingState: ApplyPreviewPreparingState,
             runOnUiThread: RunOnUiThread,
-            metadataCache: _voiceMetadataCache);
+            metadataCache: _voiceMetadataCache, getApiKey: () => _settings.ApiKey);
 
         ApiKey = settings.ApiKey;
         VoiceId = settings.VoiceId;
@@ -491,11 +491,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         CachedVoiceInfo cached) =>
         PreviewRefreshCoordinator.TryApplyRefreshedCachedVoice(settings, expectedVoiceId, cached);
 
-    internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached)
+    internal void ApplyRefreshedCachedVoice(string expectedVoiceId, CachedVoiceInfo cached, string? expectedApiKey = null)
     {
+        var apiKey = expectedApiKey ?? _settings.ApiKey;
         RunOnUiThread(() =>
         {
             if (_isDisposed
+                || !string.Equals(_settings.ApiKey, apiKey, StringComparison.Ordinal)
                 || !string.Equals(VoiceId, expectedVoiceId, StringComparison.Ordinal)
                 || !string.Equals(_settings.VoiceId, expectedVoiceId, StringComparison.Ordinal))
             {
@@ -649,8 +651,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     {
         if (cached is null || string.IsNullOrEmpty(cached.Title))
         {
-            CachedVoiceId = null;
-            CachedVoiceTitle = null;
+            CachedVoiceId = SettingsValidation.IsValidVoiceIdFormat(VoiceId) ? VoiceId : null;
+            CachedVoiceTitle = CachedVoiceId;
             CachedVoiceDescription = null;
             CachedVoiceCoverUrl = null;
             CachedVoiceAuthor = null;
@@ -774,8 +776,36 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                     CancelFavoritePageLoad();
                 return;
             case nameof(ApiKey):
-                updateSettings = settings => settings.ApiKey = ApiKey;
-                break;
+                if (_suppressSettingsSave)
+                    return;
+                var previousKey = _settings.ApiKey;
+                var previousVoice = _settings.CachedVoice;
+                try
+                {
+                    if (!UpdateSettingsAndSave(settings => { settings.ApiKey = ApiKey; settings.CachedVoice = null; }))
+                    {
+                        RestoreApiKeyDraft(_settings.ApiKey);
+                        return;
+                    }
+                }
+                catch
+                {
+                    if (_settingsWriteLease is null)
+                    {
+                        _settings.ApiKey = previousKey;
+                        _settings.CachedVoice = previousVoice;
+                    }
+                    RestoreApiKeyDraft(_settings.ApiKey);
+                    throw;
+                }
+                _voiceDiscoveryCoordinator.InvalidateCredentials();
+                _previewRefreshCoordinator.CancelDisplayPreviewOperation();
+                _previewPlayback.Stop();
+                CancelFavoritePageLoad();
+                foreach (var card in FavoriteResults)
+                    ResetMetadataPlaceholder(card);
+                ApplyCachedVoice(null);
+                return;
             case nameof(VoiceId):
                 SyncFavoriteState();
                 _previewRefreshCoordinator.CancelDisplayPreviewOperation();
@@ -803,6 +833,13 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
 
         if (!_suppressSettingsSave)
             UpdateSettingsAndSave(updateSettings);
+    }
+
+    private void RestoreApiKeyDraft(string apiKey)
+    {
+        _suppressSettingsSave = true;
+        try { ApiKey = apiKey; }
+        finally { _suppressSettingsSave = false; }
     }
 
     private bool UpdateSettingsAndSave(Action<Settings> update) =>

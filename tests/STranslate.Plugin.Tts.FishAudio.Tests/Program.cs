@@ -5,6 +5,25 @@ if (args.Contains("--streaming-output-tests"))
     return;
 }
 
+if (args.Contains("--voice-auth-tests"))
+{
+    VoiceCredentialScopeSuite.CacheWritesAndQueuedEventsKeepCapturedCredentialScope();
+    await VoiceCredentialScopeSuite.RejectedCredentialSavesRetainAcceptedKeyAsync();
+    VoiceCredentialScopeSuite.QueuedStartupApplyRechecksCredentialInsideDispatcher();
+    await VoiceCredentialScopeSuite.FailedReplacementConstructionPreservesAcceptedCacheAsync();
+    await VoiceCredentialScopeSuite.ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync();
+    await VoiceDiscoverySuite.SearchAndByIdUseConfiguredTokenOrDummyAsync();
+    await VoiceDiscoverySuite.CredentialChangesInvalidateMetadataAndPendingSearchAsync();
+    await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
+    await InitializationLifecycleSuite.StartupRefreshSelectedVoiceMetadataAsync();
+    await InitializationLifecycleSuite.StartupMetadataRejectsChangedCredentialsAsync();
+    await InitializationLifecycleSuite.StartupVoiceSaveFailureRollsBackRuntimeAndStorageAsync();
+    await PreviewSuite.RunBoundedPreviewRegressionTestsAsync();
+    await CoverImageCacheSuite.CoverImageCacheDownloadsThroughBoundedStreamAsync();
+    Console.WriteLine("Voice authentication tests passed.");
+    return;
+}
+
 if (args.Contains("--voice-card-ink-tests"))
 {
     await VoiceCardInkSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-ink-tests") + 1));
@@ -142,6 +161,7 @@ InitializationLifecycleSuite.ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSu
 RepositoryContractSuite.FreeModelDeadlineDocumentationIsConsistent();
 InitializationLifecycleSuite.MainInitNormalizesStructuredSettingsWithoutClearingKeys();
 await InitializationLifecycleSuite.StartupRefreshSelectedVoiceMetadataAsync();
+await InitializationLifecycleSuite.StartupMetadataRejectsChangedCredentialsAsync();
 await InitializationLifecycleSuite.StartupVoiceUiApplyRechecksExpectedVoiceIdAsync();
 await InitializationLifecycleSuite.DelayedStartupVoiceRefreshDoesNotRestoreClearedVoiceAsync();
 await InitializationLifecycleSuite.DelayedStartupVoiceRefreshDoesNotOverwriteNewSelectionAsync();
@@ -188,7 +208,14 @@ FavoriteStorageCacheSuite.BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata(
 await FavoriteStorageCacheSuite.FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync();
 await FavoriteStorageCacheSuite.PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync();
 await FavoriteStorageCacheSuite.SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync();
-await VoiceDiscoverySuite.SearchAndByIdUseDummyTokenAsync();
+VoiceCredentialScopeSuite.CacheWritesAndQueuedEventsKeepCapturedCredentialScope();
+await VoiceCredentialScopeSuite.RejectedCredentialSavesRetainAcceptedKeyAsync();
+VoiceCredentialScopeSuite.QueuedStartupApplyRechecksCredentialInsideDispatcher();
+await VoiceCredentialScopeSuite.FailedReplacementConstructionPreservesAcceptedCacheAsync();
+await VoiceCredentialScopeSuite.ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync();
+await VoiceDiscoverySuite.SearchAndByIdUseConfiguredTokenOrDummyAsync();
+await VoiceDiscoverySuite.CredentialChangesInvalidateMetadataAndPendingSearchAsync();
+await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();

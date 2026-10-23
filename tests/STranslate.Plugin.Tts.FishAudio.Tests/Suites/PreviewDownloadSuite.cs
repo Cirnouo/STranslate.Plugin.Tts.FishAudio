@@ -53,7 +53,7 @@ internal static partial class PreviewSuite
                 AssertEqual(2, scenario.Http.GetAsStreamCallCount, "403/404 should retry the refreshed resource once");
                 AssertEqual(1, scenario.Http.GetCallCount, "403/404 should refresh voice detail once");
                 AssertEqual(1, scenario.Player.PlayCallCount, "Refreshed sample should play locally");
-                AssertEqual("Bearer dummy", AssertHeaders(scenario.Http.LastGetOptions, "Detail refresh headers")["Authorization"], "Only metadata receives the public dummy token");
+                AssertEqual("Bearer private-preview-key", AssertHeaders(scenario.Http.LastGetOptions, "Detail refresh headers")["Authorization"], "Metadata refresh should use the configured value while resources stay unauthenticated");
                 AssertEqual(true, scenario.Http.GetStreamOptionsByUrl.All(call => call.Options?.Headers is null || !call.Options.Headers.ContainsKey("Authorization")), "No resource request may receive authorization");
             }
             foreach (var status in new[] { HttpStatusCode.Unauthorized, HttpStatusCode.InternalServerError, HttpStatusCode.Forbidden })
