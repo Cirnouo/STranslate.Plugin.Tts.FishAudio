@@ -291,7 +291,15 @@ internal static class RepositoryContractSuite
             AssertEqual(true, readme.Contains(lastFreeDate, StringComparison.Ordinal), $"{relativePath} should use the November 30 free-model deadline");
             var guidePath = Path.Combine("docs", "user-guide", Path.GetFileName(relativePath));
             var guide = File.ReadAllText(FindRepoFile(guidePath));
-            AssertEqual(true, guide.Contains(cutoffDate, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");
+            // Guides use readable local dates; overviews keep their ISO date.
+            var guideCutoff = Path.GetFileName(relativePath) switch
+            {
+                "README_EN.md" => "1 December 2026",
+                "README_JA.md" => "2026年12月1日",
+                "README_KO.md" => "2026년 12월 1일",
+                _ => cutoffDate,
+            };
+            AssertEqual(true, guide.Contains(guideCutoff, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");
             AssertEqual(false, readme.Contains(staleFreeDate, StringComparison.Ordinal), $"{relativePath} should not retain the August 31 free-model deadline");
         }
 

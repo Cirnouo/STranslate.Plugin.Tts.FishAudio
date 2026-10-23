@@ -33,6 +33,16 @@ Do not create a second glossary or copy policy text into each specification. Lin
 
 Published changelog sections describe the version that shipped. Follow the [release policy](releases.md#changelog-editing-workflow) before editing CHANGELOG: verify the latest published stable baseline, use canonical English category headings with Chinese prose, and record cumulative net changes rather than development iterations. Do not retroactively rewrite a published section to describe a later refactor. Historical release checks must not require Unreleased to remain empty. Verify the final documentation state after the last edit, including changelog updates, under the [verification policy](verification.md).
 
+## User guidance boundaries
+
+Organize guides around user tasks: first reading, choosing a voice, understanding model/cost choices, adjusting speech, selecting a format and recovering from failure. Lead with the next useful action, keep optional setup after the first successful path, and use short steps or compact comparison tables where they reduce reading effort. Keep the five versions aligned in tasks and consequences rather than forcing a line-for-line translation.
+
+Explain information the reader needs to act or decide: prerequisites, cost and cancellation limits, local-only favorites, meaningful defaults/ranges, non-obvious interactions and concrete recovery steps. A hidden interaction such as the wheel hover delay belongs in a short instruction. Intuitive icons do not need an inventory of glyph shapes, button borders or accessibility labels. Keys and Voice IDs normally come from copy/paste, so direct readers to the official source and explain recovery rather than teaching their character grammar.
+
+Do not turn a user guide into a UI state machine or developer contract. Keep rendering matrices, cache partitions/TTL, callback generations, schemas, transport fields, buffer sizes, test expectations and storage layouts in their canonical English specs, policies or references. Preserve useful user consequences without those implementation details. Troubleshooting states an action that helps the affected task and distinguishes different causes; it must not recommend deleting valid settings or favorites for temporary network problems. Scope free-only precautions to readers who require zero spending without implying that paid use is unavailable.
+
+Preserve existing inbound anchors, cost/network facts and the approved README layout when rewriting guidance. Render-check Markdown emphasis and tables in every language, including CJK punctuation boundaries, and verify links. A screenshot or fixture is not a reason to document all visible controls.
+
 ## Instruction progressive disclosure
 
 Read this section before editing maintained AGENTS/Skill instructions, their instruction references or their loading/layout rules. It adapts the [reference repository's progressive-disclosure policy](https://github.com/Cirnouo/debugging-cdp-targets/blob/859808b66a7cf691f34a12344b209feee384c705/docs/policies/documentation.md#instruction-progressive-disclosure). Applying that practice to AGENTS is local repository policy, not a requirement attributed to an upstream Skill format.
