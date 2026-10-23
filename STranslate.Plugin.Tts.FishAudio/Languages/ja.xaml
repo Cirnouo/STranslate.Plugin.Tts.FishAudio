@@ -77,7 +77,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">キャッシュをクリア</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">キャッシュのクリアがタイムアウトしました。後でもう一度お試しください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">サポート</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 公式サイト</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">プロジェクトのソースコード・問題報告・貢献</sys:String>
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">コンテキスト連携</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks_Description">同じ合成音声内の前のチャンクを使って声の一貫性を保ち、以前に生成した別の音声は参照しません</sys:String>
@@ -120,4 +120,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">音声 ID をコピー</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">音声 ID をコピーしました</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">音声 ID をコピーできませんでした。もう一度お試しください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">プロジェクトのリポジトリを開けませんでした。既定のブラウザー設定を確認してください。</sys:String>
 </ResourceDictionary>

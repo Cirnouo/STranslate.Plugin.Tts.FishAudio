@@ -82,6 +82,14 @@ internal static class BuildScriptSuite
         }
     }
 
+    internal static void PackageMissingOcticonsNoticeFails()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuildWithoutOcticonsNotice();
+        AssertEqual(true, result.ExitCode != 0, "A package missing the required icon license must fail verification");
+        AssertEqual(true, result.Output.Contains("Octicons.LICENSE.txt", StringComparison.Ordinal), "Package rejection must identify the missing icon license");
+    }
+
     internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
@@ -158,6 +166,7 @@ internal static class BuildScriptSuite
         private readonly string _fakeDotnetDirectory;
         private readonly string _invocationLogPath;
         private bool _omitAudioDependency;
+        private bool _omitOcticonsNotice;
         private string _omittedStreamingDependency = string.Empty;
 
         private BuildScriptTestRepository(string rootPath, string fakeDotnetDirectory, string invocationLogPath)
@@ -250,6 +259,9 @@ internal static class BuildScriptSuite
                         $false)
                     try {
                         $entryNames = @('plugin.json', "$projectName.dll", 'NAudio.Core.dll')
+                        if ($env:FISH_AUDIO_BUILD_TEST_OMIT_OCTICONS -ne '1') {
+                            $entryNames += 'Assets/Licenses/Octicons.LICENSE.txt'
+                        }
                         foreach ($streamingDependency in @('MessagePack.dll', 'MessagePack.Annotations.dll', 'Microsoft.NET.StringTools.dll')) {
                             if ($env:FISH_AUDIO_BUILD_TEST_OMIT_STREAMING -ne $streamingDependency) {
                                 $entryNames += $streamingDependency
@@ -315,6 +327,12 @@ internal static class BuildScriptSuite
             return RunBuildCore(failTests: true, arguments);
         }
 
+        internal (int ExitCode, string Output) RunBuildWithoutOcticonsNotice()
+        {
+            _omitOcticonsNotice = true;
+            return RunBuild("-Release", "-Clean");
+        }
+
         internal (int ExitCode, string Output) RunBuildWithoutAudioDependency()
         {
             _omitAudioDependency = true;
@@ -349,6 +367,7 @@ internal static class BuildScriptSuite
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_REPO"] = RootPath;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_LOG"] = _invocationLogPath;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_TESTS"] = failTests ? "1" : "0";
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_OCTICONS"] = _omitOcticonsNotice ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_AUDIO"] = _omitAudioDependency ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_STREAMING"] = _omittedStreamingDependency;
 

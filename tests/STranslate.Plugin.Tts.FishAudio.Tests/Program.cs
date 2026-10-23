@@ -1,9 +1,24 @@
+if (args.Contains("--package-contract-tests"))
+{
+    BuildScriptSuite.PackageMissingOcticonsNoticeFails();
+    BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
+    Console.WriteLine("Package contract tests passed.");
+    return;
+}
+
 if (args.Contains("--activity-dispatcher-tests"))
 {
     await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
     await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
     await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
     Console.WriteLine("Activity dispatcher regression tests passed.");
+    return;
+}
+
+if (args.Contains("--repository-link-tests"))
+{
+    await ProjectRepositoryLinkSuite.RunAllAsync();
+    Console.WriteLine("Project repository link tests passed.");
     return;
 }
 
@@ -126,6 +141,7 @@ RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch();
 BuildScriptSuite.ConfigurationParameterIsRejected();
 BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
 BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
+BuildScriptSuite.PackageMissingOcticonsNoticeFails();
 BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails();
 BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding();
 BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding();
@@ -337,4 +353,5 @@ await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
+await ProjectRepositoryLinkSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

@@ -1,4 +1,7 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Windows.Documents;
+using System.Windows.Navigation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -10,6 +13,9 @@ namespace STranslate.Plugin.Tts.FishAudio.View;
 
 public partial class SettingsView : UserControl
 {
+    private static readonly Uri ProjectRepositoryUri = new("https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio");
+    internal Action<ProcessStartInfo> RepositoryLinkLauncher { get; set; } = startInfo => Process.Start(startInfo)?.Dispose();
+
     private static readonly Regex DigitsOnly = new(@"^\d+$", RegexOptions.Compiled);
 
     public SettingsView()
@@ -60,11 +66,25 @@ public partial class SettingsView : UserControl
         var current = obj;
         while (current is not null)
         {
-            if (current is TextBox or PasswordBox or ButtonBase or ComboBox or Slider or Thumb)
+            if (current is TextBox or PasswordBox or ButtonBase or ComboBox or Slider or Thumb or Hyperlink)
                 return true;
             current = ParentOf(current);
         }
         return false;
+    }
+
+    private void ProjectRepositoryLink_RequestNavigate(object sender, RequestNavigateEventArgs args)
+    {
+        args.Handled = true;
+        if (args.Uri != ProjectRepositoryUri) return;
+        try
+        {
+            RepositoryLinkLauncher(new ProcessStartInfo(ProjectRepositoryUri.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch (Exception)
+        {
+            if (DataContext is ViewModel.SettingsViewModel vm) vm.ReportRepositoryLinkFailure();
+        }
     }
 
     private void VoiceIdInput_PreviewTextInput(object sender, TextCompositionEventArgs e)

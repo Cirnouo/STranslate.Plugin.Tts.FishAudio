@@ -85,7 +85,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache">清理缓存</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout">清理缓存超时，请稍后重试</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support">支持</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">Fish Audio 官网</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Support_Description">项目源码、问题反馈与贡献</sys:String>
 
     <!-- 生成参数 (续) -->
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_ConditionOnPreviousChunks">上下文关联</sys:String>
@@ -131,4 +131,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">复制声音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">声音 ID 已复制</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">无法复制声音 ID，请重试。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">无法打开项目仓库。请检查默认浏览器设置。</sys:String>
 </ResourceDictionary>

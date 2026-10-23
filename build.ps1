@@ -192,7 +192,8 @@ try {
         'NAudio.WinMM.dll',
         'MessagePack.dll',
         'MessagePack.Annotations.dll',
-        'Microsoft.NET.StringTools.dll'
+        'Microsoft.NET.StringTools.dll',
+        'Assets/Licenses/Octicons.LICENSE.txt'
     )
     $missingPackageFiles = @($requiredPackageFiles | Where-Object { -not $packageEntryNames.Contains($_) })
     if ($missingPackageFiles.Count -gt 0) {
