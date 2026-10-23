@@ -33,19 +33,29 @@ internal static class SettingsLayoutSuite
     // compiled-view cases on one STA, as they are used in the application.
     internal static async Task CompiledViewAudioNetworkAndFoldInteractionsAsync()
     {
-        await RunOnStaThreadAsync(() =>
+        foreach (var scenario in new Action[]
         {
-            PcmHidesWholeBitrateCardAndMp3RestoresIt();
-            ReadingNetworkSettingsAreAbsent();
-            FavoriteVoicesTabMatchesPeerTabs();
-            SelectedVoiceStarSharesFavoriteState();
-            PasteButtonsReserveInputSpace();
-            SelectionAndPagingActionsUseBareIcons();
-            LoudnessCardFollowsModelCapability();
-            TopPMinimumKeepsSliderTracksAligned();
-            ResultTogglesKeepIndependentViewState();
-            SharedVoiceCardReflectsMetadataState();
-        });
+            PcmHidesWholeBitrateCardAndMp3RestoresIt,
+            ReadingNetworkSettingsAreAbsent,
+            FavoriteVoicesTabMatchesPeerTabs,
+            SelectedVoiceStarSharesFavoriteState,
+            PasteButtonsReserveInputSpace,
+            SelectionAndPagingActionsUseBareIcons,
+            LoudnessCardFollowsModelCapability,
+            TopPMinimumKeepsSliderTracksAligned,
+            ResultTogglesKeepIndependentViewState,
+            SharedVoiceCardReflectsMetadataState,
+        })
+        {
+            var phase = System.Diagnostics.Stopwatch.StartNew();
+            Console.WriteLine($"[settings-layout] {scenario.Method.Name} queued.");
+            await RunOnStaThreadAsync(() =>
+            {
+                Console.WriteLine($"[settings-layout] {scenario.Method.Name} entered after {phase.ElapsedMilliseconds}ms.");
+                scenario();
+                Console.WriteLine($"[settings-layout] {scenario.Method.Name} completed after {phase.ElapsedMilliseconds}ms.");
+            });
+        }
         // Keep the same dispatcher and bounded per-group deadline as the
         // native template/viewport matrix grows.
         await InlineNumericInteractionsAsync();
