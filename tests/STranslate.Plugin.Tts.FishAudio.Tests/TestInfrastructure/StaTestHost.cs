@@ -5,15 +5,23 @@ internal static class StaTestHost
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(5);
     private static readonly Lazy<Task<Dispatcher>> SharedDispatcher = new(StartDispatcher);
 
-    internal static async Task RunOnStaThreadAsync(Action action)
+    internal static Task RunOnStaThreadAsync(Action action) =>
+        RunOnStaThreadAsync(action, TestTimeout);
+
+    internal static async Task RunOnStaThreadAsync(Action action, TimeSpan executionTimeout)
     {
+        if (executionTimeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(executionTimeout));
+        }
+
         var dispatcher = await SharedDispatcher.Value.WaitAsync(TestTimeout);
         if (dispatcher.CheckAccess())
         {
             action();
             return;
         }
-        await dispatcher.InvokeAsync(action).Task.WaitAsync(TestTimeout);
+        await dispatcher.InvokeAsync(action).Task.WaitAsync(executionTimeout);
     }
 
     internal static async Task RunOnStaThreadAsync(Func<Task> action)
