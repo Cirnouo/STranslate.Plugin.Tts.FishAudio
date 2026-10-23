@@ -38,4 +38,6 @@ public sealed class Settings
     internal bool NeedsCanonicalSave { get; set; }
     internal string ReadOnlyReason { get; set; } = "";
     internal long ActiveWriteLease { get; set; }
+    // Runtime publication identity, independent of the credential-scoped cache key.
+    internal object CredentialIdentity { get; set; } = new();
 }

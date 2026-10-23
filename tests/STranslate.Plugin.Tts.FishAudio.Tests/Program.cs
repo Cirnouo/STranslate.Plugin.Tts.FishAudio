@@ -1,3 +1,18 @@
+if (args.Contains("--credential-display-tests"))
+{
+    await CredentialDisplayPreservationSuite.AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync();
+    CredentialDisplayPreservationSuite.CredentialRoundTripRejectsQueuedPublications();
+    await CredentialDisplayPreservationSuite.PendingMetadataCannotReplaceRetainedDisplayAsync();
+    await CredentialDisplayPreservationSuite.ReinitializationDoesNotSeedNewCredentialCacheFromRetainedSnapshotAsync();
+    await CredentialDisplayPreservationSuite.FailedSavesPreserveIdentitySubscriptionAndPendingWorkAsync();
+    CredentialDisplayPreservationSuite.AcceptedPublicationOwnsIdentityAcrossCopiesAndReentrantSaves();
+    CredentialDisplayPreservationSuite.SubscriptionRebindingAndDisposalKeepOnlyTheCurrentOwner();
+    await CredentialDisplayPreservationSuite.RetainedPreviewEntryUsesResourceWithoutAuthAndRefreshesWithAcceptedKeyAsync();
+    await CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync();
+    Console.WriteLine("Credential display preservation tests passed.");
+    return;
+}
+
 if (args.Contains("--streaming-output-tests"))
 {
     await StreamingPlaybackSuite.RunAllAsync();
@@ -13,7 +28,7 @@ if (args.Contains("--voice-auth-tests"))
     await VoiceCredentialScopeSuite.FailedReplacementConstructionPreservesAcceptedCacheAsync();
     await VoiceCredentialScopeSuite.ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync();
     await VoiceDiscoverySuite.SearchAndByIdUseConfiguredTokenOrDummyAsync();
-    await VoiceDiscoverySuite.CredentialChangesInvalidateMetadataAndPendingSearchAsync();
+    await VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync();
     await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
     await InitializationLifecycleSuite.StartupRefreshSelectedVoiceMetadataAsync();
     await InitializationLifecycleSuite.StartupMetadataRejectsChangedCredentialsAsync();
@@ -214,7 +229,16 @@ VoiceCredentialScopeSuite.QueuedStartupApplyRechecksCredentialInsideDispatcher()
 await VoiceCredentialScopeSuite.FailedReplacementConstructionPreservesAcceptedCacheAsync();
 await VoiceCredentialScopeSuite.ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync();
 await VoiceDiscoverySuite.SearchAndByIdUseConfiguredTokenOrDummyAsync();
-await VoiceDiscoverySuite.CredentialChangesInvalidateMetadataAndPendingSearchAsync();
+await CredentialDisplayPreservationSuite.AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync();
+CredentialDisplayPreservationSuite.CredentialRoundTripRejectsQueuedPublications();
+await CredentialDisplayPreservationSuite.PendingMetadataCannotReplaceRetainedDisplayAsync();
+await CredentialDisplayPreservationSuite.ReinitializationDoesNotSeedNewCredentialCacheFromRetainedSnapshotAsync();
+await CredentialDisplayPreservationSuite.FailedSavesPreserveIdentitySubscriptionAndPendingWorkAsync();
+CredentialDisplayPreservationSuite.AcceptedPublicationOwnsIdentityAcrossCopiesAndReentrantSaves();
+CredentialDisplayPreservationSuite.SubscriptionRebindingAndDisposalKeepOnlyTheCurrentOwner();
+await CredentialDisplayPreservationSuite.RetainedPreviewEntryUsesResourceWithoutAuthAndRefreshesWithAcceptedKeyAsync();
+await CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync();
+await VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync();
 await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();

@@ -17,6 +17,7 @@ public partial class SettingsViewModel
     private IReadOnlyList<string> _favoriteIds = [];
     private CancellationTokenSource? _favoritePageCancellation;
     private long _favoritePageGeneration;
+    private Action<string, VoiceMetadata>? _metadataUpdatedHandler;
 
     internal Task PendingFavoriteMetadataTask { get; private set; } = Task.CompletedTask;
 
@@ -284,13 +285,32 @@ public partial class SettingsViewModel
         card.CoverUrl = "";
     }
 
-    private void OnVoiceMetadataUpdated(string credentialScope, VoiceMetadata metadata) => RunOnUiThread(() =>
+    private void SubscribeToVoiceMetadataUpdates()
     {
-        if (_isDisposed || credentialScope != VoiceMetadataCache.CredentialScope(_settings.ApiKey))
-            return;
-        foreach (var card in GetVoiceCards().Where(card => card.Id == metadata.VoiceId))
-            ApplyMetadata(card, metadata);
-    });
+        _voiceMetadataCache.MetadataUpdated -= _metadataUpdatedHandler;
+        object credentialIdentity;
+        lock (_settings)
+            credentialIdentity = _settings.CredentialIdentity;
+        // Cache notifications snapshot their subscribers. A reentrant key edit must
+        // leave that old snapshot bound to its original accepted publication identity.
+        _metadataUpdatedHandler = (scope, metadata) => OnVoiceMetadataUpdated(scope, metadata, credentialIdentity);
+        _voiceMetadataCache.MetadataUpdated += _metadataUpdatedHandler;
+    }
+
+    private void OnVoiceMetadataUpdated(string credentialScope, VoiceMetadata metadata, object credentialIdentity)
+    {
+        RunOnUiThread(() =>
+        {
+            bool isCurrent;
+            lock (_settings)
+                isCurrent = ReferenceEquals(_settings.CredentialIdentity, credentialIdentity)
+                    && credentialScope == VoiceMetadataCache.CredentialScope(_settings.ApiKey);
+            if (_isDisposed || !isCurrent)
+                return;
+            foreach (var card in GetVoiceCards().Where(card => card.Id == metadata.VoiceId))
+                ApplyMetadata(card, metadata);
+        });
+    }
 
     private void ApplyMetadata(VoiceSearchItem card, VoiceMetadata metadata)
     {

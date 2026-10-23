@@ -403,8 +403,10 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         SettingsWriteLease settingsWriteLease,
         CancellationToken cancellationToken)
     {
-        var requestedVoiceId = settings.VoiceId;
-        var requestedApiKey = settings.ApiKey;
+        var requestedSettings = SettingsStore.CaptureSnapshot(settings);
+        var requestedVoiceId = requestedSettings.VoiceId;
+        var requestedApiKey = requestedSettings.ApiKey;
+        var requestedCredentialIdentity = requestedSettings.CredentialIdentity;
         if (string.IsNullOrWhiteSpace(requestedVoiceId) || !SettingsValidation.IsValidVoiceIdFormat(requestedVoiceId))
             return;
 
@@ -418,7 +420,9 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         {
             var model = await FishAudioApi.GetModelAsync(context, FishAudioApi.MetadataApiKey(requestedApiKey), requestedVoiceId, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            if (model is null || !string.Equals(settings.ApiKey, requestedApiKey, StringComparison.Ordinal))
+            var currentSettings = SettingsStore.CaptureSnapshot(settings);
+            if (model is null || !ReferenceEquals(currentSettings.CredentialIdentity, requestedCredentialIdentity)
+                || !string.Equals(currentSettings.ApiKey, requestedApiKey, StringComparison.Ordinal))
                 return;
 
             var cached = SettingsViewModel.CreateCachedVoiceInfo(model);
@@ -444,7 +448,8 @@ internal sealed class PluginInitializationCoordinator : IDisposable
                     candidate =>
                     {
                         if (!string.Equals(candidate.VoiceId, requestedVoiceId, StringComparison.Ordinal)
-                            || !string.Equals(candidate.ApiKey, requestedApiKey, StringComparison.Ordinal))
+                            || !string.Equals(candidate.ApiKey, requestedApiKey, StringComparison.Ordinal)
+                            || !ReferenceEquals(candidate.CredentialIdentity, requestedCredentialIdentity))
                             return false;
 
                         candidate.CachedVoice = cached;
@@ -455,7 +460,7 @@ internal sealed class PluginInitializationCoordinator : IDisposable
             }
 
             if (TryGetCurrentViewModel(identity, out var viewModel))
-                viewModel?.ApplyRefreshedCachedVoice(requestedVoiceId, cached, requestedApiKey);
+                viewModel?.ApplyRefreshedCachedVoice(requestedVoiceId, cached, requestedApiKey, requestedCredentialIdentity);
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
