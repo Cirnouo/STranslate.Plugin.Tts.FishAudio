@@ -16,9 +16,10 @@ internal static class SettingsInputBindingSuite
     internal static async Task ApiKeyPasswordInputPersistsBeforeFocusLeavesAsync()
     {
         SettingsView view = null!;
+        var constructionTimeout = TimeSpan.FromSeconds(15);
         var phase = Stopwatch.StartNew();
         var constructionFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Console.WriteLine("[settings-input] View construction queued.");
+        Console.WriteLine($"[settings-input] View construction queued with {constructionTimeout.TotalSeconds:0}s execution budget.");
         try
         {
             await RunOnStaThreadAsync(() =>
@@ -38,7 +39,7 @@ internal static class SettingsInputBindingSuite
                 {
                     constructionFinished.TrySetResult();
                 }
-            });
+            }, constructionTimeout);
         }
         catch (TimeoutException)
         {
