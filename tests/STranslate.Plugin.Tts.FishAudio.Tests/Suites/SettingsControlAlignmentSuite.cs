@@ -184,10 +184,10 @@ internal static class SettingsControlAlignmentSuite
             NearInk(center, InkCenter(heart, row), $"{state}: the visible heart drawing must center on its title action row");
             var actionGlyph = Visuals(action).OfType<InkCenteredGlyph>().Single();
             NearInk(center, InkCenter(actionGlyph, row), $"{state}: the visible Tick/Cross glyph must center on its title action row");
-            center = preview.TranslatePoint(new Point(18, 18), row).Y;
-            var playGlyph = Visuals(preview).OfType<InkCenteredGlyph>().Single();
+            center = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), row).Y;
+            var playGlyph = Visuals(preview).OfType<System.Windows.Shapes.Path>().Single();
             if (IsShown(playGlyph))
-                NearInk(center, InkCenter(playGlyph, row), $"{state}: the visible Play glyph must center on the preview ring");
+                NearInk(center, InkCenter(playGlyph, row), $"{state}: the visible filled Play contour must center on its actual portrait-sized preview ring");
             foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Width is 9 or 10))
                 Near(center, stop.TranslatePoint(new Point(stop.ActualWidth / 2, stop.ActualHeight / 2), row).Y, $"{state}: the visible Stop icon must center on the preview ring");
             foreach (var spinner in preview.Children.OfType<Grid>().Where(grid => IsShown(grid)))
