@@ -42,6 +42,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     private CancellationTokenSource? _displayPreviewCancellationTokenSource;
     private PreviewRefreshTarget? _displayPreviewOperationTarget;
     private PreviewRefreshTarget? _playbackTarget;
+    private bool _acceptedSearchOriginRemoved;
 
     internal PreviewRefreshCoordinator(IPluginContext context, Func<string?> getCachedVoiceId,
         Func<string?> getCachedVoiceSampleUrl, Func<string> getVoiceId, Func<string> getSettingsVoiceId,
@@ -79,13 +80,21 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     {
         var id = _getCachedVoiceId();
         var url = _getCachedVoiceSampleUrl();
-        return string.IsNullOrEmpty(id) || string.IsNullOrEmpty(url)
+        return string.IsNullOrEmpty(id) || (string.IsNullOrEmpty(url) && !HasActivePreview(id))
             ? Task.CompletedTask : ToggleAsync(new(id, null), url);
     }
 
     internal Task ToggleSearchItemPreviewAsync(VoiceSearchItem? item) =>
-        item is null || string.IsNullOrEmpty(item.SampleAudioUrl)
+        item is null || !_getSearchResults().Contains(item)
+            || (string.IsNullOrEmpty(item.SampleAudioUrl) && !HasActivePreview(item.Id))
             ? Task.CompletedTask : ToggleAsync(new(item.Id, item), item.SampleAudioUrl);
+
+    private bool HasActivePreview(string id)
+    {
+        if (_getPreviewingVoiceId() == id) return true;
+        lock (_displayPreviewOperationGate)
+            return _displayPreviewCancellationTokenSource is not null && _displayPreviewOperationTarget?.VoiceId == id;
+    }
 
     private async Task ToggleAsync(PreviewRefreshTarget target, string? audioUrl)
     {
@@ -141,8 +150,17 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             if (!IsCurrentDisplayPreviewOperation(operationId, target) || !CanStartPreview(TargetName(target))) return;
             _togglePreview(target.VoiceId, audio);
             audio = null; // The controller owns the buffer even if local playback fails.
-            if (!IsCurrentDisplayPreviewOperation(operationId, target)) { _stopPreview(); return; }
-            if (_getPreviewingVoiceId() == target.VoiceId) _playbackTarget = target;
+            if (!IsCurrentDisplayPreviewOperation(operationId, target))
+            {
+                bool stillOwnsOperation;
+                lock (_displayPreviewOperationGate)
+                    stillOwnsOperation = ReferenceEquals(_displayPreviewCancellationTokenSource, cts);
+                // Retirement already stopped this owner. A reentrant command may
+                // have accepted a successor that this continuation must not stop.
+                if (stillOwnsOperation) _stopPreview();
+                return;
+            }
+            if (_getPreviewingVoiceId() == target.VoiceId && !_acceptedSearchOriginRemoved) _playbackTarget = target;
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
@@ -266,21 +284,30 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         });
     }
 
-    internal void OnSearchResultsChanged()
+    internal void OnSearchResultsChanged(bool retainAcceptedSearchPlayback = false)
     {
         var stop = false;
+        var cards = _getSearchResults();
+        var previewingVoiceId = _getPreviewingVoiceId();
         lock (_displayPreviewOperationGate)
         {
-            if (_displayPreviewOperationTarget is { SearchItem: { } pending } && !_getSearchResults().Contains(pending))
+            if (_displayPreviewOperationTarget is { SearchItem: { } pending } && !cards.Contains(pending))
             {
-                ++_displayPreviewOperationId;
-                CancelCurrentDisplayPreviewOperationLocked();
-                stop = true;
+                // Play has returned before the controller publishes this ID. Its state
+                // callback may reenter search publication before ToggleAsync resumes.
+                if (retainAcceptedSearchPlayback && previewingVoiceId == pending.Id)
+                    _acceptedSearchOriginRemoved = true;
+                else if (!_acceptedSearchOriginRemoved)
+                {
+                    ++_displayPreviewOperationId;
+                    CancelCurrentDisplayPreviewOperationLocked();
+                    stop = true;
+                }
             }
-            if (_playbackTarget is { SearchItem: { } playing } && !_getSearchResults().Contains(playing))
+            if (_playbackTarget is { SearchItem: { } playing } && !cards.Contains(playing))
             {
                 _playbackTarget = null;
-                stop = true;
+                stop |= !retainAcceptedSearchPlayback;
             }
         }
         if (stop)
@@ -309,6 +336,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             cancellationToken = cts.Token;
             _displayPreviewCancellationTokenSource = cts;
             _displayPreviewOperationTarget = target;
+            _acceptedSearchOriginRemoved = false;
             return true;
         }
     }
@@ -321,13 +349,16 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
 
     private bool IsCurrentIdentity(long operationId, PreviewRefreshTarget target)
     {
+        bool acceptedSearchOriginRemoved;
         lock (_displayPreviewOperationGate)
         {
             if (_isDisposed || _isFacadeDisposed() || _displayPreviewOperationId != operationId || _displayPreviewOperationTarget != target) return false;
+            acceptedSearchOriginRemoved = _acceptedSearchOriginRemoved;
         }
         return target.SearchItem is null
             ? string.Equals(_getVoiceId(), target.VoiceId, StringComparison.Ordinal) && string.Equals(_getSettingsVoiceId(), target.VoiceId, StringComparison.Ordinal)
-            : string.Equals(target.SearchItem.Id, target.VoiceId, StringComparison.Ordinal) && _getSearchResults().Contains(target.SearchItem);
+            : string.Equals(target.SearchItem.Id, target.VoiceId, StringComparison.Ordinal)
+                && (acceptedSearchOriginRemoved || _getSearchResults().Contains(target.SearchItem));
     }
 
     private void CompleteDisplayPreviewOperation(CancellationTokenSource cts)
@@ -337,6 +368,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
             if (!ReferenceEquals(_displayPreviewCancellationTokenSource, cts)) return;
             _displayPreviewCancellationTokenSource = null;
             _displayPreviewOperationTarget = null;
+            _acceptedSearchOriginRemoved = false;
             cts.Dispose();
         }
         PublishPreparingState();
@@ -355,6 +387,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         var cancellation = _displayPreviewCancellationTokenSource;
         _displayPreviewCancellationTokenSource = null;
         _displayPreviewOperationTarget = null;
+        _acceptedSearchOriginRemoved = false;
         if (cancellation is null) return;
         try { cancellation.Cancel(); }
         finally { cancellation.Dispose(); }

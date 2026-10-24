@@ -73,6 +73,7 @@ internal sealed class PreviewPlaybackController : IDisposable
             player.Play();
             if (!IsCurrent(player, generation)) return;
             SetState(voiceId, 0);
+            if (!IsCurrent(player, generation)) return;
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
             _timer.Tick += OnPreviewTick;
             _timer.Start();

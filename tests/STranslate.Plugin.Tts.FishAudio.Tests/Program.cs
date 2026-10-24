@@ -16,6 +16,55 @@ if (args.Contains("--popup-lifetime-tests"))
     return;
 }
 
+if (args.Contains("--search-preview-retention-tests"))
+{
+    await SearchPreviewRetentionSuite.RunAllAsync();
+    Console.WriteLine("Search preview retention regressions passed.");
+    return;
+}
+
+if (args.Contains("--preview-ownership-compatibility-tests"))
+{
+    await PreviewSuite.PreviewPublishesPreparationBeforeFirstAwaitAsync();
+    await PreviewSuite.PreviewPreparationTransitionsToRealPlaybackAsync();
+    await PreviewSuite.PreviewSameVoiceAcrossEntriesCancelsPreparationAsync();
+    await PreviewSuite.PreviewOldCompletionCannotClearNewPreparationAsync();
+    await PreviewSuite.PreviewPreparationFailureAndResetClearStateAsync();
+    await PreviewSuite.PreviewQueuedPublicationsReadCurrentPreparationOwnerAsync();
+    await PreviewSuite.RunBoundedPreviewRegressionTestsAsync();
+    await PreviewSuite.DisplayPreviewValidUrlSkipsDetailRefreshAsync();
+    await PreviewSuite.DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync();
+    await PreviewSuite.DisplayPreviewOfflinePreflightStopsBeforeRefreshAsync();
+    await PreviewSuite.DisplayPreviewRechecksNetworkBeforePlaybackAsync();
+    await PreviewSuite.SearchPreviewUsesListUrlWithoutDetailRefresh();
+    await PreviewSuite.SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync();
+    await PreviewSuite.SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync();
+    await PreviewSuite.SearchPreviewRemovedResultIgnoresLateRefreshAsync();
+    await PreviewSuite.SearchPreviewSecondClickCancelsPendingRefreshAsync();
+    await PreviewSuite.SearchPreviewSecondClickStopsWithoutNetwork();
+    await PreviewSuite.DisplayPreviewExpiredRefreshFailureShowsErrorAsync();
+    await PreviewSuite.DisplayPreviewNotFoundShowsRefreshErrorAsync();
+    await PreviewSuite.DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync();
+    await PreviewSuite.DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync();
+    await PreviewSuite.DisplayPreviewSecondClickStopsWithoutNetworkAsync();
+    await PreviewSuite.DisplayPreviewSecondClickCancelsPendingRefreshWithoutRestartAsync();
+    await PreviewSuite.PreviewPlaybackFailureUsesNetworkAwareMessage();
+    await PreviewSuite.SearchPreviewInvalidatesPendingDisplayRefreshAsync();
+    await PreviewSuite.DisplayPreviewVoiceSwitchIgnoresLateRefreshAsync();
+    await PreviewSuite.DisplayPreviewDisposeCancelsAndIgnoresLateRefreshAsync();
+    await VoiceDiscoverySuite.SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync();
+    await VoiceDiscoverySuite.SearchCommittedQuerySurvivesEditsAndFailureAsync();
+    await VoiceDiscoverySuite.SearchReplacementRejectsLatePaginationAsync();
+    await VoiceDiscoverySuite.SearchPublishesPaginationBeforeResolvingCoversAsync();
+    await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
+    await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
+    await FavoriteVoicesSuite.FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync();
+    await FavoriteVoicesSuite.UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync();
+    await SearchAdjustmentSuite.RunRequestsAsync();
+    Console.WriteLine("Preview ownership compatibility regressions passed.");
+    return;
+}
+
 if (args.Contains("--numeric-typography-tests"))
 {
     await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
@@ -44,6 +93,12 @@ if (args.Contains("--streaming-cancellation-probe-tests"))
     await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
     await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
     Console.WriteLine("Streaming cancellation probe regressions passed.");
+    return;
+}
+
+if (args.Contains("--avatar-preview-tests"))
+{
+    await AvatarPreviewSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--avatar-preview-tests") + 1));
     return;
 }
 
@@ -222,6 +277,13 @@ if (args.Contains("--settings-input-tests"))
 {
     await SettingsInputInteractionSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--settings-input-tests") + 1));
     Console.WriteLine("Settings input interaction tests passed.");
+    return;
+}
+
+if (args.Contains("--numeric-tooltip-diagnostics-tests"))
+{
+    await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
+    Console.WriteLine("Native numeric tooltip diagnostic contracts passed.");
     return;
 }
 
@@ -513,6 +575,7 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 // the new numeric group explicitly warms actual DPI on compiled text views.
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
 
+await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
 await VoiceLanguageSuite.RunAllAsync();
@@ -524,4 +587,6 @@ await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetry
 await SearchAdjustmentControlSuite.RunAllAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceLikeSuite.RunAllAsync();
+await AvatarPreviewSuite.RunAllAsync();
+await SearchPreviewRetentionSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

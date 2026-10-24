@@ -46,7 +46,7 @@ A voice selects timbre; a model selects the synthesis engine. A voice's communit
 
 | To do this | Action |
 |---|---|
-| Hear a sample | Click Play; click again to stop. Preview plays an existing public sample without applying the voice or synthesizing your text. |
+| Hear a sample | Hover over a voice card and click Play on its avatar. During loading or playback, click the square to cancel or stop; it stays available after the pointer leaves. The avatar remains visible beneath the translucent control. After playback ends, Play appears only while the card is hovered. Preview plays an existing public sample without applying the voice or synthesizing your text. |
 | Use the voice for reading | Click the tick, **Apply**. To return to random voice, click the cross, **Clear**. Your model and liked voices remain. Random voice does not mean free. |
 | Save it for later | Click Like or Unlike to save or remove a voice. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
 | Copy its Voice ID | Click the **card title**, not the author or description. |
@@ -61,7 +61,7 @@ Likes are saved on this computer, survive restart and do not synchronize with yo
 
 In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
-Changing the voice or replacing/removing its card stops its preview.
+Once a search sample is playing, searching again, applying search options (even unchanged) or changing search pages keeps it playing, including when a query fails or is canceled. A matching card found again shows current progress and can Stop. Playback ends with the sample, Stop, another preview, a selected-voice or Key change, or closing the plugin. Replacing the source card while its sample is still loading cancels that pending preview; replacing a By-ID card or removing the originating liked card still stops its preview.
 
 ## 3. Models and costs
 
