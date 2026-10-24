@@ -1,0 +1,27 @@
+# Voice search, cards and numeric controls design
+
+Status: approved design, 2026-10-24. This document describes the requested change; current implementation specifications are updated with each completed task.
+
+## Intent and approach
+
+Make explicit search adjustments useful without losing browsing state, expose voice creation dates consistently, and improve precise numeric input. The selected approach is a compact search-adjustment popup. A tiled language picker was considered for discoverability; the compact dropdown was selected to fit the existing settings page. Language is single-select and uses the existing embedded flag presentation.
+
+## Required behavior
+
+- Add an icon-only, borderless-at-rest adjustment action inside the search input. Use the requested two horizontal slider-knob silhouette, not a funnel. Reserve the text/caret viewport for the action.
+- Use a 324-DIP popup design width, clamped to the settings viewport and monitor work area, with native opaque theme resources, Close, Reset and Apply.
+- Offer All languages plus en, zh, de, ja, fr, es, ko, ar, ru, pt. Specific options and the selected option show the same embedded flags/names as voice language pills. All languages has no flag.
+- Sort choices are Relevance, Popularity and Creation time, mapped to score, task_count and created_at. Simplified Chinese labels are 相关性, 热度 and 创建时间. Default is score. Relevance is the plugin's display name for the provider's score order; no client ranking is introduced. Popularity is generation count descending and creation order is newest first, observed on the public endpoint on 2026-10-24; the documentation does not specify directions or the score formula.
+- Every Apply closes the popup and immediately issues exactly one page-one request using the visible search text and draft language/sort, including unchanged criteria. New requests cancel/replace prior ones. Draft selection, Reset and dismissal issue no requests. Reset restores All + score; Close, Escape, outside click and browse-tab changes discard drafts.
+- Commit successful current-owner criteria, results and pagination together. Failure retains the last successful state. Paging uses the last successful criteria. Criteria are ViewModel-session state, not durable preferences.
+- Coordinate the adjustment popup and language-overflow popup with one overlay owner per settings view. Treat the language ComboBox child popup as part of the adjustment session. Support keyboard focus, dismissal, scrolling, deactivation and cleanup.
+- Rework all voice cards: Search, By-ID, Favorites and the current selected voice. Put actions at the title row's right; title, bounded description, language pills and author precede one stretching row with popularity left and creation date right. Keep existing copy/favorite/preview/progress/apply/clear behavior and placeholders. Preserve 40-DIP list avatars and the selected card's 48-DIP avatar.
+- Add nullable CreatedAt throughout provider DTO, detached metadata cache, visible cards, selected CachedVoice, startup and preview refresh. Parse malformed/wrong-type provider date metadata locally as null, consuming the whole value. Store UTC; display system-local yyyy-MM-dd with a full offset-bearing tooltip. Missing/invalid dates show an em dash. Authoritative null refreshes clear former dates.
+- Keep settings schema 2 and ID-only favorite persistence. Extend date migration/copy/save/rollback while preserving unknown/future-schema read-only behavior and existing credential partitions, leases, cache TTL and card identity.
+- Enable native slider click-to-point, retaining hundredths, bounds, bindings and zero normalization. Change the shared slider/resting-text wheel dwell from 250 to 350 ms, retaining all rearm and event-ownership rules.
+- Make all four resting numeric fields/editors 52 DIP wide and 32 DIP high, with 2-DIP horizontal padding and 1-DIP border reserved in both states. Right-align their actual text viewport edges. Resting borders are transparent; focus changes only the brush. Fix the hardcoded centered ContentPresenter. Keep the native clear adornment locally disabled. Add the separate speed unit ×; retain separate dB; use an auto unit column collapsed when empty. Preserve the surrounding native settings-card layout and 180-DIP sliders.
+- By-ID errors expire after exactly five seconds, restart on every occurrence including identical text, and clear immediately on input edits/new lookups. Use injectable time, cancellable versioned ownership, UI dispatch and retirement so old timers/responses cannot affect newer messages. Expiry changes only the error.
+
+## Boundaries and acceptance
+
+Keep the public plugin identity, host bindings and existing domain/lifecycle ownership. Seven UI locales and five user-guide languages stay aligned; maintenance documentation is English and changelog prose Chinese. No new dependencies, settings schema, synthesis requests, publication, manifest version or release tag are required. Validate behavior at fake network/time/storage/audio boundaries and real compiled themed WPF controls, register runner scenarios, then run the full Release build/test/package command and inspect its actual package. Record installed-host/device/provider limits accurately.

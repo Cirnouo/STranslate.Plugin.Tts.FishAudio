@@ -103,7 +103,7 @@ Edits save automatically. These are new-configuration defaults; change one setti
 
 All three methods retain 0.01 precision:
 
-- Drag a slider, or hover over its slider or resting number for about 250 ms, then use the mouse wheel to adjust by 0.01.
+- Click a slider track or drag its thumb, or hover over its slider or resting number for about 350 ms, then use the mouse wheel to adjust by 0.01.
 - For an exact value, click the number and type. Enter or clicking elsewhere saves; Esc cancels. Invalid, empty or out-of-range input restores the previous value.
 - Use a decimal point, or your region's decimal comma.
 ### Other options
