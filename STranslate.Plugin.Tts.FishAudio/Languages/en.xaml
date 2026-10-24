@@ -123,4 +123,13 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Unable to open the project repository. Check your default browser settings.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">en</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">More languages</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">Search adjustments</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">Language</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">All languages</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">Sort by</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">Relevance first</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Popularity">Most used first</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Newest first</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Reset</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Close</sys:String>
 </ResourceDictionary>

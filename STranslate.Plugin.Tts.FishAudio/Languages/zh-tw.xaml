@@ -123,4 +123,13 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">無法開啟專案儲存庫。請檢查預設瀏覽器設定。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">zh-TW</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">其他語言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">搜尋選項</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">語言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">全部語言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">排序</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">相關優先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Popularity">熱門優先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">最新優先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">重設</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">關閉</sys:String>
 </ResourceDictionary>

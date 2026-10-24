@@ -123,4 +123,13 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Не удалось открыть репозиторий проекта. Проверьте настройки браузера по умолчанию.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">ru</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">Другие языки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">Параметры поиска</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">Язык</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">Все языки</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">Сортировка</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">Сначала релевантные</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Popularity">Чаще используемые</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Сначала новые</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Сбросить</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Закрыть</sys:String>
 </ResourceDictionary>

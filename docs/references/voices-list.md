@@ -8,7 +8,8 @@
 | `page_number` | Integer at least 1, default 1. |
 | `title` | Optional title search. |
 | `sort_by` | `score` (default), `task_count`, or `created_at`. |
-| `tag`, `language`, `title_language` | Optional filters; preserve the schema's accepted representation. |
+| `language` | Optional scalar string language filter, such as `en` or `zh`; All omits it. |
+| `tag`, `title_language` | Optional filters; preserve the schema's accepted representation. |
 | `self` | Default false; true selects the active workspace's voices. |
 | `author_id` | Public-author filter, ignored with `self=true`. |
 | `licensed` | Default false; true selects licensed voices, ignored with `self=true`. |
@@ -22,3 +23,11 @@ In the current native schema `samples` is an array of `SampleEntity`; each item 
 The probe records `voices-anonymous`, `public-voices-default`, `public-voices-search`, and optional `*-voices-page-2` / `*-voices-no-result`; authenticated equivalents repeat visible-list behavior with the supplied key. List responses provide actual IDs used by [detail](voices-detail.md) and synthesis cases. A title search may validly return zero results. The unlikely no-result keyword is not a server guarantee of emptiness; the actual body establishes that outcome. See the [evidence index](../evidences/2026-10-20/manifest.json) for statuses and bodies.
 
 All cases read existing data. No `self=true` account enumeration, mutation, generated sample, or paid engine is needed to test the public voice picker contract.
+
+## Search options: contract and bounded observations
+
+The [pinned official OpenAPI schema](https://github.com/fishaudio/docs/blob/9e9b9e8b1a23a08c2105f4ad7e609dcb723a3bd1/api-reference/openapi.json) documents the three `sort_by` values and scalar `language` string. It does not document a sort-direction parameter, tie order or a numeric `score` field/formula. The plugin explicitly sends one selected sort, sends at most one language and omits the language parameter for All. Its presets are `en`, `zh`, `de`, `ja`, `fr`, `es`, `ko`, `ar`, `ru` and `pt`; these UI presets are not a provider capability whitelist.
+
+On 2026-10-24, three separate unauthenticated public first-page GET observations used `page_size=6&page_number=1` with `task_count` (03:02:28 UTC), `created_at` (03:02:31 UTC) and `score` (03:02:35 UTC). The popularity response counts were 19962974, 4952573, 4202767, 4007516, 3279050 and 2993860, descending; creation timestamps were latest first. The score response exposed no numeric score and was monotonic in neither count nor creation date. No raw response capture was retained for these observations. They establish only the ordering seen on those first pages, not a documented direction, stable tie order, global ranking or future guarantee. The observations did not use credentials/cookies, retry or synthesize speech.
+
+The official Python SDK [voice type at commit 448150989781e6f91c3ca9f6cc59711a87df8130](https://github.com/fishaudio/fish-audio-python/blob/448150989781e6f91c3ca9f6cc59711a87df8130/src/fishaudio/types/voices.py#L62) describes `task_count` in terms of generation uses. The UI therefore calls its descending view Most used first (热门优先). Provider `score` is labeled Relevance first (相关优先). The source website uses Recommended for score; the plugin title is a product choice for search, and no scoring formula or numeric direction is inferred from it. Newest first (最新优先) maps to `created_at`. The UI shows these three titles without helper descriptions. Descending provider order remains the bounded observation above, rather than a documented guarantee.

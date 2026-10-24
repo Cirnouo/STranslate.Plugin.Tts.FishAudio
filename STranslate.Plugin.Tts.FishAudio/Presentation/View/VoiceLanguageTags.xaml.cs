@@ -17,8 +17,7 @@ public partial class VoiceLanguageTags : UserControl
         typeof(string), typeof(VoiceLanguageTags), new PropertyMetadata("en", PresentationChanged));
     private static readonly DependencyProperty MoreCaptionProperty = DependencyProperty.Register("MoreCaption",
         typeof(string), typeof(VoiceLanguageTags), new PropertyMetadata("", PresentationChanged));
-    private static readonly DependencyProperty PopupOwnerProperty = DependencyProperty.RegisterAttached("PopupOwner",
-        typeof(VoiceLanguageTags), typeof(VoiceLanguageTags));
+    private readonly object _ownershipToken = new();
 
     private FrameworkElement? _owner;
     private Window? _window;
@@ -116,6 +115,7 @@ public partial class VoiceLanguageTags : UserControl
         base.OnDpiChanged(oldDpi, newDpi);
         _naturalWidths = null;
         InvalidateMeasure();
+        Reposition();
     }
 
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs args)
@@ -220,10 +220,8 @@ public partial class VoiceLanguageTags : UserControl
     {
         if (IsPopupOpen || _inlineCount < 1 || _codes.Count <= _inlineCount || !IsVisible || !IsLoaded) return;
         _window = Window.GetWindow(this);
-        _owner = Ancestors(this).OfType<SettingsView>().FirstOrDefault()
-            ?? (FrameworkElement?)_window ?? this;
-        if (_owner.GetValue(PopupOwnerProperty) is VoiceLanguageTags other) other.ClosePopup();
-        _owner.SetValue(PopupOwnerProperty, this);
+        _owner = SettingsOverlayOwnership.FindOwner(this);
+        SettingsOverlayOwnership.Acquire(_owner, _ownershipToken, () => ClosePopup());
         _owner.SizeChanged += OwnerSizeChanged;
         _owner.IsVisibleChanged += OwnerVisibilityChanged;
         foreach (var viewer in Ancestors(this).OfType<ScrollViewer>())
@@ -271,7 +269,7 @@ public partial class VoiceLanguageTags : UserControl
         {
             _owner.SizeChanged -= OwnerSizeChanged;
             _owner.IsVisibleChanged -= OwnerVisibilityChanged;
-            if (ReferenceEquals(_owner.GetValue(PopupOwnerProperty), this)) _owner.ClearValue(PopupOwnerProperty);
+            SettingsOverlayOwnership.Release(_owner, _ownershipToken);
         }
         _window = null;
         _owner = null;
@@ -342,7 +340,7 @@ public partial class VoiceLanguageTags : UserControl
         ? VisualTreeHelper.GetParent(child) ?? LogicalTreeHelper.GetParent(child)
         : LogicalTreeHelper.GetParent(child);
 
-    private static Rect MonitorWorkArea(Point point)
+    internal static Rect MonitorWorkArea(Point point)
     {
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         var monitor = MonitorFromPoint(new NativePoint { X = (int)point.X, Y = (int)point.Y }, 2);

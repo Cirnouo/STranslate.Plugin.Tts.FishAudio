@@ -134,4 +134,13 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">无法打开项目仓库。请检查默认浏览器设置。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">zh-CN</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">其余语言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">搜索选项</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">语言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">全部语言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">排序</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">相关优先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Popularity">热门优先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">最新优先</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">重置</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">关闭</sys:String>
 </ResourceDictionary>
