@@ -250,6 +250,7 @@ public partial class VoiceLanguageTags : UserControl
             _scrollbarLane.Begin();
             Material.Begin();
             LanguagePopup.IsOpen = true;
+            if (PresentationSource.FromVisual(PopupSurface) is null || !PreparePopupBounds()) { ClosePopup(); return; }
         }
         catch
         {
@@ -324,7 +325,8 @@ public partial class VoiceLanguageTags : UserControl
         if (args.OriginalSource is ScrollViewer viewer && _scrollOwners.Contains(viewer)
             && (args.VerticalChange != 0 || args.HorizontalChange != 0)) ClosePopup();
     }
-    private bool PreparePopupBounds() => PopupViewport.Prepare(MoreButton, _owner, _scrollOwners, PopupSurface, PopupScroll, 290, 280);
+    private bool PreparePopupBounds() => PopupViewport.Prepare(MoreButton, _owner, _scrollOwners,
+        PopupSurface, PopupScroll, [RemainingCount], 290, 280);
     private void Reposition()
     {
         if (!IsPopupOpen || _owner is null) return;

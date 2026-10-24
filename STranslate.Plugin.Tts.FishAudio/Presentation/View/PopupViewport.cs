@@ -31,12 +31,33 @@ internal static class PopupViewport
     }
 
     internal static bool Prepare(FrameworkElement anchor, FrameworkElement? owner, IEnumerable<ScrollViewer> ancestors,
-        Border surface, ScrollViewer body, double maximumWidth, double maximumBodyHeight = double.PositiveInfinity)
+        Border surface, ScrollViewer body, IEnumerable<FrameworkElement> fixedWidthChrome,
+        double maximumWidth, double maximumBodyHeight = double.PositiveInfinity)
     {
         var bounds = VisibleBounds(anchor, owner, ancestors);
         if (bounds.IsEmpty) return false;
         var dpi = ScreenScale(anchor);
         surface.Width = Math.Min(maximumWidth, bounds.Width / dpi.DpiScaleX);
+        // A retired PopupRoot suspends layout and retains constrained DesiredSize.
+        // Bound source creation first; the caller rechecks its actual new source
+        // synchronously before completing Open, using current native metrics.
+        if (PresentationSource.FromVisual(surface) is null)
+        {
+            surface.MaxHeight = bounds.Height / dpi.DpiScaleY;
+            body.MaxHeight = Math.Min(maximumBodyHeight, surface.MaxHeight);
+            return true;
+        }
+        var minimumContentWidth = 0d;
+        foreach (var chrome in fixedWidthChrome)
+        {
+            // Include native margins/gaps, while allowing header titles to wrap.
+            chrome.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            minimumContentWidth = Math.Max(minimumContentWidth, chrome.DesiredSize.Width);
+        }
+        surface.InvalidateMeasure();
+        var shellWidth = surface.Padding.Left + surface.Padding.Right
+            + surface.BorderThickness.Left + surface.BorderThickness.Right;
+        if (surface.Width < minimumContentWidth + shellWidth) return false;
         surface.MaxHeight = double.PositiveInfinity;
         body.MaxHeight = maximumBodyHeight;
         // Measure localized fixed chrome independently: no estimated popup height

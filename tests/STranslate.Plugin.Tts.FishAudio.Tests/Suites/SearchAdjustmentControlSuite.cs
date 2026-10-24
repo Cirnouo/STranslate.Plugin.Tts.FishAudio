@@ -574,10 +574,16 @@ internal static class SearchAdjustmentControlSuite
         for (DependencyObject? current = item; current is not null; current = VisualTreeHelper.GetParent(current)) yield return current;
     }
 
-    private static void ViewportClampsAcrossTriggerOrRefuses()
+    private static async Task ViewportClampsAcrossTriggerOrRefuses()
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var (service, http) = TestHttpServiceProxy.Create();
+        http.GetResponseJson = """{"total":24,"items":[{"_id":"0123456789abcdef0123456789abcdef","title":"Retained voice","type":"tts","samples":[]}]}""";
+        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+        vm.SearchQuery = "retained query";
+        await vm.ApplySearchOptionsAsync(["en"], "task_count");
+        var successfulResults = vm.SearchResults;
+        var requestCount = http.GetCallCount;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         var scroll = new ScrollViewer { Content = view, Height = 220 };
         using var source = new HwndSource(new HwndSourceParameters("Fish Audio centered short popup fixture")
@@ -600,6 +606,151 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(false, IsOpen(control), "A viewport smaller than measured fixed chrome coherently refuses the popup");
         AssertEqual(false, (bool)control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control)!,
             "Refusal retires input and overlay ownership");
+
+        scroll.Height = 280;
+        foreach (var (locale, dark) in new[] { ("en", false), ("ru", true) })
+        {
+            scroll.Width = 400;
+            SetLocale(view, locale);
+            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            Open(control);
+            AssertEqual(true, IsOpen(control), "A sufficiently wide viewport opens with native localized actions");
+            AssertFixedActions(control, surface);
+            AssertFixedCaptions(control, surface);
+            var reset = Part<Button>(control, "ResetButton");
+            var apply = Part<Button>(control, "ApplyButton");
+            // Independent boundary from the already rendered complete actions,
+            // rather than the helper's unconstrained measurement or decision.
+            var requiredWidth = reset.ActualWidth + apply.ActualWidth + apply.Margin.Left
+                + surface.Padding.Left + surface.Padding.Right + surface.BorderThickness.Left + surface.BorderThickness.Right;
+            var presenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
+            var viewportOverhead = scroll.ActualWidth - presenter.ActualWidth + 16;
+            Toggle(control, "ja");
+            Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+            scroll.Width = requiredWidth - 2 + viewportOverhead;
+            SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            var rejectedWidth = (presenter.PointToScreen(new Point(presenter.ActualWidth, 0)).X - presenter.PointToScreen(new Point()).X)
+                / PopupViewport.ScreenScale(control).DpiScaleX - 16;
+            AssertEqual(false, IsOpen(control), "Narrowing an open viewport below its complete native footer width closes the popup");
+            AssertHorizontalRetirement(control, view);
+            Open(control);
+            AssertEqual(false, IsOpen(control), "A tall viewport narrower than localized fixed actions refuses reopening");
+            AssertHorizontalRetirement(control, view);
+            if (locale == "ru")
+            {
+                scroll.Width = 150;
+                SettingsLayoutSuite.Layout(scroll, 400); Drain();
+                foreach (var attempt in new[] { 1, 2 })
+                {
+                    Open(control);
+                    AssertEqual(false, IsOpen(control), $"The original 150-DIP Russian narrow viewport refuses open {attempt}");
+                    AssertHorizontalRetirement(control, view);
+                }
+            }
+            AssertEqual(requestCount, http.GetCallCount, "Width retirement and refused reopening issue no GET");
+            AssertEqual(true, ReferenceEquals(successfulResults, vm.SearchResults), "Width refusal retains successful result objects");
+            AssertEnumerableEqual(new[] { "en" }, vm.SearchLanguages, "Width retirement cannot apply language drafts");
+            AssertEqual("task_count", vm.SearchSort, "Width retirement cannot apply sort drafts");
+            AssertEqual(1, vm.SearchPage, "Width retirement preserves successful pagination");
+
+            scroll.Width = requiredWidth + 2 + viewportOverhead;
+            SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
+            AssertEqual(true, IsOpen(control), "Restoring enough width reopens without a forced maximum-width floor");
+            AssertFixedActions(control, surface);
+            AssertFixedCaptions(control, surface);
+            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen restores successful languages after discarded drafts");
+            AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Reopen restores successful sort");
+            var top = surface.PointToScreen(new Point());
+            var bottom = surface.PointToScreen(new Point(surface.ActualWidth, surface.ActualHeight));
+            var visibleTop = presenter.PointToScreen(new Point());
+            var visibleBottom = presenter.PointToScreen(new Point(presenter.ActualWidth, presenter.ActualHeight));
+            AssertEqual(true, top.X >= visibleTop.X && bottom.X <= visibleBottom.X + 1 && top.Y >= visibleTop.Y && bottom.Y <= visibleBottom.Y + 1,
+                "The reopened shell remains inside the complete visible viewport on both axes");
+            Console.WriteLine($"[popup-horizontal/{locale}/{(dark ? "dark" : "light")}] rendered boundary={requiredWidth:0.###} DIP; rejected requested={requiredWidth - 2:0.###}/actual={rejectedWidth:0.###}; reopened shell={surface.ActualWidth:0.###}; viewport={presenter.ActualWidth:0.###}x{presenter.ActualHeight:0.###}; sourceDpi={PopupViewport.ScreenScale(control).DpiScaleX:0.##}; popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX:0.##}; captions complete; draft/noGET/cleanup preserved");
+            Click(control, "CloseButton");
+            AssertHorizontalRetirement(control, view);
+        }
+        scroll.Width = 400;
+        SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
+        AssertEqual(true, IsOpen(control), "Restoring the original 400-DIP viewport reopens after repeated narrow refusal");
+        AssertFixedActions(control, surface);
+        AssertFixedCaptions(control, surface);
+        Click(control, "CloseButton");
+        AssertHorizontalRetirement(control, view);
+        AssertEqual(requestCount, http.GetCallCount, "All width-only transitions leave the last successful request untouched");
+
+        // The shared helper must use this shell's own fixed count, not impose the
+        // search footer's larger width on read-only language overflow.
+        var tags = new VoiceLanguageTags { Languages = new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt", "it", "nl" } };
+        tags.Resources.MergedDictionaries.Add(view.Resources);
+        scroll.Content = tags;
+        scroll.Width = 150;
+        SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
+        AssertEqual(true, tags.IsPopupOpen, "Language overflow can open below the search footer's width requirement");
+        var languageSurface = (Border)tags.FindName("PopupSurface");
+        var count = (TextBlock)tags.FindName("RemainingCount");
+        var languageMinimum = count.ActualWidth + count.Margin.Left + languageSurface.Padding.Left + languageSurface.Padding.Right
+            + languageSurface.BorderThickness.Left + languageSurface.BorderThickness.Right;
+        var languagePresenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
+        var languageOverhead = scroll.ActualWidth - languagePresenter.ActualWidth + 16;
+        scroll.Width = languageMinimum - 2 + languageOverhead;
+        SettingsLayoutSuite.Layout(scroll, 400); Drain();
+        var rejectedLanguageWidth = (languagePresenter.PointToScreen(new Point(languagePresenter.ActualWidth, 0)).X - languagePresenter.PointToScreen(new Point()).X)
+            / PopupViewport.ScreenScale(tags).DpiScaleX - 16;
+        AssertEqual(false, tags.IsPopupOpen, "Language overflow closes when its own fixed count cannot fit");
+        AssertEqual(IntPtr.Zero, tags.Material.Handle, "Language width retirement releases its exact source");
+        AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
+            "Language width retirement detaches input");
+        AssertEqual(0d, ((ScrollViewer)tags.FindName("PopupScroll")).Padding.Right, "Language width retirement restores scrollbar padding");
+        AssertEqual(false, Escape(scroll).Handled, "Retired language input cannot consume Escape");
+        tags.OpenPopup(); Drain();
+        AssertEqual(false, tags.IsPopupOpen, "Language overflow refuses a still insufficient width");
+        scroll.Width = languageMinimum + 2 + languageOverhead;
+        SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
+        AssertEqual(true, tags.IsPopupOpen, "Language overflow reopens at its own sufficient width");
+        var countBounds = count.TransformToAncestor(languageSurface).TransformBounds(new Rect(count.RenderSize));
+        AssertEqual(true, countBounds.Left >= 0 && countBounds.Right <= languageSurface.ActualWidth, "The reopened fixed count remains fully visible");
+        Console.WriteLine($"[popup-horizontal/languages/ru] native required={languageMinimum:0.###} DIP; rejected requested={languageMinimum - 2:0.###}/actual={rejectedLanguageWidth:0.###}; reopened={languageSurface.ActualWidth:0.###}; count={count.Text}");
+        tags.ClosePopup();
+        AssertEqual(requestCount, http.GetCallCount, "Language width transitions issue no GET");
+    }
+
+    private static void AssertHorizontalRetirement(FrameworkElement control, FrameworkElement root)
+    {
+        object? Field(string name) => control.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control);
+        AssertEqual(false, (bool)Field("_ownsInput")!, "Horizontal retirement detaches input");
+        AssertEqual<object?>(null, Field("_owner"), "Horizontal retirement releases the overlay owner");
+        AssertEqual<object?>(null, Field("_window"), "Horizontal retirement releases window subscriptions");
+        AssertEqual(0, ((System.Collections.ICollection)Field("_scrollOwners")!).Count, "Horizontal retirement releases ancestor subscriptions");
+        AssertEqual(IntPtr.Zero, ((SearchAdjustmentControl)control).Material.Handle, "Horizontal retirement releases material/source ownership");
+        AssertEqual(0d, Part<ScrollViewer>(control, "PopupScroll").Padding.Right, "Horizontal retirement restores original scrollbar padding");
+        AssertEqual(false, Escape(root).Handled, "Retired input handlers cannot consume subsequent Escape");
+    }
+
+    private static void AssertFixedCaptions(FrameworkElement control, Border surface)
+    {
+        foreach (var name in new[] { "ResetButton", "ApplyButton" })
+        {
+            var button = Part<Button>(control, name);
+            var label = Visuals(button).OfType<TextBlock>().Single(text => text.Text == (string)button.Content);
+            var full = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize,
+                FontWeight = label.FontWeight, FontStyle = label.FontStyle, FontStretch = label.FontStretch };
+            typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [full, VisualTreeHelper.GetDpi(label)]);
+            full.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var labelBounds = label.TransformToAncestor(button).TransformBounds(new Rect(label.RenderSize));
+            var shellBounds = label.TransformToAncestor(surface).TransformBounds(new Rect(label.RenderSize));
+            foreach (var presenter in AncestorsAndSelf(label).TakeWhile(item => !ReferenceEquals(item, button)).OfType<ContentPresenter>())
+            {
+                var inPresenter = label.TransformToAncestor(presenter).TransformBounds(new Rect(label.RenderSize));
+                AssertEqual(true, inPresenter.Left >= -.01 && inPresenter.Right <= presenter.ActualWidth + .01,
+                    $"The complete native {name} caption stays inside each real content presenter viewport");
+            }
+            AssertEqual(true, label.ActualWidth + .01 >= full.DesiredSize.Width && labelBounds.Left >= 0 && labelBounds.Right <= button.ActualWidth + .01
+                && shellBounds.Left >= 0 && shellBounds.Right <= surface.ActualWidth + .01,
+                $"The complete native {name} caption remains inside its button and visible shell ({label.Text})");
+        }
     }
 
     private static void AssertFixedActions(FrameworkElement control, Border surface)

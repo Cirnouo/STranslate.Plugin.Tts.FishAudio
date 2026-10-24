@@ -143,6 +143,7 @@ public partial class SearchAdjustmentControl : UserControl
             _scrollbarLane.Begin();
             Material.Begin();
             AdjustmentPopup.IsOpen = true;
+            if (PresentationSource.FromVisual(PopupSurface) is null || !PreparePopupBounds()) { ClosePopup(); return; }
         }
         catch
         {
@@ -244,7 +245,8 @@ public partial class SearchAdjustmentControl : UserControl
         if (args.OriginalSource is ScrollViewer viewer && _scrollOwners.Contains(viewer)
             && (args.VerticalChange != 0 || args.HorizontalChange != 0)) ClosePopup();
     }
-    private bool PreparePopupBounds() => PopupViewport.Prepare(AdjustmentButton, _owner, _scrollOwners, PopupSurface, PopupScroll, 324);
+    private bool PreparePopupBounds() => PopupViewport.Prepare(AdjustmentButton, _owner, _scrollOwners,
+        PopupSurface, PopupScroll, [PopupFooter, CloseButton], 324);
     private void Reposition()
     {
         if (AdjustmentPopup is null || !AdjustmentPopup.IsOpen || _owner is null) return;
