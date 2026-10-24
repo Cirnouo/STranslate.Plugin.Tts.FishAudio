@@ -196,13 +196,15 @@ internal static class SettingsLayoutSuite
         AssertEqual(true, ReferenceEquals(view.FindResource("VoiceLikeHeartGeometry"), icon!.Data), "The tab shares the card heart contour");
         var referenceIcon = ((StackPanel)search.Content).Children.OfType<TextBlock>().Single(block => block.FontFamily.Source == "Segoe MDL2 Assets");
         AssertEqual(referenceIcon.FontSize, icon.Width, "Likes must retain the peer icon allocation");
-        AssertEqual(referenceIcon.FontSize, icon.Height, "Likes must retain the peer icon height");
+        Layout(view);
+        AssertEqual(true, icon.ActualHeight > 0 && icon.ActualHeight < icon.ActualWidth,
+            "The centered Like silhouette stays within the peer allocation with its wider, shorter aspect");
         AssertEqual(referenceIcon.Margin, icon.Margin, "Likes must retain peer icon spacing");
         AssertEqual(Colors.Transparent, ((SolidColorBrush)icon.Fill).Color, "Inactive tab heart is outlined");
         viewModel.BrowseMode = VoiceBrowseMode.Favorites;
         DrainBindings();
-        AssertEqual(((SolidColorBrush)((TextBlock)view.FindName("FavoritesTabLabel")).Foreground).Color,
-            ((SolidColorBrush)icon.Fill).Color, "Active tab heart fills with its on-accent label foreground");
+        AssertEqual(Color.FromRgb(252, 61, 73), ((SolidColorBrush)icon.Fill).Color,
+            "Active tab heart uses the reference red independently of its native on-accent label");
         viewModel.BrowseMode = VoiceBrowseMode.Search;
         DrainBindings();
         AssertEqual(Colors.Transparent, ((SolidColorBrush)icon.Fill).Color, "Leaving Likes restores the outline");
@@ -248,7 +250,7 @@ internal static class SettingsLayoutSuite
         DrainBindings();
         AssertEqual(true, matching.IsFavorite, "Favoriting the selected voice must update a matching browse card");
         AssertEqual("Unlike", AutomationProperties.GetName(selected), "The selected heart must reflect the saved favorite state");
-        AssertEqual(((SolidColorBrush)view.FindResource("AccentFillColorDefaultBrush")).Color, ((SolidColorBrush)heart.Fill).Color, "A saved selected voice must show a filled heart");
+        AssertEqual(Color.FromRgb(252, 61, 73), ((SolidColorBrush)heart.Fill).Color, "A saved selected voice must show the reference-red filled heart");
         AssertEqual(1, viewModel.FavoriteCount, "The selected-card action must save through the shared favorites store");
         AssertEqual(id, settings.VoiceId, "Favoriting a selected voice must preserve the applied voice");
 

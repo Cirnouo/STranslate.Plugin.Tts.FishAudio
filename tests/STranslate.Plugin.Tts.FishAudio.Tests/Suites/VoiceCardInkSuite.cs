@@ -41,7 +41,7 @@ internal static class VoiceCardInkSuite
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = ApplicationTheme.Dark;
         ThemeManager.SetRequestedTheme(view, ElementTheme.Dark);
         // This headless STA has no Application/OS accent initialization. Supply an
-        // opaque fixture accent so fill-state coverage is meaningful before white isolation.
+        // opaque fixture accent for native controls; liked hearts use their fixed red.
         view.Resources["AccentFillColorDefaultBrush"] = new SolidColorBrush(Color.FromRgb(0x4C, 0xC2, 0xFF));
         view.UseLayoutRounding = true;
         view.SnapsToDevicePixels = true;
@@ -96,6 +96,9 @@ internal static class VoiceCardInkSuite
                 var heartCenter = RasterCenter(bitmap, heart, view, dpi);
                 var actionCenter = RasterCenter(bitmap, action, view, dpi);
                 var context = $"{dpi * 100}%/{format}/{location}/{state}";
+                var heartFrameCenter = heart.TranslatePoint(new Point(0, heart.ActualHeight / 2), view).Y * dpi;
+                AssertEqual(true, Math.Abs(heartFrameCenter - expected) < .00001,
+                    $"{context}: the aspect-preserved heart frame centers exactly on its action row");
                 // A raster's outer pixel bounds quantize to half-pixel centers. This is a physical
                 // sampling limit; the exact outline below must still be centered without tolerance.
                 AssertEqual(true, Math.Abs(actionCenter - heartCenter) <= .50001, $"{context}: Tick/Cross and heart raster centers must differ by at most one half physical pixel");
@@ -150,9 +153,13 @@ internal static class VoiceCardInkSuite
             // Retain the original exact Cross/star oracle with its original contour.
             // The product heart has a different RGB-threshold edge classification.
             var productGeometry = heart.Data;
+            var productHeight = heart.Height;
+            var productStretch = heart.Stretch;
             try
             {
                 heart.Data = Geometry.Parse("M 12,2 L 14.94,8.04 L 21.61,9.02 L 16.8,13.72 L 17.93,20.36 L 12,17.22 L 6.07,20.36 L 7.2,13.72 L 2.39,9.02 L 9.06,8.04 Z");
+                heart.Height = 18;
+                heart.Stretch = Stretch.Fill;
                 SettingsLayoutSuite.Layout(view);
                 var historical = new RenderTargetBitmap(actualBitmap.PixelWidth, actualBitmap.PixelHeight, 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
                 historical.Render(view);
@@ -164,6 +171,8 @@ internal static class VoiceCardInkSuite
             finally
             {
                 heart.Data = productGeometry;
+                heart.Height = productHeight;
+                heart.Stretch = productStretch;
                 SettingsLayoutSuite.Layout(view);
             }
             if (proofDirectory is not null)

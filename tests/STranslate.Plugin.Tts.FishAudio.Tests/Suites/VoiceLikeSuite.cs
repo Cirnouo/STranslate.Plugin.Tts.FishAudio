@@ -43,6 +43,11 @@ internal static class VoiceLikeSuite
         var like = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && IsShown(button));
         AssertEqual(true, like.Content is System.Windows.Shapes.Path path && ReferenceEquals(view.FindResource("VoiceLikeHeartGeometry"), path.Data),
             "The compiled shared template renders its Like vector from the common heart resource");
+        var geometry = (Geometry)view.FindResource("VoiceLikeHeartGeometry");
+        AssertEqual(true, geometry.FillContains(new Point(12, 4.25)), "The shared filled contour has a shallow soft central notch");
+        foreach (var point in new[] { new Point(10.75, 20.5), new Point(13.25, 20.5) })
+            AssertEqual(true, geometry.FillContains(point), "The shared filled contour retains a rounded lower cap instead of a pointed tip");
+        AssertHeartAspect((System.Windows.Shapes.Path)like.Content);
     });
 
     private static void InspectLikeState(string locale, bool dark, double width)
@@ -67,6 +72,7 @@ internal static class VoiceLikeSuite
         view.Resources["AccentFillColorDefaultBrush"] = accent;
         SettingsLayoutSuite.Layout(view, width);
         var geometry = (Geometry)view.FindResource("VoiceLikeHeartGeometry");
+        var referenceRed = Color.FromRgb(252, 61, 73);
         AssertEqual(false, geometry.FillContains(new Point(12, 3)), "Heart contour has an open notch above its center");
         foreach (var point in new[] { new Point(6, 6), new Point(18, 6), new Point(12, 16) })
             AssertEqual(true, geometry.FillContains(point), "Heart contour retains both lobes and its lower body");
@@ -97,14 +103,15 @@ internal static class VoiceLikeSuite
                 AssertEqual(true, ReferenceEquals(geometry, path.Data), "All four locations share the same closed heart");
                 AssertEqual(18d, path.Width, "Card heart keeps the vector allocation");
                 AssertEqual(1.5d, path.StrokeThickness, "Card heart keeps its native stroke width");
-                AssertEqual(accent.Color, ((SolidColorBrush)path.Fill).Color, "Liked hearts resolve the theme accent");
-                AssertEqual(accent.Color, ((SolidColorBrush)path.Stroke).Color, "Filled heart outline follows the same accent");
+                AssertEqual(referenceRed, ((SolidColorBrush)path.Fill).Color, "Liked hearts use the supplied reference red in both themes");
+                AssertEqual(referenceRed, ((SolidColorBrush)path.Stroke).Color, "Filled heart outline uses the same reference red");
+                AssertHeartAspect(path);
             }
             var changedAccent = new SolidColorBrush(Color.FromRgb(0x90, 0x50, 0xB0));
             view.Resources["AccentFillColorDefaultBrush"] = changedAccent;
             SettingsLayoutSuite.Layout(view, width);
-            AssertEqual(changedAccent.Color, ((SolidColorBrush)selectedHeart.Fill).Color, "A live accent change updates the selected heart");
-            AssertEqual(changedAccent.Color, ((SolidColorBrush)heart.Fill).Color, "A live accent change updates the browse heart");
+            AssertEqual(referenceRed, ((SolidColorBrush)selectedHeart.Fill).Color, "A live accent change preserves the selected heart's reference red");
+            AssertEqual(referenceRed, ((SolidColorBrush)heart.Fill).Color, "A live accent change preserves the browse heart's reference red");
             view.Resources["AccentFillColorDefaultBrush"] = accent;
             // Avoid metadata requests from mutation refresh while exercising the same real commands.
             vm.BrowseMode = VoiceBrowseMode.Search;
@@ -120,7 +127,11 @@ internal static class VoiceLikeSuite
             SettingsLayoutSuite.Layout(view, width);
             browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item) && IsShown(button));
             AssertEqual(like, AutomationProperties.GetName(browse), "Unliked browse card offers Like");
-            AssertEqual(Colors.Transparent, ((SolidColorBrush)((System.Windows.Shapes.Path)browse.Content).Fill).Color, "Unliked browse heart remains outlined");
+            var outline = (System.Windows.Shapes.Path)browse.Content;
+            AssertEqual(Colors.Transparent, ((SolidColorBrush)outline.Fill).Color, "Unliked browse heart remains outlined");
+            AssertEqual(true, ReferenceEquals(geometry, outline.Data) && ReferenceEquals(geometry, selectedHeart.Data),
+                "Outline and filled card states retain the same refined silhouette");
+            AssertHeartAspect(outline);
             vm.BrowseMode = VoiceBrowseMode.Search;
             vm.FavoriteResults = [];
             Click(browse);
@@ -136,8 +147,25 @@ internal static class VoiceLikeSuite
         var tab = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.SwitchToFavoritesCommand));
         var label = (TextBlock)view.FindName("FavoritesTabLabel");
         var content = (StackPanel)tab.Content;
+        var tabHeart = content.Children.OfType<System.Windows.Shapes.Path>().Single();
+        AssertEqual(true, ReferenceEquals(geometry, tabHeart.Data), "The active Like tab shares the card silhouette");
+        AssertEqual(referenceRed, ((SolidColorBrush)tabHeart.Fill).Color, "The active Like tab fills its shared heart with the same reference red");
+        AssertEqual(referenceRed, ((SolidColorBrush)tabHeart.Stroke).Color, "The active Like tab's stroke matches its red fill");
+        AssertHeartAspect(tabHeart);
         AssertEqual(13d, label.FontSize, "Every translated compact caption retains peer metrics");
         AssertEqual(true, content.ActualWidth <= tab.ActualWidth && label.ActualWidth > 0, "Compact Like caption and icon fit at existing narrow widths");
+        vm.BrowseMode = VoiceBrowseMode.Search;
+        SettingsLayoutSuite.Layout(view, width);
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)tabHeart.Fill).Color, "The inactive Like tab outlines the same refined heart");
+        AssertEqual(((SolidColorBrush)label.Foreground).Color, ((SolidColorBrush)tabHeart.Stroke).Color, "The inactive Like tab retains its native foreground");
+        AssertEqual(true, ReferenceEquals(geometry, tabHeart.Data), "Changing tab state preserves the shared silhouette");
+    }
+
+    private static void AssertHeartAspect(System.Windows.Shapes.Path heart)
+    {
+        var bounds = VisualTreeHelper.GetDrawing(heart)!.Bounds;
+        AssertEqual(true, bounds.Width > bounds.Height * 1.08 && bounds.Width < bounds.Height * 1.25,
+            "The rendered heart must retain the reference's wider, shorter aspect instead of being stretched square");
     }
 
     private static void Click(Button button) => typeof(Button).GetMethod("OnClick", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(button, null);
