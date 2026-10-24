@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,11 +42,103 @@ internal static class SearchAdjustmentControlSuite
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
-            await RunOnStaThreadAsync(() =>
+            await ObserveMatrixActionAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
+                stage => GeometryAndFlags(locale, dark, dpi, stage));
+    }
+
+    private static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
+        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
+    {
+        var elapsed = Stopwatch.StartNew();
+        var phases = new ConcurrentQueue<string>();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? actionFailure = null;
+        long enteredAt = -1;
+        void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[search-adjustment/{name}] {phase}"); }
+        Stage("queued with original 5s action deadline");
+        try
+        {
+            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(() =>
             {
-                GeometryAndFlags(locale, dark, dpi);
-                Console.WriteLine($"[search-adjustment] {locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%: flags, native viewport/caret and popup containment passed at 320/480 DIP.");
+                Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+                Stage("entered");
+                try { action(Stage); }
+                catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
+                finally { Stage("action completed"); completion.TrySetResult(); }
             });
+            (write ?? Console.WriteLine)($"[search-adjustment/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; 320/480 DIP.");
+        }
+        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        {
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
+            try
+            {
+                // Bound observation off the shared STA; never replace/cancel/retry its work.
+                await Task.Run(() => (observe ?? (pending => pending))(completion.Task)).WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+                Stage("same action observation completed; original deadline remains failed");
+            }
+            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
+            Dump();
+            throw;
+        }
+        catch
+        {
+            Dump();
+            throw;
+        }
+    }
+
+    internal static async Task MatrixDiagnosticsPreserveFailuresWithoutRetryAsync()
+    {
+        var outer = new TimeoutException("Synthetic outer deadline");
+        Action? queued = null;
+        var runs = 0;
+        var observations = 0;
+        Exception? caught = null;
+        var output = new List<string>();
+        try
+        {
+            await ObserveMatrixActionAsync("queued-fixture", stage => { runs++; stage("action body"); },
+                dispatch: callback => { queued = callback; throw outer; },
+                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Observing a queued action must preserve the original outer deadline exception");
+        AssertEqual(1, observations, "An outer deadline must observe only its same queued action once");
+        AssertEqual(1, runs, "Observation must execute that queued action once, without a replacement or retry");
+        AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "A pre-entry deadline must report its queue boundary");
+        AssertEqual(true, output.Any(line => line.Contains("action body", StringComparison.Ordinal)), "Failure output must retain the recorded phases");
+
+        var inner = new TimeoutException("Synthetic action timeout");
+        runs = 0; observations = 0; caught = null; output.Clear();
+        try
+        {
+            await ObserveMatrixActionAsync("inner-fixture", _ => { runs++; throw inner; },
+                dispatch: callback => { callback(); return Task.CompletedTask; },
+                observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned timeout must remain the original failure");
+        AssertEqual(0, observations, "An action-owned timeout must not be observed as an outer deadline");
+        AssertEqual(1, runs, "An action-owned timeout must not run the action again");
+
+        caught = null; observations = 0; output.Clear();
+        try
+        {
+            await ObserveMatrixActionAsync("observation-fixture", _ => throw new InvalidOperationException("Must not replace queued work"),
+                dispatch: _ => throw outer,
+                observe: _ => { observations++; return Task.FromException(new TimeoutException("Synthetic observation timeout")); }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "A later observation timeout must not replace the original outer failure");
+        AssertEqual(1, observations, "An incomplete action gets one bounded observation, without retry");
+
+        output.Clear();
+        await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
+            dispatch: callback => { callback(); return Task.CompletedTask; }, write: output.Add);
+        AssertEqual(1, output.Count, "A successful action emits one compact line");
+        AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
     }
 
     private static FrameworkElement Control(SettingsView view)
@@ -269,70 +363,100 @@ internal static class SearchAdjustmentControlSuite
 
     // Incorrect inset/padding/DPI conversion or selected-only flag templates must
     // fail against the actual themed TextBox viewport and popup presentation source.
-    private static void GeometryAndFlags(string locale, bool dark, double dpi)
+    private static void GeometryAndFlags(string locale, bool dark, double dpi, Action<string> stage)
     {
+        stage("ViewModel construction begin");
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        stage("ViewModel ready; compiled view construction begin");
         var view = SettingsLayoutSuite.CreateThemedView(vm);
+        stage("compiled view ready; locale/theme setup begin");
         SetLocale(view, locale);
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-        using var source = Attach(view);
-        var control = Control(view);
-        var input = (TextBox)view.FindName("VoiceSearchInput");
-        input.Text = new string('W', 160); input.CaretIndex = input.Text.Length;
-        // Materialize lazy native text views before actual root DPI, preserving
-        // the runner's established voice-card first-use ordering.
-        SettingsLayoutSuite.Layout(view, 480);
-        _ = input.GetRectFromCharacterIndex(input.Text.Length);
-        VisualTreeHelper.SetRootDpi(view, new DpiScale(dpi, dpi));
-        foreach (var width in new[] { 320d, 480d })
+        stage("locale/theme ready; source attach/layout begin");
+        var source = Attach(view);
+        stage("source attach/layout ready");
+        FrameworkElement? diagnosticControl = null;
+        try
         {
-            SettingsLayoutSuite.Layout(view, width); Drain();
-            input.CaretIndex = input.Text.Length;
-            input.ScrollToHorizontalOffset(double.MaxValue); Drain();
-            AssertEqual(dpi, VisualTreeHelper.GetDpi(input).DpiScaleX, "The native input receives the requested actual DPI");
-            var button = Part<Button>(control, "AdjustmentButton");
-            AssertEqual(28d, button.ActualWidth, "Embedded action keeps a 28-DIP hit target");
-            AssertEqual(28d, button.ActualHeight, "Embedded action keeps a 28-DIP hit target");
-            var buttonBounds = button.TransformToAncestor(view).TransformBounds(new Rect(button.RenderSize));
-            var inputBounds = input.TransformToAncestor(view).TransformBounds(new Rect(input.RenderSize));
-            AssertEqual(true, Math.Abs(inputBounds.Right - buttonBounds.Right - 4) <= 1 / dpi, "The action has a four-DIP right inset");
-            var textView = Visuals(input).OfType<FrameworkElement>().Single(item => item.GetType().Name == "TextBoxView");
-            var viewport = textView.TransformToAncestor(view).TransformBounds(new Rect(textView.RenderSize));
-            AssertEqual(true, viewport.Right <= buttonBounds.Left - 3, "The native text viewport reserves room for the embedded action");
-            var caret = input.GetRectFromCharacterIndex(input.Text.Length);
-            AssertEqual(true, caret.Right <= input.ActualWidth - 34, $"The final caret remains within the reserved text viewport ({locale}/{dpi}/{width}: {caret.Right}/{input.ActualWidth}, offset {input.HorizontalOffset})");
-            Open(control);
-            var surface = Part<Border>(control, "PopupSurface");
-            AssertEqual(true, surface.ActualWidth <= 324 && surface.ActualWidth >= 280, "Popup body is 324 DIP or clamped to the narrow viewport");
-            var left = surface.PointToScreen(new Point()).X;
-            var right = surface.PointToScreen(new Point(surface.ActualWidth, 0)).X;
-            var ownerLeft = view.PointToScreen(new Point()).X;
-            var ownerRight = view.PointToScreen(new Point(view.ActualWidth, 0)).X;
-            // Explicit visual-root DPI exercises text/layout. The separate native
-            // HWND still uses its monitor's screen transform, not that injection.
-            var screenScale = (ownerRight - ownerLeft) / view.ActualWidth;
-            AssertEqual(true, left >= ownerLeft + 7 * screenScale - 1 && right <= ownerRight - 7 * screenScale + 1, $"Device-pixel placement contains the native Popup in the settings viewport ({locale}/{dpi}/{width}: {left}..{right} owner {ownerLeft}..{ownerRight}, popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX}, viewDpi={VisualTreeHelper.GetDpi(view).DpiScaleX})");
-            AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Popup surface resolves an opaque native theme brush");
-            var combo = Part<ComboBox>(control, "LanguageCombo");
-            AssertEnumerableEqual(new string?[] { null, "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }, combo.Items.Cast<object>().Select(Code), "Presets retain the exact scalar codes and order");
-            combo.SelectedIndex = 1; Drain();
-            AssertEqual(true, Visuals(combo).OfType<LanguageFlagImage>().Any(item => item.IsVisible), "The selected native ComboBox item renders a flag");
-            combo.IsDropDownOpen = true; Drain();
-            var child = NativeComboPopup(combo).Child;
-            AssertEqual(10, Visuals(child).OfType<LanguageFlagImage>().Count(item => item.IsVisible), "Every language dropdown item renders its flag while All has none");
-            combo.IsDropDownOpen = false;
-            foreach (var next in UiLocales.All)
+            var control = Control(view);
+            diagnosticControl = control;
+            var input = (TextBox)view.FindName("VoiceSearchInput");
+            input.Text = new string('W', 160); input.CaretIndex = input.Text.Length;
+            // Materialize lazy native text views before actual root DPI, preserving
+            // the runner's established voice-card first-use ordering.
+            stage("native text materialization begin");
+            SettingsLayoutSuite.Layout(view, 480);
+            _ = input.GetRectFromCharacterIndex(input.Text.Length);
+            stage("native text ready; root DPI setup begin");
+            VisualTreeHelper.SetRootDpi(view, new DpiScale(dpi, dpi));
+            stage("root DPI setup ready");
+            foreach (var width in new[] { 320d, 480d })
             {
-                SetLocale(view, next); Drain();
-                AssertEqual("en", Code(combo.SelectedItem), "Live locale replacement preserves the draft selection");
-                AssertEqual(true, IsOpen(control), "Live locale replacement updates the same open popup");
+                stage($"width={width}: layout begin");
+                SettingsLayoutSuite.Layout(view, width); Drain();
+                stage($"width={width}: layout/drain ready");
+                input.CaretIndex = input.Text.Length;
+                input.ScrollToHorizontalOffset(double.MaxValue); Drain();
+                AssertEqual(dpi, VisualTreeHelper.GetDpi(input).DpiScaleX, "The native input receives the requested actual DPI");
+                var button = Part<Button>(control, "AdjustmentButton");
+                AssertEqual(28d, button.ActualWidth, "Embedded action keeps a 28-DIP hit target");
+                AssertEqual(28d, button.ActualHeight, "Embedded action keeps a 28-DIP hit target");
+                var buttonBounds = button.TransformToAncestor(view).TransformBounds(new Rect(button.RenderSize));
+                var inputBounds = input.TransformToAncestor(view).TransformBounds(new Rect(input.RenderSize));
+                AssertEqual(true, Math.Abs(inputBounds.Right - buttonBounds.Right - 4) <= 1 / dpi, "The action has a four-DIP right inset");
+                var textView = Visuals(input).OfType<FrameworkElement>().Single(item => item.GetType().Name == "TextBoxView");
+                var viewport = textView.TransformToAncestor(view).TransformBounds(new Rect(textView.RenderSize));
+                AssertEqual(true, viewport.Right <= buttonBounds.Left - 3, "The native text viewport reserves room for the embedded action");
+                var caret = input.GetRectFromCharacterIndex(input.Text.Length);
+                AssertEqual(true, caret.Right <= input.ActualWidth - 34, $"The final caret remains within the reserved text viewport ({locale}/{dpi}/{width}: {caret.Right}/{input.ActualWidth}, offset {input.HorizontalOffset})");
+                stage($"width={width}: main popup begin");
+                Open(control);
+                stage($"width={width}: main popup open/drain ready");
+                var surface = Part<Border>(control, "PopupSurface");
+                AssertEqual(true, surface.ActualWidth <= 324 && surface.ActualWidth >= 280, "Popup body is 324 DIP or clamped to the narrow viewport");
+                var left = surface.PointToScreen(new Point()).X;
+                var right = surface.PointToScreen(new Point(surface.ActualWidth, 0)).X;
+                var ownerLeft = view.PointToScreen(new Point()).X;
+                var ownerRight = view.PointToScreen(new Point(view.ActualWidth, 0)).X;
+                // Explicit visual-root DPI exercises text/layout. The separate native
+                // HWND still uses its monitor's screen transform, not that injection.
+                var screenScale = (ownerRight - ownerLeft) / view.ActualWidth;
+                AssertEqual(true, left >= ownerLeft + 7 * screenScale - 1 && right <= ownerRight - 7 * screenScale + 1, $"Device-pixel placement contains the native Popup in the settings viewport ({locale}/{dpi}/{width}: {left}..{right} owner {ownerLeft}..{ownerRight}, popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX}, viewDpi={VisualTreeHelper.GetDpi(view).DpiScaleX})");
+                AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Popup surface resolves an opaque native theme brush");
+                var combo = Part<ComboBox>(control, "LanguageCombo");
+                AssertEnumerableEqual(new string?[] { null, "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }, combo.Items.Cast<object>().Select(Code), "Presets retain the exact scalar codes and order");
+                combo.SelectedIndex = 1; Drain();
+                AssertEqual(true, Visuals(combo).OfType<LanguageFlagImage>().Any(item => item.IsVisible), "The selected native ComboBox item renders a flag");
+                stage($"width={width}: native dropdown begin");
+                combo.IsDropDownOpen = true; Drain();
+                stage($"width={width}: native dropdown open/drain ready");
+                var child = NativeComboPopup(combo).Child;
+                AssertEqual(10, Visuals(child).OfType<LanguageFlagImage>().Count(item => item.IsVisible), "Every language dropdown item renders its flag while All has none");
+                combo.IsDropDownOpen = false;
+                stage($"width={width}: native dropdown closed");
+                foreach (var next in UiLocales.All)
+                {
+                    stage($"width={width}: locale={next} begin");
+                    SetLocale(view, next); Drain();
+                    stage($"width={width}: locale={next} replacement/drain ready");
+                    AssertEqual("en", Code(combo.SelectedItem), "Live locale replacement preserves the draft selection");
+                    AssertEqual(true, IsOpen(control), "Live locale replacement updates the same open popup");
+                }
+                SetLocale(view, locale); Drain();
+                var relevance = Part<RadioButton>(control, "RelevanceRadio").Content as string;
+                AssertEqual(locale == "zh-cn" ? "相关优先" : locale == "en" ? "Relevance first" : (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_Search_Relevance"), relevance, "Score uses the approved localized relevance-first label");
+                stage($"width={width}: popup cleanup begin");
+                Click(control, "CloseButton");
+                stage($"width={width}: popup cleanup ready open={IsOpen(control)} dropdown={combo.IsDropDownOpen} inputOwned={control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(control)}");
             }
-            SetLocale(view, locale); Drain();
-            var relevance = Part<RadioButton>(control, "RelevanceRadio").Content as string;
-            AssertEqual(locale == "zh-cn" ? "相关优先" : locale == "en" ? "Relevance first" : (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_Search_Relevance"), relevance, "Score uses the approved localized relevance-first label");
-            Click(control, "CloseButton");
+        }
+        finally
+        {
+            stage("HwndSource cleanup begin");
+            source.Dispose();
+            stage($"HwndSource cleanup ready inputOwned={diagnosticControl?.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(diagnosticControl)}");
         }
     }
 

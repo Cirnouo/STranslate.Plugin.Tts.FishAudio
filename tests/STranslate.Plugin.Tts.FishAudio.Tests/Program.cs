@@ -13,6 +13,13 @@ if (args.Contains("--numeric-glyph-observation-tests"))
     return;
 }
 
+if (args.Contains("--search-adjustment-diagnostic-tests"))
+{
+    await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+    Console.WriteLine("Search adjustment deadline diagnostic regressions passed.");
+    return;
+}
+
 if (args.Contains("--streaming-cancellation-probe-tests"))
 {
     await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
@@ -24,6 +31,7 @@ if (args.Contains("--streaming-cancellation-probe-tests"))
 
 if (args.Contains("--search-adjustment-control-tests"))
 {
+    await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
     await SearchAdjustmentControlSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--search-adjustment-control-tests") + 1));
     Console.WriteLine("Search adjustment control tests passed.");
     return;
@@ -472,5 +480,6 @@ await VoiceLanguageSuite.RunAllAsync();
 await VoiceLanguageTagsSuite.RunAllAsync();
 await PageEntrySuite.RunAllAsync();
 await SearchAdjustmentSuite.RunRequestsAsync();
+await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
