@@ -172,19 +172,28 @@ internal static class SettingsControlAlignmentSuite
     private static void CheckIcons(StackPanel row, string state)
     {
         var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
-        var preview = row.Children.OfType<Grid>().Single();
-        var action = row.Children.OfType<Button>().Last();
-        var center = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), row).Y;
-        NearInk(center, InkCenter(heart, row), $"{state}: the visible heart drawing must center on the preview ring");
-        var actionGlyph = Visuals(action).OfType<InkCenteredGlyph>().Single();
-        NearInk(center, InkCenter(actionGlyph, row), $"{state}: the visible Tick/Cross glyph must center on the preview ring");
-        var playGlyph = Visuals(preview).OfType<InkCenteredGlyph>().Single();
-        if (IsShown(playGlyph))
-            NearInk(center, InkCenter(playGlyph, row), $"{state}: the visible Play glyph must center on the preview ring");
-        foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Background is SolidColorBrush brush && brush.Color == Colors.White))
-            Near(center, stop.TranslatePoint(new Point(stop.ActualWidth / 2, stop.ActualHeight / 2), row).Y, $"{state}: the visible Stop icon must center on the preview ring");
-        foreach (var spinner in preview.Children.OfType<Grid>().Where(grid => IsShown(grid)))
-            Near(center, spinner.TranslatePoint(new Point(spinner.ActualWidth / 2, spinner.ActualHeight / 2), row).Y, $"{state}: the spinner must retain the preview center");
+        var card = AvatarPreviewSuite.Card(row);
+        AvatarPreviewSuite.SetHover(card, true);
+        try
+        {
+            var preview = AvatarPreviewSuite.Overlay(Visuals(card).OfType<Button>().Single(button =>
+                BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") == true));
+            row.UpdateLayout();
+            var action = row.Children.OfType<Button>().Last();
+            var center = row.ActualHeight / 2;
+            NearInk(center, InkCenter(heart, row), $"{state}: the visible heart drawing must center on its title action row");
+            var actionGlyph = Visuals(action).OfType<InkCenteredGlyph>().Single();
+            NearInk(center, InkCenter(actionGlyph, row), $"{state}: the visible Tick/Cross glyph must center on its title action row");
+            center = preview.TranslatePoint(new Point(18, 18), row).Y;
+            var playGlyph = Visuals(preview).OfType<InkCenteredGlyph>().Single();
+            if (IsShown(playGlyph))
+                NearInk(center, InkCenter(playGlyph, row), $"{state}: the visible Play glyph must center on the preview ring");
+            foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Width is 9 or 10))
+                Near(center, stop.TranslatePoint(new Point(stop.ActualWidth / 2, stop.ActualHeight / 2), row).Y, $"{state}: the visible Stop icon must center on the preview ring");
+            foreach (var spinner in preview.Children.OfType<Grid>().Where(grid => IsShown(grid)))
+                Near(center, spinner.TranslatePoint(new Point(spinner.ActualWidth / 2, spinner.ActualHeight / 2), row).Y, $"{state}: the spinner must retain the preview center");
+        }
+        finally { AvatarPreviewSuite.SetHover(card, false); }
     }
 
     private static double InkCenter(FrameworkElement icon, UIElement ancestor)

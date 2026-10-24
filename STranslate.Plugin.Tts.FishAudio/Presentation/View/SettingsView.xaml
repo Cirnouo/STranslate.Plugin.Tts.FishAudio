@@ -155,6 +155,28 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="VoiceCardSurfaceStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="AvatarPreviewButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="Transparent" CornerRadius="18">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="PreviewPreparingSpinner" TargetType="Grid">
             <Setter Property="Visibility" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource BtvConverter}}" />
             <Style.Triggers>
@@ -174,16 +196,80 @@
             </Style.Triggers>
         </Style>
         <DataTemplate x:Key="VoiceCardTemplate">
-            <Border Margin="0,2" Padding="8"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+            <Border x:Name="VoiceCard" Margin="0,2" Padding="8"
+                    Style="{StaticResource VoiceCardSurfaceStyle}"
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                     CornerRadius="6">
                 <DockPanel>
-                    <Ellipse DockPanel.Dock="Left" Width="48" Height="48" Margin="0,4,8,0" VerticalAlignment="Top">
-                        <Ellipse.Fill>
-                            <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
-                        </Ellipse.Fill>
-                    </Ellipse>
+                    <Grid DockPanel.Dock="Left" Width="48" Height="48" Margin="0,4,8,0" VerticalAlignment="Top">
+                        <Ellipse Width="48" Height="48">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
+                            </Ellipse.Fill>
+                        </Ellipse>
+                        <Grid Width="36" Height="36" UseLayoutRounding="False"
+                              Tag="{Binding IsMouseOver, ElementName=VoiceCard}">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Opacity" Value="0" />
+                                    <Setter Property="Visibility" Value="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True"><Setter Property="Opacity" Value="1" /></DataTrigger>
+                                        <DataTrigger Binding="{Binding IsPreviewActive}" Value="True">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.72" IsHitTestVisible="False" />
+                            <Ellipse x:Name="SRestBorder" StrokeThickness="1"
+                                     Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
+                            <Ellipse x:Name="STrack" StrokeThickness="1.5"
+                                     Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" Visibility="Collapsed" />
+                            <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="{DynamicResource TextFillColorPrimaryBrush}" Fill="Transparent"
+                                     StrokeDashArray="72.26 72.26"
+                                     StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                                     StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform Angle="-90"/>
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
+                                  IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                                <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                         StrokeDashArray="18 54" StrokeDashCap="Round" />
+                            </Grid>
+                            <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                    Width="36" Height="36"
+                                    Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource AvatarPreviewButtonStyle}">
+                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
+                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsPreparingPreview}" Value="True">
+                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <Grid>
+                                    <view:InkCenteredGlyph x:Name="SIcon" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
+                                    <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}"
+                                            HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                                </Grid>
+                            </Button>
+                        </Grid>
+                    </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
@@ -219,54 +305,6 @@
                                         </Path.Style>
                                     </Path>
                                 </Button>
-                                <Grid Width="36" Height="36" Margin="0,0,4,0"
-                                      Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                                    <Ellipse x:Name="SRestBorder" StrokeThickness="1"
-                                             Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
-                                    <Ellipse x:Name="STrack" StrokeThickness="1.5"
-                                             Stroke="#1FFFFFFF" Fill="Transparent" Visibility="Collapsed" />
-                                    <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="White" Fill="Transparent"
-                                             StrokeDashArray="72.26 72.26"
-                                             StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
-                                             StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
-                                        <Ellipse.RenderTransform>
-                                            <RotateTransform Angle="-90"/>
-                                        </Ellipse.RenderTransform>
-                                    </Ellipse>
-                                    <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
-                                          IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                                        <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                                        <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                                 StrokeDashArray="18 54" StrokeDashCap="Round" />
-                                    </Grid>
-                                    <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                            Width="36" Height="36"
-                                            Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding}">
-                                        <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
-                                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding IsPreparingPreview}" Value="True">
-                                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Button.Style>
-                                        <Grid>
-                                            <view:InkCenteredGlyph x:Name="SIcon" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
-                                            <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-                                        </Grid>
-                                    </Button>
-                                </Grid>
                                 <Button IsEnabled="{Binding CanToggleSelection}"
                                         Command="{Binding DataContext.SelectVoiceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}">
@@ -495,18 +533,118 @@
             Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Group_Voice}" />
 
         <!-- 展示区：已选声音 -->
-        <Border
+        <Border x:Name="SelectedVoiceCard" Style="{StaticResource VoiceCardSurfaceStyle}"
             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
             BorderThickness="1"
             CornerRadius="8"
             Padding="12">
             <DockPanel>
-                <Ellipse DockPanel.Dock="Left" Width="56" Height="56" Margin="0,4,12,0" VerticalAlignment="Top"
-                         Visibility="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                    <Ellipse.Fill>
-                        <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
-                    </Ellipse.Fill>
-                </Ellipse>
+                <Grid DockPanel.Dock="Left" Width="56" Height="56" Margin="0,4,12,0" VerticalAlignment="Top">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                <DataTrigger Binding="{Binding CachedVoiceSampleUrl, Converter={StaticResource StringToVisibilityConverter}}" Value="Visible"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Ellipse Width="56" Height="56"
+                             Visibility="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                        <Ellipse.Fill>
+                            <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
+                        </Ellipse.Fill>
+                    </Ellipse>
+                    <Grid Width="36" Height="36" UseLayoutRounding="False"
+                          Tag="{Binding IsMouseOver, ElementName=SelectedVoiceCard}">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Opacity" Value="0" />
+                                <Setter Property="Visibility" Value="{Binding CachedVoiceSampleUrl, Converter={StaticResource StringToVisibilityConverter}}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True"><Setter Property="Opacity" Value="1" /></DataTrigger>
+                                    <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
+                                        <Setter Property="Opacity" Value="1" />
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.72" IsHitTestVisible="False" />
+                        <Ellipse x:Name="DisplayRestBorder" StrokeThickness="1"
+                                 Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <Ellipse x:Name="DisplayTrack" StrokeThickness="1.5"
+                                 Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent"
+                                 Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
+                        <Ellipse StrokeThickness="1.5" Stroke="{DynamicResource TextFillColorPrimaryBrush}" Fill="Transparent"
+                                 StrokeDashArray="72.26 72.26"
+                                 StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                                 StrokeDashCap="Round"
+                                 RenderTransformOrigin="0.5,0.5"
+                                 Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}">
+                            <Ellipse.RenderTransform>
+                                <RotateTransform Angle="-90"/>
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+                        <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
+                              IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                            <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                     StrokeDashArray="18 54" StrokeDashCap="Round" />
+                        </Grid>
+                        <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                Width="36" Height="36"
+                                Command="{Binding ToggleDisplayPreviewCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource AvatarPreviewButtonStyle}">
+                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsDisplayVoicePreparing}" Value="True">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <view:InkCenteredGlyph Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <view:InkCenteredGlyph.Style>
+                                        <Style TargetType="view:InkCenteredGlyph">
+                                            <Setter Property="Glyph" Value="&#xE768;" />
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </view:InkCenteredGlyph.Style>
+                                </view:InkCenteredGlyph>
+                                <Border Width="10" Height="10" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
+                            </Grid>
+                        </Button>
+                    </Grid>
+                </Grid>
                 <StackPanel VerticalAlignment="Center">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
@@ -542,81 +680,6 @@
                                     </Path.Style>
                                 </Path>
                             </Button>
-                            <!-- 试听按钮（带进度环） -->
-                            <Grid Width="36" Height="36" Margin="0,0,4,0"
-                                  Visibility="{Binding CachedVoiceSampleUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                                <Ellipse x:Name="DisplayRestBorder" StrokeThickness="1"
-                                         Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                                <Ellipse x:Name="DisplayTrack" StrokeThickness="1.5"
-                                         Stroke="#1FFFFFFF" Fill="Transparent"
-                                         Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
-                                <Ellipse StrokeThickness="1.5" Stroke="White" Fill="Transparent"
-                                         StrokeDashArray="72.26 72.26"
-                                         StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
-                                         StrokeDashCap="Round"
-                                         RenderTransformOrigin="0.5,0.5"
-                                         Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}">
-                                    <Ellipse.RenderTransform>
-                                        <RotateTransform Angle="-90"/>
-                                    </Ellipse.RenderTransform>
-                                </Ellipse>
-                                <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
-                                      IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                                    <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                                    <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                             StrokeDashArray="18 54" StrokeDashCap="Round" />
-                                </Grid>
-                                <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                        Width="36" Height="36"
-                                        Command="{Binding ToggleDisplayPreviewCommand}">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
-                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDisplayVoicePreparing}" Value="True">
-                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                    <Grid>
-                                        <view:InkCenteredGlyph Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <view:InkCenteredGlyph.Style>
-                                                <Style TargetType="view:InkCenteredGlyph">
-                                                    <Setter Property="Glyph" Value="&#xE768;" />
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </view:InkCenteredGlyph.Style>
-                                        </view:InkCenteredGlyph>
-                                        <Border Width="10" Height="10" CornerRadius="1" Background="White"
-                                                HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
-                                    </Grid>
-                                </Button>
-                            </Grid>
                             <Button
                                 Style="{StaticResource BareIconButtonStyle}"
                                 Command="{Binding ClearVoiceCommand}"

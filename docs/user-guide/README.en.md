@@ -46,7 +46,7 @@ A voice selects timbre; a model selects the synthesis engine. A voice's communit
 
 | To do this | Action |
 |---|---|
-| Hear a sample | Click Play; click again to stop. Preview plays an existing public sample without applying the voice or synthesizing your text. |
+| Hear a sample | Hover over a voice card and click Play on its avatar. During loading or playback, click the square to cancel or stop; it stays available after the pointer leaves. The avatar remains visible beneath the translucent control. After playback ends, Play appears only while the card is hovered. Preview plays an existing public sample without applying the voice or synthesizing your text. |
 | Use the voice for reading | Click the tick, **Apply**. To return to random voice, click the cross, **Clear**. Your model and liked voices remain. Random voice does not mean free. |
 | Save it for later | Click Like or Unlike to save or remove a voice. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
 | Copy its Voice ID | Click the **card title**, not the author or description. |

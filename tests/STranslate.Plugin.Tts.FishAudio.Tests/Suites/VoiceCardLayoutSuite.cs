@@ -114,7 +114,7 @@ internal static class VoiceCardLayoutSuite
                 AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), AutomationProperties.GetName(date), "Creation date has a localized accessible name");
                 var idlePlay = Visuals(cardRoot).OfType<InkCenteredGlyph>().Single(glyph => glyph.Glyph == "\uE768");
                 AssertEqual(((SolidColorBrush)view.FindResource("TextFillColorPrimaryBrush")).Color, ((SolidColorBrush)idlePlay.Foreground).Color, "Idle Play retains native theme foreground contrast");
-                AssertEqual(true, Visuals(cardRoot).OfType<Button>().All(button => button.Focusable), "Card actions retain keyboard focus eligibility");
+                AssertEqual(true, Visuals(cardRoot).OfType<Button>().Where(button => BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") != true).All(button => button.Focusable), "Card actions retain keyboard focus eligibility");
                 AssertEqual<object?>(selected ? vm.CachedVoiceId : card, selected ? title.CommandParameter : action.CommandParameter, "Actions retain their original selection/identity parameters");
                 AssertEqual(selected ? 56d : 48d, Visuals(cardRoot).OfType<System.Windows.Shapes.Ellipse>().Single(ellipse => ellipse.Width == (selected ? 56 : 48)).ActualWidth, "Portraits use the approved slightly larger list/selected allocation");
                 if (locale == "en" && width == 400 && dpi == 1 && !dark)

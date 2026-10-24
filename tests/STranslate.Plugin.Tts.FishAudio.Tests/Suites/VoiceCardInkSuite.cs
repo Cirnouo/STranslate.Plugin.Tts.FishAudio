@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using iNKORE.UI.WPF.Modern;
@@ -70,73 +71,124 @@ internal static class VoiceCardInkSuite
             vm.IsDisplayVoicePreviewing = item.IsBeingPreviewed = state == "playing";
             vm.IsDisplayVoicePreparing = item.IsPreparingPreview = state == "preparing";
             SettingsLayoutSuite.Layout(view);
-            foreach (var row in rows)
+            try
             {
-                var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
-                heart.ClearValue(System.Windows.Shapes.Shape.FillProperty);
-                heart.ClearValue(System.Windows.Shapes.Shape.StrokeProperty);
-                AssertEqual(state == "filled/Tick", ((SolidColorBrush)heart.Fill).Color.A != 0,
-                    "Both selected and browse heart fill must follow their own Like state before raster isolation");
-                heart.Stroke = Brushes.White;
-                if (heart.Fill is SolidColorBrush fill && fill.Color.A != 0) heart.Fill = Brushes.White;
-                foreach (var glyph in Visuals(row).OfType<InkCenteredGlyph>()) glyph.Foreground = Brushes.White;
-            }
-            SettingsLayoutSuite.Layout(view);
-            var bitmap = new RenderTargetBitmap((int)Math.Ceiling(view.ActualWidth * dpi), (int)Math.Ceiling(view.ActualHeight * dpi), 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
-            bitmap.Render(view);
-            if (capturedRegression && state == "idle")
-                AssertRasterDetectsDisplacedGlyph(view, rows[1], bitmap, dpi);
-            foreach (var row in rows)
-            {
-                var location = ReferenceEquals(row, rows[0]) ? "Selected" : mode.ToString();
-                var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
-                var preview = row.Children.OfType<Grid>().Single();
-                var action = Visuals(row.Children.OfType<Button>().Last()).OfType<InkCenteredGlyph>().Single();
-                var expected = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
-                var heartCenter = RasterCenter(bitmap, heart, view, dpi);
-                var actionCenter = RasterCenter(bitmap, action, view, dpi);
-                var context = $"{dpi * 100}%/{format}/{location}/{state}";
-                var heartFrameCenter = heart.TranslatePoint(new Point(0, heart.ActualHeight / 2), view).Y * dpi;
-                AssertEqual(true, Math.Abs(heartFrameCenter - expected) < .00001,
-                    $"{context}: the aspect-preserved heart frame centers exactly on its action row");
-                // A raster's outer pixel bounds quantize to half-pixel centers. This is a physical
-                // sampling limit; the exact outline below must still be centered without tolerance.
-                AssertEqual(true, Math.Abs(actionCenter - heartCenter) <= .50001, $"{context}: Tick/Cross and heart raster centers must differ by at most one half physical pixel");
-                foreach (var glyph in Visuals(row).OfType<InkCenteredGlyph>().Where(IsShown))
+                foreach (var row in rows)
                 {
-                    var drawing = VisualTreeHelper.GetDrawing(glyph)!;
-                    var center = glyph.TranslatePoint(new Point(0, drawing.Bounds.Top + drawing.Bounds.Height / 2), view).Y * dpi;
-                    AssertEqual(true, Math.Abs(center - expected) < .00001, $"{context}: the native glyph outline must center exactly on the preview");
-                    AssertNativeOutlineUnchanged(glyph, drawing);
-                    AssertEqual(true, Math.Abs(RasterCenter(bitmap, glyph, view, dpi) - heartCenter) <= .50001, $"{context}: glyph and heart raster centers must differ by at most one half physical pixel");
+                    AvatarPreviewSuite.SetHover(AvatarPreviewSuite.Card(row), true);
+                    var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
+                    heart.ClearValue(System.Windows.Shapes.Shape.FillProperty);
+                    heart.ClearValue(System.Windows.Shapes.Shape.StrokeProperty);
+                    AssertEqual(state == "filled/Tick", ((SolidColorBrush)heart.Fill).Color.A != 0,
+                        "Both selected and browse heart fill must follow their own Like state before raster isolation");
+                    heart.Stroke = Brushes.White;
+                    if (heart.Fill is SolidColorBrush fill && fill.Color.A != 0) heart.Fill = Brushes.White;
+                    foreach (var glyph in Visuals(AvatarPreviewSuite.Card(row)).OfType<InkCenteredGlyph>()) glyph.Foreground = Brushes.White;
+                    foreach (var stop in Visuals(Preview(row)).OfType<Border>().Where(border => border.Width is 9 or 10)) stop.Background = Brushes.White;
                 }
-                foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Background is SolidColorBrush brush && brush.Color == Colors.White))
-                    AssertEqual(true, Math.Abs(RasterCenter(bitmap, stop, view, dpi) - heartCenter) <= .50001, $"{context}: Stop raster must retain the preview center");
-                if (capturedRegression && ReferenceEquals(row, rows[0]) && state == "idle")
-                    AssertRecordedCompositePhase(view, row, bitmap, dpi, proofDirectory);
-                Console.WriteLine($"INK {context} preview={expected:F3} heart={heartCenter:F3} action={actionCenter:F3}");
+                SettingsLayoutSuite.Layout(view);
+                foreach (var row in rows)
+                    AssertEqual(1d, Preview(row).Opacity, "The injected hover fixture must expose actual compiled preview artwork before ink measurement");
+                var bitmap = new RenderTargetBitmap((int)Math.Ceiling(view.ActualWidth * dpi), (int)Math.Ceiling(view.ActualHeight * dpi), 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
+                bitmap.Render(view);
+                if (capturedRegression && state == "idle")
+                    AssertRasterDetectsDisplacedGlyph(view, rows[1], bitmap, dpi);
+                foreach (var row in rows)
+                {
+                    var location = ReferenceEquals(row, rows[0]) ? "Selected" : mode.ToString();
+                    var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
+                    var preview = Preview(row);
+                    var action = Visuals(row.Children.OfType<Button>().Last()).OfType<InkCenteredGlyph>().Single();
+                    var expected = row.TranslatePoint(new Point(0, row.ActualHeight / 2), view).Y * dpi;
+                    var avatarCenter = preview.TranslatePoint(new Point(18, 18), view).Y * dpi;
+                    var heartCenter = RasterCenter(bitmap, heart, view, dpi);
+                    var actionCenter = RasterCenter(bitmap, action, view, dpi);
+                    var context = $"{dpi * 100}%/{format}/{location}/{state}";
+                    var heartFrameCenter = heart.TranslatePoint(new Point(0, heart.ActualHeight / 2), view).Y * dpi;
+                    AssertEqual(true, Math.Abs(heartFrameCenter - expected) < .00001,
+                        $"{context}: the aspect-preserved heart frame centers exactly on its action row");
+                    // A raster's outer pixel bounds quantize to half-pixel centers. This is a physical
+                    // sampling limit; the exact outline below must still be centered without tolerance.
+                    AssertEqual(true, Math.Abs(actionCenter - heartCenter) <= .50001, $"{context}: Tick/Cross and heart raster centers must differ by at most one half physical pixel");
+                    foreach (var glyph in Visuals(row).OfType<InkCenteredGlyph>().Where(IsShown))
+                    {
+                        var drawing = VisualTreeHelper.GetDrawing(glyph)!;
+                        var center = glyph.TranslatePoint(new Point(0, drawing.Bounds.Top + drawing.Bounds.Height / 2), view).Y * dpi;
+                        AssertEqual(true, Math.Abs(center - expected) < .00001, $"{context}: the native action outline must center exactly on its title row");
+                        AssertNativeOutlineUnchanged(glyph, drawing);
+                        AssertEqual(true, Math.Abs(RasterCenter(bitmap, glyph, view, dpi) - heartCenter) <= .50001, $"{context}: glyph and heart raster centers must differ by at most one half physical pixel");
+                    }
+                    foreach (var glyph in Visuals(preview).OfType<InkCenteredGlyph>().Where(IsShown))
+                    {
+                        var drawing = VisualTreeHelper.GetDrawing(glyph)!;
+                        var center = glyph.TranslatePoint(new Point(0, drawing.Bounds.Top + drawing.Bounds.Height / 2), view).Y * dpi;
+                        AssertEqual(true, Math.Abs(center - avatarCenter) < .00001, $"{context}: Play outline centers exactly on its avatar overlay");
+                        AssertNativeOutlineUnchanged(glyph, drawing);
+                        AssertEqual(true, Math.Abs(RasterCenter(bitmap, glyph, view, dpi) - avatarCenter) <= .50001, $"{context}: Play keeps the half-physical-pixel avatar bound");
+                    }
+                    foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Width is 9 or 10))
+                        AssertEqual(true, Math.Abs(RasterCenter(bitmap, stop, view, dpi) - avatarCenter) <= .50001, $"{context}: Stop raster must retain the preview center");
+                    if (capturedRegression && ReferenceEquals(row, rows[0]) && state == "idle")
+                        CheckLegacyReference(view, dpi, proofDirectory);
+                    Console.WriteLine($"INK {context} avatar={avatarCenter:F3} title={expected:F3} heart={heartCenter:F3} action={actionCenter:F3}");
+                }
+                if (proofDirectory is not null && state == "idle" && mode == VoiceBrowseMode.Search && format == TextFormattingMode.Display && (capturedRegression || dpi == 1))
+                    CheckLegacyReference(view, dpi, proofDirectory);
             }
-            if (proofDirectory is not null && state == "idle" && mode == VoiceBrowseMode.Search && format == TextFormattingMode.Display && (capturedRegression || dpi == 1))
-                SaveComparison(view, rows[0], dpi, proofDirectory);
+            finally
+            {
+                foreach (var row in rows) AvatarPreviewSuite.SetHover(AvatarPreviewSuite.Card(row), false);
+            }
         }
+    }
+
+    private static Grid Preview(StackPanel row) => AvatarPreviewSuite.Overlay(Visuals(AvatarPreviewSuite.Card(row)).OfType<Button>().Single(button =>
+        BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") == true));
+
+    private static void CheckLegacyReference(SettingsView view, double dpi, string? proofDirectory)
+    {
+        var row = new StackPanel { Orientation = Orientation.Horizontal, UseLayoutRounding = false, HorizontalAlignment = HorizontalAlignment.Right };
+        var heart = new System.Windows.Shapes.Path { Width = 18, Height = 18, Stretch = Stretch.Fill, StrokeThickness = 1.5,
+            StrokeLineJoin = PenLineJoin.Round, Stroke = Brushes.White, Fill = Brushes.Transparent, Data = (Geometry)view.FindResource("VoiceLikeHeartGeometry") };
+        row.Children.Add(new Button { Width = 32, Height = 32, Margin = new Thickness(0, 0, 4, 0), Padding = new Thickness(6), Background = Brushes.Transparent, BorderThickness = new Thickness(0), Content = heart });
+        var preview = new Grid { Width = 36, Height = 36, Margin = new Thickness(0, 0, 4, 0) };
+        preview.Children.Add(new System.Windows.Shapes.Ellipse { StrokeThickness = 1, Stroke = Brushes.Gray });
+        preview.Children.Add(new InkCenteredGlyph { Glyph = "\uE768", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 13,
+            Foreground = Brushes.White, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
+        row.Children.Add(preview);
+        row.Children.Add(new Button { Style = (Style)view.FindResource("BareIconButtonStyle"), Content = "\uE711", Foreground = Brushes.White });
+        var backdrop = new Border { Background = Brushes.Black, Child = row, HorizontalAlignment = HorizontalAlignment.Right, UseLayoutRounding = false };
+        var panel = (Panel)view.Content;
+        panel.Children.Add(backdrop);
+        try
+        {
+            SettingsLayoutSuite.Layout(view);
+            var referenceBitmap = new RenderTargetBitmap((int)Math.Ceiling(view.ActualWidth * dpi), (int)Math.Ceiling(view.ActualHeight * dpi), 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
+            referenceBitmap.Render(view);
+            AssertRecordedCompositePhase(view, row, referenceBitmap, dpi, proofDirectory);
+            if (proofDirectory is not null) SaveComparison(view, row, dpi, proofDirectory);
+        }
+        finally { panel.Children.Remove(backdrop); SettingsLayoutSuite.Layout(view); }
     }
 
     private static void AssertRecordedCompositePhase(SettingsView view, StackPanel row, RenderTargetBitmap actualBitmap,
         double dpi, string? proofDirectory)
     {
+        // The independent legacy fixture retains the original common row and sampling phase.
         // The historical exact full-composite classifier was captured at an integer
         // common-center phase. The title-row reflow changes the row's absolute phase;
-        // retain that capture without moving product layout or individual glyphs.
+        // retain that capture in a separate original reference strip without moving product layout.
         const double recordedCommonCenterPixels = 847;
         var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
         var preview = row.Children.OfType<Grid>().Single();
         var action = Visuals(row.Children.OfType<Button>().Last()).OfType<InkCenteredGlyph>().Single();
         var actualCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
-        Console.WriteLine($"INK-PRODUCT-PHASE center={actualCenter:R}, heart-alpha={RasterCenter(actualBitmap, heart, view, dpi):R}, action-alpha={RasterCenter(actualBitmap, action, view, dpi):R}, heart-RGB={RasterCenter(actualBitmap, heart, view, dpi, false):R}, action-RGB={RasterCenter(actualBitmap, action, view, dpi, false):R}");
-        var previous = row.RenderTransform;
+        Console.WriteLine($"INK-LEGACY-REFERENCE-PHASE center={actualCenter:R}, heart-alpha={RasterCenter(actualBitmap, heart, view, dpi):R}, action-alpha={RasterCenter(actualBitmap, action, view, dpi):R}, heart-RGB={RasterCenter(actualBitmap, heart, view, dpi, false):R}, action-RGB={RasterCenter(actualBitmap, action, view, dpi, false):R}");
+        var referenceHost = (Border)row.Parent;
+        var previous = referenceHost.RenderTransform;
         try
         {
-            row.RenderTransform = new TranslateTransform(0, (recordedCommonCenterPixels - actualCenter) / dpi);
+            referenceHost.RenderTransform = new TranslateTransform(0, (recordedCommonCenterPixels - actualCenter) / dpi);
             SettingsLayoutSuite.Layout(view);
             var recordedCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
             AssertEqual(true, Math.Abs(recordedCenter - recordedCommonCenterPixels) < .00001,
@@ -148,7 +200,7 @@ internal static class VoiceCardInkSuite
             var heartCenter = RasterCenter(recorded, heart, view, dpi, false);
             var crossCenter = RasterCenter(recorded, action, view, dpi, false);
             AssertEqual(true, Math.Abs(heartCenter - crossCenter) <= .50001,
-                "The captured-phase product heart/Cross contours retain the half-physical-pixel bound");
+                "The captured-phase reference heart/Cross contours retain the half-physical-pixel bound");
             Console.WriteLine($"INK-CAPTURED-HEART center={recordedCenter:R}, heart-RGB={heartCenter:R}, action-RGB={crossCenter:R}");
             // Retain the original exact Cross/star oracle with its original contour.
             // The product heart has a different RGB-threshold edge classification.
@@ -188,10 +240,10 @@ internal static class VoiceCardInkSuite
         }
         finally
         {
-            row.RenderTransform = previous;
+            referenceHost.RenderTransform = previous;
             SettingsLayoutSuite.Layout(view);
             var restoredCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
-            AssertEqual(true, Math.Abs(restoredCenter - actualCenter) < .00001, "Captured fixture restores the original compiled product phase");
+            AssertEqual(true, Math.Abs(restoredCenter - actualCenter) < .00001, "Captured fixture restores its independent legacy reference phase");
         }
     }
 

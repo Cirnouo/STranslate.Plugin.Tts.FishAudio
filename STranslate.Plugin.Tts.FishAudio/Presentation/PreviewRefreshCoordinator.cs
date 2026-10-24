@@ -79,13 +79,21 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
     {
         var id = _getCachedVoiceId();
         var url = _getCachedVoiceSampleUrl();
-        return string.IsNullOrEmpty(id) || string.IsNullOrEmpty(url)
+        return string.IsNullOrEmpty(id) || (string.IsNullOrEmpty(url) && !HasActivePreview(id))
             ? Task.CompletedTask : ToggleAsync(new(id, null), url);
     }
 
     internal Task ToggleSearchItemPreviewAsync(VoiceSearchItem? item) =>
-        item is null || string.IsNullOrEmpty(item.SampleAudioUrl)
+        item is null || (string.IsNullOrEmpty(item.SampleAudioUrl)
+            && (!_getSearchResults().Contains(item) || !HasActivePreview(item.Id)))
             ? Task.CompletedTask : ToggleAsync(new(item.Id, item), item.SampleAudioUrl);
+
+    private bool HasActivePreview(string id)
+    {
+        if (_getPreviewingVoiceId() == id) return true;
+        lock (_displayPreviewOperationGate)
+            return _displayPreviewCancellationTokenSource is not null && _displayPreviewOperationTarget?.VoiceId == id;
+    }
 
     private async Task ToggleAsync(PreviewRefreshTarget target, string? audioUrl)
     {

@@ -47,6 +47,12 @@ if (args.Contains("--streaming-cancellation-probe-tests"))
     return;
 }
 
+if (args.Contains("--avatar-preview-tests"))
+{
+    await AvatarPreviewSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--avatar-preview-tests") + 1));
+    return;
+}
+
 if (args.Contains("--voice-like-tests"))
 {
     await VoiceLikeSuite.RunAllAsync();
@@ -524,4 +530,5 @@ await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetry
 await SearchAdjustmentControlSuite.RunAllAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceLikeSuite.RunAllAsync();
+await AvatarPreviewSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
