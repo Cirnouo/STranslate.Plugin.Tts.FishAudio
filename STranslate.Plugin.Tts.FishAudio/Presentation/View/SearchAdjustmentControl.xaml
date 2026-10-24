@@ -55,13 +55,14 @@
             </Grid>
         </Button>
         <Popup x:Name="AdjustmentPopup" PlacementTarget="{Binding ElementName=AdjustmentButton}" Placement="Custom" StaysOpen="True" AllowsTransparency="True">
-            <Border x:Name="PopupSurface" Width="324" Padding="16" CornerRadius="8" BorderThickness="1"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource FlyoutPresenterBackground}"
+            <Border x:Name="PopupSurface" Width="324" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
+                    BorderBrush="{DynamicResource FlyoutBorderThemeBrush}" Background="{DynamicResource FlyoutPresenterBackground}"
+                    TextElement.FontFamily="{DynamicResource ContentControlThemeFontFamily}"
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}" KeyboardNavigation.TabNavigation="Cycle" PreviewKeyDown="Popup_PreviewKeyDown">
                 <Grid>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <DockPanel Margin="0,0,0,14">
-                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Width="28" Height="28" MinHeight="0" MinWidth="0" Padding="7" Margin="8,-4,-4,0"
+                    <DockPanel x:Name="PopupHeader" MinHeight="28" Margin="0,0,0,12">
+                        <Button x:Name="CloseButton" DockPanel.Dock="Right" Width="28" Height="28" MinHeight="0" MinWidth="0" Padding="7" Margin="8,0,0,0"
                                 BorderThickness="0" Background="Transparent" Click="Close_Click"
                                 ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Close}" AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Close}">
                             <Path Data="M0,0 L10,10 M10,0 L0,10" Width="10" Height="10" Stretch="Uniform" StrokeThickness="1.5" Stroke="{DynamicResource TextFillColorSecondaryBrush}"/>
@@ -70,7 +71,7 @@
                     </DockPanel>
                     <ScrollViewer x:Name="PopupScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
                         <StackPanel>
-                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Language}" Margin="0,0,0,6"/>
+                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Language}" FontSize="12" LineHeight="18" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,6"/>
                             <Grid x:Name="LanguageTiles">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="6"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
@@ -79,23 +80,25 @@
                                     <RowDefinition Height="32"/><RowDefinition Height="6"/><RowDefinition Height="32"/>
                                 </Grid.RowDefinitions>
                             </Grid>
-                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Sort}" Margin="0,16,0,6"/>
-                            <RadioButton x:Name="RelevanceRadio" GroupName="SearchSort" IsChecked="True" Margin="0,0,0,6"
+                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Sort}" FontSize="12" LineHeight="18" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,12,0,4"/>
+                            <RadioButton x:Name="RelevanceRadio" GroupName="SearchSort" IsChecked="True" MinHeight="32"
                                          Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Relevance}"
                                          AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Relevance}"/>
-                            <RadioButton x:Name="PopularityRadio" GroupName="SearchSort" Margin="0,0,0,6"
+                            <RadioButton x:Name="PopularityRadio" GroupName="SearchSort" MinHeight="32"
                                          Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Popularity}"
                                          AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Popularity}"/>
-                            <RadioButton x:Name="CreationRadio" GroupName="SearchSort"
+                            <RadioButton x:Name="CreationRadio" GroupName="SearchSort" MinHeight="32"
                                          Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_CreationTime}"
                                          AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_CreationTime}"/>
                         </StackPanel>
                     </ScrollViewer>
-                    <Grid Grid.Row="2" Margin="0,20,0,0">
+                    <Border x:Name="PopupFooter" Grid.Row="2" Margin="0,12,0,0" Padding="0,12,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource FlyoutBorderThemeBrush}">
+                    <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                        <Button x:Name="ResetButton" HorizontalAlignment="Left" Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Reset}" Click="Reset_Click"/>
-                        <Button x:Name="ApplyButton" Grid.Column="1" Margin="12,0,0,0" Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" Click="Apply_Click"/>
+                        <Button x:Name="ResetButton" MinHeight="32" HorizontalAlignment="Left" Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search_Reset}" Click="Reset_Click"/>
+                        <Button x:Name="ApplyButton" MinHeight="32" Style="{DynamicResource AccentButtonStyle}" Grid.Column="1" Margin="12,0,0,0" Content="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" Click="Apply_Click"/>
                     </Grid>
+                    </Border>
                 </Grid>
             </Border>
         </Popup>

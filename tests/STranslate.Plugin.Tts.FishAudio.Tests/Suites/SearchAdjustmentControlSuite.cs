@@ -23,8 +23,29 @@ using static TestAssertions;
 
 internal static class SearchAdjustmentControlSuite
 {
-    internal static async Task RunAllAsync(string? group = null)
+    internal static async Task RunAllAsync(string? group = null, string? proofDirectory = null)
     {
+        if (group is "proof")
+        {
+            foreach (var (locale, dark) in new[] { ("en", false), ("en", true), ("ru", true) })
+                await ObserveMatrixActionAsync($"proof/{locale}/{dark}", stage => GeometryAndFlags(locale, dark, 1.25, stage, proofDirectory));
+            await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
+            return;
+        }
+        if (group is "lifetime")
+        {
+            await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
+            await RunOnStaThreadAsync(WindowAndScrollLifetime);
+            await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
+            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            return;
+        }
+        if (group is "material")
+        {
+            await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
+            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            return;
+        }
         if (group is "radio")
         {
             foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
@@ -32,7 +53,8 @@ internal static class SearchAdjustmentControlSuite
         }
         if (group is "edges")
         {
-            await RunOnStaThreadAsync(ShortViewportKeepsPopupInsideVisibleArea);
+            await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
+            await RunOnStaThreadAsync(ViewportClampsAcrossTriggerOrRefuses);
             return;
         }
         await RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync);
@@ -41,12 +63,15 @@ internal static class SearchAdjustmentControlSuite
         await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
         await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
         await RunOnStaThreadAsync(WindowAndScrollLifetime);
-        await RunOnStaThreadAsync(ShortViewportKeepsPopupInsideVisibleArea);
+        await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
+        await RunOnStaThreadAsync(ViewportClampsAcrossTriggerOrRefuses);
+        await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
+        await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
             await ObserveMatrixActionAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
-                stage => GeometryAndFlags(locale, dark, dpi, stage));
+                stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory));
     }
 
     private static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
@@ -181,6 +206,68 @@ internal static class SearchAdjustmentControlSuite
         var control = view.FindName("SearchAdjustments") as FrameworkElement;
         AssertNotNull(control, "The compiled search row must embed the search adjustment action");
         return control!;
+    }
+
+    private static void PopupMaterialUsesItsOwnNonlayeredSource()
+    {
+        var settings = new Settings();
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        using var ownerSource = Attach(view);
+        var control = Control(view);
+        Open(control);
+        var surface = Part<Border>(control, "PopupSurface");
+        var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+            AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Acrylic compatibility path must create a nonlayered Popup before applying DWM material");
+        var material = ((SearchAdjustmentControl)control).Material;
+        Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleBlur=UNVERIFIED");
+        AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
+        Click(control, "CloseButton");
+        AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+    }
+
+    private static void PopupMaterialFallbackAndSourceLifetimes()
+    {
+        foreach (var supported in new[] { false, true })
+        foreach (var result in new[] { new PopupBackdropResult(0, unchecked((int)0x80004005), 3), new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 3) })
+        {
+            var settings = new Settings();
+            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            using var ownerSource = Attach(view);
+            var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
+            var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
+            var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
+            var material = new PopupMaterial(popup, surface, api);
+            material.Begin(); popup.IsOpen = true; Drain();
+            var first = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+            AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
+            AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
+            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+            popup.IsOpen = false; Drain();
+            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+            var calls = api.Applied.Count;
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+            AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
+            material.Begin(); popup.IsOpen = true; Drain();
+            var second = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+            popup.IsOpen = false; material.End(); Drain();
+        }
+    }
+
+    private sealed class TestPopupBackdropApi : IPopupBackdropApi
+    {
+        public bool IsSupported { get; init; }
+        internal PopupBackdropResult Result { get; init; }
+        internal List<IntPtr> Applied { get; } = [];
+        public PopupBackdropResult Apply(IntPtr handle, bool dark) { Applied.Add(handle); return Result; }
+        public void UpdateChrome(IntPtr handle, bool dark) { }
+        public void Remove(IntPtr handle) { }
     }
     private static T Part<T>(FrameworkElement control, string name) where T : class => (T)control.FindName(name);
     private static void Click(FrameworkElement control, string name) => Part<Button>(control, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -399,11 +486,15 @@ internal static class SearchAdjustmentControlSuite
 
     // Monitor-only Y clamping lets an options popup extend below a short host
     // window. Both anchor edges must fit the actually visible ancestor viewport.
-    private static void ShortViewportKeepsPopupInsideVisibleArea()
+    private static void ShortViewportKeepsPopupInsideVisibleArea(string? proofDirectory = null)
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
         var view = SettingsLayoutSuite.CreateThemedView(vm);
+        // Same labeled headless accent fixture as the locale matrix; the host
+        // supplies these native resources in actual installed-window acceptance.
+        view.Resources["AccentButtonBackground"] = new SolidColorBrush(Color.FromRgb(0x00, 0x5F, 0xB8));
+        view.Resources["AccentButtonForeground"] = Brushes.White;
         var scroll = new ScrollViewer { Content = view, Height = 240, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         var dpi = VisualTreeHelper.GetDpi(new DrawingVisual());
         using var source = new HwndSource(new HwndSourceParameters("Fish Audio short visible popup viewport fixture")
@@ -431,6 +522,7 @@ internal static class SearchAdjustmentControlSuite
                 "A short viewport chooses the available side of the trigger with a visible gap");
             var contentScroll = Part<ScrollViewer>(control, "PopupScroll");
             AssertEqual(true, contentScroll.ExtentHeight > contentScroll.ViewportHeight, "A popup taller than available space scrolls internally");
+            AssertScrollbarExclusion(contentScroll, Tiles(control), "search language tiles");
             foreach (var name in new[] { "CloseButton", "ResetButton", "ApplyButton" })
             {
                 var action = Part<Button>(control, name);
@@ -440,21 +532,110 @@ internal static class SearchAdjustmentControlSuite
             Tiles(control).Last().BringIntoView(); Drain();
             AssertEqual(true, IsOpen(control), "Bringing a clipped tile into view scrolls only the internal body");
             AssertEqual(true, contentScroll.VerticalOffset > 0, "Keyboard/focus BringIntoView can reach the final language row");
-            SavePopupProof(surface, $"short-viewport-{(nearBottom ? "above" : "below")}-native{dpi.DpiScaleX * 100:0}");
+            var oldBar = (ScrollBar)contentScroll.Template.FindName("PART_VerticalScrollBar", contentScroll);
+            var oldLane = contentScroll.Padding.Right;
+            oldBar.Width = oldBar.ActualWidth + 8; Drain();
+            AssertScrollbarExclusion(contentScroll, Tiles(control), "expanded replacement width");
+            AssertEqual(true, contentScroll.Padding.Right > oldLane, "A wider actual scrollbar increases the owned lane");
+            var template = contentScroll.Template;
+            contentScroll.Template = null; contentScroll.UpdateLayout();
+            contentScroll.Template = template; contentScroll.UpdateLayout(); Drain();
+            AssertEqual(false, ReferenceEquals(oldBar, contentScroll.Template.FindName("PART_VerticalScrollBar", contentScroll)), "Template replacement realizes a new scrollbar part");
+            AssertScrollbarExclusion(contentScroll, Tiles(control), "replacement native template");
+            SavePopupProof(surface, $"short-viewport-{(nearBottom ? "above" : "below")}-native{dpi.DpiScaleX * 100:0}", proofDirectory);
             Click(control, "CloseButton");
+            AssertEqual(0d, contentScroll.Padding.Right, "Close detaches and restores the viewer's original padding");
         }
     }
 
-    private static void SavePopupProof(FrameworkElement surface, string name)
+    internal static void AssertScrollbarExclusion(ScrollViewer viewer, IEnumerable<FrameworkElement> content, string context)
     {
-        var directory = Path.Combine(Path.GetDirectoryName(FindRepoFile("build.ps1"))!, ".scratch", "task-8", "popup-proof");
+        viewer.ApplyTemplate();
+        var bar = (ScrollBar)viewer.Template.FindName("PART_VerticalScrollBar", viewer);
+        AssertEqual(true, VisualStateManager.GoToState(viewer, "MouseIndicator", false), "The real native viewer exposes its mouse-indicator state");
+        AssertEqual(true, VisualStateManager.GoToState(bar, "Expanded", false), "The real native scrollbar expands through its installed template");
+        viewer.UpdateLayout();
+        AssertEqual(Visibility.Visible, bar.Visibility, $"{context}: real overflow exposes the native scrollbar part");
+        var bounds = bar.TransformToAncestor(viewer).TransformBounds(new Rect(bar.RenderSize));
+        AssertEqual(true, bounds.Left >= 0 && bounds.Right <= viewer.ActualWidth + .1, $"{context}: native scrollbar stays in the viewer");
+        foreach (var item in content)
+        {
+            var itemBounds = item.TransformToAncestor(viewer).TransformBounds(new Rect(item.RenderSize));
+            AssertEqual(true, itemBounds.Right <= bounds.Left - 3.9,
+                $"{context}: selectable/read-only content ends four DIP before the ACTUAL expanded scrollbar ({itemBounds.Right:0.##} <= {bounds.Left - 4:0.##}; part width {bounds.Width:0.##})");
+        }
+        var laneHit = viewer.InputHitTest(new Point(bounds.Left - 2, viewer.ActualHeight / 2)) as DependencyObject;
+        AssertEqual(false, laneHit is not null && AncestorsAndSelf(laneHit).OfType<ToggleButton>().Any(),
+            $"{context}: the exclusion lane has no selectable tile behind it");
+    }
+
+    private static IEnumerable<DependencyObject> AncestorsAndSelf(DependencyObject item)
+    {
+        for (DependencyObject? current = item; current is not null; current = VisualTreeHelper.GetParent(current)) yield return current;
+    }
+
+    private static void ViewportClampsAcrossTriggerOrRefuses()
+    {
+        var settings = new Settings();
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        var scroll = new ScrollViewer { Content = view, Height = 220 };
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio centered short popup fixture")
+        { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
+        source.RootVisual = scroll;
+        SettingsLayoutSuite.Layout(scroll, 400);
+        var control = Control(view);
+        scroll.ScrollToVerticalOffset(control.TransformToAncestor(view).Transform(new Point()).Y - 96); Drain();
+        Open(control);
+        AssertEqual(true, IsOpen(control), "A centered trigger can use the complete visible viewport when neither side fits fixed chrome and an option");
+        var surface = Part<Border>(control, "PopupSurface");
+        var trigger = Part<Button>(control, "AdjustmentButton");
+        AssertEqual(true, surface.PointToScreen(new Point()).Y < trigger.PointToScreen(new Point()).Y
+            && surface.PointToScreen(new Point(0, surface.ActualHeight)).Y > trigger.PointToScreen(new Point(0, trigger.ActualHeight)).Y,
+            "The useful constrained popup can clamp across the trigger");
+        AssertFixedActions(control, surface);
+        Click(control, "CloseButton");
+        scroll.Height = 70; SettingsLayoutSuite.Layout(scroll, 400); Drain();
+        Open(control);
+        AssertEqual(false, IsOpen(control), "A viewport smaller than measured fixed chrome coherently refuses the popup");
+        AssertEqual(false, (bool)control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control)!,
+            "Refusal retires input and overlay ownership");
+    }
+
+    private static void AssertFixedActions(FrameworkElement control, Border surface)
+    {
+        foreach (var name in new[] { "CloseButton", "ResetButton", "ApplyButton" })
+        {
+            var button = Part<Button>(control, name);
+            var bounds = button.TransformToAncestor(surface).TransformBounds(new Rect(button.RenderSize));
+            AssertEqual(true, bounds.Top >= 0 && bounds.Bottom <= surface.ActualHeight + .1 && bounds.Left >= 0 && bounds.Right <= surface.ActualWidth + .1,
+                "Fixed Close/Reset/Apply remain fully inside the constrained shell");
+        }
+    }
+
+    private static void SavePopupProof(FrameworkElement surface, string name, string? proofDirectory = null)
+    {
+        var directory = proofDirectory ?? Path.Combine(Path.GetDirectoryName(FindRepoFile("build.ps1"))!, ".superpowers", "sdd", "2026-10-24-voice-search-and-controls", "task-13-candidate-proofs");
         Directory.CreateDirectory(directory);
+        WriteProofAssembly(directory);
         SaveBitmap(RenderGlyph(surface, surface), Path.Combine(directory, name + ".png"));
+    }
+
+    internal static void WriteProofAssembly(string directory)
+    {
+        Directory.CreateDirectory(directory);
+        var path = typeof(SearchAdjustmentControl).Assembly.Location;
+        File.WriteAllText(Path.Combine(directory, "proof-assembly.json"), System.Text.Json.JsonSerializer.Serialize(new
+        {
+            path,
+            sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path))),
+            note = "Compiled fixture layout/composition only; native desktop blur is not represented by RenderTargetBitmap."
+        }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
     }
 
     // Incorrect inset/padding/DPI conversion or missing/mismatched tile flags must
     // fail against the actual themed TextBox viewport and popup presentation source.
-    private static void GeometryAndFlags(string locale, bool dark, double dpi, Action<string> stage)
+    private static void GeometryAndFlags(string locale, bool dark, double dpi, Action<string> stage, string? proofDirectory = null)
     {
         stage("ViewModel construction begin");
         var settings = new Settings();
@@ -469,6 +650,8 @@ internal static class SearchAdjustmentControlSuite
         // palette state, retaining the production DynamicResource and native metrics.
         var accentPalette = new SolidColorBrush(dark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8));
         view.Resources["AccentFillColorDefaultBrush"] = accentPalette;
+        view.Resources["AccentButtonBackground"] = accentPalette;
+        view.Resources["AccentButtonForeground"] = Brushes.White;
         view.Resources["RadioButtonOuterEllipseCheckedFill"] = accentPalette;
         view.Resources["RadioButtonOuterEllipseCheckedStroke"] = accentPalette;
         stage("locale/theme ready (concrete accent fixture); source attach/layout begin");
@@ -521,8 +704,22 @@ internal static class SearchAdjustmentControlSuite
                 // HWND still uses its monitor's screen transform, not that injection.
                 var screenScale = (ownerRight - ownerLeft) / view.ActualWidth;
                 AssertEqual(true, left >= ownerLeft + 7 * screenScale - 1 && right <= ownerRight - 7 * screenScale + 1, $"Device-pixel placement contains the native Popup in the settings viewport ({locale}/{dpi}/{width}: {left}..{right} owner {ownerLeft}..{ownerRight}, popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX}, viewDpi={VisualTreeHelper.GetDpi(view).DpiScaleX})");
-                AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Popup surface resolves an opaque native theme brush");
+                AssertEqual(true, ((SearchAdjustmentControl)control).Material.AttributeAccepted
+                    ? surface.Background is SolidColorBrush { Color.A: 0 }
+                    : surface.Background is SolidColorBrush { Color.A: 255 }, "Surface uses accepted native material or explicit native opaque fallback");
                 var tiles = Tiles(control);
+                var contentViewer = Part<ScrollViewer>(control, "PopupScroll");
+                Console.WriteLine($"[popup-dpi] ownerRequested={dpi:0.##}; ownerActual={VisualTreeHelper.GetDpi(view).DpiScaleX:0.##}; popupActual={VisualTreeHelper.GetDpi(surface).DpiScaleX:0.##}; tileActual={VisualTreeHelper.GetDpi(tiles[0]).DpiScaleX:0.##}; OSdisplay=UNCHANGED");
+                if (contentViewer.ScrollableHeight > 0)
+                {
+                    AssertScrollbarExclusion(contentViewer, tiles, $"{locale}/{dark}/{dpi}/{width} tiles");
+                    AssertFixedActions(control, surface);
+                    Part<RadioButton>(control, "CreationRadio").BringIntoView(); Drain();
+                    var finalBounds = Part<RadioButton>(control, "CreationRadio").TransformToAncestor(contentViewer).TransformBounds(new Rect(Part<RadioButton>(control, "CreationRadio").RenderSize));
+                    AssertEqual(true, finalBounds.Top >= -.1 && finalBounds.Bottom <= contentViewer.ActualHeight + .1, "BringIntoView reaches the final native sort choice");
+                    AssertFixedActions(control, surface);
+                    contentViewer.ScrollToTop(); Drain();
+                }
                 AssertEnumerableEqual(new[] { "", "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }, tiles.Select(tile => (string)tile.Tag), "Preset tiles keep their approved order");
                 for (var index = 0; index < tiles.Length; index++)
                 {
@@ -549,7 +746,7 @@ internal static class SearchAdjustmentControlSuite
                     AssertEqual(true, tile.Focusable && KeyboardNavigation.GetIsTabStop(tile), "Every native toggle remains keyboard reachable");
                 }
                 if (dpi == 1.25 && (locale == "en" || (locale == "ru" && width == 320)))
-                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-all-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}");
+                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-all-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}", proofDirectory);
                 Toggle(control, "en"); Toggle(control, "zh");
                 foreach (var tile in tiles)
                 {
@@ -563,7 +760,7 @@ internal static class SearchAdjustmentControlSuite
                     AssertEqual(false, check.Focusable, "The check adds no separate focus target");
                 }
                 if (dpi == 1.25 && (locale == "en" || (locale == "ru" && width == 320)))
-                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-multiple-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}");
+                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-multiple-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}", proofDirectory);
                 foreach (var next in UiLocales.All)
                 {
                     stage($"width={width}: locale={next} begin");
@@ -571,6 +768,7 @@ internal static class SearchAdjustmentControlSuite
                     stage($"width={width}: locale={next} replacement/drain ready");
                     AssertEnumerableEqual(new[] { "en", "zh" }, Selected(control), "Live locale replacement preserves the entire draft set");
                     AssertEqual(true, IsOpen(control), "Live locale replacement updates the same open popup");
+                    if (contentViewer.ScrollableHeight > 0) AssertScrollbarExclusion(contentViewer, tiles, $"live {next} tiles");
                     foreach (var tile in tiles)
                     {
                         var code = (string)tile.Tag;
@@ -580,6 +778,12 @@ internal static class SearchAdjustmentControlSuite
                     }
                 }
                 SetLocale(view, locale); Drain();
+                view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Light : ApplicationTheme.Dark;
+                ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Light : ElementTheme.Dark); Drain();
+                AssertEqual(true, IsOpen(control), "A live theme change preserves drafts and the same popup lifetime");
+                if (contentViewer.ScrollableHeight > 0) AssertScrollbarExclusion(contentViewer, tiles, "live theme replacement");
+                view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+                ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light); Drain();
                 var relevance = Part<RadioButton>(control, "RelevanceRadio").Content as string;
                 AssertEqual(locale == "zh-cn" ? "相关优先" : locale == "en" ? "Relevance first" : (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_Search_Relevance"), relevance, "Score uses the approved localized relevance-first label");
                 stage($"width={width}: popup cleanup begin");

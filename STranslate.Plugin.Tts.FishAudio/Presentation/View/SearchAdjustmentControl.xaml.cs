@@ -26,10 +26,14 @@ public partial class SearchAdjustmentControl : UserControl
     private Window? _window;
     private bool _ownsInput;
     private bool _updatingDraftTiles;
+    private readonly PopupScrollbarLane _scrollbarLane;
+    internal PopupMaterial Material { get; }
 
     public SearchAdjustmentControl()
     {
         InitializeComponent();
+        _scrollbarLane = new PopupScrollbarLane(PopupScroll);
+        Material = new PopupMaterial(AdjustmentPopup, PopupSurface);
         SetResourceReference(UiLocaleProperty, "STranslate_Plugin_Tts_FishAudio_Languages_UiLocale");
         SetResourceReference(AllCaptionProperty, "STranslate_Plugin_Tts_FishAudio_Search_AllLanguages");
         AdjustmentPopup.CustomPopupPlacementCallback = PlacePopup;
@@ -72,6 +76,7 @@ public partial class SearchAdjustmentControl : UserControl
             AutomationProperties.SetName(tile, option.Name);
         }
         UpdateDraftTiles();
+        Reposition();
     }
 
     private void LanguageTile_CheckedChanged(object sender, RoutedEventArgs args)
@@ -135,9 +140,16 @@ public partial class SearchAdjustmentControl : UserControl
         try
         {
             if (!PreparePopupBounds()) { ReleaseOwnership(); return; }
+            _scrollbarLane.Begin();
+            Material.Begin();
             AdjustmentPopup.IsOpen = true;
         }
-        catch { ReleaseOwnership(); throw; }
+        catch
+        {
+            // Retirement must not replace the failure that prevented opening.
+            try { ClosePopup(); } catch { }
+            throw;
+        }
         _languageTiles[""].Focus();
     }
 
@@ -153,6 +165,7 @@ public partial class SearchAdjustmentControl : UserControl
     {
         if (!_ownsInput) return;
         _ownsInput = false;
+        _scrollbarLane.End();
         InputManager.Current.PreProcessInput -= ObserveInput;
         foreach (var viewer in _scrollOwners)
         {
@@ -174,6 +187,8 @@ public partial class SearchAdjustmentControl : UserControl
         }
         _owner = null;
         _window = null;
+        // Retire all input/overlay subscriptions even if native cleanup fails.
+        Material.End();
     }
 
     private void ObserveInput(object sender, PreProcessInputEventArgs args)
@@ -229,75 +244,13 @@ public partial class SearchAdjustmentControl : UserControl
         if (args.OriginalSource is ScrollViewer viewer && _scrollOwners.Contains(viewer)
             && (args.VerticalChange != 0 || args.HorizontalChange != 0)) ClosePopup();
     }
-    private DpiScale ScreenScale()
-    {
-        var transform = PresentationSource.FromVisual(AdjustmentButton)?.CompositionTarget?.TransformToDevice;
-        return transform is { } matrix ? new DpiScale(matrix.M11, matrix.M22) : VisualTreeHelper.GetDpi(AdjustmentButton);
-    }
-    private static Rect ScreenBounds(FrameworkElement element) => new(element.PointToScreen(new Point()),
-        element.PointToScreen(new Point(element.ActualWidth, element.ActualHeight)));
-
-    private Rect VisibleViewport()
-    {
-        var bounds = VoiceLanguageTags.MonitorWorkArea(AdjustmentButton.PointToScreen(new Point()));
-        if (_owner is { ActualWidth: > 0, ActualHeight: > 0 }) bounds.Intersect(ScreenBounds(_owner));
-        foreach (var viewer in _scrollOwners)
-        {
-            // ViewportHeight may be logical item units. Measure the actual rendered
-            // presenter instead of the complete, possibly scrolled settings content.
-            var presenter = viewer.Template?.FindName("PART_ScrollContentPresenter", viewer) as FrameworkElement
-                ?? VisualChildren(viewer).OfType<ScrollContentPresenter>().FirstOrDefault() ?? (FrameworkElement)viewer;
-            bounds.Intersect(ScreenBounds(presenter));
-        }
-        return bounds;
-    }
-    private static IEnumerable<DependencyObject> VisualChildren(DependencyObject parent)
-    {
-        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
-        {
-            var child = VisualTreeHelper.GetChild(parent, index);
-            yield return child;
-            foreach (var descendant in VisualChildren(child)) yield return descendant;
-        }
-    }
-    private bool PreparePopupBounds()
-    {
-        var dpi = ScreenScale();
-        var bounds = VisibleViewport();
-        if (bounds.IsEmpty || bounds.Width <= 16 * dpi.DpiScaleX || bounds.Height <= 16 * dpi.DpiScaleY) return false;
-        bounds.Inflate(-8 * dpi.DpiScaleX, -8 * dpi.DpiScaleY);
-        PopupSurface.Width = Math.Min(324, bounds.Width / dpi.DpiScaleX);
-        var anchor = AdjustmentButton.PointToScreen(new Point());
-        var anchorBottom = AdjustmentButton.PointToScreen(new Point(0, AdjustmentButton.ActualHeight)).Y;
-        var below = Math.Max(0, bounds.Bottom - anchorBottom - 8 * dpi.DpiScaleY);
-        var above = Math.Max(0, anchor.Y - 8 * dpi.DpiScaleY - bounds.Top);
-        PopupSurface.MaxHeight = double.PositiveInfinity;
-        PopupSurface.Measure(new Size(PopupSurface.Width, double.PositiveInfinity));
-        var naturalHeight = PopupSurface.DesiredSize.Height * dpi.DpiScaleY;
-        var availableHeight = naturalHeight <= below ? below : naturalHeight <= above ? above : Math.Max(above, below);
-        PopupSurface.MaxHeight = Math.Max(1, Math.Min(bounds.Height, availableHeight) / dpi.DpiScaleY);
-        return true;
-    }
+    private bool PreparePopupBounds() => PopupViewport.Prepare(AdjustmentButton, _owner, _scrollOwners, PopupSurface, PopupScroll, 324);
     private void Reposition()
     {
         if (AdjustmentPopup is null || !AdjustmentPopup.IsOpen || _owner is null) return;
         if (!PreparePopupBounds()) { ClosePopup(); return; }
         AdjustmentPopup.HorizontalOffset = AdjustmentPopup.HorizontalOffset == 0 ? .01 : 0;
     }
-    private CustomPopupPlacement[] PlacePopup(Size popupSize, Size targetSize, Point offset)
-    {
-        var anchor = AdjustmentButton.PointToScreen(new Point());
-        var dpi = ScreenScale();
-        var bounds = VisibleViewport();
-        if (bounds.IsEmpty) return [];
-        bounds.Inflate(-8 * dpi.DpiScaleX, -8 * dpi.DpiScaleY);
-        // Native custom-placement sizes and offsets are already device pixels.
-        var left = Math.Clamp(anchor.X + targetSize.Width - popupSize.Width, bounds.Left, Math.Max(bounds.Left, bounds.Right - popupSize.Width));
-        var below = bounds.Bottom - anchor.Y - targetSize.Height - 8 * dpi.DpiScaleY;
-        var above = anchor.Y - 8 * dpi.DpiScaleY - bounds.Top;
-        var useAbove = popupSize.Height > below && (popupSize.Height <= above || above > below);
-        var top = useAbove ? anchor.Y - 8 * dpi.DpiScaleY - popupSize.Height : anchor.Y + targetSize.Height + 8 * dpi.DpiScaleY;
-        top = Math.Clamp(top, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - popupSize.Height));
-        return [new CustomPopupPlacement(new Point(left - anchor.X, top - anchor.Y), PopupPrimaryAxis.None)];
-    }
+    private CustomPopupPlacement[] PlacePopup(Size popupSize, Size targetSize, Point offset) =>
+        PopupViewport.Place(AdjustmentButton, _owner, _scrollOwners, popupSize, targetSize, alignRight: true);
 }

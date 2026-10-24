@@ -1,3 +1,21 @@
+if (args.Contains("--popup-proof-tests"))
+{
+    var directory = args.ElementAtOrDefault(Array.IndexOf(args, "--popup-proof-tests") + 1)
+        ?? throw new ArgumentException("A private proof directory is required");
+    await SearchAdjustmentControlSuite.RunAllAsync("proof", directory);
+    await VoiceLanguageTagsSuite.RunProofsAsync(directory);
+    Console.WriteLine("Representative popup proofs passed.");
+    return;
+}
+
+if (args.Contains("--popup-lifetime-tests"))
+{
+    await SearchAdjustmentControlSuite.RunAllAsync("lifetime");
+    await VoiceLanguageTagsSuite.RunLifetimeAsync();
+    Console.WriteLine("Popup lifetime regressions passed.");
+    return;
+}
+
 if (args.Contains("--numeric-typography-tests"))
 {
     await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
