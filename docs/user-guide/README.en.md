@@ -55,7 +55,7 @@ Open **Search adjustments** inside the search field to choose **All languages** 
 
 Search, By ID, Likes and the selected voice use the same language labels in a separate single-line row: a flag plus a name in the interface language. Wider cards show more labels, with no fixed limit of three; click `+N` to open exactly the remaining N languages in a popup. Names stay visible; only a first label whose full name cannot fit is shortened with an ellipsis (hover for its full name). Missing language metadata hides the row. Labels come from Fish Audio voice metadata, not a fixed synthesis-language whitelist, speaker nationality or a complete account of the engine's language capabilities. Unknown language codes keep their text with a generic icon.
 
-The lower-right date uses your system time zone (`yyyy-MM-dd`); hover for the complete timestamp and UTC offset. Missing or invalid dates show `—`. An empty description hides its entire row, moving languages, author and popularity upward.
+The lower-right date uses your system time zone (`yyyy-MM-dd`); hover for the complete timestamp and UTC offset. Missing or invalid dates show `—`. An empty description hides its entire row without leaving a gap.
 
 Likes are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved liked voice.
 
