@@ -1,3 +1,10 @@
+if (args.Contains("--numeric-typography-tests"))
+{
+    await NumericTypographySuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-typography-tests") + 1));
+    Console.WriteLine("Numeric typography regressions passed.");
+    return;
+}
+
 if (args.Contains("--streaming-cancellation-probe-tests"))
 {
     await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();

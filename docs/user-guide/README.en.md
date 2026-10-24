@@ -104,7 +104,7 @@ Edits save automatically. These are new-configuration defaults; change one setti
 All three methods retain 0.01 precision:
 
 - Click a slider track or drag its thumb, or hover over its slider or resting number for about 350 ms, then use the mouse wheel to adjust by 0.01.
-- For an exact value, click the number and type. Enter or clicking elsewhere saves; Esc cancels. Invalid, empty or out-of-range input restores the previous value.
+- For an exact value, click the right-aligned number and type in the centered input; its unit stays outside the input. Enter or clicking elsewhere saves; Esc cancels. Invalid, empty or out-of-range input restores the previous value.
 - Use a decimal point, or your region's decimal comma.
 ### Other options
 

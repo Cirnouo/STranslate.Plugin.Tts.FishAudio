@@ -27,7 +27,7 @@ internal static class InlineNumericEditorSuite
     internal static IReadOnlyList<(string Language, string Culture)> Cultures { get; } =
         [("en", "en-US"), ("zh-cn", "zh-CN"), ("zh-tw", "zh-TW"), ("ja", "ja-JP"), ("ko", "ko-KR"), ("ru", "ru-RU"), ("tr", "tr-TR"), ("en", "de-DE")];
 
-    // Catches a centered display presenter, focus-only border growth, clipped
+    // Catches a centered resting presenter, focus-only border growth, clipped
     // signed values/carets, or a permanently reserved empty unit column. This
     // is a compiled native-theme state fixture, not installed-host focus proof.
     internal static void CompactGeometryForCulture(string language, string culture, bool dark, double dpi)
@@ -75,6 +75,7 @@ internal static class InlineNumericEditorSuite
                 var labelBounds = Bounds(label, row);
                 var slider = Descendants(view).OfType<Slider>().Single(slider => BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path == property);
                 var sliderBounds = Bounds(slider, row);
+                NumericTypographySuite.AssertResting(editor, label, unit, context);
                 Near(dpi, VisualTreeHelper.GetDpi(input).DpiScaleX, $"{context}: the compiled input must inherit the requested actual root DPI");
                 Near(180, slider.ActualWidth, $"{context}: compact labels must preserve the native slider length");
                 Near(displayBounds.Right - 3, labelBounds.Right, $"{context}: rendered resting text must reach the field's padded right edge");
@@ -96,7 +97,8 @@ internal static class InlineNumericEditorSuite
                 AssertEqual(sliderBounds, Bounds(slider, row), $"{context}: editing must not move the neighboring native slider");
                 AssertEqual(new Thickness(1), input.BorderThickness, $"{context}: the native input border must be fixed at one DIP");
                 AssertEqual(new Thickness(2, 0, 2, 0), input.Padding, $"{context}: native text must retain the compact inner padding");
-                AssertEqual(TextAlignment.Right, input.TextAlignment, $"{context}: drafts must align at the same right edge");
+                AssertEqual(TextAlignment.Center, input.TextAlignment, $"{context}: drafts must center within the unchanged native viewport");
+                NumericTypographySuite.AssertEditing(editor, input, unit, context);
                 var nativeSetter = input.Template.Triggers.OfType<MultiTrigger>().SelectMany(trigger => trigger.Setters.OfType<Setter>())
                     .Single(setter => setter.Property == iNKORE.UI.WPF.Modern.Controls.Helpers.TextBoxHelper.IsDeleteButtonVisibleProperty);
                 var focusedThemeState = new Style(typeof(TextBox), input.Style);
@@ -107,7 +109,7 @@ internal static class InlineNumericEditorSuite
                     input.Text = value;
                     SettingsLayoutSuite.Layout(view, width);
                     AssertNumericViewport(input, value);
-                    AssertCaretAndRightEdge(input, view, context);
+                    AssertCaretAndCenter(input, view, context);
                 }
                 var expectedUnit = property switch { "Speed" => "×", "Volume" => "dB", _ => "" };
                 AssertEqual(expectedUnit, unit.Text, $"{context}: units must be separate from the editable numeric draft");
@@ -121,7 +123,7 @@ internal static class InlineNumericEditorSuite
                 else
                 {
                     AssertEqual(Visibility.Visible, unit.Visibility, $"{context}: the unit must remain visible during editing");
-                    Near(displayBounds.Right + 4, Bounds(unit, row).Left, $"{context}: unit spacing must remain outside the numeric field");
+                    Near(displayBounds.Right, Bounds(unit, row).Left, $"{context}: the unit must start outside the numeric field without an added margin");
                     Near(unit.DesiredSize.Width, grid.ColumnDefinitions[1].ActualWidth, $"{context}: the unit column must size to its real content");
                     Near(52 + unit.DesiredSize.Width, editor.ActualWidth, $"{context}: units must not retain the old fixed-width reservation");
                 }
@@ -135,7 +137,7 @@ internal static class InlineNumericEditorSuite
         finally { CultureInfo.CurrentCulture = originalCulture; }
     }
 
-    private static void AssertCaretAndRightEdge(TextBox input, FrameworkElement root, string context)
+    private static void AssertCaretAndCenter(TextBox input, FrameworkElement root, string context)
     {
         var viewport = VisualDescendants(input).OfType<FrameworkElement>().Single(element => element.GetType().Name == "TextBoxView");
         // The native ScrollContentPresenter includes negative padding margins;
@@ -150,7 +152,8 @@ internal static class InlineNumericEditorSuite
         AssertEqual(false, start.IsEmpty || end.IsEmpty, $"{context}: both end caret positions must resolve after native layout");
         var startX = input.TranslatePoint(start.TopLeft, root).X;
         var endX = input.TranslatePoint(end.TopLeft, root).X;
-        Near(viewportBounds.Right, endX, $"{context}: the actual trailing caret must align at the right edge");
+        Near(viewportBounds.Left + viewportBounds.Width / 2, (startX + endX) / 2,
+            $"{context}: the complete draft between its actual caret positions must center in the text viewport");
         AssertEqual(true, startX >= viewportBounds.Left && endX <= viewportBounds.Right + .01,
             $"{context}: the full signed draft and both caret positions must fit without clipping either end");
         input.Select(0, 0);

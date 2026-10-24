@@ -23,7 +23,7 @@
 ## Review Focus
 
 - Actual pointer mapping and wheel event ownership must remain correct at endpoints, signed zero and prequalification partial deltas.
-- Focused native text viewports must fit -10.00 plus the caret at fractional DPI, without layout or right-edge jumps.
+- Focused native text viewports must fit -10.00 plus the caret at fractional DPI, without layout shifts or clipping; the later Task 9 requires centered editing rather than cross-state right-edge equality.
 - Old timer callbacks and identical replacement errors must not clear new messages.
 - Nested native ComboBox popups must not be dismissed as outside clicks, and failed/stale searches must not publish mismatched filters/results.
 - Optional date metadata must round-trip and authoritatively clear across every card/cache/startup/preview path without crossing credential or persistence boundaries.
@@ -44,7 +44,7 @@
 
 **Files:** InlineNumericEditor.xaml(.cs), Speed editor binding in SettingsView.xaml; InlineNumericEditorSuite.cs and relevant layout/input suites; settings spec and DD-058/DD-059 amendments.
 
-**Interfaces:** Consume Task 1's numeric controls. All fields/display buttons are 52 DIP wide, 32 DIP high, Padding 2,0 and fixed 1-DIP borders. Numbers right-align; units are separate (Speed ×, Volume dB, otherwise collapsed auto column). Keep current outer settings-card layout and 180-DIP sliders.
+**Interfaces:** Consume Task 1's numeric controls. All fields/display buttons are 52 DIP wide, 32 DIP high, Padding 2,0 and fixed 1-DIP borders. Resting numbers right-align; Task 9 supersedes the original editor alignment with centered drafts. Units are separate (Speed ×, Volume dB, otherwise collapsed auto column). Keep current outer settings-card layout and 180-DIP sliders.
 
 - [ ] Add compiled geometry/caret regressions before production changes: same resting/edit bounds, actual right edges, -10.00/-10,00 viewport and caret fit, focus brush without thickness/layout shifts, units outside editable text and no-unit column collapse.
 - [ ] Record focused RED. Fix the hardcoded centered ContentPresenter, use its padding, reserve transparent resting border, right-align TextBox, shrink the numeric field and use auto-width units; keep native clear hidden locally.
@@ -93,5 +93,13 @@
 - [ ] Complete each task review, then a fresh xhigh whole-branch review. Fix material findings and rerun affected checks.
 - [ ] After implementation, use cua-driver in the local STranslate host for actual appearance/interaction acceptance. Root is the only desktop controller; inspect live schemas, use exact-window snapshot/action/verify, preserve private evidence, restore settings and avoid synthesis. Finish this acceptance before whole-branch final signoff and PR creation.
 - [ ] Run ./build.ps1 -Release -Clean -Test on the final intended state and inspect the fresh .spkg manifest, private runtime dependencies, seven resources and flag assets. Run relevant offline probe/release-tool checks already required by repository CI; record evidence boundaries.
-- [ ] Push the feature branch, create a template-compliant PR and attach it to this chat. Monitor actual required PR checks; keep the head current and use squash with the PR-number suffix after success. Verify the merged subject and PR association.
-- [ ] Monitor main CI at the merge commit. Fast-forward the original local main with --ff-only, preserving unrelated work. Archive the managed worktree, preserving the PR attachment, then verify attachments and local/remote commit identity. Do not tag or publish a release.
+- [ ] Repartition verified integration commits into four sequential PRs: controls + By-ID error + numeric typography; search (Task 4 + its diagnostics + Task 8); dated cards + Likes + softer heart; avatar preview + retained playing. The controller owns branch operations, template-compliant PR creation/attachment, per-PR frozen builds, reviews and required CI. Squash each after success with the PR-number suffix and verify each merged subject/association.
+- [ ] Monitor main CI at the merge commit. Fast-forward the original local main with --ff-only, preserving unrelated work. Archive the managed worktree, preserving all four PR attachments, then verify attachments and local/remote commit identity. Do not tag or publish a release.
+
+## Approved separate follow-ups after Task 8
+
+- **Task 9 — Numeric typography:** keep resting numbers right aligned, center editor text, and retain separate units on the number's typographic baseline. Measure native fonts, line boxes and glyph baselines before selecting a fix; original dB ink extents do not by themselves prove baseline misalignment. Remove the extra unit margin, derive unit line metrics from the numeric font, use the native caption size for × and retain the numeric size for dB. Preserve numeric dimensions, precision, drafts, validation, wheel dwell, zero canonicalization, separate unit hit/event ownership and persistence. Extend the existing 48 shared-STA culture/theme/actual-DPI actions without changing first-use raster order or five-second action deadlines. Check same-font phrase spacing and both states; the controller inspects representative compiled renders before freeze and owns installed-host acceptance. Keep this numeric-only commit replayable into delivery group 1 before search/card/avatar work. Task 7 records this request without changing numeric controls.
+- **Task 10 — Accepted preview lifetime:** retain already-started search preview audio through new searches, Apply and paging/result replacement, while stale pending preparations remain unable to start output. Preserve credentials, disposal and explicit stop/replacement, truthful current-card progress projection and existing unrelated removal contracts. This is a separate ownership change; Task 7 retains current card-removal cancellation.
+- **Task 11 — Softer shared heart:** refine the existing closed heart vector to fuller rounded lobes/notch/bottom for outline and filled states, matching the user reference. Preserve all Like domain/ID/command/state and geometry limits, separate avatar/title centers, historical exact reference-star oracle and displacement sensitivity. Task 7 retains Task 6's current heart shape.
+
+Each follow-up requires its own focused regressions, representative compiled render inspection where relevant, frozen full release/test/package verification, self-review and atomic conventional commit. None authorizes synthesis, publication or changes to schema/version/public identity.
