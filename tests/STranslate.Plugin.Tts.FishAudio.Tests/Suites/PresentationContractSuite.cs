@@ -203,15 +203,15 @@ internal static class PresentationContractSuite
     {
         var documentationLocales = new Dictionary<string, string>
         {
-            ["README_EN.md"] = "en",
-            ["README_TW.md"] = "zh-tw",
-            ["README_JA.md"] = "ja",
-            ["README_KO.md"] = "ko",
+            ["README.en.md"] = "en",
+            ["README.zh-TW.md"] = "zh-tw",
+            ["README.ja.md"] = "ja",
+            ["README.ko.md"] = "ko",
         };
 
         foreach (var (fileName, locale) in documentationLocales)
         {
-            var readme = File.ReadAllText(FindRepoFile(Path.Combine("docs", fileName)));
+            var readme = File.ReadAllText(FindRepoFile(fileName));
 
             AssertEqual(false, readme.Contains("s2-pro-free-promo.webp", StringComparison.Ordinal), $"{fileName} should not reference the removed README promo image");
             AssertEqual(true, readme.Contains("> [!TIP]", StringComparison.Ordinal), $"{fileName} should use the source README tip callout");
@@ -226,7 +226,7 @@ internal static class PresentationContractSuite
                 $"{fileName} user guide should use the localized context conditioning control name");
         }
 
-        var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", "README_KO.md")));
+        var koreanReadme = File.ReadAllText(FindRepoFile(Path.Combine("docs", "user-guide", "README.ko.md")));
         AssertEqual(true, koreanReadme.Contains("컨텍스트 연동", StringComparison.Ordinal), "Korean user guide should use the localized control name for context conditioning");
         AssertEqual(false, koreanReadme.Contains("컨텍스트 연결", StringComparison.Ordinal), "Korean user guide should not use a different context conditioning label");
     }

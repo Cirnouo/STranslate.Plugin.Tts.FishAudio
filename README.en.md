@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="assets/icon.svg" alt="Fish Audio TTS" width="80" height="80" /></a>
+  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="docs/assets/icon.svg" alt="Fish Audio TTS" width="80" height="80" /></a>
   <h1>Fish Audio TTS</h1>
   <p><a href="https://fish.audio">Fish Audio</a> speech synthesis for <a href="https://github.com/ZGGSONG/STranslate">STranslate</a>.</p>
   <p>
@@ -9,7 +9,7 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><a href="../README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <b>English</b> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a></p>
+  <p><a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · <b>English</b> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 </div>
 
 > [!TIP]
@@ -52,11 +52,11 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 
 ## User guide
 
-[Read the complete user guide →](user-guide/README_EN.md)
+[Read the complete user guide →](docs/user-guide/README.en.md)
 
 Detailed guidance covers installation, first setup, voice selection, every setting, PCM / MP3, networking and proxies, and troubleshooting.
 
-[Configuration](user-guide/README_EN.md#configuration) · [Audio formats](user-guide/README_EN.md#audio-formats) · [Network and proxy](user-guide/README_EN.md#network-and-proxy) · [Troubleshooting](user-guide/README_EN.md#troubleshooting)
+[Configuration](docs/user-guide/README.en.md#configuration) · [Audio formats](docs/user-guide/README.en.md#audio-formats) · [Network and proxy](docs/user-guide/README.en.md#network-and-proxy) · [Troubleshooting](docs/user-guide/README.en.md#troubleshooting)
 
 ## FAQ
 
@@ -88,7 +88,7 @@ For accounts, the voice community, model capabilities, parameter guidance and bi
 
 ## Development
 
-Start with the [development and contribution guide](../CONTRIBUTING.md) for setup, required reading, build verification and submission requirements.
+Start with the [development and contribution guide](CONTRIBUTING.md) for setup, required reading, build verification and submission requirements.
 
 Quick verification: on Windows with the .NET 10 SDK, run:
 
@@ -100,8 +100,8 @@ The package is written to `STranslate.Plugin.Tts.FishAudio.spkg` in the reposito
 
 ## Feedback and contributions
 
-[Report an issue or suggestion](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) · [Changelog](../CHANGELOG.md) · [Contribute](../CONTRIBUTING.md)
+[Report an issue or suggestion](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) · [Changelog](CHANGELOG.md) · [Contribute](CONTRIBUTING.md)
 
 ## License
 
-[MIT License](../LICENSE)
+[MIT License](LICENSE)
