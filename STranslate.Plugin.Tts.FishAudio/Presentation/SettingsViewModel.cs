@@ -296,7 +296,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         SettingsWriteLease? settingsWriteLease = null,
         VoiceMetadataCache? voiceMetadataCache = null,
         FavoriteVoiceStore? favoriteVoiceStore = null,
-        Action<string>? copyVoiceIdToClipboard = null)
+        Action<string>? copyVoiceIdToClipboard = null,
+        TimeProvider? voiceIdErrorTimeProvider = null)
     {
         _context = context;
         _settings = settings;
@@ -355,7 +356,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             setSubmittingVoiceId: value => IsSubmittingVoiceId = value,
             isFacadeDisposed: () => _isDisposed,
             setByIdResult: item => ByIdResults = item is null ? [] : [item],
-            metadataCache: _voiceMetadataCache, getApiKey: () => _settings.ApiKey);
+            metadataCache: _voiceMetadataCache, getApiKey: () => _settings.ApiKey,
+            timeProvider: voiceIdErrorTimeProvider, runOnUiThread: RunOnUiThread);
         _previewRefreshCoordinator = new PreviewRefreshCoordinator(
             context: context,
             getCachedVoiceId: () => CachedVoiceId,

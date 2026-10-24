@@ -162,6 +162,7 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Symptom | Next action |
 |---|---|
 | ID paste rejected | Copy the ID alone without a URL or extra text. Look it up after pasting, then apply. |
+| ID lookup error disappears | Errors clear after five seconds, or when you edit the ID or start another lookup. Clearing does not mean the lookup succeeded. Check the ID or connection, look it up again, then apply the result. |
 | ID found but selection unchanged | Click the result's tick, **Apply**. Preview and star do not apply it. |
 | Cannot add a favorite | At 300, remove one first. Otherwise retry saving; if the error repeats, keep your existing favorites and report the error and steps. |
 | A favorite shows only its ID | Check the host connection and reopen Favorites. Its saved ID remains; remove it if you no longer want it. |

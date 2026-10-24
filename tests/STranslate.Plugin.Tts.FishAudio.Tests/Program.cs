@@ -1,3 +1,14 @@
+if (args.Contains("--by-id-error-tests"))
+{
+    await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
+    await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
+    await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
+    await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();
+    await VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync();
+    Console.WriteLine("By-ID error lifecycle tests passed.");
+    return;
+}
+
 if (args.Contains("--page-entry-tests"))
 {
     await PageEntrySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--page-entry-tests") + 1));
@@ -312,6 +323,11 @@ await CredentialDisplayPreservationSuite.RetainedPreviewEntryUsesResourceWithout
 await CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync();
 await VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync();
 await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
+await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
+await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
+await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
+await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();
+await VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
