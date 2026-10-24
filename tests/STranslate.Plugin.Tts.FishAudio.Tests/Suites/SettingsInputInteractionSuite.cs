@@ -26,7 +26,8 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero" or "hover")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero" or "hover" or "point")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        if (group is null or "point") await RunOnStaThreadAsync(SliderTrackClickMovesToPoint);
         if (group is null or "zero")
             foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
                 await RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture));
@@ -51,6 +52,79 @@ internal static class SettingsInputInteractionSuite
         if (group is null or "copy")
             foreach (var language in UiLocales.All)
                 await RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language));
+    }
+
+    // Disabling native move-to-point on any compiled slider must leave its
+    // actual routed track press unable to update the bound setting as expected.
+    private static void SliderTrackClickMovesToPoint()
+    {
+        var settings = new Settings { SelectedModel = "s2-pro" };
+        var context = CreateContext(settings: settings);
+        var storage = (ContextProxy)(object)context;
+        using var vm = new SettingsViewModel(context, settings);
+        var view = CreateView(vm);
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio native point-click fixture") { Width = 600, Height = 2000, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        source.RootVisual = view;
+        Layout(view, 600);
+        foreach (var (property, minimum, maximum, requested) in new[] {
+            ("Speed", .5, 2d, 1.67), ("Volume", -10d, 10d, -3.21),
+            ("Temperature", 0d, 1d, .83), ("TopP", .05, 1d, .82),
+        })
+        {
+            var slider = Logical(view).OfType<NumericSlider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == property);
+            var track = (Track)slider.Template.FindName("PART_Track", slider);
+            var saves = storage.SaveCount;
+            var x = track.Thumb.ActualWidth / 2 + (requested - minimum) / (maximum - minimum) * (track.ActualWidth - track.Thumb.ActualWidth);
+            var press = TrackPress(source, track, new Point(x, track.ActualHeight / 2), requested > slider.Value ? track.IncreaseRepeatButton : track.DecreaseRepeatButton);
+            // WPF converts the cached position through integer screen pixels.
+            // Snap the actual native point to the contract's .01 ticks rather
+            // than assuming that an arbitrary requested hundredth is reachable.
+            var expected = Math.Clamp(Math.Round(minimum + Math.Round((press.PointValue - minimum) / .01, MidpointRounding.AwayFromZero) * .01, 2), minimum, maximum);
+            AssertEqual(true, press.Args.Handled, $"{property} must consume a native point-click before repeat-button paging");
+            AssertEqual(true, Math.Abs(expected - slider.Value) < 1e-9, $"{property} must move to the clicked hundredth in one press");
+            AssertEqual(expected, Math.Round((double)typeof(Settings).GetProperty(property)!.GetValue(settings)!, 2), $"{property} point-click must reach its bound persisted setting");
+            AssertEqual(saves + 1, storage.SaveCount, $"{property} point-click must save exactly once");
+            Layout(view, 600);
+            foreach (var (pointX, bound, target) in new[] {
+                (0d, minimum, track.DecreaseRepeatButton),
+                (track.ActualWidth, maximum, track.IncreaseRepeatButton),
+            })
+            {
+                saves = storage.SaveCount;
+                TrackPress(source, track, new Point(pointX, track.ActualHeight / 2), target);
+                AssertEqual(bound, slider.Value, $"{property} endpoint click must respect its existing bounds");
+                AssertEqual(saves + 1, storage.SaveCount, $"{property} changed endpoint must save once");
+                Layout(view, 600);
+                TrackPress(source, track, new Point(pointX, track.ActualHeight / 2), target);
+                AssertEqual(saves + 1, storage.SaveCount, $"{property} unchanged endpoint must not save redundantly");
+            }
+        }
+    }
+
+    private static (MouseButtonEventArgs Args, double PointValue) TrackPress(HwndSource source, Track track, Point point, UIElement target)
+    {
+        // Model WPF's cached native input position on the shared STA, restoring
+        // it immediately. No OS cursor movement or installed-host claim.
+        var mouse = Mouse.PrimaryDevice;
+        var inputSource = typeof(MouseDevice).GetField("_inputSource", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var lastPosition = typeof(MouseDevice).GetField("_lastPosition", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var previousSource = inputSource.GetValue(mouse);
+        var previousPosition = lastPosition.GetValue(mouse);
+        try
+        {
+            inputSource.SetValue(mouse, source);
+            var rootPoint = track.TranslatePoint(point, (UIElement)source.RootVisual);
+            lastPosition.SetValue(mouse, source.CompositionTarget.TransformToDevice.Transform(rootPoint));
+            var args = new MouseButtonEventArgs(mouse, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent };
+            var pointValue = track.ValueFromPoint(mouse.GetPosition(track));
+            target.RaiseEvent(args);
+            return (args, pointValue);
+        }
+        finally
+        {
+            inputSource.SetValue(mouse, previousSource);
+            lastPosition.SetValue(mouse, previousPosition);
+        }
     }
 
     private static void VolumeZeroIsCanonicalAcrossInputRoutes(string culture)
@@ -399,15 +473,15 @@ internal static class SettingsInputInteractionSuite
                 AssertEqual(saves, storage.SaveCount, "Before entering, wheel must not save");
                 AssertEqual(true, page.VerticalOffset > 0, "Before activation, the real ScrollViewer must move normally");
                 target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
-                clock.Advance(249);
+                clock.Advance(349);
                 page.ScrollToTop(); page.UpdateLayout();
                 RawWheel(target, -60); page.UpdateLayout();
-                AssertEqual(initial, slider.Value, "At 249 ms, wheel must not change the value");
-                AssertEqual(true, page.VerticalOffset > 0, "At 249 ms ordinary scrolling remains available");
+                AssertEqual(initial, slider.Value, "At 349 ms, wheel must not change the value");
+                AssertEqual(true, page.VerticalOffset > 0, "At 349 ms ordinary scrolling remains available");
                 AssertEqual(false, track.Thumb.ToolTip is ToolTip { IsOpen: true }, "Unqualified input must not show a bubble");
                 clock.Advance(1);
                 var qualified = RawWheel(target, 60);
-                AssertEqual(true, qualified.Handled, "At exactly 250 ms, the target owns the routed event");
+                AssertEqual(true, qualified.Handled, "At exactly 350 ms, the target owns the routed event");
                 AssertEqual(initial, slider.Value, "An early half notch must not leak into the first qualified half notch");
                 AssertEqual(saves, storage.SaveCount, "A first qualified half notch must not save");
                 RawWheel(target, 60);
@@ -422,7 +496,7 @@ internal static class SettingsInputInteractionSuite
                 RawWheel(target, 60);
                 LeaveHover(target);
                 target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
-                clock.Advance(249);
+                clock.Advance(349);
                 RawWheel(target, 60);
                 AssertEqual(initial, slider.Value, "Reentering requires a fresh continuous dwell");
                 clock.Advance(1);
@@ -475,7 +549,7 @@ internal static class SettingsInputInteractionSuite
             slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
             RawWheel(slider, 60);
             AssertEqual(transferredValue, slider.Value, "Label dwell and its half notch cannot authorize a newly entered slider");
-            HoverClockFor(slider).Advance(250);
+            HoverClockFor(slider).Advance(350);
             RawWheel(slider, 60);
             AssertEqual(transferredValue, slider.Value, "The first qualified slider half notch must remain independent of the label");
             LeaveHover(slider);
@@ -511,8 +585,8 @@ internal static class SettingsInputInteractionSuite
                 resets[resetIndex]();
                 Console.WriteLine($"[numeric-hover] {target.GetType().Name}/reset-{resetIndex}: mouseOver={target.IsMouseOver}, visible={target.IsVisible}.");
                 AssertEqual(1d, slider.Value, "Lifecycle rearming itself must not change the setting");
-                clock.Advance(249);
-                AssertEqual(false, RawWheel(target, 60).Handled, "A retained pointer must still wait a fresh 250ms after lifecycle reset");
+                clock.Advance(349);
+                AssertEqual(false, RawWheel(target, 60).Handled, "A retained pointer must still wait a fresh 350ms after lifecycle reset");
                 clock.Advance(1);
                 AssertEqual(true, RawWheel(target, 60).Handled, "A retained pointer must rearm without a new MouseEnter");
                 AssertEqual(1d, slider.Value, "The early half notch cannot enter the fresh remainder");
@@ -1075,7 +1149,7 @@ internal static class SettingsInputInteractionSuite
         target = HoverTarget(target);
         var clock = HoverClockFor(target);
         target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseEnterEvent });
-        clock.Advance(250);
+        clock.Advance(350);
     }
     private static void LeaveHover(UIElement target) => target.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
     private static MouseWheelEventArgs Wheel(UIElement target, int delta)

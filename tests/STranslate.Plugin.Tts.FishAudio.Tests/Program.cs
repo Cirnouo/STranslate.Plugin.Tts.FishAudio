@@ -1,3 +1,43 @@
+if (args.Contains("--numeric-typography-tests"))
+{
+    await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
+    await NumericTypographySuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-typography-tests") + 1));
+    Console.WriteLine("Numeric typography regressions passed.");
+    return;
+}
+
+if (args.Contains("--numeric-glyph-observation-tests"))
+{
+    await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
+    Console.WriteLine("Numeric glyph observation regressions passed.");
+    return;
+}
+
+if (args.Contains("--streaming-cancellation-probe-tests"))
+{
+    await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
+    await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
+    await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
+    Console.WriteLine("Streaming cancellation probe regressions passed.");
+    return;
+}
+
+if (args.Contains("--by-id-error-tests"))
+{
+    await VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync();
+    await VoiceDiscoverySuite.ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync();
+    await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
+    await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
+    await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
+    await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();
+    await VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync();
+    await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
+    await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
+    await VoiceDiscoverySuite.DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync();
+    Console.WriteLine("By-ID error lifecycle tests passed.");
+    return;
+}
+
 if (args.Contains("--page-entry-tests"))
 {
     await PageEntrySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--page-entry-tests") + 1));
@@ -134,6 +174,7 @@ if (args.Contains("--settings-control-tests"))
 
 if (args.Contains("--inline-numeric-tests"))
 {
+    await SettingsLayoutSuite.CompactNumericGeometryAsync();
     await SettingsLayoutSuite.InlineNumericInteractionsAsync();
     Console.WriteLine("Inline numeric regression tests passed.");
     return;
@@ -143,6 +184,8 @@ await StreamingEntrySuite.FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAs
 await StreamingEntrySuite.SnapshotStaysImmutableWhileSettingsAreEditedAsync();
 await StreamingEntrySuite.SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync();
 await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
+await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
+await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
 await StreamingEntrySuite.TransportFailuresDoNotExposeCredentialsAsync();
 StreamingSettingsSuite.MissingConfigurationLoadsPcm();
 StreamingSettingsSuite.LegacyFormatsMigrateAndCurrentDefaultsUsePcm();
@@ -311,6 +354,13 @@ await CredentialDisplayPreservationSuite.RetainedPreviewEntryUsesResourceWithout
 await CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync();
 await VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync();
 await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
+await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
+await VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync();
+await VoiceDiscoverySuite.ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync();
+await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
+await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
+await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();
+await VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync();
 await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
@@ -397,6 +447,10 @@ await ApiKeySettingsCardSuite.RunAllAsync();
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
+await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
+// Preserve the existing ink suite's first-use DPI characterization before
+// the new numeric group explicitly warms actual DPI on compiled text views.
+await SettingsLayoutSuite.CompactNumericGeometryAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();

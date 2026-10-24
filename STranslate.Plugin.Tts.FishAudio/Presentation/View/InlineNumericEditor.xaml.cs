@@ -65,6 +65,7 @@ public partial class InlineNumericEditor : UserControl
         EditorBox.MaxLength = IntegerDigits + (DecimalPlaces > 0 ? DecimalPlaces + 1 : 0) + (Minimum < 0 ? 1 : 0);
         DisplayButton.Content = Value.ToString($"F{DecimalPlaces}", CultureInfo.CurrentCulture);
         UnitText.Text = Unit;
+        UnitText.Visibility = string.IsNullOrEmpty(Unit) ? Visibility.Collapsed : Visibility.Visible;
         AutomationProperties.SetName(DisplayButton, $"{Label} {DisplayButton.Content} {Unit}".Trim());
         AutomationProperties.SetName(EditorBox, Label);
     }

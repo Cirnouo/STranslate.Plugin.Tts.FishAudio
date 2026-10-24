@@ -103,8 +103,8 @@ Edits save automatically. These are new-configuration defaults; change one setti
 
 All three methods retain 0.01 precision:
 
-- Drag a slider, or hover over its slider or resting number for about 250 ms, then use the mouse wheel to adjust by 0.01.
-- For an exact value, click the number and type. Enter or clicking elsewhere saves; Esc cancels. Invalid, empty or out-of-range input restores the previous value.
+- Click a slider track or drag its thumb, or hover over its slider or resting number for about 350 ms, then use the mouse wheel to adjust by 0.01.
+- For an exact value, click the right-aligned number and type in the centered input; its unit stays outside the input. Enter or clicking elsewhere saves; Esc cancels. Invalid, empty or out-of-range input restores the previous value.
 - Use a decimal point, or your region's decimal comma.
 ### Other options
 
@@ -162,6 +162,7 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Symptom | Next action |
 |---|---|
 | ID paste rejected | Copy the ID alone without a URL or extra text. Look it up after pasting, then apply. |
+| ID lookup error disappears | Errors clear after five seconds, or when you edit the ID or start another lookup. Clearing does not mean the lookup succeeded. Check the ID or connection, look it up again, then apply the result. |
 | ID found but selection unchanged | Click the result's tick, **Apply**. Preview and star do not apply it. |
 | Cannot add a favorite | At 300, remove one first. Otherwise retry saving; if the error repeats, keep your existing favorites and report the error and steps. |
 | A favorite shows only its ID | Check the host connection and reopen Favorites. Its saved ID remains; remove it if you no longer want it. |

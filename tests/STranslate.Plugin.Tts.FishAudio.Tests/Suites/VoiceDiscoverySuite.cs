@@ -17,6 +17,278 @@ using static TestAssertions;
 
 internal static class VoiceDiscoverySuite
 {
+    internal static async Task ByIdTimerCreationCannotOutliveConcurrentRetirementAsync()
+    {
+        // Installing a timer without rechecking its reserved owner after CreateTimer must fail.
+        foreach (var retirement in new[] { "dispose", "replacement" })
+        {
+            using var clock = new InterceptingTimeProvider();
+            using var releaseCreation = new ManualResetEventSlim();
+            var creationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            clock.BeforeNextTimerReturns = () =>
+            {
+                creationEntered.SetResult();
+                AssertEqual(true, releaseCreation.Wait(TimeSpan.FromSeconds(2)), "The test must release the same paused timer creation");
+            };
+            var settings = new Settings();
+            using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+            var lookup = Task.Run(() => view.SubmitVoiceIdCommand.ExecuteAsync(null));
+            var lateErrorChanges = 0;
+            try
+            {
+                await creationEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                if (retirement == "dispose")
+                    view.Dispose();
+                else
+                {
+                    view.VoiceIdInput = "bad";
+                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                }
+                view.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(view.VoiceIdError)) lateErrorChanges++; };
+            }
+            finally
+            {
+                releaseCreation.Set();
+                await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            AssertEqual(true, clock.Timers[0].IsDisposed, "A timer whose creation lost ownership must be disposed");
+            AssertEqual(0, lateErrorChanges, "A timer creation finishing after retirement cannot publish an old error");
+            if (retirement == "dispose")
+                AssertEqual<string?>(null, view.VoiceIdError, "Completed disposal must reject an in-flight error publication");
+            else
+            {
+                AssertEqual("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat", view.VoiceIdError, "Concurrent replacement owns the visible error");
+                AssertEqual(false, clock.Timers[1].IsDisposed, "Rejecting an old timer cannot retire the replacement timer");
+                clock.Advance(TimeSpan.FromMilliseconds(4999));
+                AssertNotNull(view.VoiceIdError, "The replacement retains its full five-second lifetime");
+                clock.Advance(TimeSpan.FromMilliseconds(1));
+                AssertEqual<string?>(null, view.VoiceIdError, "The replacement still expires on its own timer");
+            }
+        }
+    }
+
+    internal static async Task ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync()
+    {
+        // A TimeProvider may reenter before returning; the outer candidate must not overwrite its successor.
+        using var clock = new InterceptingTimeProvider();
+        var settings = new Settings();
+        using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+        clock.BeforeNextTimerReturns = () =>
+        {
+            view.VoiceIdInput = "bad";
+            view.SubmitVoiceIdCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+        };
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        AssertEqual(true, clock.Timers[0].IsDisposed, "Reentrant replacement must dispose the outer timer candidate");
+        AssertEqual(false, clock.Timers[1].IsDisposed, "The reentrant successor must retain ownership of its timer");
+        AssertEqual("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat", view.VoiceIdError, "The outer occurrence cannot overwrite the reentrant error");
+        clock.Advance(TimeSpan.FromSeconds(5));
+        AssertEqual<string?>(null, view.VoiceIdError, "The surviving reentrant occurrence expires normally");
+        AssertEqual(true, clock.Timers[1].IsDisposed, "Expiry disposes the surviving timer");
+    }
+
+    internal static async Task ByIdErrorsExpireAtFiveSecondsAsync()
+    {
+        // Removing expiry, expiring early, or expiring only local validation must fail.
+        (string Input, Exception? Failure, string Json, string Error)[] cases =
+        [
+            ("", null, "", "STranslate_Plugin_Tts_FishAudio_VoiceId_Empty"),
+            ("ABCDEF0123456789ABCDEF0123456789", null, "", "STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat"),
+            ("abcdef0123456789abcdef0123456789\n", null, "", "STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat"),
+            ("11111111111111111111111111111111", new HttpRequestException("missing", null, HttpStatusCode.NotFound), "", "STranslate_Plugin_Tts_FishAudio_Voice_NotFound"),
+            ("11111111111111111111111111111111", null, "{\"_id\":\"11111111111111111111111111111111\",\"type\":\"asr\"}", "STranslate_Plugin_Tts_FishAudio_Voice_NotFound"),
+            ("11111111111111111111111111111111", new TimeoutException(), "", "STranslate_Plugin_Tts_FishAudio_Request_Timeout"),
+            ("11111111111111111111111111111111", new InvalidOperationException("lookup failed"), "", "lookup failed"),
+        ];
+        foreach (var item in cases)
+        {
+            var clock = new ManualStreamingTimeProvider();
+            var settings = new Settings { VoiceId = "22222222222222222222222222222222", CachedVoice = new CachedVoiceInfo { Title = "Selected" } };
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetException = item.Failure;
+            http.GetResponseJson = item.Json;
+            var context = CreateContext(settings: settings, httpService: service);
+            using var view = CreateTimedDiscoveryView(context, settings, clock);
+            view.VoiceIdInput = item.Input;
+            var searchCard = new VoiceSearchItem { Id = "33333333333333333333333333333333", Title = "Retained search" };
+            view.SearchResults = [searchCard];
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            AssertEqual(item.Error, view.VoiceIdError, "Lookup should publish the appropriate current error");
+            clock.Advance(TimeSpan.FromMilliseconds(4999));
+            AssertEqual(item.Error, view.VoiceIdError, "The error must remain for the full first 4999 ms");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            AssertEqual<string?>(null, view.VoiceIdError, "Only the error text must expire at 5000 ms");
+            AssertEqual(item.Input, view.VoiceIdInput, "Expiry must preserve the raw input draft");
+            AssertEqual(true, ReferenceEquals(searchCard, view.SearchResults.Single()), "Expiry must retain existing search cards");
+            AssertEqual("22222222222222222222222222222222", settings.VoiceId, "Expiry must preserve selection");
+            AssertEqual("Selected", settings.CachedVoice?.Title, "Expiry must preserve selected metadata");
+            AssertEqual(0, ((ContextProxy)(object)context).SaveCount, "Transient errors must not save settings");
+            AssertEqual(item.Input.Length == 32 && char.IsDigit(item.Input[0]) ? 1 : 0, http.GetCallCount, "Raw invalid IDs must remain rejected without a request");
+        }
+    }
+
+    internal static async Task IdenticalByIdErrorsRestartTheirLifetimeAsync()
+    {
+        // A text-equality guard or an old timer clearing a replacement must fail.
+        var clock = new ManualStreamingTimeProvider();
+        var settings = new Settings();
+        using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+        view.VoiceIdInput = "invalid";
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        var error = view.VoiceIdError;
+        clock.Advance(TimeSpan.FromSeconds(4));
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        clock.Advance(TimeSpan.FromSeconds(1));
+        AssertEqual(error, view.VoiceIdError, "The first occurrence's deadline must not clear an identical replacement");
+        clock.Advance(TimeSpan.FromMilliseconds(3999));
+        AssertEqual(error, view.VoiceIdError, "An identical replacement receives its own full lifetime");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        AssertEqual<string?>(null, view.VoiceIdError, "The replacement must expire at its own five-second deadline");
+    }
+
+    internal static async Task EditsAndNewByIdLookupsClearErrorsImmediatelyAsync()
+    {
+        // Omitting edit/lookup retirement must fail before fake time advances.
+        var clock = new ManualStreamingTimeProvider();
+        var settings = new Settings();
+        var (service, http) = TestHttpServiceProxy.Create();
+        using var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
+        view.VoiceIdInput = "bad";
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        view.VoiceIdInput = "also bad";
+        AssertEqual<string?>(null, view.VoiceIdError, "Editing an invalid draft must immediately clear its former error");
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        view.VoiceIdInput = "11111111111111111111111111111111";
+        http.GetException = new TimeoutException();
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        AssertNotNull(view.VoiceIdError, "The failed request should publish an error before replacement");
+        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        http.GetAsyncHandler = (_, _, _) => pending.Task;
+        var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        AssertEqual<string?>(null, view.VoiceIdError, "A new lookup must clear the previous error while pending");
+        pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}");
+        await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+        var card = view.ByIdResults.Single();
+        clock.Advance(TimeSpan.FromSeconds(5));
+        AssertEqual<string?>(null, view.VoiceIdError, "Successful lookup must remain error-free");
+        AssertEqual(true, ReferenceEquals(card, view.ByIdResults.Single()), "An old error deadline must preserve the successful result object");
+        AssertEqual("11111111111111111111111111111111", view.VoiceIdInput, "Successful lookup retains the input");
+        AssertEqual("", settings.VoiceId, "Successful lookup still requires explicit Apply");
+    }
+
+    internal static async Task DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync()
+    {
+        // A generation check before dispatch alone permits a queued old expiry to clear new text.
+        foreach (var retirement in new[] { "identical", "different", "edit", "dispose" })
+        {
+            var clock = new ManualStreamingTimeProvider();
+            var settings = new Settings();
+            using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+            view.VoiceIdInput = "bad";
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            var queued = new List<Action>();
+            var previousInvoker = SettingsViewModel.UiThreadInvokerOverride;
+            try
+            {
+                SettingsViewModel.UiThreadInvokerOverride = queued.Add;
+                await Task.Run(() => clock.Advance(TimeSpan.FromSeconds(5)));
+            }
+            finally
+            {
+                SettingsViewModel.UiThreadInvokerOverride = previousInvoker;
+            }
+            AssertEqual(1, queued.Count, "The background timer must marshal one expiry to the UI boundary");
+            switch (retirement)
+            {
+                case "identical":
+                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                    break;
+                case "different":
+                    view.VoiceIdInput = "";
+                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                    break;
+                case "edit":
+                    view.VoiceIdInput = "edited";
+                    break;
+                case "dispose":
+                    view.Dispose();
+                    break;
+            }
+            var expected = view.VoiceIdError;
+            var errorChanges = 0;
+            view.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(view.VoiceIdError)) errorChanges++; };
+            queued.Single()();
+            AssertEqual(expected, view.VoiceIdError, "A queued expired occurrence cannot publish after replacement, edit or disposal");
+            AssertEqual(0, errorChanges, "A retired queued expiry must not notify the disposed/replaced facade");
+            if (retirement is "identical" or "different")
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(4999));
+                AssertEqual(expected, view.VoiceIdError, "The queued older deadline cannot shorten the new occurrence");
+                clock.Advance(TimeSpan.FromMilliseconds(1));
+                AssertEqual<string?>(null, view.VoiceIdError, "The current occurrence must still expire normally");
+            }
+        }
+    }
+
+    internal static async Task ByIdDisposalRetiresTimerAndLateResponsesAsync()
+    {
+        // Missing timer disposal or request-owner checks must fail at the observable facade.
+        foreach (var retirement in new[] { "edit", "replacement", "credentials", "dispose" })
+        foreach (var fail in new[] { false, true })
+        {
+            var clock = new ManualStreamingTimeProvider();
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            using var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            CancellationToken requestToken = default;
+            http.GetAsyncHandler = (_, _, token) => { requestToken = token; return pending.Task; }; // Intentionally ignores cancellation.
+            view.VoiceIdInput = "11111111111111111111111111111111";
+            var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            switch (retirement)
+            {
+                case "edit": view.VoiceIdInput = "edited"; break;
+                case "replacement":
+                    http.GetAsyncHandler = null;
+                    http.GetException = new TimeoutException();
+                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                    break;
+                case "credentials": view.ApiKey = "new-account"; break;
+                case "dispose": view.Dispose(); break;
+            }
+            AssertEqual(true, requestToken.IsCancellationRequested, "Retiring lookup ownership must propagate cancellation");
+            var expectedError = view.VoiceIdError;
+            if (fail) pending.SetException(new InvalidOperationException("late failure"));
+            else pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Late\"}");
+            await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+            AssertEqual(expectedError, view.VoiceIdError, "Cancellation-ignoring completion cannot republish an error");
+            AssertEqual(0, view.ByIdResults.Count, "Cancellation-ignoring completion cannot republish a card");
+            clock.Advance(TimeSpan.FromSeconds(5));
+            AssertEqual<string?>(null, view.VoiceIdError, "Only a current replacement error may expire");
+        }
+
+        var disposalClock = new ManualStreamingTimeProvider();
+        var disposalSettings = new Settings();
+        using var disposedView = CreateTimedDiscoveryView(CreateContext(settings: disposalSettings), disposalSettings, disposalClock);
+        await disposedView.SubmitVoiceIdCommand.ExecuteAsync(null);
+        disposedView.Dispose();
+        var notifications = 0;
+        disposedView.PropertyChanged += (_, _) => notifications++;
+        var previous = SettingsViewModel.UiThreadInvokerOverride;
+        var dispatches = 0;
+        try
+        {
+            SettingsViewModel.UiThreadInvokerOverride = _ => dispatches++;
+            disposalClock.Advance(TimeSpan.FromSeconds(10));
+        }
+        finally { SettingsViewModel.UiThreadInvokerOverride = previous; }
+        AssertEqual(0, dispatches, "Disposal must dispose its timer rather than leave a queued UI callback");
+        AssertEqual(0, notifications, "Timer retirement must leave a disposed facade untouched");
+    }
+
+    private static SettingsViewModel CreateTimedDiscoveryView(IPluginContext context, Settings settings, TimeProvider clock) =>
+        new(context, settings, null, null, voiceIdErrorTimeProvider: clock);
+
     internal static async Task SearchAndByIdUseConfiguredTokenOrDummyAsync()
     {
         foreach (var key in new[] { AppliedKey, "unvalidated-configured-key", "", " \t" })

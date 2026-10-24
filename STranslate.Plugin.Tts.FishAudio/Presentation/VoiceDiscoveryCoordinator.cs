@@ -28,6 +28,9 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private readonly Action<VoiceSearchItem?> _setByIdResult;
     private readonly Action<CachedVoiceInfo?> _applyCachedVoice;
     private readonly Action<string?> _setVoiceIdError;
+    private readonly object _voiceIdErrorGate = new();
+    private readonly TimeProvider _timeProvider;
+    private readonly Action<Action> _runOnUiThread;
     private readonly Action<bool> _setSubmittingVoiceId;
     private readonly Func<bool> _isFacadeDisposed;
     private long _searchOperationId;
@@ -35,6 +38,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private bool _isDisposed;
     private CancellationTokenSource? _searchCancellationTokenSource;
     private CancellationTokenSource? _voiceIdCancellationTokenSource;
+    private ITimer? _voiceIdErrorTimer;
+    private long _voiceIdErrorVersion;
     private VoiceSearchPagination _pagination = VoiceSearchPagination.Initial;
     private string _committedSearchQuery = "";
     private int _highestVisitedPage = 1;
@@ -58,7 +63,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         Action<bool> setSubmittingVoiceId,
         Func<bool> isFacadeDisposed,
         Action<VoiceSearchItem?>? setByIdResult = null,
-        VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null)
+        VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null,
+        TimeProvider? timeProvider = null, Action<Action>? runOnUiThread = null)
     {
         _context = context;
         _getApiKey = getApiKey ?? (() => "");
@@ -78,6 +84,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         _setByIdResult = setByIdResult ?? (_ => { });
         _applyCachedVoice = applyCachedVoice;
         _setVoiceIdError = setVoiceIdError;
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _runOnUiThread = runOnUiThread ?? (action => action());
         _setSubmittingVoiceId = setSubmittingVoiceId;
         _isFacadeDisposed = isFacadeDisposed;
     }
@@ -143,13 +151,13 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         var voiceId = _getVoiceIdInput();
         if (string.IsNullOrEmpty(voiceId))
         {
-            _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_Empty"));
+            SetVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_Empty"));
             return;
         }
 
         if (!SettingsValidation.IsValidVoiceIdFormat(voiceId))
         {
-            _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat"));
+            SetVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat"));
             return;
         }
 
@@ -157,7 +165,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
         var operationId = BeginVoiceIdOperation(out var cts);
         _setSubmittingVoiceId(true);
-        _setVoiceIdError(null);
+        SetVoiceIdError(null);
 
         try
         {
@@ -173,7 +181,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
             if (model is null || !IsSelectableVoice(model))
             {
-                _setVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_Voice_NotFound"));
+                SetVoiceIdError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_Voice_NotFound"));
                 return;
             }
 
@@ -181,7 +189,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             if (!IsCurrentVoiceIdOperation(operationId))
                 return;
             _setByIdResult(result);
-            _setVoiceIdError(null);
+            SetVoiceIdError(null);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
@@ -189,7 +197,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         catch (Exception ex)
         {
             if (IsCurrentVoiceIdOperation(operationId))
-                _setVoiceIdError(FishAudioRequestPolicy.GetUserFacingError(_context, ex));
+                SetVoiceIdError(FishAudioRequestPolicy.GetUserFacingError(_context, ex));
         }
         finally
         {
@@ -203,11 +211,67 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     internal void InvalidateVoiceIdInput()
     {
         Interlocked.Increment(ref _voiceIdOperationId);
+        SetVoiceIdError(null);
         var cancellation = _voiceIdCancellationTokenSource;
         _voiceIdCancellationTokenSource = null;
         _setSubmittingVoiceId(false);
         _setByIdResult(null);
         cancellation?.Cancel();
+    }
+
+    private void SetVoiceIdError(string? error, long? expectedVersion = null)
+    {
+        if (_isFacadeDisposed())
+            return;
+
+        ITimer? previous;
+        long version;
+        lock (_voiceIdErrorGate)
+        {
+            if (_isDisposed || (expectedVersion is { } expected && _voiceIdErrorVersion != expected))
+                return;
+
+            version = ++_voiceIdErrorVersion;
+            previous = _voiceIdErrorTimer;
+            _voiceIdErrorTimer = null;
+        }
+        previous?.Dispose();
+
+        if (!IsCurrentVoiceIdError(version) || _isFacadeDisposed())
+            return;
+        if (error is not null)
+        {
+            // Creation/disposal may block or reenter; neither runs under the state gate.
+            var candidate = _timeProvider.CreateTimer(_ => _runOnUiThread(() =>
+            {
+                // Disposing a timer cannot retract a callback already queued to WPF.
+                // Conditional retirement rechecks the occurrence inside the UI action.
+                SetVoiceIdError(null, version);
+            }), null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+
+            var facadeActive = !_isFacadeDisposed();
+            bool attached;
+            lock (_voiceIdErrorGate)
+            {
+                attached = facadeActive && !_isDisposed && _voiceIdErrorVersion == version;
+                if (attached)
+                    _voiceIdErrorTimer = candidate;
+            }
+            if (!attached)
+            {
+                candidate.Dispose();
+                return;
+            }
+        }
+
+        if (IsCurrentVoiceIdError(version) && !_isFacadeDisposed())
+            _setVoiceIdError(error);
+    }
+
+    private bool IsCurrentVoiceIdError(long version)
+    {
+        lock (_voiceIdErrorGate)
+            return !_isDisposed && _voiceIdErrorVersion == version;
     }
 
     internal static CachedVoiceInfo CreateCachedVoiceInfo(ModelEntity model) => new()
@@ -367,12 +431,20 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal void InvalidateOperations()
     {
-        if (Volatile.Read(ref _isDisposed))
-            return;
+        ITimer? timer;
+        lock (_voiceIdErrorGate)
+        {
+            if (_isDisposed)
+                return;
 
-        Volatile.Write(ref _isDisposed, true);
-        Interlocked.Increment(ref _searchOperationId);
-        Interlocked.Increment(ref _voiceIdOperationId);
+            Volatile.Write(ref _isDisposed, true);
+            ++_voiceIdErrorVersion;
+            timer = _voiceIdErrorTimer;
+            _voiceIdErrorTimer = null;
+            Interlocked.Increment(ref _searchOperationId);
+            Interlocked.Increment(ref _voiceIdOperationId);
+        }
+        timer?.Dispose();
     }
 
     public void Dispose()

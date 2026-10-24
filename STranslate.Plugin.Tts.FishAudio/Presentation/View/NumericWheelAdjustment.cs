@@ -22,7 +22,7 @@ internal sealed class NumericWheelAdjustment
         if (isMouseOver) BeginHover();
     }
     internal bool IsHoverReady => _hoverStarted is { } started
-        && _timeProvider.GetElapsedTime(started) >= TimeSpan.FromMilliseconds(250);
+        && _timeProvider.GetElapsedTime(started) >= TimeSpan.FromMilliseconds(350);
 
     internal void Reset() => _remainder = 0;
 
