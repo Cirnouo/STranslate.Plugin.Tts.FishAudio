@@ -65,6 +65,19 @@ if (args.Contains("--preview-ownership-compatibility-tests"))
     return;
 }
 
+if (args.Contains("--numeric-bottom-tests"))
+{
+    await NumericBottomSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-bottom-tests") + 1));
+    Console.WriteLine("Numeric visible-bottom regressions passed.");
+    return;
+}
+
+if (args.Contains("--numeric-bottom-lifecycle-tests"))
+{
+    await NumericAlignmentLifecycleSuite.RunAsync();
+    return;
+}
+
 if (args.Contains("--numeric-typography-tests"))
 {
     await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
@@ -574,6 +587,8 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 // Preserve the existing ink suite's first-use DPI characterization before
 // the new numeric group explicitly warms actual DPI on compiled text views.
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
+await NumericBottomSuite.RunAsync(null);
+await NumericAlignmentLifecycleSuite.RunAsync();
 
 await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();

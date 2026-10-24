@@ -184,9 +184,6 @@ internal static class NumericTypographySuite
                 TestAssertions.AssertEqual(true, glyph.EmSize < number.FontSize, $"{context}: both units must be smaller than the native number");
                 TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), glyph.Brush,
                     $"{context}: every unit glyph must render with the dynamic secondary foreground");
-                foreach (var numeric in numbers)
-                    TestAssertions.AssertEqual(true, Math.Abs(numeric.Baseline.Y - glyph.Baseline.Y) < .01,
-                        $"{context}: every unit and number glyph must share a typographic baseline; number={numeric.Baseline.Y:F4}, unit={glyph.Baseline.Y:F4}");
             }
             var space = new FormattedText(" ", CultureInfo.CurrentCulture, number.FlowDirection,
                 new Typeface(number.FontFamily, number.FontStyle, number.FontWeight, number.FontStretch), number.FontSize,
@@ -195,6 +192,7 @@ internal static class NumericTypographySuite
             TestAssertions.AssertEqual(true, gap > 0 && gap <= space + .01,
                 $"{context}: number and separate unit must have at most an ordinary same-font space; gap={gap:F3}, space={space:F3}");
             new NumericPhraseReference(editor, number, unit).AssertMatches(context);
+            NumericBottomSuite.AssertAligned(number, unit, editor, context);
             var hit = VisualTreeHelper.HitTest(editor, unit.TranslatePoint(new Point(unit.ActualWidth / 2, unit.ActualHeight / 2), editor));
             TestAssertions.AssertEqual(unit, hit?.VisualHit, $"{context}: the unit's visual hit must remain outside the numeric button");
             }
@@ -224,13 +222,11 @@ internal static class NumericTypographySuite
             {
                 TestAssertions.AssertEqual(11d, glyph.EmSize, $"{context}: editing must preserve every 11-DIP unit glyph");
                 TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), glyph.Brush, $"{context}: editing must preserve every dynamic secondary unit glyph");
-                foreach (var number in numbers)
-                    TestAssertions.AssertEqual(true, Math.Abs(number.Baseline.Y - glyph.Baseline.Y) < .01,
-                        $"{context}: centering every native edit glyph must preserve the separate unit baseline");
             }
             var button = (Button)editor.FindName("DisplayButton");
             var label = Visuals(button).OfType<TextBlock>().Single();
             new NumericPhraseReference(editor, label, unit).AssertEditingMatches(input, viewport, context);
+            NumericBottomSuite.AssertAligned(viewport, unit, editor, context);
         }
         catch
         {
