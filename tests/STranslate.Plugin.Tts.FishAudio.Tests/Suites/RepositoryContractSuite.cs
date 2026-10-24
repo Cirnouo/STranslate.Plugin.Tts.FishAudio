@@ -289,10 +289,10 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     Path.Combine("docs", "README_EN.md"),
-                     Path.Combine("docs", "README_TW.md"),
-                     Path.Combine("docs", "README_JA.md"),
-                     Path.Combine("docs", "README_KO.md"),
+                     "README_EN.md",
+                     "README_TW.md",
+                     "README_JA.md",
+                     "README_KO.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
@@ -313,7 +313,7 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     Path.Combine("docs", "README_TW.md"),
+                     "README_TW.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
@@ -333,10 +333,10 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     Path.Combine("docs", "README_EN.md"),
-                     Path.Combine("docs", "README_TW.md"),
-                     Path.Combine("docs", "README_JA.md"),
-                     Path.Combine("docs", "README_KO.md"),
+                     "README_EN.md",
+                     "README_TW.md",
+                     "README_JA.md",
+                     "README_KO.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));

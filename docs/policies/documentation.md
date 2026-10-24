@@ -2,11 +2,11 @@
 
 README and user-guide content is maintained in the five existing languages: Simplified Chinese, Traditional Chinese, English, Japanese and Korean. The Simplified Chinese user guidance supplies the common structure. CHANGELOG is written in Chinese. All other documentation is written in English so that terminology, provenance and constraints are consistent across maintainers; quoted raw requests, responses and source text retain their original language. Persistent UI resources cover all seven host languages: Simplified Chinese, Traditional Chinese, English, Japanese, Korean, Russian and Turkish. README and user-guide translations remain limited to the five documentation languages above.
 
-The table defines the current layout. The root README is Simplified Chinese; localized overviews remain at `docs/README_*.md`, with same-language detailed guides under `docs/user-guide/`. Overviews retain the project icon and badges; other documentation media belongs under `docs/assets/` when needed.
+The table defines the current layout. The root `README.md` is Simplified Chinese; the four localized overviews are its siblings at `README_*.md`, with same-language detailed guides under `docs/user-guide/`. Overviews retain the project icon and badges; other documentation media belongs under `docs/assets/` when needed.
 
 | Location | Purpose |
 |---|---|
-| `README.md` and `docs/user-guide/` | User entry and detailed setup/configuration guidance in five languages. |
+| `README.md`, `README_*.md` and `docs/user-guide/` | User entry and detailed setup/configuration guidance in five languages. |
 | `CONTRIBUTING.md` | The designated English unified developer and contribution entry; links to canonical policies/specs rather than duplicating them. |
 | `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md` and `.github/ISSUE_TEMPLATE/` | Community conduct, human vulnerability reporting, support routing and public issue intake. Keep report routes consistent with actual repository settings; do not invent contact details, support windows or response deadlines. |
 | `CHANGELOG.md` | Chinese user-visible net changes under Unreleased and immutable historical release sections. |

@@ -211,7 +211,7 @@ internal static class PresentationContractSuite
 
         foreach (var (fileName, locale) in documentationLocales)
         {
-            var readme = File.ReadAllText(FindRepoFile(Path.Combine("docs", fileName)));
+            var readme = File.ReadAllText(FindRepoFile(fileName));
 
             AssertEqual(false, readme.Contains("s2-pro-free-promo.webp", StringComparison.Ordinal), $"{fileName} should not reference the removed README promo image");
             AssertEqual(true, readme.Contains("> [!TIP]", StringComparison.Ordinal), $"{fileName} should use the source README tip callout");

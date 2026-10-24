@@ -1,6 +1,6 @@
 # Fish Audio TTS ユーザーガイド
 
-[概要へ戻る](../README_JA.md) · [简体中文](README.md) · [繁體中文](README_TW.md) · [English](README_EN.md) · **日本語** · [한국어](README_KO.md)
+[概要へ戻る](../../README_JA.md) · [简体中文](README.md) · [繁體中文](README_TW.md) · [English](README_EN.md) · **日本語** · [한국어](README_KO.md)
 
 [使い始める](#installation) · [ボイスを選ぶ・管理する](#voices) · [モデルと料金](#playback-and-cost) · [読み上げを調整する](#configuration) · [形式と接続](#audio-formats) · [問題を解決する](#troubleshooting)
 

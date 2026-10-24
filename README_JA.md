@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="assets/icon.svg" alt="Fish Audio TTS" width="80" height="80" /></a>
+  <a href="https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio"><img src="docs/assets/icon.svg" alt="Fish Audio TTS" width="80" height="80" /></a>
   <h1>Fish Audio TTS</h1>
   <p><a href="https://github.com/ZGGSONG/STranslate">STranslate</a> で <a href="https://fish.audio">Fish Audio</a> の音声合成を利用できます。</p>
   <p>
@@ -9,7 +9,7 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><a href="../README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <b>日本語</b> · <a href="README_KO.md">한국어</a></p>
+  <p><a href="README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <b>日本語</b> · <a href="README_KO.md">한국어</a></p>
 </div>
 
 > [!TIP]
@@ -52,11 +52,11 @@
 
 ## ユーザーガイド
 
-[完全なユーザーガイドを読む →](user-guide/README_JA.md)
+[完全なユーザーガイドを読む →](docs/user-guide/README_JA.md)
 
 インストール、初期設定、ボイス選択、全設定項目、PCM / MP3、ネットワークとプロキシ、問題の対処方法を説明します。
 
-[設定一覧](user-guide/README_JA.md#configuration) · [音声形式](user-guide/README_JA.md#audio-formats) · [ネットワークとプロキシ](user-guide/README_JA.md#network-and-proxy) · [問題の対処](user-guide/README_JA.md#troubleshooting)
+[設定一覧](docs/user-guide/README_JA.md#configuration) · [音声形式](docs/user-guide/README_JA.md#audio-formats) · [ネットワークとプロキシ](docs/user-guide/README_JA.md#network-and-proxy) · [問題の対処](docs/user-guide/README_JA.md#troubleshooting)
 
 ## よくある質問
 
@@ -88,7 +88,7 @@ A: いいえ。削除するのはボイスのカバー画像だけです。ボ�
 
 ## 開発
 
-環境準備、必読文書、ビルド・テスト、提出要件は[開発・貢献ガイド](../CONTRIBUTING.md)をご覧ください。
+環境準備、必読文書、ビルド・テスト、提出要件は[開発・貢献ガイド](CONTRIBUTING.md)をご覧ください。
 
 Windows と .NET 10 SDK で次を実行すると検証できます。
 
@@ -100,8 +100,8 @@ Windows と .NET 10 SDK で次を実行すると検証できます。
 
 ## フィードバックと貢献
 
-[問題・提案を報告](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) · [更新履歴](../CHANGELOG.md) · [開発への参加](../CONTRIBUTING.md)
+[問題・提案を報告](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) · [更新履歴](CHANGELOG.md) · [開発への参加](CONTRIBUTING.md)
 
 ## ライセンス
 
-[MIT License](../LICENSE)
+[MIT License](LICENSE)
