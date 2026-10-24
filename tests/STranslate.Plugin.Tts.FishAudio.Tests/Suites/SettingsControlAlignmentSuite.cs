@@ -138,18 +138,18 @@ internal static class SettingsControlAlignmentSuite
         {
             vm.BrowseMode = mode;
             Layout(view, width);
-            var selectedStar = Logical(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleSelectedVoiceFavoriteCommand));
-            CheckIcons((StackPanel)selectedStar.Parent, $"Selected/{width}px");
+            var selectedHeart = Logical(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleSelectedVoiceFavoriteCommand));
+            CheckIcons((StackPanel)selectedHeart.Parent, $"Selected/{width}px");
             VoiceSearchItem item;
             // Select by the bound collection rather than assuming enum order.
             item = mode == VoiceBrowseMode.Search ? items[0] : mode == VoiceBrowseMode.ById ? items[1] : items[2];
-            var star = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item));
-            var row = (StackPanel)star.Parent;
+            var heart = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item));
+            var row = (StackPanel)heart.Parent;
             CheckIcons(row, $"{mode}/{width}px");
             item.IsApplied = false;
             item.IsFavorite = true;
             Layout(view, width);
-            CheckIcons(row, $"{mode}/{width}px/filled-star-and-Tick");
+            CheckIcons(row, $"{mode}/{width}px/filled-heart-and-Tick");
             item.IsApplied = true;
             item.IsFavorite = false;
             foreach (var preparing in new[] { false, true })
@@ -159,7 +159,7 @@ internal static class SettingsControlAlignmentSuite
                 item.IsBeingPreviewed = !preparing;
                 item.IsPreparingPreview = preparing;
                 Layout(view, width);
-                CheckIcons((StackPanel)selectedStar.Parent, $"Selected/{width}px/{(preparing ? "preparing" : "playing")}");
+                CheckIcons((StackPanel)selectedHeart.Parent, $"Selected/{width}px/{(preparing ? "preparing" : "playing")}");
                 CheckIcons(row, $"{mode}/{width}px/{(preparing ? "preparing" : "playing")}");
             }
             vm.IsDisplayVoicePreviewing = false;
@@ -171,11 +171,11 @@ internal static class SettingsControlAlignmentSuite
 
     private static void CheckIcons(StackPanel row, string state)
     {
-        var star = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
+        var heart = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
         var preview = row.Children.OfType<Grid>().Single();
         var action = row.Children.OfType<Button>().Last();
         var center = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), row).Y;
-        NearInk(center, InkCenter(star, row), $"{state}: the visible star drawing must center on the preview ring");
+        NearInk(center, InkCenter(heart, row), $"{state}: the visible heart drawing must center on the preview ring");
         var actionGlyph = Visuals(action).OfType<InkCenteredGlyph>().Single();
         NearInk(center, InkCenter(actionGlyph, row), $"{state}: the visible Tick/Cross glyph must center on the preview ring");
         var playGlyph = Visuals(preview).OfType<InkCenteredGlyph>().Single();

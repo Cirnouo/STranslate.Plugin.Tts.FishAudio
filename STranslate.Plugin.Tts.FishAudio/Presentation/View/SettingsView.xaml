@@ -17,6 +17,8 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
+        <!-- Repository-owned closed contour, shared by local Like actions and their tab. -->
+        <Geometry x:Key="VoiceLikeHeartGeometry">M 12,5 C 8,-1 1,1 1,7 C 1,12 6,16 12,21 C 18,16 23,12 23,7 C 23,1 16,-1 12,5 Z</Geometry>
         <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <conv:VoiceCreationDateConverter x:Key="VoiceCreationDateConverter" />
@@ -195,15 +197,15 @@
                                         </Style>
                                     </Button.Style>
                                     <Path Width="18" Height="18" Stretch="Fill" StrokeThickness="1.5" StrokeLineJoin="Round"
-                                          Data="M 12,2 L 14.94,8.04 L 21.61,9.02 L 16.8,13.72 L 17.93,20.36 L 12,17.22 L 6.07,20.36 L 7.2,13.72 L 2.39,9.02 L 9.06,8.04 Z">
+                                          Data="{StaticResource VoiceLikeHeartGeometry}">
                                         <Path.Style>
                                             <Style TargetType="Path">
                                                 <Setter Property="Fill" Value="Transparent" />
                                                 <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsFavorite}" Value="True">
-                                                        <Setter Property="Fill" Value="#FFFFC857" />
-                                                        <Setter Property="Stroke" Value="#FFFFC857" />
+                                                        <Setter Property="Fill" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                        <Setter Property="Stroke" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -508,15 +510,15 @@
                                     </Style>
                                 </Button.Style>
                                 <Path Width="18" Height="18" Stretch="Fill" StrokeThickness="1.5" StrokeLineJoin="Round"
-                                      Data="M 12,2 L 14.94,8.04 L 21.61,9.02 L 16.8,13.72 L 17.93,20.36 L 12,17.22 L 6.07,20.36 L 7.2,13.72 L 2.39,9.02 L 9.06,8.04 Z">
+                                      Data="{StaticResource VoiceLikeHeartGeometry}">
                                     <Path.Style>
                                         <Style TargetType="Path">
                                             <Setter Property="Fill" Value="Transparent" />
                                             <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsSelectedVoiceFavorite}" Value="True">
-                                                    <Setter Property="Fill" Value="#FFFFC857" />
-                                                    <Setter Property="Stroke" Value="#FFFFC857" />
+                                                    <Setter Property="Fill" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                    <Setter Property="Stroke" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -800,8 +802,20 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{Binding Foreground, ElementName=FavoritesTabLabel}"
-                                   VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <Path Width="12" Height="12" Stretch="Fill" StrokeThickness="1" StrokeLineJoin="Round"
+                              Data="{StaticResource VoiceLikeHeartGeometry}" Stroke="{Binding Foreground, ElementName=FavoritesTabLabel}"
+                              VerticalAlignment="Center" Margin="0,0,4,0">
+                            <Path.Style>
+                                <Style TargetType="Path">
+                                    <Setter Property="Fill" Value="Transparent" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFavoritesMode}" Value="True">
+                                            <Setter Property="Fill" Value="{Binding Foreground, ElementName=FavoritesTabLabel}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Path.Style>
+                        </Path>
                         <TextBlock x:Name="FavoritesTabLabel" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Favorites}" VerticalAlignment="Center" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">

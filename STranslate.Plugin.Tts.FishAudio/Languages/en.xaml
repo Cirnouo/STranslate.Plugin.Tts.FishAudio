@@ -105,18 +105,18 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Speech synthesis failed. Check your system network connection and model service status.</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favorites</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Likes</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Apply</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Add to favorites</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Remove from favorites</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">No favorite voices yet. Use a star on a voice card to save one.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Expand favorite voices</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Collapse favorite voices</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">You can save up to 300 voices. Remove a favorite before adding another.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Favorites are currently read-only. Check the favorites file and try again.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Could not save favorites. Please try again.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Like</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Unlike</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">No liked voices yet. Use Like on a voice card to save one.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Expand liked voices</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Collapse liked voices</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">You can like up to 300 voices. Unlike one before adding another.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Liked voices are currently read-only. Check the local list file and try again.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Could not save liked voices. Please try again.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Loading voice details…</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Could not read the favorites file. Existing favorites are preserved; changes are unavailable until the file can be read.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Could not read the local list file. Existing likes are preserved; changes are unavailable until the file can be read.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Copy voice ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Voice ID copied</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Could not copy the voice ID. Please try again.</sys:String>

@@ -21,6 +21,12 @@ using static TestAssertions;
 
 internal static class SettingsLayoutSuite
 {
+    internal static async Task LikePresentationAsync()
+    {
+        await RunOnStaThreadAsync(FavoriteVoicesTabMatchesPeerTabs);
+        await RunOnStaThreadAsync(SelectedVoiceHeartSharesFavoriteState);
+    }
+
     internal static async Task CompactNumericGeometryAsync()
     {
         // Explicit root-DPI propagation warms shared WPF theme metrics. Keep
@@ -48,7 +54,7 @@ internal static class SettingsLayoutSuite
             PcmHidesWholeBitrateCardAndMp3RestoresIt,
             ReadingNetworkSettingsAreAbsent,
             FavoriteVoicesTabMatchesPeerTabs,
-            SelectedVoiceStarSharesFavoriteState,
+            SelectedVoiceHeartSharesFavoriteState,
             PasteButtonsReserveInputSpace,
             SelectionAndPagingActionsUseBareIcons,
             LoudnessCardFollowsModelCapability,
@@ -185,16 +191,22 @@ internal static class SettingsLayoutSuite
         var search = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.SwitchToSearchCommand));
         var content = favorites.Content as StackPanel;
         AssertNotNull(content, "The Favorite Voices tab must have an icon and label like its peer tabs");
-        var icon = content!.Children.OfType<TextBlock>().SingleOrDefault(block => block.FontFamily.Source == "Segoe MDL2 Assets");
-        AssertNotNull(icon, "The Favorite Voices tab must use the same symbol font as Search and By ID");
-        AssertEqual(true, icon!.Text.Length == 1 && icon.Text[0] is >= '\uE000' and <= '\uF8FF',
-            "The Favorite Voices tab must use a symbol-font glyph");
+        var icon = content!.Children.OfType<System.Windows.Shapes.Path>().SingleOrDefault();
+        AssertNotNull(icon, "The Likes tab must use a heart vector");
+        AssertEqual(true, ReferenceEquals(view.FindResource("VoiceLikeHeartGeometry"), icon!.Data), "The tab shares the card heart contour");
         var referenceIcon = ((StackPanel)search.Content).Children.OfType<TextBlock>().Single(block => block.FontFamily.Source == "Segoe MDL2 Assets");
-        AssertEqual(referenceIcon.FontSize, icon!.FontSize, "Favorite Voices must use the same tab icon size");
-        AssertEqual(referenceIcon.Margin, icon.Margin, "Favorite Voices must use the same tab icon spacing");
-        AssertEqual(true, content.Children.OfType<TextBlock>().Any(block => block.Text == "Favorites"),
-            "The tab must display the localized Favorite Voices label");
-        foreach (var (locale, label) in new[] { ("zh-cn", "收藏夹"), ("zh-tw", "收藏夾"), ("ja", "お気に入り"), ("ko", "즐겨찾기"), ("ru", "Избранное"), ("tr", "Favoriler"), ("en", "Favorites") })
+        AssertEqual(referenceIcon.FontSize, icon.Width, "Likes must retain the peer icon allocation");
+        AssertEqual(referenceIcon.FontSize, icon.Height, "Likes must retain the peer icon height");
+        AssertEqual(referenceIcon.Margin, icon.Margin, "Likes must retain peer icon spacing");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)icon.Fill).Color, "Inactive tab heart is outlined");
+        viewModel.BrowseMode = VoiceBrowseMode.Favorites;
+        DrainBindings();
+        AssertEqual(((SolidColorBrush)((TextBlock)view.FindName("FavoritesTabLabel")).Foreground).Color,
+            ((SolidColorBrush)icon.Fill).Color, "Active tab heart fills with its on-accent label foreground");
+        viewModel.BrowseMode = VoiceBrowseMode.Search;
+        DrainBindings();
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)icon.Fill).Color, "Leaving Likes restores the outline");
+        foreach (var (locale, label) in new[] { ("zh-cn", "喜欢"), ("zh-tw", "喜歡"), ("ja", "いいね"), ("ko", "좋아요"), ("ru", "Нравится"), ("tr", "Beğeniler"), ("en", "Likes") })
         {
             view.Resources.MergedDictionaries.Add(new ResourceDictionary
             {
@@ -211,7 +223,7 @@ internal static class SettingsLayoutSuite
         }
     }
 
-    private static void SelectedVoiceStarSharesFavoriteState()
+    private static void SelectedVoiceHeartSharesFavoriteState()
     {
         var id = "0123456789abcdef0123456789abcdef";
         var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
@@ -224,25 +236,26 @@ internal static class SettingsLayoutSuite
         var selected = Descendants(view).OfType<Button>().SingleOrDefault(button =>
             BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path == "ToggleSelectedVoiceFavoriteCommand");
         AssertNotNull(selected, "The selected voice card must expose its own favorite action");
-        AssertEqual(true, selected!.Content is System.Windows.Shapes.Path, "The selected voice favorite must use a vector star");
+        AssertEqual(true, selected!.Content is System.Windows.Shapes.Path, "The selected voice favorite must use a vector heart");
         AssertNotNull(selected.Command, "The selected voice favorite command must bind to the live ViewModel");
-        AssertEqual(Visibility.Visible, selected.Visibility, "A selected voice must expose its favorite star");
-        AssertEqual("Add to favorites", AutomationProperties.GetName(selected), "An unbookmarked selected voice must offer Add");
-        var star = (System.Windows.Shapes.Path)selected.Content;
-        AssertEqual(Colors.Transparent, ((SolidColorBrush)star.Fill).Color, "An unbookmarked selected voice must show an outline star");
+        AssertEqual(Visibility.Visible, selected.Visibility, "A selected voice must expose its favorite heart");
+        AssertEqual("Like", AutomationProperties.GetName(selected), "An unbookmarked selected voice must offer Add");
+        var heart = (System.Windows.Shapes.Path)selected.Content;
+        AssertEqual(true, ReferenceEquals(view.FindResource("VoiceLikeHeartGeometry"), heart.Data), "Selected and list hearts share one closed contour");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)heart.Fill).Color, "An unbookmarked selected voice must show an outline heart");
 
         typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(selected, null);
         DrainBindings();
         AssertEqual(true, matching.IsFavorite, "Favoriting the selected voice must update a matching browse card");
-        AssertEqual("Remove from favorites", AutomationProperties.GetName(selected), "The selected star must reflect the saved favorite state");
-        AssertEqual(Color.FromArgb(255, 255, 200, 87), ((SolidColorBrush)star.Fill).Color, "A saved selected voice must show a filled star");
+        AssertEqual("Unlike", AutomationProperties.GetName(selected), "The selected heart must reflect the saved favorite state");
+        AssertEqual(((SolidColorBrush)view.FindResource("AccentFillColorDefaultBrush")).Color, ((SolidColorBrush)heart.Fill).Color, "A saved selected voice must show a filled heart");
         AssertEqual(1, viewModel.FavoriteCount, "The selected-card action must save through the shared favorites store");
         AssertEqual(id, settings.VoiceId, "Favoriting a selected voice must preserve the applied voice");
 
         viewModel.ToggleFavoriteCommand.Execute(matching);
         DrainBindings();
-        AssertEqual("Add to favorites", AutomationProperties.GetName(selected), "Removing a matching browse favorite must update the selected star");
-        AssertEqual(Colors.Transparent, ((SolidColorBrush)star.Fill).Color, "Browse removal must restore the selected star outline");
+        AssertEqual("Like", AutomationProperties.GetName(selected), "Removing a matching browse favorite must update the selected heart");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)heart.Fill).Color, "Browse removal must restore the selected heart outline");
         AssertEqual(0, viewModel.FavoriteCount, "Browse removal must remove the same persisted favorite");
         viewModel.ClearVoiceCommand.Execute(null);
         DrainBindings();

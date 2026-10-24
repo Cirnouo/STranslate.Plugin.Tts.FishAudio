@@ -105,18 +105,18 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Не удалось синтезировать речь. Проверьте системное сетевое подключение и состояние сервиса модели.</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Избранное</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Нравится</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Применить</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Добавить в избранное</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Удалить из избранного</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">В избранном пока нет голосов. Нажмите на звёздочку в карточке голоса, чтобы сохранить его.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Развернуть избранные голоса</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Свернуть избранные голоса</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">Можно сохранить не более 300 голосов. Прежде чем добавить новый, удалите один из избранного.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Избранное доступно только для чтения. Проверьте файл избранного и повторите попытку.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Не удалось сохранить избранное. Повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Нравится</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Убрать отметку «Нравится»</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">Понравившихся голосов пока нет. Нажмите «Нравится» на карточке голоса.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Развернуть понравившиеся голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Свернуть понравившиеся голоса</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">Можно отметить до 300 голосов. Сначала уберите отметку у одного из них.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Список понравившихся голосов доступен только для чтения. Проверьте локальный файл списка и повторите попытку.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Не удалось сохранить понравившиеся голоса. Повторите попытку.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Загрузка данных голоса…</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Не удалось прочитать файл избранного. Существующие записи не удалены. Изменять их можно будет, когда файл снова станет доступен для чтения.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Не удалось прочитать локальный файл понравившихся голосов. Существующие отметки сохранены; изменения недоступны до восстановления чтения файла.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Копировать ID голоса</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">ID голоса скопирован</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Не удалось скопировать ID голоса. Повторите попытку.</sys:String>

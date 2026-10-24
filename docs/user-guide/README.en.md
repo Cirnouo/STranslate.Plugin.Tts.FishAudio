@@ -42,24 +42,24 @@ A voice selects timbre; a model selects the synthesis engine. A voice's communit
 |---|---|
 | **Search** | Enter a name, then click search or press Enter. |
 | **By ID** | Copy an ID from the [official community](https://fish.audio/app/discovery) or a card title. Paste the ID alone, not a URL. Click the magnifier or press Enter to look it up, then click **Apply** on its result. |
-| **Favorites** | Open locally saved voices; preview or apply after their details load. |
+| **Likes** | Open locally saved voices; preview or apply after their details load. |
 
 | To do this | Action |
 |---|---|
 | Hear a sample | Click Play; click again to stop. Preview plays an existing public sample without applying the voice or synthesizing your text. |
-| Use the voice for reading | Click the tick, **Apply**. To return to random voice, click the cross, **Clear**. Your model and favorites remain. Random voice does not mean free. |
-| Save it for later | Click the star to add/remove a favorite. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
+| Use the voice for reading | Click the tick, **Apply**. To return to random voice, click the cross, **Clear**. Your model and liked voices remain. Random voice does not mean free. |
+| Save it for later | Click Like or Unlike to save or remove a voice. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
 | Copy its Voice ID | Click the **card title**, not the author or description. |
 
 Open **Search adjustments** inside the search field to choose **All languages** or toggle one or more language tiles. All languages clears specific choices; clearing the last specific restores All. Selecting all ten presets still filters to those presets. Fish Audio determines how selected languages combine. Choose **Relevance first**, **Most used first**, or **Newest first**. **Apply** closes the options and immediately refreshes page one using the current search text, even if nothing changed. **Reset** only restores the option drafts to All languages + Relevance first; **Close** discards drafts. Search or Enter uses the applied options, and changing pages keeps the last successful search. Options last only for the current settings session. If a refresh fails, the previous results and options remain.
 
-Search, By ID, Favorites and the selected voice use the same language labels in a separate single-line row: a flag plus a name in the interface language. Wider cards show more labels, with no fixed limit of three; click `+N` to open exactly the remaining N languages in a popup. Names stay visible; only a first label whose full name cannot fit is shortened with an ellipsis (hover for its full name). Missing language metadata hides the row. Labels come from Fish Audio voice metadata, not a fixed synthesis-language whitelist, speaker nationality or a complete account of the engine's language capabilities. Unknown language codes keep their text with a generic icon.
+Search, By ID, Likes and the selected voice use the same language labels in a separate single-line row: a flag plus a name in the interface language. Wider cards show more labels, with no fixed limit of three; click `+N` to open exactly the remaining N languages in a popup. Names stay visible; only a first label whose full name cannot fit is shortened with an ellipsis (hover for its full name). Missing language metadata hides the row. Labels come from Fish Audio voice metadata, not a fixed synthesis-language whitelist, speaker nationality or a complete account of the engine's language capabilities. Unknown language codes keep their text with a generic icon.
 
 The lower-right date uses your system time zone (`yyyy-MM-dd`); hover for the complete timestamp and UTC offset. Missing or invalid dates show `—`. An empty description hides its entire row, moving languages, author and popularity upward.
 
-Favorites are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved favorite.
+Likes are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved liked voice.
 
-In Search and Favorites, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
+In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
 Changing the voice or replacing/removing its card stops its preview.
 
@@ -136,14 +136,14 @@ Older configurations generally retain MP3. PCM hides the entire bitrate setting;
 <a id="network-and-proxy"></a>
 ### Check the two connections separately
 
-**A working voice list does not establish that synthesis can connect.** Favorite details and previews also need networking; saved favorites are not offline audio.
+**A working voice list does not establish that synthesis can connect.** Liked voice details and previews also need networking; saved liked voices are not offline audio.
 
 | Feature | Network settings used |
 |---|---|
 | Search, voice details, credits, preview samples | STranslate host HTTP networking. |
 | Speech synthesis | Windows system default networking/proxy; the connection must permit WebSocket. |
 
-There is no separate proxy switch or address field in the plugin. If Fish Audio is unreachable or search works while speech fails, check host networking and Windows system networking/proxy separately, make sure the proxy service is running and the firewall permits WebSocket, then check model/account permissions. Retry manually after fixing the cause. Do not delete settings or favorites to repair a temporary connection failure.
+There is no separate proxy switch or address field in the plugin. If Fish Audio is unreachable or search works while speech fails, check host networking and Windows system networking/proxy separately, make sure the proxy service is running and the firewall permits WebSocket, then check model/account permissions. Retry manually after fixing the cause. Do not delete settings or liked voices to repair a temporary connection failure.
 
 ## 6. Troubleshoot and recover
 
@@ -153,7 +153,7 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Symptom | Next action |
 |---|---|
 | Search fails after entering a Key | Copy a valid key from the official page without extra whitespace/newlines, or clear the key to browse public voices. Synthesis and credits still require a valid key. |
-| Changing the Key stops a lookup or preview | Old work is canceled, but displayed voices, selection and favorites stay. Later queries use the new key. Start another lookup or preview when needed. |
+| Changing the Key stops a lookup or preview | Old work is canceled, but displayed voices, selection and liked voices stay. Later queries use the new key. Start another lookup or preview when needed. |
 | Key editing is temporarily locked | Wait for the current speech or credit request to finish. |
 | Credits unavailable | Check the key, account permissions and host connection, then refresh. |
 | Search works, speech fails | Check [both connections](#network-and-proxy), then model availability and account permissions. |
@@ -161,15 +161,17 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Silent or interrupted audio | Check Windows output selection, system/app volume and device connection. Fix the cause, then decide whether to retry manually. Volume 0 dB is not mute. |
 | Charges after stopping / balance unchanged | Stopping does not reverse provider charges. Wait and refresh, then check the official bill; see [cost limits](#playback-and-cost). |
 
-### Voices, favorites and saving
+<a id="voices-favorites-and-saving"></a>
+
+### Voices, liked voices and saving
 
 | Symptom | Next action |
 |---|---|
 | ID paste rejected | Copy the ID alone without a URL or extra text. Look it up after pasting, then apply. |
 | ID lookup error disappears | Errors clear after five seconds, or when you edit the ID or start another lookup. Clearing does not mean the lookup succeeded. Check the ID or connection, look it up again, then apply the result. |
-| ID found but selection unchanged | Click the result's tick, **Apply**. Preview and star do not apply it. |
-| Cannot add a favorite | At 300, remove one first. Otherwise retry saving; if the error repeats, keep your existing favorites and report the error and steps. |
-| A favorite shows only its ID | Check the host connection and reopen Favorites. Its saved ID remains; remove it if you no longer want it. |
+| ID found but selection unchanged | Click the result's tick, **Apply**. Preview and Like do not apply it. |
+| Cannot add a liked voice | At 300, remove one first. Otherwise retry saving; if the error repeats, keep your existing liked voices and report the error and steps. |
+| A liked voice shows only its ID | Check the host connection and reopen Likes. Its saved ID remains; remove it if you no longer want it. |
 | Copying a title fails | Wait briefly and try the title again. If it still fails, copy the ID from the voice's [official community page](https://fish.audio/app/discovery). |
 | A number returns to its old value | Enter a value within the [table's range](#configuration) and press Enter. Esc cancels an edit. |
 | A save error repeats | Reopen settings to check the saved value. If the problem persists, report the error and steps. Keep your configuration. |
@@ -180,6 +182,6 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 
 - Loudness and bitrate follow the model and PCM/MP3 choice. Return to a supported choice to restore their saved values.
 - An old Top P of zero becomes 0.05; Temperature zero remains valid. No reset is needed.
-- **Clear cache** removes covers only, keeping selection and favorites. Downloading covers again afterward is expected.
+- **Clear cache** removes covers only, keeping selection and liked voices. Downloading covers again afterward is expected.
 
-Do not delete settings or favorites to repair a temporary connection failure. For unresolved problems, open an [issue](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) with plugin/host/Windows versions, steps, model, format, network conditions and sanitized errors. Exclude API Keys, complete signed URLs, proxy passwords and private text. Development and contribution guidance is in [CONTRIBUTING](../../CONTRIBUTING.md).
+Do not delete settings or liked voices to repair a temporary connection failure. For unresolved problems, open an [issue](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues) with plugin/host/Windows versions, steps, model, format, network conditions and sanitized errors. Exclude API Keys, complete signed URLs, proxy passwords and private text. Development and contribution guidance is in [CONTRIBUTING](../../CONTRIBUTING.md).

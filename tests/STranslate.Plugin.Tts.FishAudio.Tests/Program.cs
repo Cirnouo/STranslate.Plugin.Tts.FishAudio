@@ -47,6 +47,13 @@ if (args.Contains("--streaming-cancellation-probe-tests"))
     return;
 }
 
+if (args.Contains("--voice-like-tests"))
+{
+    await VoiceLikeSuite.RunAllAsync();
+    Console.WriteLine("Voice Like presentation tests passed.");
+    return;
+}
+
 if (args.Contains("--voice-card-layout-tests"))
 {
     await VoiceCardLayoutSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-layout-tests") + 1));
@@ -383,7 +390,7 @@ FavoriteVoicesSuite.FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases();
 await FavoriteVoicesSuite.ByIdReplacementAndInputEditsRejectLateResultsAsync();
 await FavoriteVoicesSuite.FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync();
 await FavoriteVoicesSuite.UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync();
-FavoriteVoicesSuite.SharedCardsAndFavoriteResourcesArePackaged();
+await VoiceLikeSuite.SharedCardTemplateIsCompiledAsync();
 await FavoriteStorageCacheSuite.SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync();
 await FavoriteStorageCacheSuite.LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync();
 FavoriteStorageCacheSuite.MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl();
@@ -516,4 +523,5 @@ await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
+await VoiceLikeSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");
