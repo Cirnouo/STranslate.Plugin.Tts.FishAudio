@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">新着順</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">リセット</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">閉じる</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">作成日時</sys:String>
 </ResourceDictionary>

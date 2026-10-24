@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Önce en yeniler</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Sıfırla</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Kapat</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">Oluşturulma tarihi</sys:String>
 </ResourceDictionary>

@@ -460,10 +460,8 @@ internal static class VoiceLanguageTagsSuite
                 "Selected-card fixture reserves the real cover geometry using a local resource");
             AssertEqual(36d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
                 "Selected-card fixture reserves the visible preview action without playing audio");
-            AssertEqual(true, selectedTags.ActualWidth <= selectedCard.ActualWidth - 201,
-                "The fully populated selected-card content allocation accounts for cover, actions, border and padding");
-            if (width == 320) AssertEqual(1, InlinePills(selectedTags).Length,
-                $"At the minimum width the fully populated selected card retains one named pill and exact remaining access ({mode}/{dpi}/{dark}: width={selectedTags.ActualWidth}, panel={((Panel)selectedTags.FindName("InlinePanel")).ActualWidth}, valid={selectedTags.IsMeasureValid}, rootValid={view.IsMeasureValid})");
+            AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 86)) <= 1,
+                "The selected metadata spans the full column after 48-DIP cover, gap, border and padding");
             foreach (var tag in tags)
             {
                 var inline = (Panel)tag.FindName("InlinePanel");

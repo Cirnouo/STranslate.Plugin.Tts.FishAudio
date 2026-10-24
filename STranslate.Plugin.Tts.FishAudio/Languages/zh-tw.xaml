@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">最新優先</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">重設</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">關閉</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">建立時間</sys:String>
 </ResourceDictionary>

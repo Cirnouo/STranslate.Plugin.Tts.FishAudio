@@ -10,6 +10,14 @@ public sealed class CachedVoiceInfo
         set => _languages = VoiceLanguageMetadata.Normalize(value);
     }
 
+    private DateTimeOffset? _createdAt;
+
+    public DateTimeOffset? CreatedAt
+    {
+        get => _createdAt;
+        set => _createdAt = value?.ToUniversalTime();
+    }
+
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
     public string CoverImage { get; set; } = "";

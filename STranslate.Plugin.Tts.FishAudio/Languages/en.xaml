@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Newest first</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Reset</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Close</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">Created</sys:String>
 </ResourceDictionary>

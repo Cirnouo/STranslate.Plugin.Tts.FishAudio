@@ -4,23 +4,24 @@ using STranslate.Plugin.Tts.FishAudio.Model;
 namespace STranslate.Plugin.Tts.FishAudio.Caching;
 
 internal sealed record VoiceMetadata(string VoiceId, string Title, string Description, string CoverImage,
-    string AuthorName, int TaskCount, string? SampleAudioUrl, IReadOnlyList<string> Languages)
+    string AuthorName, int TaskCount, string? SampleAudioUrl, IReadOnlyList<string> Languages, DateTimeOffset? CreatedAt = null)
 {
+    public DateTimeOffset? CreatedAt { get; } = CreatedAt?.ToUniversalTime();
     public IReadOnlyList<string> Languages { get; } = VoiceLanguageMetadata.Normalize(Languages);
 
     public override string ToString() => $"VoiceMetadata({VoiceId})";
     internal static VoiceMetadata FromModel(ModelEntity model, string? voiceId = null) => FromCachedVoice(
         voiceId ?? model.Id,
         new CachedVoiceInfo { Title = model.Title, Description = model.Description, CoverImage = model.CoverImage,
-            AuthorName = model.Author?.Nickname ?? "", TaskCount = model.TaskCount, Languages = model.Languages, SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio });
+            AuthorName = model.Author?.Nickname ?? "", TaskCount = model.TaskCount, Languages = model.Languages, CreatedAt = model.CreatedAt, SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio });
 
     internal static VoiceMetadata FromCachedVoice(string id, CachedVoiceInfo voice) => new(id,
         Bound(voice.Title, 512), Bound(voice.Description, 8192), Bound(voice.CoverImage, 4096),
         Bound(voice.AuthorName, 256), Math.Max(0, voice.TaskCount), voice.SampleAudioUrl is null ? null : Bound(voice.SampleAudioUrl, 8192),
-        voice.Languages);
+        voice.Languages, voice.CreatedAt);
 
     internal CachedVoiceInfo ToCachedVoice() => new() { Title = Title, Description = Description,
-        CoverImage = CoverImage, AuthorName = AuthorName, TaskCount = TaskCount, SampleAudioUrl = SampleAudioUrl, Languages = Languages };
+        CoverImage = CoverImage, AuthorName = AuthorName, TaskCount = TaskCount, SampleAudioUrl = SampleAudioUrl, Languages = Languages, CreatedAt = CreatedAt };
 
     private static string Bound(string? value, int maximum) =>
         string.IsNullOrEmpty(value) ? "" : value.Length <= maximum ? value : value[..maximum];

@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">최신순</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">초기화</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">닫기</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">생성 일시</sys:String>
 </ResourceDictionary>

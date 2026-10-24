@@ -13,6 +13,14 @@ public partial class VoiceSearchItem : ObservableObject
         set => SetProperty(ref _languages, VoiceLanguageMetadata.Normalize(value));
     }
 
+    private DateTimeOffset? _createdAt;
+
+    public DateTimeOffset? CreatedAt
+    {
+        get => _createdAt;
+        set => SetProperty(ref _createdAt, value?.ToUniversalTime());
+    }
+
     public string Id { get; set; } = "";
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }

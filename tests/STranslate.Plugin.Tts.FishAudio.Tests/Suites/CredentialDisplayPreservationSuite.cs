@@ -23,7 +23,7 @@ internal static class CredentialDisplayPreservationSuite
         var (service, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = """
             {"total":18,"items":[{"_id":"fedcba9876543210fedcba9876543210","title":"Retained voice",
-            "description":"Full description","author":{"nickname":"Author"},"task_count":23,
+            "description":"Full description","created_at":"2026-09-18T01:02:03.1234567+08:00","author":{"nickname":"Author"},"task_count":23,
             "samples":[{"audio":"https://platform.r2.fish.audio/retained.mp3"}]}]}
             """;
         var context = CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory);
@@ -43,8 +43,11 @@ internal static class CredentialDisplayPreservationSuite
         {
             card.CoverImage = "https://public-platform.r2.fish.audio/retained.png";
             card.CoverUrl = localCover;
+            card.CreatedAt = VoiceCreationDateSuite.Date;
         }
         view.CachedVoiceCoverUrl = localCover;
+        view.CachedVoiceCreatedAt = VoiceCreationDateSuite.Date;
+        settings.CachedVoice!.CreatedAt = VoiceCreationDateSuite.Date;
         view.SearchQuery = "unapplied draft";
         view.PageInput = "page draft";
         view.FavoritePageInput = "favorite draft";
@@ -393,7 +396,7 @@ internal static class CredentialDisplayPreservationSuite
     private static string SelectedDisplay(SettingsViewModel view) => JsonSerializer.Serialize(new
     {
         view.VoiceId, view.CachedVoiceId, view.CachedVoiceTitle, view.CachedVoiceDescription,
-        view.CachedVoiceCoverUrl, view.CachedVoiceAuthor, view.CachedVoiceTaskCount,
+        view.CachedVoiceCoverUrl, view.CachedVoiceAuthor, view.CachedVoiceTaskCount, view.CachedVoiceCreatedAt,
         view.CachedVoiceSampleUrl, view.IsSelectedVoiceFavorite,
     });
 

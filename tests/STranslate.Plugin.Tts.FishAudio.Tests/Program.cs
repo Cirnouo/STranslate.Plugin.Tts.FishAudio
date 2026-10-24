@@ -47,6 +47,20 @@ if (args.Contains("--streaming-cancellation-probe-tests"))
     return;
 }
 
+if (args.Contains("--voice-card-layout-tests"))
+{
+    await VoiceCardLayoutSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-layout-tests") + 1));
+    Console.WriteLine("Voice card layout tests passed.");
+    return;
+}
+
+if (args.Contains("--voice-creation-date-tests"))
+{
+    await VoiceCreationDateSuite.RunAllAsync();
+    Console.WriteLine("Voice creation date tests passed.");
+    return;
+}
+
 if (args.Contains("--search-adjustment-control-tests"))
 {
     await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
@@ -495,9 +509,11 @@ await SettingsLayoutSuite.CompactNumericGeometryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
 await VoiceLanguageSuite.RunAllAsync();
+await VoiceCreationDateSuite.RunAllAsync();
 await VoiceLanguageTagsSuite.RunAllAsync();
 await PageEntrySuite.RunAllAsync();
 await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
+await VoiceCardLayoutSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

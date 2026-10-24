@@ -108,6 +108,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial IReadOnlyList<string> CachedVoiceLanguages { get; set; } = Array.Empty<string>();
 
+    [ObservableProperty]
+    public partial DateTimeOffset? CachedVoiceCreatedAt { get; set; }
+
     // ── 韵律 ──
 
     [ObservableProperty]
@@ -709,6 +712,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             CachedVoiceSampleUrl = null;
             CachedVoiceTaskCount = 0;
             CachedVoiceLanguages = [];
+            CachedVoiceCreatedAt = null;
             UpdatePreviewState();
             return;
         }
@@ -726,6 +730,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         CachedVoiceSampleUrl = cached.SampleAudioUrl;
         CachedVoiceTaskCount = cached.TaskCount;
         CachedVoiceLanguages = VoiceLanguageMetadata.Normalize(cached.Languages);
+        CachedVoiceCreatedAt = cached.CreatedAt;
 
         UpdatePreviewState();
     }

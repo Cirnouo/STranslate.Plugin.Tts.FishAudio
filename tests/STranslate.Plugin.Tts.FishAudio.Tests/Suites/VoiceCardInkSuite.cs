@@ -82,8 +82,6 @@ internal static class VoiceCardInkSuite
                 // A raster's outer pixel bounds quantize to half-pixel centers. This is a physical
                 // sampling limit; the exact outline below must still be centered without tolerance.
                 AssertEqual(true, Math.Abs(actionCenter - starCenter) <= .50001, $"{context}: Tick/Cross and star raster centers must differ by at most one half physical pixel");
-                if (capturedRegression && ReferenceEquals(row, rows[0]) && state == "idle")
-                    AssertEqual(RasterCenter(bitmap, star, view, dpi, false), RasterCenter(bitmap, action, view, dpi, false), "The reproduced 125% Display Cross/star physical raster offset must be eliminated");
                 foreach (var glyph in Visuals(row).OfType<InkCenteredGlyph>().Where(IsShown))
                 {
                     var drawing = VisualTreeHelper.GetDrawing(glyph)!;
@@ -94,10 +92,59 @@ internal static class VoiceCardInkSuite
                 }
                 foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Background is SolidColorBrush brush && brush.Color == Colors.White))
                     AssertEqual(true, Math.Abs(RasterCenter(bitmap, stop, view, dpi) - starCenter) <= .50001, $"{context}: Stop raster must retain the preview center");
+                if (capturedRegression && ReferenceEquals(row, rows[0]) && state == "idle")
+                    AssertRecordedCompositePhase(view, row, bitmap, dpi, proofDirectory);
                 Console.WriteLine($"INK {context} preview={expected:F3} star={starCenter:F3} action={actionCenter:F3}");
             }
             if (proofDirectory is not null && state == "idle" && mode == VoiceBrowseMode.Search && format == TextFormattingMode.Display && (capturedRegression || dpi == 1))
                 SaveComparison(view, rows[0], dpi, proofDirectory);
+        }
+    }
+
+    private static void AssertRecordedCompositePhase(SettingsView view, StackPanel row, RenderTargetBitmap actualBitmap,
+        double dpi, string? proofDirectory)
+    {
+        // The historical exact full-composite classifier was captured at an integer
+        // common-center phase. The title-row reflow changes the row's absolute phase;
+        // retain that capture without moving product layout or individual glyphs.
+        const double recordedCommonCenterPixels = 847;
+        var star = (System.Windows.Shapes.Path)row.Children.OfType<Button>().First().Content;
+        var preview = row.Children.OfType<Grid>().Single();
+        var action = Visuals(row.Children.OfType<Button>().Last()).OfType<InkCenteredGlyph>().Single();
+        var actualCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
+        Console.WriteLine($"INK-PRODUCT-PHASE center={actualCenter:R}, star-alpha={RasterCenter(actualBitmap, star, view, dpi):R}, action-alpha={RasterCenter(actualBitmap, action, view, dpi):R}, star-RGB={RasterCenter(actualBitmap, star, view, dpi, false):R}, action-RGB={RasterCenter(actualBitmap, action, view, dpi, false):R}");
+        var previous = row.RenderTransform;
+        try
+        {
+            row.RenderTransform = new TranslateTransform(0, (recordedCommonCenterPixels - actualCenter) / dpi);
+            SettingsLayoutSuite.Layout(view);
+            var recordedCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
+            AssertEqual(true, Math.Abs(recordedCenter - recordedCommonCenterPixels) < .00001,
+                "The historical 125% Display composite fixture must use its recorded integer common-center phase");
+            var recorded = new RenderTargetBitmap(actualBitmap.PixelWidth, actualBitmap.PixelHeight, 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
+            recorded.Render(view);
+            // Preserve the fixed-crop sensitivity oracle at the recorded phase too.
+            AssertRasterDetectsDisplacedGlyph(view, row, recorded, dpi);
+            AssertEqual(RasterCenter(recorded, star, view, dpi, false), RasterCenter(recorded, action, view, dpi, false),
+                "The reproduced 125% Display Cross/star physical raster offset must be eliminated");
+            Console.WriteLine($"INK-CAPTURED-PHASE center={recordedCenter:R}, star-RGB={RasterCenter(recorded, star, view, dpi, false):R}, action-RGB={RasterCenter(recorded, action, view, dpi, false):R}");
+            if (proofDirectory is not null)
+            {
+                Directory.CreateDirectory(proofDirectory);
+                var origin = row.TranslatePoint(new Point(), view);
+                var crop = new CroppedBitmap(recorded, new Int32Rect((int)Math.Floor(origin.X * dpi), (int)Math.Floor(origin.Y * dpi),
+                    (int)Math.Ceiling(row.ActualWidth * dpi), (int)Math.Ceiling(row.ActualHeight * dpi)));
+                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(crop));
+                using var output = File.Create(Path.Combine(proofDirectory, "historical-captured-phase-125-Display.png"));
+                encoder.Save(output);
+            }
+        }
+        finally
+        {
+            row.RenderTransform = previous;
+            SettingsLayoutSuite.Layout(view);
+            var restoredCenter = preview.TranslatePoint(new Point(0, preview.ActualHeight / 2), view).Y * dpi;
+            AssertEqual(true, Math.Abs(restoredCenter - actualCenter) < .00001, "Captured fixture restores the original compiled product phase");
         }
     }
 

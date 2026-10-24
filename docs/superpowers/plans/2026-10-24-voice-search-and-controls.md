@@ -84,9 +84,14 @@
 - [ ] Add RED cases for search/detail mapping, property-scoped malformed/wrong-type JSON date handling (consume complete arrays/objects), offsets/UTC, absent/null authoritative clearing, immutable cache copies, favorite placeholder reset/hit/refresh, selected apply/startup/preview propagation, old schema-2 roundtrip, malformed/duplicate nested dates, leased clone/save/rollback and read-only schemas.
 - [ ] Carry CreatedAt through every existing metadata producer/consumer, including PreviewRefreshCoordinator's direct update and startup conditional persistence. Add no metadata disk cache or bookmark fields; preserve TTL/credential/card ownership.
 - [ ] Rebuild both shared list and selected voice layouts: preserve avatars 40/48 DIP and existing actions, put actions top-right at title, then description, responsive language row, author, popularity-left/date-right full content row. Keep loading/error placeholders and action identity/state behavior. Titles/authors ellipsize; descriptions keep bounded lines; native theme resources only.
+- [ ] Collapse null/empty/whitespace-only description rows in all four locations, preserve provider text and cover runtime empty/nonempty transitions without residual height or description margins.
 - [ ] Add compiled layout/interaction tests for all four card locations, absent data, long text, language overflow, action commands/progress/focus, 320/400/480/640 widths, seven locales, light/dark and 100/125/150% DPI. Test local date boundaries deterministically and full tooltip semantics.
 - [ ] Update current specs/ADRs/resources/guides and consolidate Chinese Unreleased against published v1.1.2 without modifying published history or manifest version.
 - [ ] Run focused GREEN and full runner, self-review and commit. Suggested subject: feat(voices): show creation dates in refreshed voice cards.
+
+### Task 6: Heart-shaped Like presentation, unchanged favorites behavior
+
+This is a separate atomic follow-up after Task 5. Replace outline/filled star artwork in all four card locations and the browse tab with hearts using the existing icon/theme infrastructure. Use Like/Unlike/Liked voices wording coherently in all seven UI locales, accessible names, feedback and five-language guidance. Preserve Favorites domain/public bindings and commands, ID-only favorite-voices.json, schema, order, credential/cache/lease/cancellation ownership, hit targets, focus, preview/progress, selection state and card geometry. Do not reinterpret provider popularity as likes. Extend meaningful outline/fill, action/state, accessibility and fractional-DPI raster regressions; preserve historical documentation and asset licenses. Run focused RED/GREEN, the full combined check and actual package inspection, self-review and commit independently. Suggested subject: feat(voices): present saved voices as likes.
 
 ### Task 8: Approved language tile multiselect
 
