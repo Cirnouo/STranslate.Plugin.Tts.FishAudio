@@ -118,6 +118,60 @@ internal static class StreamingEntrySuite
         }
     }
 
+    internal static async Task CancellationProbeObservesSynchronousRetirementAsync()
+    {
+        foreach (var dispose in new[] { false, true })
+        {
+            using var network = OverrideNetworkAvailability(false);
+            using var caller = new CancellationTokenSource();
+            CancellationTokenRegistration handlerRegistration = default;
+            var session = new StreamingSessionDouble
+            {
+                Handler = (_, _, token) =>
+                {
+                    // A legal synchronous continuation retires the session before
+                    // cancellation reaches its earlier observation registration.
+                    var canceled = new TaskCompletionSource();
+                    handlerRegistration = token.Register(() => canceled.TrySetCanceled(token));
+                    return canceled.Task;
+                },
+            };
+            using var plugin = CreatePlugin(() => session);
+            plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
+            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            network.Set(true);
+            var playback = plugin.PlayAudioAsync("synchronous cancel", caller.Token);
+            await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            try
+            {
+                if (dispose) plugin.Dispose(); else caller.Cancel();
+                await AssertCanceledAsync(playback);
+                AssertEqual(true, session.CancellationObserved, $"The session must observe its canceled token before synchronous retirement (dispose={dispose})");
+                AssertEqual(1, session.DisposeCount, "Synchronous cancellation retains exactly one owned session disposal");
+            }
+            finally { handlerRegistration.Dispose(); }
+        }
+    }
+
+    internal static async Task CancellationProbeRetainsOnlyActiveObservationAsync()
+    {
+        var request = new SynthesisRequest(CreateTtsSettings(FishAudioModelPolicy.S2ProModel));
+        using var completed = new CancellationTokenSource();
+        var session = new StreamingSessionDouble();
+        await session.PlayAsync(request, "completed", completed.Token);
+        completed.Cancel();
+        AssertEqual(false, session.CancellationObserved, "Cancellation after a completed call must not count as an active observation");
+
+        using var active = new CancellationTokenSource();
+        session.Handler = (_, _, token) => { active.Cancel(); return Task.FromCanceled(token); };
+        try { await session.PlayAsync(request, "canceled", active.Token); }
+        catch (OperationCanceledException) { }
+        AssertEqual(true, session.CancellationObserved, "An active call must observe its owned canceled token");
+        session.Handler = (_, _, _) => Task.CompletedTask;
+        await session.PlayAsync(request, "later completion", CancellationToken.None);
+        AssertEqual(true, session.CancellationObserved, "A later uncanceled call must preserve the probe's prior observation");
+    }
+
     internal static async Task TransportFailuresDoNotExposeCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(false);

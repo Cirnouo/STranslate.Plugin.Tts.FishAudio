@@ -17,7 +17,14 @@ internal sealed class StreamingSessionDouble : IStreamingTtsSession
         Text = text;
         using var registration = cancellationToken.Register(() => CancellationObserved = true);
         Entered.TrySetResult();
-        await Handler(request, text, cancellationToken).ConfigureAwait(false);
+        try { await Handler(request, text, cancellationToken).ConfigureAwait(false); }
+        finally
+        {
+            // A synchronous handler continuation can dispose the earlier callback
+            // registration before cancellation reaches it. Observe only while active,
+            // and never overwrite a callback's sticky true with an uncanceled false.
+            if (cancellationToken.IsCancellationRequested) CancellationObserved = true;
+        }
     }
 
     public void Dispose() => ++DisposeCount;

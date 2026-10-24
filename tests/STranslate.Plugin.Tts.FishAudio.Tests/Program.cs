@@ -1,3 +1,12 @@
+if (args.Contains("--streaming-cancellation-probe-tests"))
+{
+    await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
+    await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
+    await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
+    Console.WriteLine("Streaming cancellation probe regressions passed.");
+    return;
+}
+
 if (args.Contains("--by-id-error-tests"))
 {
     await VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync();
@@ -160,6 +169,8 @@ await StreamingEntrySuite.FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAs
 await StreamingEntrySuite.SnapshotStaysImmutableWhileSettingsAreEditedAsync();
 await StreamingEntrySuite.SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync();
 await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
+await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
+await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
 await StreamingEntrySuite.TransportFailuresDoNotExposeCredentialsAsync();
 StreamingSettingsSuite.MissingConfigurationLoadsPcm();
 StreamingSettingsSuite.LegacyFormatsMigrateAndCurrentDefaultsUsePcm();
