@@ -94,10 +94,6 @@ internal static class VoiceCardLayoutSuite
                 var titleRow = (DockPanel)VisualTreeHelper.GetParent((StackPanel)VisualTreeHelper.GetParent(action));
                 var metadata = (StackPanel)VisualTreeHelper.GetParent(tag);
                 var actions = (StackPanel)VisualTreeHelper.GetParent(action);
-                var preview = Visuals(actions).OfType<Button>().Single(button => ReferenceEquals(button.Command, selected ? vm.ToggleDisplayPreviewCommand : vm.ToggleSearchItemPreviewCommand));
-                AssertEqual(36d, preview.ActualWidth, "The intermediate title strip keeps the original 36-DIP preview target");
-                AssertEqual(3, Visuals(actions).OfType<Button>().Count(), "The intermediate title strip reserves Like, Preview and Apply/Clear");
-                AssertEqual(108d, actions.ActualWidth, "The title viewport reserves all three action widths and existing four-DIP gaps");
                 AssertEqual(dpi, VisualTreeHelper.GetDpi(date).DpiScaleX, "Date text inherits the requested visual-root DPI");
                 AssertEqual(true, Math.Abs(title.TranslatePoint(new Point(0, title.ActualHeight / 2), cardRoot).Y - action.TranslatePoint(new Point(0, action.ActualHeight / 2), cardRoot).Y) <= 1,
                     "Voice title and actions share the same row center while the copy target retains native text height");
@@ -112,8 +108,8 @@ internal static class VoiceCardLayoutSuite
                 AssertEqual(true, Math.Abs(tag.ActualWidth - metadata.ActualWidth) <= 1, "Languages use the full content width under the title actions");
                 AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local), date.Text, "Compiled date binding displays the local day");
                 AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), AutomationProperties.GetName(date), "Creation date has a localized accessible name");
-                var idlePlay = Visuals(cardRoot).OfType<InkCenteredGlyph>().Single(glyph => glyph.Glyph == "\uE768");
-                AssertEqual(((SolidColorBrush)view.FindResource("TextFillColorPrimaryBrush")).Color, ((SolidColorBrush)idlePlay.Foreground).Color, "Idle Play retains native theme foreground contrast");
+                var idlePlay = Visuals(cardRoot).OfType<System.Windows.Shapes.Path>().Single(path => ReferenceEquals(path.Data, view.FindResource("AvatarPreviewPlayGeometry")));
+                AssertEqual(Colors.White, ((SolidColorBrush)idlePlay.Fill).Color, "Filled idle Play retains opaque white contrast in both themes");
                 AssertEqual(true, Visuals(cardRoot).OfType<Button>().Where(button => BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") != true).All(button => button.Focusable), "Card actions retain keyboard focus eligibility");
                 AssertEqual<object?>(selected ? vm.CachedVoiceId : card, selected ? title.CommandParameter : action.CommandParameter, "Actions retain their original selection/identity parameters");
                 AssertEqual(selected ? 56d : 48d, Visuals(cardRoot).OfType<System.Windows.Shapes.Ellipse>().Single(ellipse => ellipse.Width == (selected ? 56 : 48)).ActualWidth, "Portraits use the approved slightly larger list/selected allocation");

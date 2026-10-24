@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Path = System.Windows.Shapes.Path;
 using System.Windows.Threading;
 using iNKORE.UI.WPF.Modern;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -74,13 +75,16 @@ internal static class AvatarPreviewSuite
         view.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-        typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
         var layoutNumber = 0;
         void Layout()
         {
             var number = ++layoutNumber;
             LayoutOwner(view, width, phase => layoutSubstage($"{number}/{phase}"));
         }
+        // Materialize this owner's compiled card tree before changing its root DPI;
+        // otherwise later-created controls can retain the preceding theme DPI.
+        Layout();
+        typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
         Layout();
         var selected = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleDisplayPreviewCommand));
         var browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleSearchItemPreviewCommand) && ReferenceEquals(button.CommandParameter, item) && IsPresented(button));
@@ -93,11 +97,36 @@ internal static class AvatarPreviewSuite
         foreach (var button in controls)
         {
             var overlay = Overlay(button);
-            AssertEqual(36d, overlay.ActualWidth, "The moved progress circle retains its original 36-DIP circumference");
-            AssertEqual(36d, overlay.ActualHeight, "The preview circle must not stretch to the avatar");
-            AssertEqual(true, overlay.Parent is Grid avatar && avatar.ActualWidth == (ReferenceEquals(button, selected) ? 56d : 48d), "Preview belongs to the current larger avatar allocation");
+            AssertEqual(dpi, VisualTreeHelper.GetDpi(overlay).DpiScaleX, "The realized preview overlay inherits the requested visual-root DPI");
+            AssertEqual(dpi, VisualTreeHelper.GetDpi(button).DpiScaleX, "The actual preview action inherits the requested visual-root DPI");
+            var diameter = ReferenceEquals(button, selected) ? 56d : 48d;
             var host = (Grid)overlay.Parent;
-            AssertEqual(new Point(host.ActualWidth / 2, host.ActualHeight / 2), overlay.TranslatePoint(new Point(18, 18), host), "Overlay centers on its avatar");
+            var portrait = host.Children.OfType<Ellipse>().Single();
+            AssertEqual(diameter, host.ActualWidth, "Preview follows the enlarged 48/56-DIP portrait allocation");
+            var portraitBounds = new Rect(0, 0, portrait.Width, portrait.Height);
+            AssertEqual(portraitBounds, overlay.TransformToAncestor(host).TransformBounds(new Rect(overlay.RenderSize)), "Preview overlay must cover the actual portrait bounds in every card location");
+            AssertEqual(portraitBounds, button.TransformToAncestor(host).TransformBounds(new Rect(button.RenderSize)), "The actual preview action must cover the portrait, including its outer edge");
+            var backplate = overlay.Children.OfType<Ellipse>().Single(ellipse => ellipse.Stroke is null);
+            AssertEqual(portraitBounds, backplate.TransformToAncestor(host).TransformBounds(new Rect(backplate.RenderSize)), "The light contrast backplate follows the portrait bounds");
+            AssertRoundedPlay(button, diameter * .3);
+            AssertEqual(.4, backplate.Opacity, "Only the black image backplate uses the reference's forty-percent opacity");
+            AssertEqual(Colors.Black, ((SolidColorBrush)backplate.Fill).Color, "The reference-style backplate darkens the image consistently in both themes");
+            AssertEqual(false, backplate.IsHitTestVisible, "The contrast layer never owns pointer input");
+            AssertProgressGeometry(button);
+            try
+            {
+                host.Width = host.Height = portrait.Width = portrait.Height = diameter + 4;
+                Layout();
+                AssertEqual(diameter + 4, overlay.ActualWidth, "Overlay sizing follows its actual avatar owner after a later portrait resize");
+                AssertEqual(diameter + 4, button.ActualWidth, "Preview input sizing follows the resized avatar owner");
+                AssertRoundedPlay(button, (diameter + 4) * .3);
+                AssertProgressGeometry(button);
+            }
+            finally
+            {
+                host.Width = host.Height = portrait.Width = portrait.Height = diameter;
+                Layout();
+            }
             AssertEqual(true, !button.Focusable && !KeyboardNavigation.GetIsTabStop(button) && button.IsEnabled, "Avatar action stays available without cover/hover but does not enter keyboard navigation");
             AssertEqual<Style?>(null, button.FocusVisualStyle, "Avatar preview has no keyboard-focus adornment");
             AssertEqual(0d, overlay.Opacity, "Idle artwork is hidden without card hover");
@@ -114,7 +143,12 @@ internal static class AvatarPreviewSuite
             AssertCoverShowsThrough(browse, dpi);
             SaveProof("idle-hover");
             AssertEqual(1d, Overlay(browse).Opacity, "Hover over any card content reveals Play on its avatar");
+            AssertForegroundAndHitOwnership(browse);
             AssertEqual(0d, Overlay(selected).Opacity, "Another same-ID card does not inherit hover");
+            SetHover(selectedRoot, true); Layout();
+            AssertCoverShowsThrough(selected, dpi);
+            SaveProof("idle-hover-both-fixture");
+            SetHover(selectedRoot, false); Layout();
             AssertEqual(false, Equals(background, browseRoot.Background), "Only pointer hover highlights the card");
             AssertEqual(secondBackground, secondRoot.Background, "Adjacent card keeps its normal background");
             SetHover(browseRoot, false); Layout();
@@ -248,9 +282,42 @@ internal static class AvatarPreviewSuite
             AssertEqual(true, button.IsEnabled, "Active cancel/Stop remains usable even without a sample URL");
             var spinner = Overlay(button).Children.OfType<Grid>().Single();
             AssertEqual(resource == "Preview_CancelLoading" ? Visibility.Visible : Visibility.Collapsed, spinner.Visibility, "Only preparation uses the existing indeterminate spinner");
-            var arc = Overlay(button).Children.OfType<Ellipse>().Single(ellipse => ellipse.StrokeDashArray.Count == 2 && ellipse.StrokeDashArray[0] == 72.26);
-            AssertEqual(resource == "Preview_Stop" ? Visibility.Visible : Visibility.Collapsed, arc.Visibility, "Real playing state alone exposes the unchanged progress arc");
+            var arc = Overlay(button).Children.OfType<Ellipse>().Single(ellipse => ReferenceEquals(ellipse.Style, view.FindResource("AvatarProgressRingStyle")));
+            AssertEqual(resource == "Preview_Stop" ? Visibility.Visible : Visibility.Collapsed, arc.Visibility, "Real playing state alone exposes the avatar-sized progress arc");
             AssertEqual(true, Visuals(button).OfType<Border>().Any(border => border.Width is 9 or 10 && border.Visibility == Visibility.Visible), "Active control keeps square Stop/cancel");
+            AssertEqual(Visibility.Collapsed, Visuals(button).OfType<Path>().Single().Visibility, "Preparation/playing hides only the idle filled triangle");
+            AssertForegroundAndHitOwnership(button);
+            AssertProgressGeometry(button);
+            var originalDisplayProgress = vm.PreviewProgress;
+            var originalItemProgress = item.PreviewProgress;
+            foreach (var progress in resource == "Preview_Stop" ? new[] { 0d, .25, 1d } : Array.Empty<double>())
+            {
+                vm.PreviewProgress = item.PreviewProgress = progress;
+                Layout();
+                var circumferenceUnits = (Overlay(button).ActualWidth - arc.StrokeThickness) * Math.PI / arc.StrokeThickness;
+                AssertEqual(true, Math.Abs(arc.StrokeDashOffset - (1 - progress) * circumferenceUnits) < .00001,
+                    "Zero, quarter and complete progress use the actual avatar circumference, without changing playback state");
+            }
+            vm.PreviewProgress = originalDisplayProgress;
+            item.PreviewProgress = originalItemProgress;
+            Layout();
+            var host = (Grid)Overlay(button).Parent;
+            var portrait = host.Children.OfType<Ellipse>().Single();
+            var diameter = host.Width;
+            try
+            {
+                host.Width = host.Height = portrait.Width = portrait.Height = diameter + 4;
+                Layout();
+                AssertProgressGeometry(button);
+                if (resource == "Preview_Stop")
+                    AssertEqual(true, Math.Abs(arc.StrokeDashOffset - (1 - originalDisplayProgress) * (diameter + 4 - 1.5) * Math.PI / 1.5) < .00001,
+                        "Active progress offset follows a resized portrait rather than retaining the previous circumference");
+            }
+            finally
+            {
+                host.Width = host.Height = portrait.Width = portrait.Height = diameter;
+                Layout();
+            }
         }
     }
 
@@ -274,7 +341,85 @@ internal static class AvatarPreviewSuite
         stage("ready");
     }
 
-    internal static Grid Overlay(Button button) => Ancestors(button).OfType<Grid>().First(grid => grid.Width == 36 && grid.Height == 36);
+    internal static Grid Overlay(Button button) => (Grid)VisualTreeHelper.GetParent(button);
+
+    private static void AssertRoundedPlay(Button button, double nominalSize)
+    {
+        var paths = Visuals(button).OfType<Path>().ToArray();
+        AssertEqual(1, paths.Length, "Current avatars use a filled rounded Play contour instead of the original font outline");
+        var play = paths.Single();
+        AssertEqual(true, ReferenceEquals(play.Data, play.FindResource("AvatarPreviewPlayGeometry")), "All current avatar locations share one closed Play contour");
+        AssertEqual(true, Math.Abs(play.Width - nominalSize) < .00001 && Math.Abs(play.Height - nominalSize) < .00001 &&
+            Math.Abs(Math.Max(play.ActualWidth, play.ActualHeight) - nominalSize) < .00001,
+            "The filled triangle's maximum dimension follows its reference-proportional foreground allocation");
+        AssertEqual(true, play.ActualWidth < play.ActualHeight && play.ActualWidth > play.ActualHeight * .8,
+            "Uniform stretch preserves the rounded triangle's aspect instead of distorting it to a square");
+        AssertEqual(Visibility.Visible, play.Visibility, "Idle Play remains available for the existing hover reveal");
+        AssertEqual(1d, play.Opacity, "The filled Play foreground is not faded with its backplate");
+        AssertEqual(false, play.IsHitTestVisible || play.Focusable, "The filled artwork is decorative and leaves pointer/focus ownership on its existing button");
+        AssertEqual(Colors.White, ((SolidColorBrush)play.Fill).Color, "Filled Play keeps the reference's opaque white foreground in either theme");
+        AssertEqual<Brush?>(null, play.Stroke, "Play is filled geometry rather than an outlined triangle with rounded stroke joins");
+        var bounds = play.Data.Bounds;
+        bool Filled(double x, double y) => play.Data.FillContains(new Point(bounds.Left + bounds.Width * x, bounds.Top + bounds.Height * y));
+        AssertEqual(true, Filled(.005, .5) && Filled(.25, .5) && Filled(.5, .5) && Filled(.75, .5), "The right-facing triangle has a solid interior and a substantial left edge");
+        AssertEqual(false, Filled(.005, .005) || Filled(.005, .995), "The two left corners round the filled region itself");
+        AssertEqual(true, Filled(.97, .46) && Filled(.97, .54), "The right tip has a soft filled curve instead of a sharp triangle vertex");
+        AssertEqual(true, PathGeometry.CreateFromGeometry(play.Data).Figures.All(figure => figure.IsClosed), "The shared Play silhouette is explicitly closed");
+    }
+
+    private static void AssertForegroundAndHitOwnership(Button button)
+    {
+        var overlay = Overlay(button);
+        AssertEqual(1d, button.Opacity, "The foreground button is not faded with the backplate");
+        foreach (var layer in overlay.Children.OfType<UIElement>().Where(layer => layer is not Ellipse { Stroke: null }))
+            AssertEqual(1d, layer.Opacity, "Play, Stop, spinner and progress remain at full presentation opacity");
+        foreach (var stop in Visuals(button).OfType<Border>().Where(border => border.Width is 9 or 10))
+            AssertEqual(Colors.White, ((SolidColorBrush)stop.Background).Color, "Stop/cancel retains opaque white contrast against the reference backplate");
+        foreach (var ring in Visuals(overlay).OfType<Ellipse>().Where(ellipse =>
+            ReferenceEquals(ellipse.Style, ellipse.FindResource("AvatarProgressRingStyle")) ||
+            ReferenceEquals(ellipse.Style, ellipse.FindResource("AvatarPreparingRingStyle"))))
+            AssertEqual(Colors.White, ((SolidColorBrush)ring.Stroke).Color, "Progress/spinner retains opaque white contrast in both themes");
+        var host = (Grid)overlay.Parent;
+        foreach (var point in new[] { new Point(1, host.ActualHeight / 2), new Point(host.ActualWidth - 1, host.ActualHeight / 2) })
+        {
+            // This compiled fixture has no presentation source; inspect its actual
+            // visual hit geometry rather than InputHitTest's presentation visibility.
+            var hit = VisualTreeHelper.HitTest(host, point)?.VisualHit;
+            AssertNotNull(hit, "The transparent preview target covers both portrait edges in the compiled visual tree");
+            AssertEqual(true, ReferenceEquals(hit, button) || Ancestors(hit!).Contains(button), "Both portrait edges route pointer input to the existing preview action");
+        }
+    }
+
+    private static void AssertProgressGeometry(Button button)
+    {
+        var overlay = Overlay(button);
+        var host = (Grid)overlay.Parent;
+        var center = new Point(host.ActualWidth / 2, host.ActualHeight / 2);
+        foreach (var ellipse in Visuals(overlay).OfType<Ellipse>().Where(ellipse => ellipse.Stroke is not null && IsPresented(ellipse)))
+        {
+            var geometry = ellipse.RenderedGeometry.Bounds;
+            var actual = ellipse.TranslatePoint(new Point(geometry.Left + geometry.Width / 2, geometry.Top + geometry.Height / 2), host);
+            AssertEqual(true, Math.Abs(actual.X - center.X) < .00001 && Math.Abs(actual.Y - center.Y) < .00001,
+                "The actual rest, progress and spinner paths center on the portrait owner");
+            AssertEqual(true, Math.Abs(geometry.Width + ellipse.StrokeThickness - host.ActualWidth) < .00001,
+                "Progress geometry fits inside the avatar-sized owner with its original stroke weight");
+            if (ReferenceEquals(ellipse.Style, ellipse.FindResource("AvatarProgressRingStyle")))
+            {
+                AssertEqual(2, ellipse.StrokeDashArray.Count, "Visible progress retains one circumference dash and gap");
+                var circumferenceUnits = geometry.Width * Math.PI / ellipse.StrokeThickness;
+                AssertEqual(true, ellipse.StrokeDashArray.All(dash => Math.Abs(dash - circumferenceUnits) < .00001),
+                    "The progress dash and gap each match the actual ring circumference");
+            }
+            else if (ReferenceEquals(ellipse.Style, ellipse.FindResource("AvatarPreparingRingStyle")))
+            {
+                AssertEqual(2, ellipse.StrokeDashArray.Count, "Visible preparation retains a quarter-ring dash and its remaining gap");
+                var circumferenceUnits = geometry.Width * Math.PI / ellipse.StrokeThickness;
+                AssertEqual(true, Math.Abs(ellipse.StrokeDashArray[0] - circumferenceUnits / 4) < .00001 &&
+                    Math.Abs(ellipse.StrokeDashArray[1] - circumferenceUnits * 3 / 4) < .00001,
+                    "The preparation spinner retains one quarter of the avatar-sized ring rather than repeating a legacy-sized dash");
+            }
+        }
+    }
     internal static Border Card(DependencyObject child) => Ancestors(child).OfType<Border>().First(border => border.Child is DockPanel);
     internal static IEnumerable<DependencyObject> Ancestors(DependencyObject child)
     {
@@ -308,20 +453,23 @@ internal static class AvatarPreviewSuite
     {
         var overlay = Overlay(button);
         var avatar = (Grid)overlay.Parent;
-        var image = (ImageBrush)avatar.Children.OfType<Ellipse>().Single(ellipse => ellipse.Width == avatar.Width).Fill;
+        var portrait = avatar.Children.OfType<Ellipse>().Single();
+        AssertEqual(portrait.TransformToAncestor(avatar).TransformBounds(new Rect(portrait.RenderSize)),
+            overlay.TransformToAncestor(avatar).TransformBounds(new Rect(overlay.RenderSize)), "Image-backed portrait and overlay have equal realized bounds");
+        var image = (ImageBrush)portrait.Fill;
         var original = image.ImageSource;
         var originalBinding = BindingOperations.GetBindingExpression(image, ImageBrush.ImageSourceProperty);
         AssertNotNull(originalBinding, "The transparency fixture must exercise the compiled cover binding");
         var card = Card(button);
-        var point = overlay.TranslatePoint(new Point(7, 18), card);
+        var point = overlay.TranslatePoint(new Point(7, overlay.ActualHeight / 2), card);
         try
         {
             image.SetCurrentValue(ImageBrush.ImageSourceProperty, BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[] { 0, 0, 255, 255 }, 4));
             var red = Pixel(Capture(card, dpi));
             image.SetCurrentValue(ImageBrush.ImageSourceProperty, BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[] { 255, 0, 0, 255 }, 4));
             var blue = Pixel(Capture(card, dpi));
-            AssertEqual(true, Math.Abs(red[0] - blue[0]) + Math.Abs(red[2] - blue[2]) > 30,
-                "Rendered cover pixels must remain visible through the idle/active contrast surface (injected red/blue ImageBrush fixture)");
+            AssertEqual(true, Math.Abs(red[0] - blue[0]) is >= 150 and <= 156 && Math.Abs(red[2] - blue[2]) is >= 150 and <= 156,
+                "Idle/active compositing retains about sixty percent of both portrait color channels (forty-percent black backplate, injected red/blue ImageBrush fixture)");
         }
         finally { image.SetCurrentValue(ImageBrush.ImageSourceProperty, original); }
         AssertEqual(true, ReferenceEquals(originalBinding, BindingOperations.GetBindingExpression(image, ImageBrush.ImageSourceProperty)),

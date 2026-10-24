@@ -458,7 +458,7 @@ internal static class VoiceLanguageTagsSuite
             var selectedCard = CardBorder(selectedTags);
             AssertEqual(56d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Fill is ImageBrush).ActualWidth,
                 "Selected-card fixture reserves the real cover geometry using a local resource");
-            AssertEqual(36d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
+            AssertEqual(56d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
                 "Selected-card fixture reserves the visible preview action without playing audio");
             AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 94)) <= 1,
                 "The selected metadata spans the full column after 56-DIP cover, gap, border and padding");

@@ -84,6 +84,7 @@ internal static class VoiceCardInkSuite
                     heart.Stroke = Brushes.White;
                     if (heart.Fill is SolidColorBrush fill && fill.Color.A != 0) heart.Fill = Brushes.White;
                     foreach (var glyph in Visuals(AvatarPreviewSuite.Card(row)).OfType<InkCenteredGlyph>()) glyph.Foreground = Brushes.White;
+                    foreach (var play in Visuals(Preview(row)).OfType<System.Windows.Shapes.Path>()) play.Fill = Brushes.White;
                     foreach (var stop in Visuals(Preview(row)).OfType<Border>().Where(border => border.Width is 9 or 10)) stop.Background = Brushes.White;
                 }
                 SettingsLayoutSuite.Layout(view);
@@ -100,13 +101,13 @@ internal static class VoiceCardInkSuite
                     var preview = Preview(row);
                     var action = Visuals(row.Children.OfType<Button>().Last()).OfType<InkCenteredGlyph>().Single();
                     var expected = row.TranslatePoint(new Point(0, row.ActualHeight / 2), view).Y * dpi;
-                    var avatarCenter = preview.TranslatePoint(new Point(18, 18), view).Y * dpi;
+                    var avatarCenter = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), view).Y * dpi;
                     var heartCenter = RasterCenter(bitmap, heart, view, dpi);
                     var actionCenter = RasterCenter(bitmap, action, view, dpi);
                     var context = $"{dpi * 100}%/{format}/{location}/{state}";
                     var heartFrameCenter = heart.TranslatePoint(new Point(0, heart.ActualHeight / 2), view).Y * dpi;
                     AssertEqual(true, Math.Abs(heartFrameCenter - expected) < .00001,
-                        $"{context}: the aspect-preserved heart frame centers exactly on its action row");
+                        $"{context}: the aspect-preserved heart frame centers exactly on its title row");
                     // A raster's outer pixel bounds quantize to half-pixel centers. This is a physical
                     // sampling limit; the exact outline below must still be centered without tolerance.
                     AssertEqual(true, Math.Abs(actionCenter - heartCenter) <= .50001, $"{context}: Tick/Cross and heart raster centers must differ by at most one half physical pixel");
@@ -125,6 +126,21 @@ internal static class VoiceCardInkSuite
                         AssertEqual(true, Math.Abs(center - avatarCenter) < .00001, $"{context}: Play outline centers exactly on its avatar overlay");
                         AssertNativeOutlineUnchanged(glyph, drawing);
                         AssertEqual(true, Math.Abs(RasterCenter(bitmap, glyph, view, dpi) - avatarCenter) <= .50001, $"{context}: Play keeps the half-physical-pixel avatar bound");
+                    }
+                    var play = Visuals(preview).OfType<System.Windows.Shapes.Path>().Single();
+                    AssertEqual(state is "idle" or "filled/Tick", IsShown(play), $"{context}: only idle state uses the current filled Play contour");
+                    if (IsShown(play))
+                    {
+                        var bounds = VisualTreeHelper.GetDrawing(play)!.Bounds;
+                        var center = play.TranslatePoint(new Point(bounds.Left + bounds.Width / 2, bounds.Top + bounds.Height / 2), view);
+                        var owner = preview.TranslatePoint(new Point(preview.ActualWidth / 2, preview.ActualHeight / 2), view);
+                        var frameCenter = play.TranslatePoint(new Point(play.ActualWidth / 2, play.ActualHeight / 2), view);
+                        AssertEqual(true, Math.Abs(frameCenter.X - owner.X) * dpi < .00001 && Math.Abs(frameCenter.Y - owner.Y) * dpi < .00001,
+                            $"{context}: filled Play frame centers exactly on its avatar owner");
+                        AssertEqual(true, Math.Abs(center.X - owner.X) * dpi < .00001 && Math.Abs(center.Y - owner.Y) * dpi < .00001,
+                            $"{context}: filled Play ink centers exactly on its avatar owner");
+                        AssertEqual(true, Math.Abs(RasterCenter(bitmap, play, view, dpi) - avatarCenter) <= .50001,
+                            $"{context}: filled Play keeps the unchanged half-physical-pixel avatar bound");
                     }
                     foreach (var stop in Visuals(preview).OfType<Border>().Where(border => IsShown(border) && border.Width is 9 or 10))
                         AssertEqual(true, Math.Abs(RasterCenter(bitmap, stop, view, dpi) - avatarCenter) <= .50001, $"{context}: Stop raster must retain the preview center");
@@ -148,7 +164,7 @@ internal static class VoiceCardInkSuite
     private static void CheckLegacyReference(SettingsView view, double dpi, string? proofDirectory)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, UseLayoutRounding = false, HorizontalAlignment = HorizontalAlignment.Right };
-        var heart = new System.Windows.Shapes.Path { Width = 18, Height = 18, Stretch = Stretch.Fill, StrokeThickness = 1.5,
+        var heart = new System.Windows.Shapes.Path { Width = 18, Stretch = Stretch.Uniform, StrokeThickness = 1.5,
             StrokeLineJoin = PenLineJoin.Round, Stroke = Brushes.White, Fill = Brushes.Transparent, Data = (Geometry)view.FindResource("VoiceLikeHeartGeometry") };
         row.Children.Add(new Button { Width = 32, Height = 32, Margin = new Thickness(0, 0, 4, 0), Padding = new Thickness(6), Background = Brushes.Transparent, BorderThickness = new Thickness(0), Content = heart });
         var preview = new Grid { Width = 36, Height = 36, Margin = new Thickness(0, 0, 4, 0) };
@@ -163,6 +179,8 @@ internal static class VoiceCardInkSuite
         try
         {
             SettingsLayoutSuite.Layout(view);
+            foreach (var glyph in Visuals(row).OfType<InkCenteredGlyph>())
+                AssertNativeOutlineUnchanged(glyph, VisualTreeHelper.GetDrawing(glyph)!);
             var referenceBitmap = new RenderTargetBitmap((int)Math.Ceiling(view.ActualWidth * dpi), (int)Math.Ceiling(view.ActualHeight * dpi), 96 * dpi, 96 * dpi, PixelFormats.Pbgra32);
             referenceBitmap.Render(view);
             AssertRecordedCompositePhase(view, row, referenceBitmap, dpi, proofDirectory);

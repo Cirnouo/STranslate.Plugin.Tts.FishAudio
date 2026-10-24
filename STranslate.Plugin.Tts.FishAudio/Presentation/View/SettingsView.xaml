@@ -20,12 +20,59 @@
         <!-- Repository-owned rounded contour, shared by outline/filled Like actions and their tab. -->
         <Geometry x:Key="VoiceLikeHeartGeometry">M 12,4 C 11.2,4 10.6,2.5 8.7,1.7 C 5.8,0.4 2.5,1.75 1.3,4.5 C -1,9.8 3.4,15.4 10,20.2 C 11.2,21.1 12.8,21.1 14,20.2 C 20.6,15.4 25,9.8 22.7,4.5 C 21.5,1.75 18.2,0.4 15.3,1.7 C 13.4,2.5 12.8,4 12,4 Z</Geometry>
         <SolidColorBrush x:Key="VoiceLikeFilledBrush" Color="#FC3D49" />
+        <!-- Repository-owned filled silhouette: all three corners curve within the geometry. -->
+        <Geometry x:Key="AvatarPreviewPlayGeometry">M 0.8,1.6 Q 0.8,-0.3 2.4,0.6 L 10.4,5 Q 12.2,6 10.4,7 L 2.4,11.4 Q 0.8,12.3 0.8,10.4 Z</Geometry>
+        <SolidColorBrush x:Key="AvatarPreviewBackplateBrush" Color="Black" />
+        <SolidColorBrush x:Key="AvatarPreviewForegroundBrush" Color="White" />
+        <conv:AvatarPreviewGlyphSizeConverter x:Key="AvatarPreviewGlyphSizeConverter" />
+        <Style x:Key="AvatarPreviewPlayStyle" TargetType="Path">
+            <Setter Property="Data" Value="{StaticResource AvatarPreviewPlayGeometry}" />
+            <Setter Property="Fill" Value="{StaticResource AvatarPreviewForegroundBrush}" />
+            <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource AvatarPreviewGlyphSizeConverter}}" />
+            <Setter Property="Height" Value="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource AvatarPreviewGlyphSizeConverter}}" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="UseLayoutRounding" Value="False" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Focusable" Value="False" />
+        </Style>
         <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <conv:VoiceCreationDateConverter x:Key="VoiceCreationDateConverter" />
         <conv:VoiceDescriptionVisibilityConverter x:Key="VoiceDescriptionVisibilityConverter" />
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
-        <conv:ProgressToDashOffsetConverter x:Key="ProgressToDashOffsetConverter" />
+        <conv:AvatarPreviewRingConverter x:Key="AvatarPreviewRingConverter" />
+        <conv:AvatarPreviewRingConverter x:Key="AvatarPreparingRingConverter" IsIndeterminate="True" />
+        <Style x:Key="AvatarProgressRingStyle" TargetType="Ellipse">
+            <Setter Property="StrokeDashArray">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource AvatarPreviewRingConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                        <Binding Path="StrokeThickness" RelativeSource="{RelativeSource Self}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="StrokeDashOffset">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource AvatarPreviewRingConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                        <Binding Path="StrokeThickness" RelativeSource="{RelativeSource Self}" />
+                        <Binding Path="PreviewProgress" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="AvatarPreparingRingStyle" TargetType="Ellipse">
+            <Setter Property="StrokeDashArray">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource AvatarPreparingRingConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource Self}" />
+                        <Binding Path="StrokeThickness" RelativeSource="{RelativeSource Self}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <BooleanToVisibilityConverter x:Key="BtvConverter" />
         <DataTemplate x:Key="VoiceTitleCopyToolTipTemplate">
             <StackPanel>
@@ -170,7 +217,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="Transparent" CornerRadius="18">
+                        <Border Background="Transparent" CornerRadius="24">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                     </ControlTemplate>
@@ -207,7 +254,8 @@
                                 <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
                             </Ellipse.Fill>
                         </Ellipse>
-                        <Grid Width="36" Height="36" UseLayoutRounding="False"
+                        <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                              Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}" UseLayoutRounding="False"
                               Tag="{Binding IsMouseOver, ElementName=VoiceCard}">
                             <Grid.Style>
                                 <Style TargetType="Grid">
@@ -222,14 +270,13 @@
                                     </Style.Triggers>
                                 </Style>
                             </Grid.Style>
-                            <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.72" IsHitTestVisible="False" />
+                            <Ellipse Fill="{StaticResource AvatarPreviewBackplateBrush}" Opacity="0.4" IsHitTestVisible="False" />
                             <Ellipse x:Name="SRestBorder" StrokeThickness="1"
                                      Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
                             <Ellipse x:Name="STrack" StrokeThickness="1.5"
                                      Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" Visibility="Collapsed" />
-                            <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="{DynamicResource TextFillColorPrimaryBrush}" Fill="Transparent"
-                                     StrokeDashArray="72.26 72.26"
-                                     StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                            <Ellipse x:Name="SArc" Style="{StaticResource AvatarProgressRingStyle}"
+                                     StrokeThickness="1.5" Stroke="{StaticResource AvatarPreviewForegroundBrush}" Fill="Transparent"
                                      StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
                                 <Ellipse.RenderTransform>
                                     <RotateTransform Angle="-90"/>
@@ -238,11 +285,12 @@
                             <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
                                   IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                                 <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                                <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                         StrokeDashArray="18 54" StrokeDashCap="Round" />
+                                <Ellipse Style="{StaticResource AvatarPreparingRingStyle}"
+                                         Stroke="{StaticResource AvatarPreviewForegroundBrush}" StrokeThickness="1.5" Fill="Transparent" StrokeDashCap="Round" />
                             </Grid>
                             <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                    Width="36" Height="36"
+                                    Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                    Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
                                     Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                     CommandParameter="{Binding}">
                                 <Button.Style>
@@ -262,9 +310,8 @@
                                     </Style>
                                 </Button.Style>
                                 <Grid>
-                                    <view:InkCenteredGlyph x:Name="SIcon" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
-                                    <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}"
+                                    <Path x:Name="SIcon" Style="{StaticResource AvatarPreviewPlayStyle}" />
+                                    <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="{StaticResource AvatarPreviewForegroundBrush}"
                                             HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
                                 </Grid>
                             </Button>
@@ -556,7 +603,8 @@
                             <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
                         </Ellipse.Fill>
                     </Ellipse>
-                    <Grid Width="36" Height="36" UseLayoutRounding="False"
+                    <Grid Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                          Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}" UseLayoutRounding="False"
                           Tag="{Binding IsMouseOver, ElementName=SelectedVoiceCard}">
                         <Grid.Style>
                             <Style TargetType="Grid">
@@ -571,7 +619,7 @@
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
-                        <Ellipse Fill="{DynamicResource SolidBackgroundFillColorBaseBrush}" Opacity="0.72" IsHitTestVisible="False" />
+                        <Ellipse Fill="{StaticResource AvatarPreviewBackplateBrush}" Opacity="0.4" IsHitTestVisible="False" />
                         <Ellipse x:Name="DisplayRestBorder" StrokeThickness="1"
                                  Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent">
                             <Ellipse.Style>
@@ -588,9 +636,8 @@
                         <Ellipse x:Name="DisplayTrack" StrokeThickness="1.5"
                                  Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent"
                                  Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
-                        <Ellipse StrokeThickness="1.5" Stroke="{DynamicResource TextFillColorPrimaryBrush}" Fill="Transparent"
-                                 StrokeDashArray="72.26 72.26"
-                                 StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                        <Ellipse Style="{StaticResource AvatarProgressRingStyle}"
+                                 StrokeThickness="1.5" Stroke="{StaticResource AvatarPreviewForegroundBrush}" Fill="Transparent"
                                  StrokeDashCap="Round"
                                  RenderTransformOrigin="0.5,0.5"
                                  Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}">
@@ -601,11 +648,12 @@
                         <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
                               IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                             <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                            <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                     StrokeDashArray="18 54" StrokeDashCap="Round" />
+                            <Ellipse Style="{StaticResource AvatarPreparingRingStyle}"
+                                     Stroke="{StaticResource AvatarPreviewForegroundBrush}" StrokeThickness="1.5" Fill="Transparent" StrokeDashCap="Round" />
                         </Grid>
                         <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                Width="36" Height="36"
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Grid}}"
+                                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Grid}}"
                                 Command="{Binding ToggleDisplayPreviewCommand}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource AvatarPreviewButtonStyle}">
@@ -624,11 +672,9 @@
                                 </Style>
                             </Button.Style>
                             <Grid>
-                                <view:InkCenteredGlyph Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <view:InkCenteredGlyph.Style>
-                                        <Style TargetType="view:InkCenteredGlyph">
-                                            <Setter Property="Glyph" Value="&#xE768;" />
+                                <Path>
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource AvatarPreviewPlayStyle}">
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
@@ -636,9 +682,9 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </view:InkCenteredGlyph.Style>
-                                </view:InkCenteredGlyph>
-                                <Border Width="10" Height="10" CornerRadius="1" Background="{DynamicResource TextFillColorPrimaryBrush}"
+                                    </Path.Style>
+                                </Path>
+                                <Border Width="10" Height="10" CornerRadius="1" Background="{StaticResource AvatarPreviewForegroundBrush}"
                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                         Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
                             </Grid>
