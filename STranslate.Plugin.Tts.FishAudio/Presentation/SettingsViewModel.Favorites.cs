@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
+using STranslate.Plugin.Tts.FishAudio.Presentation;
 
 namespace STranslate.Plugin.Tts.FishAudio.ViewModel;
 
@@ -79,7 +80,7 @@ public partial class SettingsViewModel
     [RelayCommand]
     private void CommitFavoritePageInput()
     {
-        if (int.TryParse(FavoritePageInput, out var page) && page >= 1 && page <= FavoriteTotalPages)
+        if (PageInputDraft.TryGetPage(FavoritePageInput, out var page) && page <= FavoriteTotalPages && page != FavoritePage)
             ShowFavoritePage(page);
         else
             FavoritePageInput = FavoritePage.ToString();
@@ -280,6 +281,7 @@ public partial class SettingsViewModel
         card.Description = "";
         card.AuthorName = "";
         card.TaskCount = 0;
+        card.Languages = [];
         card.SampleAudioUrl = null;
         card.CoverImage = "";
         card.CoverUrl = "";
@@ -318,6 +320,7 @@ public partial class SettingsViewModel
         card.Description = metadata.Description;
         card.AuthorName = metadata.AuthorName;
         card.TaskCount = metadata.TaskCount;
+        card.Languages = metadata.Languages;
         card.SampleAudioUrl = metadata.SampleAudioUrl;
         card.CoverImage = metadata.CoverImage;
         card.HasMetadata = true;

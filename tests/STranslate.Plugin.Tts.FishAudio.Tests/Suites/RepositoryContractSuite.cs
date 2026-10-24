@@ -24,7 +24,7 @@ internal static class RepositoryContractSuite
         {
             var root = System.Xml.Linq.XDocument.Load(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml")).Root!;
             var entries = root.Elements().ToArray();
-            AssertEqual(105, entries.Length, $"{locale} must have all 105 own resources without fallback");
+            AssertEqual(107, entries.Length, $"{locale} must have all 107 own resources without fallback");
             AssertEqual(true, entries.All(entry => entry.Name.LocalName == "String"
                 && ((string?)entry.Attribute(keyName))?.StartsWith(prefix, StringComparison.Ordinal) == true
                 && !string.IsNullOrWhiteSpace(entry.Value)), $"{locale} must have nonempty keyed string resources");
@@ -38,6 +38,8 @@ internal static class RepositoryContractSuite
         foreach (var locale in UiLocales.All)
         {
             var resources = Load(locale);
+            AssertEqual(locale, resources[prefix + "Languages_UiLocale"].ToLowerInvariant(),
+                "Each UI dictionary must explicitly identify its language-name culture");
             AssertEqual(true, english.Keys.Order(StringComparer.Ordinal).SequenceEqual(resources.Keys.Order(StringComparer.Ordinal)),
                 $"{locale} must define exactly the English key set");
             using var metadata = JsonDocument.Parse(File.ReadAllText(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.json")));

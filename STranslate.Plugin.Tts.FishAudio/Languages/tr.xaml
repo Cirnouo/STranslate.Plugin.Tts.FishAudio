@@ -121,4 +121,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Ses ID&apos;si kopyalandı</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Ses ID&apos;si kopyalanamadı. Yeniden deneyin.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Proje deposu açılamadı. Varsayılan tarayıcı ayarlarınızı kontrol edin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">tr</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">Diğer diller</sys:String>
 </ResourceDictionary>

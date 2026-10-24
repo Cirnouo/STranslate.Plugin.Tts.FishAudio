@@ -84,6 +84,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _getSearchQuery(), resetOnEmptyResponse: true);
 
+    internal int PageInputMaximum => _pagination.InputMaximum(_highestVisitedPage);
+
     internal async Task NextPageAsync()
     {
         if (_pagination.HasNextPage)
@@ -98,10 +100,11 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal async Task CommitPageInputAsync()
     {
-        if (int.TryParse(_getPageInput(), out var requestedPage)
+        if (PageInputDraft.TryGetPage(_getPageInput(), out var requestedPage)
             && _pagination.CanRequestPage(requestedPage, _highestVisitedPage)
             && requestedPage != _pagination.Page)
         {
+            _setPageInput(requestedPage.ToString());
             await ExecuteSearchAsync(requestedPage, _committedSearchQuery);
         }
         else
@@ -122,6 +125,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             CoverImage = item.CoverImage,
             AuthorName = item.AuthorName,
             TaskCount = item.TaskCount,
+            Languages = item.Languages,
             SampleAudioUrl = item.SampleAudioUrl,
         };
         if (!_persistSelectedVoice(item.Id, cached))
@@ -213,6 +217,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         CoverImage = model.CoverImage,
         AuthorName = model.Author?.Nickname ?? "",
         TaskCount = model.TaskCount,
+        Languages = model.Languages,
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
@@ -294,6 +299,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             Description = metadata.Description,
             AuthorName = metadata.AuthorName,
             TaskCount = metadata.TaskCount,
+            Languages = metadata.Languages,
             SampleAudioUrl = metadata.SampleAudioUrl,
             CoverImage = metadata.CoverImage,
         };

@@ -289,6 +289,7 @@ public static class SettingsStore
                 CoverImage = source.CachedVoice.CoverImage,
                 AuthorName = source.CachedVoice.AuthorName,
                 TaskCount = source.CachedVoice.TaskCount,
+                Languages = source.CachedVoice.Languages,
                 SampleAudioUrl = source.CachedVoice.SampleAudioUrl,
             };
         target.IsS21ProFreePromoDismissed = source.IsS21ProFreePromoDismissed;

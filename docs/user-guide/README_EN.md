@@ -51,9 +51,11 @@ A voice selects timbre; a model selects the synthesis engine. A voice's communit
 | Save it for later | Click the star to add/remove a favorite. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
 | Copy its Voice ID | Click the **card title**, not the author or description. |
 
+Search, By ID, Favorites and the selected voice use the same language labels in a separate single-line row: a flag plus a name in the interface language. Wider cards show more labels, with no fixed limit of three; click `+N` to open exactly the remaining N languages in a popup. Names stay visible; only a first label whose full name cannot fit is shortened with an ellipsis (hover for its full name). Missing language metadata hides the row. Labels come from Fish Audio voice metadata, not a fixed synthesis-language whitelist, speaker nationality or a complete account of the engine's language capabilities. Unknown language codes keep their text with a generic icon.
+
 Favorites are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved favorite.
 
-Use `‹` / `›`, or enter a page number and press Enter; leaving the page field also submits it. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
+In Search and Favorites, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
 Changing the voice or replacing/removing its card stops its preview.
 

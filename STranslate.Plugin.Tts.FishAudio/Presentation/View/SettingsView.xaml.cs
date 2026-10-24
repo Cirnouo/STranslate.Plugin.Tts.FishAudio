@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows;
@@ -15,8 +14,6 @@ public partial class SettingsView : UserControl
 {
     private static readonly Uri ProjectRepositoryUri = new("https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio");
     internal Action<ProcessStartInfo> RepositoryLinkLauncher { get; set; } = startInfo => Process.Start(startInfo)?.Dispose();
-
-    private static readonly Regex DigitsOnly = new(@"^\d+$", RegexOptions.Compiled);
 
     public SettingsView()
     {
@@ -104,11 +101,6 @@ public partial class SettingsView : UserControl
 
     private static string ReplaceSelection(TextBox input, string replacement) =>
         input.Text.Remove(input.SelectionStart, input.SelectionLength).Insert(input.SelectionStart, replacement);
-
-    private void PageInputBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
-    {
-        e.Handled = !DigitsOnly.IsMatch(e.Text);
-    }
 
     private void PageInputBox_LostFocus(object sender, RoutedEventArgs e)
     {

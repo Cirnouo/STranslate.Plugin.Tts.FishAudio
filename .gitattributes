@@ -4,3 +4,4 @@ docs/evidences/**/*.msgpack binary
 docs/evidences/**/*.pcm binary
 # Preserve the copied upstream license bytes in Windows checkouts and packages.
 STranslate.Plugin.Tts.FishAudio/Assets/Licenses/Octicons.LICENSE.txt -text
+STranslate.Plugin.Tts.FishAudio/Assets/Licenses/flag-icons.LICENSE.txt -text

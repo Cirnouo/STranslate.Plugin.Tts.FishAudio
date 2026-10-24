@@ -103,6 +103,14 @@ internal static class BuildScriptSuite
         AssertEqual(true, result.Output.Contains("Octicons.LICENSE.txt", StringComparison.Ordinal), "Package rejection must identify the missing icon license");
     }
 
+    internal static void PackageMissingFlagIconsNoticeFails()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuildWithoutFlagIconsNotice();
+        AssertEqual(true, result.ExitCode != 0, "A package missing the bundled flags' complete license must fail verification");
+        AssertEqual(true, result.Output.Contains("flag-icons.LICENSE.txt", StringComparison.Ordinal), "Package rejection identifies the missing flag license");
+    }
+
     internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
@@ -180,6 +188,7 @@ internal static class BuildScriptSuite
         private readonly string _invocationLogPath;
         private bool _omitAudioDependency;
         private bool _omitOcticonsNotice;
+        private bool _omitFlagIconsNotice;
         private string _omittedLocale = string.Empty;
         private string _omittedStreamingDependency = string.Empty;
 
@@ -284,6 +293,9 @@ internal static class BuildScriptSuite
                         if ($env:FISH_AUDIO_BUILD_TEST_OMIT_OCTICONS -ne '1') {
                             $entryNames += 'Assets/Licenses/Octicons.LICENSE.txt'
                         }
+                        if ($env:FISH_AUDIO_BUILD_TEST_OMIT_FLAGS -ne '1') {
+                            $entryNames += 'Assets/Licenses/flag-icons.LICENSE.txt'
+                        }
                         foreach ($streamingDependency in @('MessagePack.dll', 'MessagePack.Annotations.dll', 'Microsoft.NET.StringTools.dll')) {
                             if ($env:FISH_AUDIO_BUILD_TEST_OMIT_STREAMING -ne $streamingDependency) {
                                 $entryNames += $streamingDependency
@@ -361,6 +373,12 @@ internal static class BuildScriptSuite
             return RunBuild("-Release", "-Clean");
         }
 
+        internal (int ExitCode, string Output) RunBuildWithoutFlagIconsNotice()
+        {
+            _omitFlagIconsNotice = true;
+            return RunBuild("-Release", "-Clean");
+        }
+
         internal (int ExitCode, string Output) RunBuildWithoutAudioDependency()
         {
             _omitAudioDependency = true;
@@ -397,6 +415,7 @@ internal static class BuildScriptSuite
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_TESTS"] = failTests ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_LOCALE"] = _omittedLocale;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_OCTICONS"] = _omitOcticonsNotice ? "1" : "0";
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_FLAGS"] = _omitFlagIconsNotice ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_AUDIO"] = _omitAudioDependency ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_STREAMING"] = _omittedStreamingDependency;
 

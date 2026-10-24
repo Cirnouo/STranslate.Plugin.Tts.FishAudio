@@ -132,4 +132,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">声音 ID 已复制</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">无法复制声音 ID，请重试。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">无法打开项目仓库。请检查默认浏览器设置。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">zh-CN</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">其余语言</sys:String>
 </ResourceDictionary>

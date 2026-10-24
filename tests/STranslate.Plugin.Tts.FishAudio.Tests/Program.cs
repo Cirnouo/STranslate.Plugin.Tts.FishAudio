@@ -1,3 +1,25 @@
+if (args.Contains("--page-entry-tests"))
+{
+    await PageEntrySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--page-entry-tests") + 1));
+    Console.WriteLine("Page entry tests passed.");
+    return;
+}
+
+if (args.Contains("--voice-language-tags-tests"))
+{
+    BuildScriptSuite.PackageMissingFlagIconsNoticeFails();
+    await VoiceLanguageTagsSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-language-tags-tests") + 1));
+    Console.WriteLine("Voice language tag tests passed.");
+    return;
+}
+
+if (args.Contains("--voice-language-tests"))
+{
+    await VoiceLanguageSuite.RunAllAsync();
+    Console.WriteLine("Voice language metadata tests passed.");
+    return;
+}
+
 if (args.Contains("--ui-locale-contract-tests"))
 {
     RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata();
@@ -163,6 +185,7 @@ BuildScriptSuite.ConfigurationParameterIsRejected();
 BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging();
 BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails();
 BuildScriptSuite.PackageMissingOcticonsNoticeFails();
+BuildScriptSuite.PackageMissingFlagIconsNoticeFails();
 BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails();
 BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding();
 BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding();
@@ -375,4 +398,7 @@ await VoiceCardInkSuite.RunAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
+await VoiceLanguageSuite.RunAllAsync();
+await VoiceLanguageTagsSuite.RunAllAsync();
+await PageEntrySuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

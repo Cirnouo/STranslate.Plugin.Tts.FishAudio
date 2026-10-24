@@ -272,15 +272,16 @@
                             <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
                         </Ellipse.Fill>
                     </Ellipse>
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+                    <StackPanel VerticalAlignment="Center">
                         <Button Style="{StaticResource VoiceTitleButtonStyle}"
                                 Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                 CommandParameter="{Binding Id}">
-                            <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" MaxWidth="280" />
+                            <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
                         </Button>
                         <TextBlock Text="{Binding Description}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
                                    TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
+                        <view:VoiceLanguageTags Languages="{Binding Languages}" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
                                     Visibility="{Binding IsLoadingMetadata, Converter={StaticResource BtvConverter}}">
                             <Grid Width="12" Height="12" Margin="0,0,4,0" IsHitTestVisible="False"
@@ -583,10 +584,10 @@
                         <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
                     </Ellipse.Fill>
                 </Ellipse>
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left">
+                <StackPanel VerticalAlignment="Center">
                     <Button Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
                             CommandParameter="{Binding CachedVoiceId}">
-                        <TextBlock FontWeight="Medium" FontSize="14">
+                        <TextBlock FontWeight="Medium" FontSize="14" TextTrimming="CharacterEllipsis">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
@@ -605,6 +606,7 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" MaxHeight="36"
                                Visibility="{Binding CachedVoiceDescription, Converter={StaticResource StringToVisibilityConverter}}" />
+                    <view:VoiceLanguageTags Languages="{Binding CachedVoiceLanguages}" />
                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                         <TextBlock Text="{Binding CachedVoiceAuthor}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
@@ -844,8 +846,8 @@
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
                         <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" x:Name="PageInputBox" Width="40" TextAlignment="Center" FontFamily="Consolas"
                                  FontSize="12" Padding="4,2" VerticalContentAlignment="Center"
-                                 Text="{Binding PageInput, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewTextInput="PageInputBox_PreviewTextInput"
+                                 view:PageInputBehavior.Maximum="{Binding SearchPageInputMaximum}"
+                                 Text="{Binding PageInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  LostFocus="PageInputBox_LostFocus">
                             <TextBox.InputBindings>
                                 <KeyBinding Key="Enter" Command="{Binding CommitPageInputCommand}" />
@@ -982,8 +984,8 @@
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
                         <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" x:Name="FavoritePageInputBox" Width="40" TextAlignment="Center" FontFamily="Consolas"
                                  FontSize="12" Padding="4,2" VerticalContentAlignment="Center"
-                                 Text="{Binding FavoritePageInput, UpdateSourceTrigger=PropertyChanged}"
-                                 PreviewTextInput="PageInputBox_PreviewTextInput"
+                                 view:PageInputBehavior.Maximum="{Binding FavoriteTotalPages}"
+                                 Text="{Binding FavoritePageInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  LostFocus="FavoritePageInputBox_LostFocus">
                             <TextBox.InputBindings>
                                 <KeyBinding Key="Enter" Command="{Binding CommitFavoritePageInputCommand}" />

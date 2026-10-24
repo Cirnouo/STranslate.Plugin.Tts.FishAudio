@@ -193,7 +193,8 @@ try {
         'MessagePack.dll',
         'MessagePack.Annotations.dll',
         'Microsoft.NET.StringTools.dll',
-        'Assets/Licenses/Octicons.LICENSE.txt'
+        'Assets/Licenses/Octicons.LICENSE.txt',
+        'Assets/Licenses/flag-icons.LICENSE.txt'
     )
     foreach ($locale in @('en', 'zh-cn', 'zh-tw', 'ja', 'ko', 'ru', 'tr')) {
         $requiredPackageFiles += "Languages/$locale.xaml"

@@ -121,4 +121,6 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">음성 ID를 복사했습니다</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">음성 ID를 복사하지 못했습니다. 다시 시도해 주세요.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">프로젝트 저장소를 열 수 없습니다. 기본 브라우저 설정을 확인해 주세요.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">ko</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">다른 언어</sys:String>
 </ResourceDictionary>
