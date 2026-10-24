@@ -46,7 +46,7 @@ internal static class SettingsInputInteractionSuite
         if (group is null or "wheel") await RunOnStaThreadAsync(SliderWheelEditsWithoutScrolling);
         if (group is null or "wheel" or "tooltip")
             foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
-                await RunOnStaThreadAsync(() => SliderWheelUsesNativeValueToolTipAsync(culture));
+                await ObserveNativeToolTipActionAsync(culture, stage => SliderWheelUsesNativeValueToolTipAsync(culture, stage));
         if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
         if (group is null or "copy")
@@ -841,97 +841,301 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture)
+    internal static async Task NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync()
+    {
+        // These contracts catch replacement/retry, lost failure identity and
+        // unbounded observation without dispatching WPF or waiting on real time.
+        var outer = new TimeoutException("Synthetic outer action deadline");
+        Func<Task>? queued = null;
+        var dispatches = 0;
+        var runs = 0;
+        var observations = 0;
+        Exception? caught = null;
+        var output = new List<string>();
+        try
+        {
+            await ObserveNativeToolTipActionAsync("queued-contract", stage => { runs++; stage("original action body"); return Task.CompletedTask; },
+                dispatch: callback => { dispatches++; queued = callback; throw outer; },
+                observe: async completion => { observations++; await queued!(); await completion; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Queued observation must preserve the original outer timeout identity");
+        AssertEqual(1, observations, "A queued outer deadline must observe its same action exactly once");
+        AssertEqual(1, dispatches, "Observation must not dispatch a replacement action");
+        AssertEqual(1, runs, "The original queued action must run once without retry");
+        AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "Queued failure must identify its pre-entry phase");
+        AssertEqual(true, output.Any(line => line.Contains("original action body", StringComparison.Ordinal)), "Failure output must retain the action phases");
+
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? originalAction = null;
+        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+        try
+        {
+            await ObserveNativeToolTipActionAsync("entered-contract", async stage => { runs++; stage("entered action waiting"); await release.Task; stage("same action resumed"); },
+                dispatch: callback => { dispatches++; originalAction = callback(); throw outer; },
+                observe: async completion => { observations++; AssertEqual(false, completion.IsCompleted, "Observation must see the incomplete entered action"); release.SetResult(); await completion; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        await originalAction!.WaitAsync(TimeSpan.FromSeconds(2));
+        AssertEqual(true, ReferenceEquals(outer, caught), "Late entered-action completion must leave the original deadline failed");
+        AssertEqual(1, dispatches, "Entered observation must not dispatch again");
+        AssertEqual(1, runs, "The entered action must not be replaced or retried");
+        AssertEqual(1, observations, "The entered action gets one observation");
+        AssertEqual(true, output.Any(line => line.Contains("after entry", StringComparison.Ordinal)), "Entered failure must identify its execution phase");
+        AssertEqual(true, output.Any(line => line.Contains("same action resumed", StringComparison.Ordinal)), "Failure phases must include the same action's late completion");
+
+        foreach (var inner in new Exception[] { new TimeoutException("Synthetic action-owned timeout"), new InvalidOperationException("Synthetic action failure") })
+        {
+            runs = 0; observations = 0; caught = null; output.Clear();
+            try
+            {
+                await ObserveNativeToolTipActionAsync("inner-contract", _ => { runs++; throw inner; },
+                    dispatch: callback => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned failure must preserve its exact exception identity");
+            AssertEqual(0, observations, "An action-owned TimeoutException must not be treated as the outer deadline");
+            AssertEqual(1, runs, "An action-owned failure must never retry");
+            AssertEqual(true, output.Any(line => line.Contains("action failed", StringComparison.Ordinal)), "An action-owned failure must dump its phase evidence");
+        }
+
+        runs = 0; observations = 0; caught = null; output.Clear();
+        try
+        {
+            await ObserveNativeToolTipActionAsync("observation-failure-contract", _ => { runs++; return Task.CompletedTask; },
+                dispatch: callback => { queued = callback; throw outer; },
+                observe: _ => { observations++; throw new IOException("Synthetic observation failure"); }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Observation failure must not replace the original outer exception");
+        AssertEqual(1, observations, "Observation failure must not trigger a second observer");
+        AssertEqual(0, runs, "Observation failure must not execute replacement work");
+        AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "The observation failure must remain visible in safe diagnostics");
+        await queued!();
+        AssertEqual(1, runs, "The original queued action can still complete once after observation fails");
+
+        var exactClock = new ManualStreamingTimeProvider();
+        var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var exactBound = BoundNativeToolTipObservation(incomplete.Task, exactClock);
+        exactClock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(false, exactBound.IsCompleted, "The actual observation helper must remain pending at 19999ms");
+        exactClock.Advance(TimeSpan.FromMilliseconds(1));
+        AssertEqual(true, exactBound.IsCompleted, "The actual helper Task must expire at exactly 20000ms, independently of caller scheduling");
+        caught = null;
+        try { await exactBound; }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, caught is TimeoutException, "The bounded helper must report its twenty-second observation deadline");
+        AssertEqual(false, incomplete.Task.IsCompleted, "Observation expiry must not cancel or complete the original action");
+        incomplete.SetResult();
+
+        var clock = new ManualStreamingTimeProvider();
+        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var observationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? sameCompletion = null;
+        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+        var bounded = ObserveNativeToolTipActionAsync("observation-timeout-contract", _ => { runs++; return Task.CompletedTask; },
+            dispatch: callback => { dispatches++; queued = callback; throw outer; },
+            observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return observationRelease.Task; }, write: output.Add, observationTimeProvider: clock);
+        await observing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        clock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the twenty-second boundary");
+        AssertEqual(false, sameCompletion!.IsCompleted, "The original action remains pending before observation expiry");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        try { await bounded.WaitAsync(TimeSpan.FromSeconds(2)); }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Observation timeout must preserve the original outer exception");
+        AssertEqual(1, observations, "The observation bound must not retry its observer");
+        AssertEqual(1, dispatches, "The observation bound must not dispatch another action");
+        AssertEqual(0, runs, "Observation expiry must not run replacement work");
+        AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry must leave the original completion pending");
+        AssertEqual(false, observationRelease.Task.IsCompleted, "Observation expiry must not cancel the observed task");
+        AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The exact observation timeout must be reported");
+        await queued!();
+        await sameCompletion.WaitAsync(TimeSpan.FromSeconds(2));
+        observationRelease.SetResult();
+        AssertEqual(1, runs, "Only the same original queued action may complete after observation expiry");
+
+        output.Clear(); runs = 0;
+        await ObserveNativeToolTipActionAsync("success-contract", stage => { runs++; stage("buffered successful phase"); return Task.CompletedTask; },
+            dispatch: callback => callback(), write: output.Add);
+        AssertEqual(1, runs, "A successful action executes once");
+        AssertEqual(1, output.Count, "Successful diagnostics must emit exactly one compact case summary");
+        AssertEqual(false, output[0].Contains("buffered successful phase", StringComparison.Ordinal), "Success must not dump the detailed phase buffer");
+    }
+
+    private static async Task ObserveNativeToolTipActionAsync(string name, Func<Action<string>, Task> action,
+        Func<Func<Task>, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+    {
+        var elapsed = Stopwatch.StartNew();
+        var phases = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? actionFailure = null;
+        long enteredAt = -1;
+        void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] {phase}"); }
+        Stage("queued with original 5s async action deadline");
+        try
+        {
+            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(async () =>
+            {
+                Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+                Stage("entered");
+                try { await action(Stage); }
+                catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
+                finally { Stage("action completed after cleanup"); completion.TrySetResult(); }
+            });
+            (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native four-slider lifecycle.");
+        }
+        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        {
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
+            try
+            {
+                // Bound the scheduled observation too; never replace/cancel/retry STA work.
+                await BoundNativeToolTipObservation(Task.Run(() => (observe ?? (pending => pending))(completion.Task)), observationTimeProvider).ConfigureAwait(false);
+                Stage("same action observation completed; original deadline remains failed");
+            }
+            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
+            Dump();
+            throw;
+        }
+        catch
+        {
+            Dump();
+            throw;
+        }
+    }
+
+    private static Task BoundNativeToolTipObservation(Task observation, TimeProvider? timeProvider = null) =>
+        observation.WaitAsync(TimeSpan.FromSeconds(20), timeProvider ?? TimeProvider.System);
+
+    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, Action<string> stage)
     {
         var previousCulture = CultureInfo.CurrentCulture;
         try
         {
+            stage($"culture {culture} begin");
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            stage("culture applied");
             var settings = new Settings { SelectedModel = "s2-pro", Speed = 1, Volume = -9.37, Temperature = .7, TopP = .7 };
             var context = CreateContext(settings: settings);
             var storage = (ContextProxy)(object)context;
+            stage("viewmodel construction begin");
             using var vm = new SettingsViewModel(context, settings);
+            stage("viewmodel construction end; CreateView construction/Light theme/nested Layout begin");
             var view = CreateView(vm);
+            stage("CreateView construction/Light theme/nested Layout end; HwndSource construction begin");
             using var source = new HwndSource(new HwndSourceParameters("Fish Audio native tooltip fixture") { Width = 600, Height = 800, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+            stage("HwndSource construction end; source attach begin");
             source.RootVisual = view;
+            stage("source attach end; attached Layout begin");
             Layout(view, 600);
-            foreach (var slider in Logical(view).OfType<Slider>().ToArray())
+            stage("attached Layout end");
+            try
             {
-                var nativePeer = new Slider();
-                var row = (Panel)slider.Parent;
-                row.Children.Add(nativePeer);
-                Layout(view, 600);
-                AssertEqual(nativePeer.Template, slider.Template, "The wheel-capable slider must retain the same resolved native theme template as Slider");
-                row.Children.Remove(nativePeer);
-                Layout(view, 600);
-                var track = (Track)slider.Template.FindName("PART_Track", slider);
-                var thumb = track.Thumb;
-                var initial = slider.Value;
-                var originalToolTip = new object();
-                thumb.ToolTip = originalToolTip;
-                var saves = storage.SaveCount;
-                Wheel(track.DecreaseRepeatButton, 60);
-                var toolTip = thumb.ToolTip as ToolTip;
-                AssertNotNull(toolTip, "Wheel over the actual slider must show its native current-value tooltip");
-                AssertEqual(true, toolTip!.IsOpen, "A partial notch must display the current value immediately");
-                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "The tooltip must use two decimal places in the display culture");
-                AssertEqual(thumb, toolTip.PlacementTarget, "The value bubble must remain anchored to the actual thumb");
-                AssertEqual(PlacementMode.Custom, toolTip.Placement, "Wheel must use the same native placement as dragging");
-                AssertEqual(saves, storage.SaveCount, "Showing a value bubble must not save or re-snap a partial notch");
-                Wheel(thumb, 60);
-                AssertEqual((double)((decimal)initial + .01m), slider.Value, "Updating the bubble must not apply an additional native drag step");
-                AssertEqual(saves + 1, storage.SaveCount, "Refreshing the native tooltip must not duplicate a wheel save");
-                AssertEqual(slider.Value.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An open bubble must track the current wheel value");
-                Layout(view, 600);
-                var wheelTemplate = toolTip.Template;
-                var wheelPlacement = toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point());
-                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
-                AssertEqual(toolTip, thumb.ToolTip, "Real dragging must reuse the native bubble rather than open a second one");
-                AssertEqual(wheelTemplate, toolTip.Template, "Dragging and wheel input must have exactly the same resolved appearance");
-                AssertEqual(wheelPlacement[0].Point, toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point())[0].Point, "The native wheel and drag popup anchors must agree");
-                Wheel(thumb, -120);
-                AssertEqual(initial, slider.Value, "Wheel during a real drag must adjust only once");
-                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Wheel during dragging must refresh the current native bubble");
-                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
-                AssertEqual(true, toolTip.IsOpen, "Leaving while dragging must retain native drag ownership");
-                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
-                AssertEqual(false, toolTip.IsOpen, "Completing a real drag must close its native bubble");
-                AssertEqual(originalToolTip, thumb.ToolTip, "Wheel-to-drag transition must preserve the original thumb tooltip");
-                var distance = .01 / (slider.Maximum - slider.Minimum) * (track.ActualWidth - thumb.ActualWidth);
-                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
-                thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
-                AssertEqual(true, Math.Abs(slider.Value - (double)((decimal)initial + .01m)) < .000001, "Actual native thumb dragging must allow one-hundredth increments");
-                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
-                Wheel(thumb, -120);
-                AssertEqual(true, toolTip.IsOpen, "Wheel after dragging must reopen the same native bubble");
-                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
-                AssertEqual(false, toolTip.IsOpen, "Leaving the slider must close a wheel-owned bubble immediately");
-                AssertEqual(originalToolTip, thumb.ToolTip, "Leaving must restore the original thumb tooltip");
-                Wheel(thumb, 120);
-                slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
-                AssertEqual(false, toolTip.IsOpen, "Unloading must close an open wheel bubble");
-                AssertEqual(originalToolTip, thumb.ToolTip, "Unloading must restore the original tooltip");
-                slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
-                saves = storage.SaveCount;
-                Wheel(track.IncreaseRepeatButton, 120);
-                AssertEqual(slider.Maximum.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An outward bound gesture must show the current bounded value");
-                AssertEqual(saves, storage.SaveCount, "Showing a bound tooltip must not save");
-                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                foreach (var slider in Logical(view).OfType<Slider>().ToArray())
+                {
+                    var field = BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path;
+                    stage($"{field} native peer construction/add begin");
+                    var nativePeer = new Slider();
+                    var row = (Panel)slider.Parent;
+                    row.Children.Add(nativePeer);
+                    stage($"{field} native peer added; Layout begin");
+                    Layout(view, 600);
+                    stage($"{field} native peer Layout end");
+                    AssertEqual(nativePeer.Template, slider.Template, "The wheel-capable slider must retain the same resolved native theme template as Slider");
+                    stage($"{field} native peer remove begin");
+                    row.Children.Remove(nativePeer);
+                    stage($"{field} native peer removed; Layout begin");
+                    Layout(view, 600);
+                    stage($"{field} peer-removed Layout end; native bubble begin");
+                    var track = (Track)slider.Template.FindName("PART_Track", slider);
+                    var thumb = track.Thumb;
+                    var initial = slider.Value;
+                    var originalToolTip = new object();
+                    thumb.ToolTip = originalToolTip;
+                    var saves = storage.SaveCount;
+                    Wheel(track.DecreaseRepeatButton, 60);
+                    var toolTip = thumb.ToolTip as ToolTip;
+                    AssertNotNull(toolTip, "Wheel over the actual slider must show its native current-value tooltip");
+                    AssertEqual(true, toolTip!.IsOpen, "A partial notch must display the current value immediately");
+                    AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "The tooltip must use two decimal places in the display culture");
+                    AssertEqual(thumb, toolTip.PlacementTarget, "The value bubble must remain anchored to the actual thumb");
+                    AssertEqual(PlacementMode.Custom, toolTip.Placement, "Wheel must use the same native placement as dragging");
+                    AssertEqual(saves, storage.SaveCount, "Showing a value bubble must not save or re-snap a partial notch");
+                    Wheel(thumb, 60);
+                    AssertEqual((double)((decimal)initial + .01m), slider.Value, "Updating the bubble must not apply an additional native drag step");
+                    AssertEqual(saves + 1, storage.SaveCount, "Refreshing the native tooltip must not duplicate a wheel save");
+                    AssertEqual(slider.Value.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An open bubble must track the current wheel value");
+                    stage($"{field} wheel bubble updated; Layout begin");
+                    Layout(view, 600);
+                    stage($"{field} bubble Layout end; wheel-to-drag begin");
+                    var wheelTemplate = toolTip.Template;
+                    var wheelPlacement = toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point());
+                    thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                    AssertEqual(toolTip, thumb.ToolTip, "Real dragging must reuse the native bubble rather than open a second one");
+                    AssertEqual(wheelTemplate, toolTip.Template, "Dragging and wheel input must have exactly the same resolved appearance");
+                    AssertEqual(wheelPlacement[0].Point, toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point())[0].Point, "The native wheel and drag popup anchors must agree");
+                    Wheel(thumb, -120);
+                    AssertEqual(initial, slider.Value, "Wheel during a real drag must adjust only once");
+                    AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Wheel during dragging must refresh the current native bubble");
+                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                    AssertEqual(true, toolTip.IsOpen, "Leaving while dragging must retain native drag ownership");
+                    thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                    AssertEqual(false, toolTip.IsOpen, "Completing a real drag must close its native bubble");
+                    AssertEqual(originalToolTip, thumb.ToolTip, "Wheel-to-drag transition must preserve the original thumb tooltip");
+                    stage($"{field} wheel-to-drag leave/completion end; native drag begin");
+                    var distance = .01 / (slider.Maximum - slider.Minimum) * (track.ActualWidth - thumb.ActualWidth);
+                    thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                    thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                    AssertEqual(true, Math.Abs(slider.Value - (double)((decimal)initial + .01m)) < .000001, "Actual native thumb dragging must allow one-hundredth increments");
+                    thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                    Wheel(thumb, -120);
+                    AssertEqual(true, toolTip.IsOpen, "Wheel after dragging must reopen the same native bubble");
+                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                    AssertEqual(false, toolTip.IsOpen, "Leaving the slider must close a wheel-owned bubble immediately");
+                    AssertEqual(originalToolTip, thumb.ToolTip, "Leaving must restore the original thumb tooltip");
+                    stage($"{field} native drag and wheel leave end; unload begin");
+                    Wheel(thumb, 120);
+                    slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+                    AssertEqual(false, toolTip.IsOpen, "Unloading must close an open wheel bubble");
+                    AssertEqual(originalToolTip, thumb.ToolTip, "Unloading must restore the original tooltip");
+                    stage($"{field} unload end; bound bubble begin");
+                    slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
+                    saves = storage.SaveCount;
+                    Wheel(track.IncreaseRepeatButton, 120);
+                    AssertEqual(slider.Maximum.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An outward bound gesture must show the current bounded value");
+                    AssertEqual(saves, storage.SaveCount, "Showing a bound tooltip must not save");
+                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                    stage($"{field} bound bubble and leave complete");
+                }
+                stage("idle bubble setup begin");
+                var idleSlider = Logical(view).OfType<Slider>().First();
+                var idleThumb = ((Track)idleSlider.Template.FindName("PART_Track", idleSlider)).Thumb;
+                var idleOriginal = idleThumb.ToolTip;
+                Wheel(idleThumb, 120);
+                var idleToolTip = (ToolTip)idleThumb.ToolTip;
+                AssertEqual(true, idleToolTip.IsOpen, "The idle lifecycle starts with a visible value bubble");
+                var idle = Stopwatch.StartNew();
+                stage("idle wait begin; original 2s loop and minimum 700ms assertion");
+                while (idleToolTip.IsOpen && idle.Elapsed < TimeSpan.FromSeconds(2))
+                {
+                    await Task.Delay(20);
+                    stage($"idle resume at {idle.ElapsedMilliseconds}ms; open={idleToolTip.IsOpen}");
+                }
+                stage($"idle wait end after {idle.ElapsedMilliseconds}ms");
+                AssertEqual(false, idleToolTip.IsOpen, "A wheel-owned bubble must disappear after a bounded idle interval");
+                AssertEqual(true, idle.Elapsed >= TimeSpan.FromMilliseconds(700), "The bubble must remain visible long enough to read the wheel value");
+                AssertEqual(idleOriginal, idleThumb.ToolTip, "Idle close must restore the original tooltip");
             }
-            var idleSlider = Logical(view).OfType<Slider>().First();
-            var idleThumb = ((Track)idleSlider.Template.FindName("PART_Track", idleSlider)).Thumb;
-            var idleOriginal = idleThumb.ToolTip;
-            Wheel(idleThumb, 120);
-            var idleToolTip = (ToolTip)idleThumb.ToolTip;
-            AssertEqual(true, idleToolTip.IsOpen, "The idle lifecycle starts with a visible value bubble");
-            var idle = Stopwatch.StartNew();
-            while (idleToolTip.IsOpen && idle.Elapsed < TimeSpan.FromSeconds(2))
-                await Task.Delay(20);
-            AssertEqual(false, idleToolTip.IsOpen, "A wheel-owned bubble must disappear after a bounded idle interval");
-            AssertEqual(true, idle.Elapsed >= TimeSpan.FromMilliseconds(700), "The bubble must remain visible long enough to read the wheel value");
-            AssertEqual(idleOriginal, idleThumb.ToolTip, "Idle close must restore the original tooltip");
+            finally { stage("source then viewmodel cleanup begin"); }
         }
-        finally { CultureInfo.CurrentCulture = previousCulture; }
+        finally
+        {
+            stage("owned resource scope exited; culture restoration begin");
+            CultureInfo.CurrentCulture = previousCulture;
+            stage("culture restoration end");
+        }
     }
 
     private static async Task SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync()

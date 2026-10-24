@@ -280,6 +280,13 @@ if (args.Contains("--settings-input-tests"))
     return;
 }
 
+if (args.Contains("--numeric-tooltip-diagnostics-tests"))
+{
+    await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
+    Console.WriteLine("Native numeric tooltip diagnostic contracts passed.");
+    return;
+}
+
 if (args.Contains("--settings-control-tests"))
 {
     await SettingsControlAlignmentSuite.RunAllAsync();
@@ -568,6 +575,7 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 // the new numeric group explicitly warms actual DPI on compiled text views.
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
 
+await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();
 await VoiceLanguageSuite.RunAllAsync();
