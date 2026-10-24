@@ -456,12 +456,12 @@ internal static class VoiceLanguageTagsSuite
             AssertEqual(2, tags.Length, "Selected and every active browsing mode use the same language-row contract");
             var selectedTags = tags.Single(item => ReferenceEquals(item.DataContext, vm));
             var selectedCard = CardBorder(selectedTags);
-            AssertEqual(48d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Width == 48).ActualWidth,
+            AssertEqual(56d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Fill is ImageBrush).ActualWidth,
                 "Selected-card fixture reserves the real cover geometry using a local resource");
             AssertEqual(36d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
                 "Selected-card fixture reserves the visible preview action without playing audio");
-            AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 86)) <= 1,
-                "The selected metadata spans the full column after 48-DIP cover, gap, border and padding");
+            AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 94)) <= 1,
+                "The selected metadata spans the full column after 56-DIP cover, gap, border and padding");
             foreach (var tag in tags)
             {
                 var inline = (Panel)tag.FindName("InlinePanel");

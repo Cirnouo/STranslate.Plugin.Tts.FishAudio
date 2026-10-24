@@ -1061,7 +1061,9 @@ internal static class SettingsInputInteractionSuite
         vm.HasSearched = true;
         var view = CreateView(vm);
         view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{language}.xaml"), UriKind.Absolute) });
-        foreach (var width in new[] { 400d, 600d })
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio title copy tooltip fixture") { Width = 640, Height = 2000, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        source.RootVisual = view;
+        foreach (var width in new[] { 320d, 400d, 480d, 640d })
         {
             foreach (var (mode, cardId) in new[] { (VoiceBrowseMode.Search, searchId), (VoiceBrowseMode.ById, byId), (VoiceBrowseMode.Favorites, favoriteId) })
             {
@@ -1073,19 +1075,44 @@ internal static class SettingsInputInteractionSuite
                 foreach (var title in titles)
                 {
                     AssertEqual(Cursors.Hand, title.Cursor, "A copyable voice title must advertise its click action");
-                    AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId"), title.ToolTip, "Title copy tooltips must be localized");
-                    AssertEqual(title.ToolTip, AutomationProperties.GetName(title), "Title copy actions must have a localized accessible name");
+                    AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId"), AutomationProperties.GetName(title), "Title copy actions retain the localized action name");
                     var text = (TextBlock)title.Content;
+                    var tooltip = (ToolTip)title.ToolTip;
+                    tooltip.PlacementTarget = title;
+                    tooltip.IsOpen = true;
+                    try
+                    {
+                        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+                        var tooltipText = Visuals(tooltip).OfType<TextBlock>().ToArray();
+                        AssertEqual(true, tooltipText.Any(block => block.Text == (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId")), "The native tooltip keeps the localized Copy Voice ID caption");
+                        AssertEqual(true, tooltipText.Any(block => block.Text == text.Text && block.TextTrimming == TextTrimming.None), "The same tooltip includes the full untruncated title");
+                        AssertEqual<object?>(null, text.ToolTip, "Hovering the title text cannot replace the copy hint with a child tooltip");
+                        AssertEqual(text.Text, AutomationProperties.GetHelpText(text), "The full title remains available to automation");
+                        AssertEqual(text.Text, AutomationProperties.GetHelpText(title), "The copy button exposes the full title alongside its localized action name");
+                    }
+                    finally { tooltip.IsOpen = false; }
                     Near(text.ActualHeight, title.ActualHeight, "A text-only title action must preserve the title's native line height");
                     AssertEqual(0, Visuals(title).OfType<Border>().Count(), "Copyable titles must not gain a rectangular button surround");
+                    // Native input filters hidden/non-hit-testable sibling panels; a raw
+                    // visual hit can otherwise select their retained layout geometry.
+                    var titleHit = view.InputHitTest(title.TranslatePoint(new Point(title.ActualWidth / 2, title.ActualHeight / 2), view)) as DependencyObject;
+                    AssertEqual(true, titleHit is not null && IsInside(titleHit, title), $"The visible title's input-hit belongs to its dedicated copy button ({language}/{width}/{mode})");
                     var before = writes.Count;
                     typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(title, null);
                     AssertEqual(before + 1, writes.Count, "A title click must write exactly one clipboard value");
                     AssertEqual((string)title.CommandParameter, writes[^1], "The clicked title must copy its own complete voice ID");
                     AssertEqual("STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success", snackbar.LastSuccess, "A successful clipboard write must use the host success snackbar");
                 }
-                foreach (var text in Visuals(view).OfType<TextBlock>().Where(text => Shown(text) && (text.Text.EndsWith("description", StringComparison.Ordinal) || text.Text.EndsWith("author", StringComparison.Ordinal))))
-                    AssertEqual(false, HasButtonAncestor(text), "Author and description text must remain ordinary noncopyable text");
+                foreach (var text in Visuals(view).OfType<TextBlock>().Where(text => Shown(text) && (text.Text == "·" || text.Text.EndsWith("description", StringComparison.Ordinal) || text.Text.EndsWith("author", StringComparison.Ordinal))))
+                {
+                    AssertEqual(false, HasButtonAncestor(text), "Author, dot and description remain outside the dedicated copy button");
+                    var hit = view.InputHitTest(text.TranslatePoint(new Point(text.ActualWidth / 2, text.ActualHeight / 2), view)) as DependencyObject;
+                    AssertEqual(true, hit is not null && !HasButtonAncestor(hit) && hit is not Button, "The actual visible ordinary-text hit is not covered by a copy/action button");
+                    var before = writes.Count;
+                    text.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.MouseDownEvent });
+                    text.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.MouseUpEvent });
+                    AssertEqual(before, writes.Count, "Routed author/dot/description clicks cannot copy through a card-wide handler");
+                }
             }
         }
         var successes = snackbar.SuccessCount;
@@ -1109,6 +1136,13 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(0, http.GetCallCount + http.GetAsStreamCallCount + http.PostAsBytesCallCount, "Copying any title must not call Fish Audio");
         foreach (var suffix in new[] { "", "_Success", "_Failed" })
             AssertNotNull(view.TryFindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId" + suffix), "Every copy action and snackbar string must exist in all seven UI locales");
+    }
+
+    private static bool IsInside(DependencyObject child, DependencyObject owner)
+    {
+        for (DependencyObject? current = child; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (ReferenceEquals(current, owner)) return true;
+        return false;
     }
 
     private static bool HasButtonAncestor(DependencyObject child)

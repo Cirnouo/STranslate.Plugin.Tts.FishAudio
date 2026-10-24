@@ -27,6 +27,12 @@
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
         <conv:ProgressToDashOffsetConverter x:Key="ProgressToDashOffsetConverter" />
         <BooleanToVisibilityConverter x:Key="BtvConverter" />
+        <DataTemplate x:Key="VoiceTitleCopyToolTipTemplate">
+            <StackPanel>
+                <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+                <TextBlock Text="{Binding}" MaxWidth="360" TextWrapping="Wrap" />
+            </StackPanel>
+        </DataTemplate>
         <Style x:Key="VoiceTitleButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="0" />
@@ -37,8 +43,8 @@
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
             <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Content.Text, RelativeSource={RelativeSource Self}}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -173,7 +179,7 @@
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                     CornerRadius="6">
                 <DockPanel>
-                    <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,4,8,0" VerticalAlignment="Top">
+                    <Ellipse DockPanel.Dock="Left" Width="48" Height="48" Margin="0,4,8,0" VerticalAlignment="Top">
                         <Ellipse.Fill>
                             <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
                         </Ellipse.Fill>
@@ -280,11 +286,23 @@
                                     </Button.Style>
                                 </Button>
                             </StackPanel>
-                            <Button Style="{StaticResource VoiceTitleButtonStyle}"
-                                    Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding Id}">
-                                <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
-                            </Button>
+                            <view:VoiceHeaderPanel MinHeight="32" UseLayoutRounding="False" ClipToBounds="True"
+                                                  TitleText="{Binding Text, ElementName=CardTitleText}" AuthorText="{Binding AuthorName}">
+                                <Button HorizontalAlignment="Stretch" Style="{StaticResource VoiceTitleButtonStyle}"
+                                        Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding Id}">
+                                    <Button.ToolTip>
+                                        <ToolTip Content="{Binding PlacementTarget.Content.Text, RelativeSource={RelativeSource Self}}"
+                                                 ContentTemplate="{StaticResource VoiceTitleCopyToolTipTemplate}" />
+                                    </Button.ToolTip>
+                                    <TextBlock x:Name="CardTitleText" Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis"
+                                               AutomationProperties.HelpText="{Binding Title}" />
+                                </Button>
+                                <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding AuthorName}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           ToolTip="{Binding AuthorName}" AutomationProperties.Name="{Binding AuthorName}" />
+                            </view:VoiceHeaderPanel>
                         </DockPanel>
                         <TextBlock Text="{Binding Description}"
                                    Visibility="{Binding Description, Converter={StaticResource VoiceDescriptionVisibilityConverter}}"
@@ -306,8 +324,6 @@
                         <TextBlock Text="{Binding MetadataError}" FontSize="11" MaxWidth="280" TextWrapping="Wrap"
                                    Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                    Visibility="{Binding MetadataError, Converter={StaticResource StringToVisibilityConverter}}" />
-                        <TextBlock Text="{Binding AuthorName}" TextTrimming="CharacterEllipsis"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
@@ -485,7 +501,7 @@
             CornerRadius="8"
             Padding="12">
             <DockPanel>
-                <Ellipse DockPanel.Dock="Left" Width="48" Height="48" Margin="0,4,12,0" VerticalAlignment="Top"
+                <Ellipse DockPanel.Dock="Left" Width="56" Height="56" Margin="0,4,12,0" VerticalAlignment="Top"
                          Visibility="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
                     <Ellipse.Fill>
                         <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
@@ -609,32 +625,41 @@
                                 AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}"
                                 Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}" />
                         </StackPanel>
-                        <Button Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
-                                CommandParameter="{Binding CachedVoiceId}">
-                            <TextBlock FontWeight="Medium" FontSize="14" TextTrimming="CharacterEllipsis">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
-                                        <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
-                                                <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Button>
+                        <view:VoiceHeaderPanel MinHeight="32" UseLayoutRounding="False" ClipToBounds="True"
+                                              TitleText="{Binding Text, ElementName=SelectedTitleText}" AuthorText="{Binding CachedVoiceAuthor}">
+                            <Button HorizontalAlignment="Stretch" Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
+                                    CommandParameter="{Binding CachedVoiceId}">
+                                <Button.ToolTip>
+                                    <ToolTip Content="{Binding PlacementTarget.Content.Text, RelativeSource={RelativeSource Self}}"
+                                             ContentTemplate="{StaticResource VoiceTitleCopyToolTipTemplate}" />
+                                </Button.ToolTip>
+                                <TextBlock x:Name="SelectedTitleText" FontWeight="Medium" FontSize="14" TextTrimming="CharacterEllipsis"
+                                           AutomationProperties.HelpText="{Binding Text, RelativeSource={RelativeSource Self}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
+                                            <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
+                                                    <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                            <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{Binding CachedVoiceAuthor}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       ToolTip="{Binding CachedVoiceAuthor}" AutomationProperties.Name="{Binding CachedVoiceAuthor}" />
+                        </view:VoiceHeaderPanel>
                     </DockPanel>
                     <TextBlock Text="{Binding CachedVoiceDescription}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" MaxHeight="36"
                                Visibility="{Binding CachedVoiceDescription, Converter={StaticResource VoiceDescriptionVisibilityConverter}}" />
                     <view:VoiceLanguageTags Languages="{Binding CachedVoiceLanguages}" />
-                    <TextBlock Text="{Binding CachedVoiceAuthor}" TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
-                               Visibility="{Binding CachedVoiceAuthor, Converter={StaticResource StringToVisibilityConverter}}" />
                     <Grid Margin="0,4,0,0" Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
