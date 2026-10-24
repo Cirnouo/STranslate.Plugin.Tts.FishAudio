@@ -1,6 +1,6 @@
 # Development and contributions
 
-This is the developer entry point for Fish Audio TTS for STranslate. For installation and configuration, use the [user overview](README.md) and [user guide](docs/user-guide/README_EN.md). This project targets Windows/WPF and .NET 10, uses STranslate.Plugin 1.0.15, and maintains the public plugin identity, settings compatibility and localized UI contracts.
+This is the developer entry point for Fish Audio TTS for STranslate. For installation and configuration, use the [user overview](README.md) and [user guide](docs/user-guide/README.en.md). This project targets Windows/WPF and .NET 10, uses STranslate.Plugin 1.0.15, and maintains the public plugin identity, settings compatibility and localized UI contracts.
 
 The root [AGENTS.md](AGENTS.md) supplies common repository boundaries and a conditional reading map. Follow the canonical owners below for the operation at hand instead of loading or copying every policy into each task.
 

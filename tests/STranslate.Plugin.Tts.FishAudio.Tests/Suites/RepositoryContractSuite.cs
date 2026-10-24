@@ -289,10 +289,10 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     "README_EN.md",
-                     "README_TW.md",
-                     "README_JA.md",
-                     "README_KO.md",
+                     "README.en.md",
+                     "README.zh-TW.md",
+                     "README.ja.md",
+                     "README.ko.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
@@ -313,7 +313,7 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     "README_TW.md",
+                     "README.zh-TW.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
@@ -333,10 +333,10 @@ internal static class RepositoryContractSuite
         foreach (var relativePath in new[]
                  {
                      "README.md",
-                     "README_EN.md",
-                     "README_TW.md",
-                     "README_JA.md",
-                     "README_KO.md",
+                     "README.en.md",
+                     "README.zh-TW.md",
+                     "README.ja.md",
+                     "README.ko.md",
                  })
         {
             var readme = File.ReadAllText(FindRepoFile(relativePath));
@@ -346,9 +346,9 @@ internal static class RepositoryContractSuite
             // Guides use readable local dates; overviews keep their ISO date.
             var guideCutoff = Path.GetFileName(relativePath) switch
             {
-                "README_EN.md" => "1 December 2026",
-                "README_JA.md" => "2026年12月1日",
-                "README_KO.md" => "2026년 12월 1일",
+                "README.en.md" => "1 December 2026",
+                "README.ja.md" => "2026年12月1日",
+                "README.ko.md" => "2026년 12월 1일",
                 _ => cutoffDate,
             };
             AssertEqual(true, guide.Contains(guideCutoff, StringComparison.Ordinal), $"{guidePath} should identify the December 1 cutoff");

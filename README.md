@@ -9,7 +9,7 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><b>简体中文</b> · <a href="README_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a></p>
+  <p><b>简体中文</b> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 </div>
 
 > [!WARNING]

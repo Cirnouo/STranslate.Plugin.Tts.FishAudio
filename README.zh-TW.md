@@ -9,11 +9,11 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><a href="README.md">简体中文</a> · <b>繁體中文</b> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a></p>
+  <p><a href="README.md">简体中文</a> · <b>繁體中文</b> · <a href="README.en.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 </div>
 
 > [!WARNING]
-> 中國大陸網路無法存取 `fish.audio` 服務。請參閱使用指南中的[網路與代理說明](docs/user-guide/README_TW.md#network-and-proxy)。
+> 中國大陸網路無法存取 `fish.audio` 服務。請參閱使用指南中的[網路與代理說明](docs/user-guide/README.zh-TW.md#network-and-proxy)。
 
 > [!TIP]
 > 使用 `.edu` 電子郵件註冊 Fish Audio 並完成學生認證，可免費領取 **5 美元餘額**。[申請入口](https://fish.audio/students/)
@@ -55,11 +55,11 @@
 
 ## 使用指南
 
-[閱讀完整使用指南 →](docs/user-guide/README_TW.md)
+[閱讀完整使用指南 →](docs/user-guide/README.zh-TW.md)
 
 詳細指南涵蓋安裝、首次設定、聲音選擇、全部設定項目、PCM / MP3、網路與代理及常見問題排解。
 
-[設定說明](docs/user-guide/README_TW.md#configuration) · [音訊格式](docs/user-guide/README_TW.md#audio-formats) · [網路與代理](docs/user-guide/README_TW.md#network-and-proxy) · [常見問題](docs/user-guide/README_TW.md#troubleshooting)
+[設定說明](docs/user-guide/README.zh-TW.md#configuration) · [音訊格式](docs/user-guide/README.zh-TW.md#audio-formats) · [網路與代理](docs/user-guide/README.zh-TW.md#network-and-proxy) · [常見問題](docs/user-guide/README.zh-TW.md#troubleshooting)
 
 ## 常見問題
 

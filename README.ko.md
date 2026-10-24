@@ -9,7 +9,7 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><a href="README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <a href="README_EN.md">English</a> · <a href="README_JA.md">日本語</a> · <b>한국어</b></p>
+  <p><a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · <a href="README.en.md">English</a> · <a href="README.ja.md">日本語</a> · <b>한국어</b></p>
 </div>
 
 > [!TIP]
@@ -52,11 +52,11 @@
 
 ## 사용자 가이드
 
-[전체 사용자 가이드 읽기 →](docs/user-guide/README_KO.md)
+[전체 사용자 가이드 읽기 →](docs/user-guide/README.ko.md)
 
 설치, 초기 설정, 보이스 선택, 모든 설정 항목, PCM / MP3, 네트워크와 프록시, 문제 해결을 자세히 설명합니다.
 
-[설정 안내](docs/user-guide/README_KO.md#configuration) · [오디오 형식](docs/user-guide/README_KO.md#audio-formats) · [네트워크 및 프록시](docs/user-guide/README_KO.md#network-and-proxy) · [문제 해결](docs/user-guide/README_KO.md#troubleshooting)
+[설정 안내](docs/user-guide/README.ko.md#configuration) · [오디오 형식](docs/user-guide/README.ko.md#audio-formats) · [네트워크 및 프록시](docs/user-guide/README.ko.md#network-and-proxy) · [문제 해결](docs/user-guide/README.ko.md#troubleshooting)
 
 ## 자주 묻는 질문
 

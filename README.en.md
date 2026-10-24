@@ -9,7 +9,7 @@
     <img alt=".NET" src="https://img.shields.io/badge/.NET-10.0-512bd4?style=flat-square" />
     <img alt="WPF" src="https://img.shields.io/badge/WPF-Plugin-blue?style=flat-square" />
   </p>
-  <p><a href="README.md">简体中文</a> · <a href="README_TW.md">繁體中文</a> · <b>English</b> · <a href="README_JA.md">日本語</a> · <a href="README_KO.md">한국어</a></p>
+  <p><a href="README.md">简体中文</a> · <a href="README.zh-TW.md">繁體中文</a> · <b>English</b> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 </div>
 
 > [!TIP]
@@ -52,11 +52,11 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 
 ## User guide
 
-[Read the complete user guide →](docs/user-guide/README_EN.md)
+[Read the complete user guide →](docs/user-guide/README.en.md)
 
 Detailed guidance covers installation, first setup, voice selection, every setting, PCM / MP3, networking and proxies, and troubleshooting.
 
-[Configuration](docs/user-guide/README_EN.md#configuration) · [Audio formats](docs/user-guide/README_EN.md#audio-formats) · [Network and proxy](docs/user-guide/README_EN.md#network-and-proxy) · [Troubleshooting](docs/user-guide/README_EN.md#troubleshooting)
+[Configuration](docs/user-guide/README.en.md#configuration) · [Audio formats](docs/user-guide/README.en.md#audio-formats) · [Network and proxy](docs/user-guide/README.en.md#network-and-proxy) · [Troubleshooting](docs/user-guide/README.en.md#troubleshooting)
 
 ## FAQ
 
