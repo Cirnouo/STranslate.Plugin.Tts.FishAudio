@@ -134,6 +134,7 @@ if (args.Contains("--settings-control-tests"))
 
 if (args.Contains("--inline-numeric-tests"))
 {
+    await SettingsLayoutSuite.CompactNumericGeometryAsync();
     await SettingsLayoutSuite.InlineNumericInteractionsAsync();
     Console.WriteLine("Inline numeric regression tests passed.");
     return;
@@ -397,6 +398,9 @@ await ApiKeySettingsCardSuite.RunAllAsync();
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
+// Preserve the existing ink suite's first-use DPI characterization before
+// the new numeric group explicitly warms actual DPI on compiled text views.
+await SettingsLayoutSuite.CompactNumericGeometryAsync();
 
 await SettingsInputInteractionSuite.RunAllAsync();
 await ProjectRepositoryLinkSuite.RunAllAsync();

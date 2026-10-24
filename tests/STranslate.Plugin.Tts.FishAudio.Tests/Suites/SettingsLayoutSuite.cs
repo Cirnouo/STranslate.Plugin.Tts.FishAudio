@@ -21,6 +21,16 @@ using static TestAssertions;
 
 internal static class SettingsLayoutSuite
 {
+    internal static async Task CompactNumericGeometryAsync()
+    {
+        // Explicit root-DPI propagation warms shared WPF theme metrics. Keep
+        // this group after VoiceCardInkSuite's first-use characterization.
+        foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
+        foreach (var dark in new[] { false, true })
+        foreach (var dpi in new[] { 1d, 1.25, 1.5 })
+            await RunOnStaThreadAsync(() => InlineNumericEditorSuite.CompactGeometryForCulture(language, culture, dark, dpi));
+    }
+
     internal static async Task InlineNumericInteractionsAsync()
     {
         // Every locale retains the same shared STA and five-second action

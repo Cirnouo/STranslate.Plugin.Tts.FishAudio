@@ -12,6 +12,8 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using iNKORE.UI.WPF.Modern;
+using iNKORE.UI.WPF.Modern.Controls;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.View;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
@@ -24,6 +26,145 @@ internal static class InlineNumericEditorSuite
     // re-snaps typed precision, or lets the native input change row geometry.
     internal static IReadOnlyList<(string Language, string Culture)> Cultures { get; } =
         [("en", "en-US"), ("zh-cn", "zh-CN"), ("zh-tw", "zh-TW"), ("ja", "ja-JP"), ("ko", "ko-KR"), ("ru", "ru-RU"), ("tr", "tr-TR"), ("en", "de-DE")];
+
+    // Catches a centered display presenter, focus-only border growth, clipped
+    // signed values/carets, or a permanently reserved empty unit column. This
+    // is a compiled native-theme state fixture, not installed-host focus proof.
+    internal static void CompactGeometryForCulture(string language, string culture, bool dark, double dpi)
+    {
+        var originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
+            var settings = new Settings { SelectedModel = "s2-pro", Speed = 1.25, Volume = -10 };
+            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{language}.xaml"), UriKind.Absolute) });
+            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            // Materialize the lazy native text views before setting root DPI.
+            // Setting DPI before opening an input leaves its later-created
+            // TextBoxView at the desktop default in this unhosted fixture.
+            SettingsLayoutSuite.Layout(view);
+            foreach (var editor in Descendants(view).OfType<InlineNumericEditor>())
+            {
+                Click(Descendants(editor).OfType<Button>().Single());
+                SettingsLayoutSuite.Layout(view);
+                PressKey(Descendants(editor).OfType<TextBox>().Single(), Key.Escape);
+            }
+            SettingsLayoutSuite.Layout(view);
+            typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!
+                .Invoke(null, [view, new DpiScale(dpi, dpi)]);
+            foreach (var width in new[] { 400d, 600d })
+            foreach (var editor in Descendants(view).OfType<InlineNumericEditor>())
+            {
+                SettingsLayoutSuite.Layout(view, width);
+                var property = BindingOperations.GetBinding(editor, InlineNumericEditor.ValueProperty)!.Path.Path;
+                var context = $"{language}/{culture}/{(dark ? "dark" : "light")}/{dpi * 100}%/{width}/{property}";
+                var display = Descendants(editor).OfType<Button>().Single();
+                var input = Descendants(editor).OfType<TextBox>().Single();
+                var unit = Descendants(editor).OfType<TextBlock>().Single(block => block.Name == "UnitText");
+                var grid = (Grid)unit.Parent;
+                var surface = (Border)display.Template.FindName("Surface", display);
+                var label = VisualDescendants(display).OfType<TextBlock>().Single();
+                // Native keyboard focus can scroll the outer view into sight.
+                // Compare layout within the owning card row independently.
+                var row = (FrameworkElement)editor.Parent;
+                var rowBounds = Bounds(editor, row);
+                var displayBounds = Bounds(display, row);
+                var labelBounds = Bounds(label, row);
+                var slider = Descendants(view).OfType<Slider>().Single(slider => BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path == property);
+                var sliderBounds = Bounds(slider, row);
+                Near(dpi, VisualTreeHelper.GetDpi(input).DpiScaleX, $"{context}: the compiled input must inherit the requested actual root DPI");
+                Near(180, slider.ActualWidth, $"{context}: compact labels must preserve the native slider length");
+                Near(displayBounds.Right - 3, labelBounds.Right, $"{context}: rendered resting text must reach the field's padded right edge");
+                Near(52, display.ActualWidth, $"{context}: numeric hit targets must fit the compact field");
+                Near(32, display.ActualHeight, $"{context}: numeric hit targets must retain their height");
+                AssertEqual(new Thickness(1), surface.BorderThickness, $"{context}: resting border space must be reserved before focus");
+                AssertEqual(0, ((SolidColorBrush)surface.BorderBrush).Color.A, $"{context}: resting outline must remain transparent");
+                SetKeyboardFocused(display, true);
+                SettingsLayoutSuite.Layout(view, width);
+                AssertEqual(view.FindResource("TextFillColorPrimaryBrush"), surface.BorderBrush, $"{context}: focus must expose a contrasting theme outline");
+                AssertEqual(new Thickness(1), surface.BorderThickness, $"{context}: focus must change the brush without growing the border");
+                AssertEqual(labelBounds, Bounds(label, row), $"{context}: focus must not shift the rendered number");
+                AssertEqual(displayBounds, Bounds(display, row), $"{context}: focus must not move the numeric field");
+                SetKeyboardFocused(display, false);
+                Click(display);
+                SettingsLayoutSuite.Layout(view, width);
+                AssertEqual(displayBounds, Bounds(input, row), $"{context}: editing must occupy the exact resting bounds");
+                AssertEqual(rowBounds, Bounds(editor, row), $"{context}: editing must preserve the entire value/unit row");
+                AssertEqual(sliderBounds, Bounds(slider, row), $"{context}: editing must not move the neighboring native slider");
+                AssertEqual(new Thickness(1), input.BorderThickness, $"{context}: the native input border must be fixed at one DIP");
+                AssertEqual(new Thickness(2, 0, 2, 0), input.Padding, $"{context}: native text must retain the compact inner padding");
+                AssertEqual(TextAlignment.Right, input.TextAlignment, $"{context}: drafts must align at the same right edge");
+                var nativeSetter = input.Template.Triggers.OfType<MultiTrigger>().SelectMany(trigger => trigger.Setters.OfType<Setter>())
+                    .Single(setter => setter.Property == iNKORE.UI.WPF.Modern.Controls.Helpers.TextBoxHelper.IsDeleteButtonVisibleProperty);
+                var focusedThemeState = new Style(typeof(TextBox), input.Style);
+                focusedThemeState.Setters.Add(new Setter(nativeSetter.Property, nativeSetter.Value));
+                input.Style = focusedThemeState;
+                foreach (var value in property == "Volume" ? new[] { "-10.00", "-10,00" } : new[] { "0.50", "1.00" })
+                {
+                    input.Text = value;
+                    SettingsLayoutSuite.Layout(view, width);
+                    AssertNumericViewport(input, value);
+                    AssertCaretAndRightEdge(input, view, context);
+                }
+                var expectedUnit = property switch { "Speed" => "×", "Volume" => "dB", _ => "" };
+                AssertEqual(expectedUnit, unit.Text, $"{context}: units must be separate from the editable numeric draft");
+                AssertEqual(false, input.Text.Contains('×') || input.Text.Contains("dB"), $"{context}: native editing must contain only the number");
+                if (expectedUnit.Length == 0)
+                {
+                    AssertEqual(Visibility.Collapsed, unit.Visibility, $"{context}: settings without units must not reserve a unit element");
+                    Near(0, grid.ColumnDefinitions[1].ActualWidth, $"{context}: the empty auto unit column must collapse completely");
+                    Near(52, editor.ActualWidth, $"{context}: no-unit rows must end at the numeric field");
+                }
+                else
+                {
+                    AssertEqual(Visibility.Visible, unit.Visibility, $"{context}: the unit must remain visible during editing");
+                    Near(displayBounds.Right + 4, Bounds(unit, row).Left, $"{context}: unit spacing must remain outside the numeric field");
+                    Near(unit.DesiredSize.Width, grid.ColumnDefinitions[1].ActualWidth, $"{context}: the unit column must size to its real content");
+                    Near(52 + unit.DesiredSize.Width, editor.ActualWidth, $"{context}: units must not retain the old fixed-width reservation");
+                }
+                AssertEqual(true, rowBounds.Right <= row.ActualWidth, $"{context}: compact controls must stay inside the settings width");
+                PressKey(input, Key.Escape);
+                SettingsLayoutSuite.Layout(view, width);
+                AssertEqual(rowBounds, Bounds(editor, row), $"{context}: cancelling must restore the same row bounds");
+            }
+            Console.WriteLine($"[inline-numeric] {language}/{culture}/{(dark ? "dark" : "light")}/{dpi * 100}%: compact geometry, native viewport and caret checks passed at 400/600 DIP.");
+        }
+        finally { CultureInfo.CurrentCulture = originalCulture; }
+    }
+
+    private static void AssertCaretAndRightEdge(TextBox input, FrameworkElement root, string context)
+    {
+        var viewport = VisualDescendants(input).OfType<FrameworkElement>().Single(element => element.GetType().Name == "TextBoxView");
+        // The native ScrollContentPresenter includes negative padding margins;
+        // its child TextBoxView is the actual 46-DIP text viewport.
+        var viewportBounds = Bounds(viewport, root);
+        var inputBounds = Bounds(input, root);
+        Near(VisualTreeHelper.GetDpi(input).DpiScaleX, VisualTreeHelper.GetDpi(viewport).DpiScaleX, $"{context}: the actual text viewport must use the input DPI");
+        Near(46, viewport.ActualWidth, $"{context}: the real native viewport must preserve signed-number and caret space");
+        Near(inputBounds.Right - 3, viewportBounds.Right, $"{context}: the native viewport must reach the padded right edge");
+        var start = input.GetRectFromCharacterIndex(0);
+        var end = input.GetRectFromCharacterIndex(input.Text.Length, true);
+        AssertEqual(false, start.IsEmpty || end.IsEmpty, $"{context}: both end caret positions must resolve after native layout");
+        var startX = input.TranslatePoint(start.TopLeft, root).X;
+        var endX = input.TranslatePoint(end.TopLeft, root).X;
+        Near(viewportBounds.Right, endX, $"{context}: the actual trailing caret must align at the right edge");
+        AssertEqual(true, startX >= viewportBounds.Left && endX <= viewportBounds.Right + .01,
+            $"{context}: the full signed draft and both caret positions must fit without clipping either end");
+        input.Select(0, 0);
+        SettingsLayoutSuite.Layout(root, root.ActualWidth);
+        Near(0, input.HorizontalOffset, $"{context}: viewing the leading caret must not scroll the signed draft");
+        input.Select(input.Text.Length, 0);
+        SettingsLayoutSuite.Layout(root, root.ActualWidth);
+        Near(0, input.HorizontalOffset, $"{context}: viewing the trailing caret must not scroll away any leading glyph");
+    }
+
+    private static Rect Bounds(FrameworkElement element, Visual root) => new(element.TranslatePoint(new Point(), (UIElement)root), element.RenderSize);
+    private static void Near(double expected, double actual, string message) => AssertEqual(true, Math.Abs(expected - actual) < .01, $"{message}; expected {expected:F3}, actual {actual:F3}");
+    private static void SetKeyboardFocused(Button button, bool value) => button.SetValue((DependencyPropertyKey)typeof(UIElement)
+        .GetField("IsKeyboardFocusedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!, value);
 
     internal static void RunForCulture(Func<SettingsViewModel, SettingsView> createView, Action<FrameworkElement, double> layout, string language, string culture)
     {
@@ -163,7 +304,7 @@ internal static class InlineNumericEditorSuite
                     input.Text = draft; Blur(input); Drain();
                 }
                 var unit = Descendants(editor).OfType<TextBlock>().Single(b => b.Name == "UnitText");
-                AssertEqual(property == "Volume" ? "dB" : "", unit.Text, "Units must remain separate from editable numeric text");
+                AssertEqual(property switch { "Speed" => "×", "Volume" => "dB", _ => "" }, unit.Text, "Units must remain separate from editable numeric text");
                 AssertEqual(false, input.Text.Contains("dB"), "Volume editor must never include its unit");
             }
             AssertEqual(AppliedKey, settings.ApiKey, "Editing numeric settings must preserve the API key");
@@ -276,8 +417,8 @@ internal static class InlineNumericEditorSuite
             var glyphs = new FormattedText(value, CultureInfo.CurrentCulture, input.FlowDirection,
                 new Typeface(input.FontFamily, input.FontStyle, input.FontWeight, input.FontStretch), input.FontSize,
                 input.Foreground, VisualTreeHelper.GetDpi(input).PixelsPerDip);
-            AssertEqual(true, contentHost.ViewportWidth >= glyphs.WidthIncludingTrailingWhitespace,
-                $"The native numeric viewport must fit every glyph of {value} without horizontal clipping");
+            AssertEqual(true, contentHost.ViewportWidth >= glyphs.WidthIncludingTrailingWhitespace + 1 / VisualTreeHelper.GetDpi(input).DpiScaleX,
+                $"The native numeric viewport must fit every glyph of {value} with at least one physical pixel of caret room");
         }
         AssertEqual(Visibility.Collapsed, clearButton.Visibility, "Inline numeric editing must not reserve space for the native clear button");
         AssertEqual(0d, clearButton.ActualWidth, "The collapsed native clear button must consume zero horizontal space");

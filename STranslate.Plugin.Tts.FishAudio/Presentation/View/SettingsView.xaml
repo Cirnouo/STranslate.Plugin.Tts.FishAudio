@@ -1087,7 +1087,7 @@
             </ui:SettingsCard.HeaderIcon>
             <StackPanel Orientation="Horizontal" Width="270" Height="32" HorizontalAlignment="Left">
                 <view:NumericSlider Width="180" IsMoveToPointEnabled="True" IsSnapToTickEnabled="True" Maximum="2.0" Minimum="0.5" TickFrequency="0.01" SmallChange="0.01" AutoToolTipPrecision="2" AutoToolTipPlacement="TopLeft" Value="{Binding Speed}" />
-                <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Speed}" Minimum="0.5" Maximum="2" DecimalPlaces="2"
+                <view:InlineNumericEditor Margin="8,0,0,0" Value="{Binding Speed}" Minimum="0.5" Maximum="2" DecimalPlaces="2" Unit="×"
                                           Label="{DynamicResource STranslate_Plugin_Tts_FishAudio_Speed}" />
             </StackPanel>
         </ui:SettingsCard>

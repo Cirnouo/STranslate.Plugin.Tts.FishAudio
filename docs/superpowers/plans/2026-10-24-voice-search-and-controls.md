@@ -91,6 +91,7 @@
 ## Final verification and delivery
 
 - [ ] Complete each task review, then a fresh xhigh whole-branch review. Fix material findings and rerun affected checks.
+- [ ] After implementation, use cua-driver in the local STranslate host for actual appearance/interaction acceptance. Root is the only desktop controller; inspect live schemas, use exact-window snapshot/action/verify, preserve private evidence, restore settings and avoid synthesis. Finish this acceptance before whole-branch final signoff and PR creation.
 - [ ] Run ./build.ps1 -Release -Clean -Test on the final intended state and inspect the fresh .spkg manifest, private runtime dependencies, seven resources and flag assets. Run relevant offline probe/release-tool checks already required by repository CI; record evidence boundaries.
 - [ ] Push the feature branch, create a template-compliant PR and attach it to this chat. Monitor actual required PR checks; keep the head current and use squash with the PR-number suffix after success. Verify the merged subject and PR association.
 - [ ] Monitor main CI at the merge commit. Fast-forward the original local main with --ff-only, preserving unrelated work. Archive the managed worktree, preserving the PR attachment, then verify attachments and local/remote commit identity. Do not tag or publish a release.
