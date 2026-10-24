@@ -111,6 +111,7 @@ if (args.Contains("--voice-card-ink-tests"))
 
 if (args.Contains("--settings-layout-tests"))
 {
+    await ApiKeySettingsCardSuite.RunAllAsync();
     await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
     Console.WriteLine("Compiled settings layout tests passed.");
     return;
@@ -392,6 +393,7 @@ TopPCompatibilitySuite.OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips();
 TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection();
 await TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync();
 
+await ApiKeySettingsCardSuite.RunAllAsync();
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
