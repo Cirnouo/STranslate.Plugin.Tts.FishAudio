@@ -17,6 +17,76 @@ using static TestAssertions;
 
 internal static class VoiceDiscoverySuite
 {
+    internal static async Task ByIdTimerCreationCannotOutliveConcurrentRetirementAsync()
+    {
+        // Installing a timer without rechecking its reserved owner after CreateTimer must fail.
+        foreach (var retirement in new[] { "dispose", "replacement" })
+        {
+            using var clock = new InterceptingTimeProvider();
+            using var releaseCreation = new ManualResetEventSlim();
+            var creationEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            clock.BeforeNextTimerReturns = () =>
+            {
+                creationEntered.SetResult();
+                AssertEqual(true, releaseCreation.Wait(TimeSpan.FromSeconds(2)), "The test must release the same paused timer creation");
+            };
+            var settings = new Settings();
+            using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+            var lookup = Task.Run(() => view.SubmitVoiceIdCommand.ExecuteAsync(null));
+            var lateErrorChanges = 0;
+            try
+            {
+                await creationEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                if (retirement == "dispose")
+                    view.Dispose();
+                else
+                {
+                    view.VoiceIdInput = "bad";
+                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                }
+                view.PropertyChanged += (_, args) => { if (args.PropertyName == nameof(view.VoiceIdError)) lateErrorChanges++; };
+            }
+            finally
+            {
+                releaseCreation.Set();
+                await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            AssertEqual(true, clock.Timers[0].IsDisposed, "A timer whose creation lost ownership must be disposed");
+            AssertEqual(0, lateErrorChanges, "A timer creation finishing after retirement cannot publish an old error");
+            if (retirement == "dispose")
+                AssertEqual<string?>(null, view.VoiceIdError, "Completed disposal must reject an in-flight error publication");
+            else
+            {
+                AssertEqual("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat", view.VoiceIdError, "Concurrent replacement owns the visible error");
+                AssertEqual(false, clock.Timers[1].IsDisposed, "Rejecting an old timer cannot retire the replacement timer");
+                clock.Advance(TimeSpan.FromMilliseconds(4999));
+                AssertNotNull(view.VoiceIdError, "The replacement retains its full five-second lifetime");
+                clock.Advance(TimeSpan.FromMilliseconds(1));
+                AssertEqual<string?>(null, view.VoiceIdError, "The replacement still expires on its own timer");
+            }
+        }
+    }
+
+    internal static async Task ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync()
+    {
+        // A TimeProvider may reenter before returning; the outer candidate must not overwrite its successor.
+        using var clock = new InterceptingTimeProvider();
+        var settings = new Settings();
+        using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
+        clock.BeforeNextTimerReturns = () =>
+        {
+            view.VoiceIdInput = "bad";
+            view.SubmitVoiceIdCommand.ExecuteAsync(null).GetAwaiter().GetResult();
+        };
+        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+        AssertEqual(true, clock.Timers[0].IsDisposed, "Reentrant replacement must dispose the outer timer candidate");
+        AssertEqual(false, clock.Timers[1].IsDisposed, "The reentrant successor must retain ownership of its timer");
+        AssertEqual("STranslate_Plugin_Tts_FishAudio_VoiceId_InvalidFormat", view.VoiceIdError, "The outer occurrence cannot overwrite the reentrant error");
+        clock.Advance(TimeSpan.FromSeconds(5));
+        AssertEqual<string?>(null, view.VoiceIdError, "The surviving reentrant occurrence expires normally");
+        AssertEqual(true, clock.Timers[1].IsDisposed, "Expiry disposes the surviving timer");
+    }
+
     internal static async Task ByIdErrorsExpireAtFiveSecondsAsync()
     {
         // Removing expiry, expiring early, or expiring only local validation must fail.

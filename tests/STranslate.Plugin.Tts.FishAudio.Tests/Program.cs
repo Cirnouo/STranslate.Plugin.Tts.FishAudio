@@ -1,10 +1,15 @@
 if (args.Contains("--by-id-error-tests"))
 {
+    await VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync();
+    await VoiceDiscoverySuite.ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync();
     await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
     await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
     await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
     await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();
     await VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync();
+    await VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
+    await VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
+    await VoiceDiscoverySuite.DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync();
     Console.WriteLine("By-ID error lifecycle tests passed.");
     return;
 }
@@ -324,6 +329,8 @@ await CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundar
 await VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync();
 await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
 await VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync();
+await VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync();
+await VoiceDiscoverySuite.ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync();
 await VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync();
 await VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
 await VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync();

@@ -28,6 +28,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private readonly Action<VoiceSearchItem?> _setByIdResult;
     private readonly Action<CachedVoiceInfo?> _applyCachedVoice;
     private readonly Action<string?> _setVoiceIdError;
+    private readonly object _voiceIdErrorGate = new();
     private readonly TimeProvider _timeProvider;
     private readonly Action<Action> _runOnUiThread;
     private readonly Action<bool> _setSubmittingVoiceId;
@@ -218,36 +219,59 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         cancellation?.Cancel();
     }
 
-    private void SetVoiceIdError(string? error)
+    private void SetVoiceIdError(string? error, long? expectedVersion = null)
     {
-        RetireVoiceIdError();
-        if (Volatile.Read(ref _isDisposed) || _isFacadeDisposed())
+        if (_isFacadeDisposed())
             return;
 
+        ITimer? previous;
+        long version;
+        lock (_voiceIdErrorGate)
+        {
+            if (_isDisposed || (expectedVersion is { } expected && _voiceIdErrorVersion != expected))
+                return;
+
+            version = ++_voiceIdErrorVersion;
+            previous = _voiceIdErrorTimer;
+            _voiceIdErrorTimer = null;
+        }
+        previous?.Dispose();
+
+        if (!IsCurrentVoiceIdError(version) || _isFacadeDisposed())
+            return;
         if (error is not null)
         {
-            var version = Volatile.Read(ref _voiceIdErrorVersion);
-            _voiceIdErrorTimer = _timeProvider.CreateTimer(_ => _runOnUiThread(() =>
+            // Creation/disposal may block or reenter; neither runs under the state gate.
+            var candidate = _timeProvider.CreateTimer(_ => _runOnUiThread(() =>
             {
                 // Disposing a timer cannot retract a callback already queued to WPF.
-                // Each publication owns a version, even when its text is identical.
-                if (!Volatile.Read(ref _isDisposed) && !_isFacadeDisposed()
-                    && Volatile.Read(ref _voiceIdErrorVersion) == version)
-                {
-                    SetVoiceIdError(null);
-                }
+                // Conditional retirement rechecks the occurrence inside the UI action.
+                SetVoiceIdError(null, version);
             }), null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+
+            var facadeActive = !_isFacadeDisposed();
+            bool attached;
+            lock (_voiceIdErrorGate)
+            {
+                attached = facadeActive && !_isDisposed && _voiceIdErrorVersion == version;
+                if (attached)
+                    _voiceIdErrorTimer = candidate;
+            }
+            if (!attached)
+            {
+                candidate.Dispose();
+                return;
+            }
         }
 
-        _setVoiceIdError(error);
+        if (IsCurrentVoiceIdError(version) && !_isFacadeDisposed())
+            _setVoiceIdError(error);
     }
 
-    private void RetireVoiceIdError()
+    private bool IsCurrentVoiceIdError(long version)
     {
-        Interlocked.Increment(ref _voiceIdErrorVersion);
-        var timer = _voiceIdErrorTimer;
-        _voiceIdErrorTimer = null;
-        timer?.Dispose();
+        lock (_voiceIdErrorGate)
+            return !_isDisposed && _voiceIdErrorVersion == version;
     }
 
     internal static CachedVoiceInfo CreateCachedVoiceInfo(ModelEntity model) => new()
@@ -407,13 +431,20 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal void InvalidateOperations()
     {
-        if (Volatile.Read(ref _isDisposed))
-            return;
+        ITimer? timer;
+        lock (_voiceIdErrorGate)
+        {
+            if (_isDisposed)
+                return;
 
-        Volatile.Write(ref _isDisposed, true);
-        RetireVoiceIdError();
-        Interlocked.Increment(ref _searchOperationId);
-        Interlocked.Increment(ref _voiceIdOperationId);
+            Volatile.Write(ref _isDisposed, true);
+            ++_voiceIdErrorVersion;
+            timer = _voiceIdErrorTimer;
+            _voiceIdErrorTimer = null;
+            Interlocked.Increment(ref _searchOperationId);
+            Interlocked.Increment(ref _voiceIdOperationId);
+        }
+        timer?.Dispose();
     }
 
     public void Dispose()
