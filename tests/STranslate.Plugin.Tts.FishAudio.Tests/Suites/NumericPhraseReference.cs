@@ -20,7 +20,7 @@ internal sealed class NumericPhraseReference
     private readonly Point _numberOrigin;
     private readonly double _dpi;
 
-    internal NumericPhraseReference(InlineNumericEditor editor, TextBlock number, TextBlock unit)
+    internal NumericPhraseReference(InlineNumericEditor editor, TextBlock number, TextBlock unit, Action<TextBlock>? groupNative = null)
     {
         _editor = editor;
         _number = number;
@@ -42,6 +42,7 @@ internal sealed class NumericPhraseReference
         _line.Inlines.Add(new Run(number.Text));
         _line.Inlines.Add(new Run(" "));
         _line.Inlines.Add(new Run(unit.Text) { FontSize = 11, Foreground = (Brush)editor.FindResource("TextFillColorSecondaryBrush") });
+        groupNative?.Invoke(_line);
         _root = new Canvas { Width = 160, Height = 48, UseLayoutRounding = number.UseLayoutRounding };
         _root.Children.Add(_line);
         // Match the child's actual inherited DPI before measuring native text.
@@ -57,24 +58,22 @@ internal sealed class NumericPhraseReference
 
     internal void AssertMatches(string context)
     {
-        var actualNumbers = Runs(_number, _editor).ToArray();
-        var actualUnits = Runs(_unit, _editor).ToArray();
-        var native = Runs(_line, _root).ToArray();
-        var nativeNumbers = native.Where(run => run.Drawing.GlyphRun.FontRenderingEmSize == _number.FontSize &&
-            run.Drawing.GlyphRun.Characters?.Any(char.IsDigit) == true).ToArray();
-        var nativeUnits = native.Where(run => run.Drawing.GlyphRun.FontRenderingEmSize == 11).ToArray();
+        var actualNumbers = NumericGlyphObservation.Read(_number, _editor);
+        var actualUnits = NumericGlyphObservation.Read(_unit, _editor);
+        var (nativeNumbers, nativeUnits) = NativeGlyphs(context);
         AssertEqual(true, actualNumbers.Length > 0 && actualUnits.Length > 0 && nativeNumbers.Length > 0 && nativeUnits.Length > 0,
             $"{context}: actual and literal native phrase must expose number and unit glyph runs");
-        CompareGlyphs(actualNumbers, nativeNumbers, context + "/number");
-        CompareGlyphs(actualUnits, nativeUnits, context + "/unit");
-        var numberEnd = actualNumbers.Max(run => run.Origin.X + run.Drawing.GlyphRun.AdvanceWidths.Sum());
-        var nativeNumberEnd = nativeNumbers.Max(run => run.Origin.X + run.Drawing.GlyphRun.AdvanceWidths.Take(_number.Text.Length).Sum());
-        Near(actualNumbers[0].Origin.X, nativeNumbers[0].Origin.X, context + ": numeric origin and physical horizontal phase must match");
+        NumericGlyphObservation.AssertText(actualNumbers, _number.Text, context + "/number");
+        NumericGlyphObservation.AssertText(actualUnits, _unit.Text, context + "/unit");
+        NumericGlyphObservation.Compare(actualNumbers, nativeNumbers, new Vector(), context + "/number");
+        var actualOrigin = actualUnits[0].Baseline;
+        var nativeOrigin = nativeUnits[0].Baseline;
+        NumericGlyphObservation.Compare(actualUnits, nativeUnits, new Vector(actualOrigin.X - nativeOrigin.X, 0), context + "/unit");
+        var numberEnd = actualNumbers.Max(glyph => glyph.Baseline.X + glyph.Advance.X);
+        var nativeNumberEnd = nativeNumbers.Max(glyph => glyph.Baseline.X + glyph.Advance.X);
+        Near(actualNumbers[0].Baseline.X, nativeNumbers[0].Baseline.X, context + ": numeric origin and physical horizontal phase must match");
         Near(numberEnd, nativeNumberEnd, context + ": actual numeric trailing advance must match the native phrase prefix");
-        Near(actualUnits.Sum(run => run.Drawing.GlyphRun.AdvanceWidths.Sum()),
-            nativeUnits.Sum(run => run.Drawing.GlyphRun.AdvanceWidths.Sum()), context + ": native suffix content extent");
-        var actualOrigin = actualUnits[0].Origin;
-        var nativeOrigin = nativeUnits[0].Origin;
+        Near(actualUnits.Sum(glyph => glyph.Advance.X), nativeUnits.Sum(glyph => glyph.Advance.X), context + ": native suffix content extent");
         var compactGap = actualOrigin.X - numberEnd;
         var literalSpace = nativeOrigin.X - nativeNumberEnd;
         // The allocation supplies 3 DIP, which is not the literal space advance.
@@ -82,40 +81,42 @@ internal sealed class NumericPhraseReference
         // range. Keep the prior .01 DIP geometry/baseline allowance unchanged.
         AssertEqual(true, compactGap > 0 && compactGap <= literalSpace + .01,
             $"{context}: compact gap must fit within one native ordinary space; gap={compactGap:F5}, space={literalSpace:F5}");
-        Near(actualNumbers[0].Origin.Y, nativeNumbers[0].Origin.Y, context + ": native prefix baseline");
+        Near(actualNumbers[0].Baseline.Y, nativeNumbers[0].Baseline.Y, context + ": native prefix baseline");
         Near(actualOrigin.Y, nativeOrigin.Y, context + ": native suffix baseline");
         AssertEqual(false, MatchesSuffix(actualOrigin, nativeOrigin + new Vector(0, 3 / _dpi), compactGap, literalSpace),
             $"{context}: fixed +3-physical-pixel native reference suffix displacement must fail the native comparison");
         AssertEqual(false, MatchesSuffix(actualOrigin + new Vector(3 / _dpi, 0), nativeOrigin, compactGap + 3 / _dpi, literalSpace),
             $"{context}: fixed +3-physical-pixel horizontal suffix displacement must fail the native comparison");
         AssertEqual(true, MatchesSuffix(actualOrigin, nativeOrigin, compactGap, literalSpace), context + ": actual suffix must satisfy the native phrase comparison");
-        Console.WriteLine($"PHRASE {context} dpi={_dpi} number={_number.Text} unit={_unit.Text} compactAdvanceGap={compactGap:F5} literalSpace={literalSpace:F5} baselineActual={actualOrigin.Y:F5} baselineNative={nativeOrigin.Y:F5} suffixXActual={actualOrigin.X:F5} suffixXNative={nativeOrigin.X:F5} runs={native.Length} formatting={TextOptions.GetTextFormattingMode(_line)} rounding={_line.UseLayoutRounding}");
+        Console.WriteLine($"PHRASE {context} dpi={_dpi} number={_number.Text} unit={_unit.Text} compactAdvanceGap={compactGap:F5} literalSpace={literalSpace:F5} baselineActual={actualOrigin.Y:F5} baselineNative={nativeOrigin.Y:F5} suffixXActual={actualOrigin.X:F5} suffixXNative={nativeOrigin.X:F5} runs={Runs(_line, _root).Count()} formatting={TextOptions.GetTextFormattingMode(_line)} rounding={_line.UseLayoutRounding}");
+    }
+
+    internal void AssertEditingMatches(TextBox input, Visual viewport, string context)
+    {
+        var actual = NumericGlyphObservation.Read(viewport, _editor);
+        var (nativeNumbers, nativeUnits) = NativeGlyphs(context);
+        NumericGlyphObservation.AssertText(actual, input.Text, context + "/editing-number");
+        AssertEqual(_number.Text, input.Text, context + ": initial native editing draft must retain the full displayed number");
+        // The editor centers its number in the same field. Preserve the native
+        // baseline and every relative glyph position while allowing that X shift.
+        NumericGlyphObservation.Compare(actual, nativeNumbers, new Vector(actual[0].Baseline.X - nativeNumbers[0].Baseline.X, 0), context + "/editing-number");
+        var units = NumericGlyphObservation.Read(_unit, _editor);
+        NumericGlyphObservation.AssertText(units, _unit.Text, context + "/editing-unit");
+        NumericGlyphObservation.Compare(units, nativeUnits, new Vector(units[0].Baseline.X - nativeUnits[0].Baseline.X, 0), context + "/editing-unit");
+    }
+
+    private (NumericGlyphObservation.Glyph[] Numbers, NumericGlyphObservation.Glyph[] Units) NativeGlyphs(string context)
+    {
+        var native = NumericGlyphObservation.Read(_line, _root);
+        NumericGlyphObservation.AssertText(native, _number.Text + " " + _unit.Text, context + "/native-phrase");
+        var numbers = NumericGlyphObservation.Slice(native, 0, _number.Text.Length, _number.Text, context + "/native-number");
+        NumericGlyphObservation.Slice(native, _number.Text.Length, 1, " ", context + "/native-space");
+        var units = NumericGlyphObservation.Slice(native, _number.Text.Length + 1, _unit.Text.Length, _unit.Text, context + "/native-unit");
+        return (numbers, units);
     }
 
     private static bool MatchesSuffix(Point actual, Point native, double compactGap, double literalSpace) =>
         Math.Abs(actual.Y - native.Y) < .01 && compactGap > 0 && compactGap <= literalSpace + .01;
-
-    private static void CompareGlyphs(GlyphPlacement[] actual, GlyphPlacement[] native, string context)
-    {
-        // A native line may split its prefix/space/unit into several runs.
-        // Compare the actual glyph sequence rather than requiring one run.
-        AssertEqual(string.Join(",", actual.SelectMany(run => run.Drawing.GlyphRun.GlyphIndices)),
-            string.Join(",", native.SelectMany(run => run.Drawing.GlyphRun.GlyphIndices).Take(actual.Sum(run => run.Drawing.GlyphRun.GlyphIndices.Count))),
-            context + ": native glyph sequence");
-        foreach (var pair in actual.Zip(native))
-        {
-            var a = pair.First.Drawing.GlyphRun;
-            var n = pair.Second.Drawing.GlyphRun;
-            AssertEqual(a.FontRenderingEmSize, n.FontRenderingEmSize, context + ": native em size");
-            AssertEqual(a.GlyphTypeface.FontUri, n.GlyphTypeface.FontUri, context + ": native typeface");
-            AssertEqual(a.GlyphTypeface.Style, n.GlyphTypeface.Style, context + ": native style");
-            AssertEqual(a.GlyphTypeface.Weight, n.GlyphTypeface.Weight, context + ": native weight");
-            AssertEqual(a.GlyphTypeface.Stretch, n.GlyphTypeface.Stretch, context + ": native stretch");
-            AssertEqual(((SolidColorBrush)pair.First.Drawing.ForegroundBrush).Color, ((SolidColorBrush)pair.Second.Drawing.ForegroundBrush).Color,
-                context + ": actual native glyph foreground including alpha");
-            AssertEqual(pair.First.Drawing.ForegroundBrush.Opacity, pair.Second.Drawing.ForegroundBrush.Opacity, context + ": actual native brush opacity");
-        }
-    }
 
     internal void SavePair(string path, bool editing)
     {

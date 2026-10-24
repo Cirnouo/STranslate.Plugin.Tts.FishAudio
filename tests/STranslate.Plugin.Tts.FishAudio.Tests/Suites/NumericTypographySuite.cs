@@ -160,53 +160,83 @@ internal static class NumericTypographySuite
         TestAssertions.AssertEqual(button.FontSize, number.FontSize, $"{context}: number must retain the native font size");
         TestAssertions.AssertEqual(editor.FindResource("TextFillColorPrimaryBrush"), number.Foreground, $"{context}: number must retain primary foreground");
         if (unit.Visibility != Visibility.Visible) return;
-        var numberRun = Glyphs(VisualTreeHelper.GetDrawing(number)).Single();
-        var unitRun = Glyphs(VisualTreeHelper.GetDrawing(unit)).Single();
-        var numberBaseline = number.TransformToAncestor(editor).Transform(numberRun.BaselineOrigin);
-        var unitBaseline = unit.TransformToAncestor(editor).Transform(unitRun.BaselineOrigin);
-        TestAssertions.AssertEqual(number.FontFamily, unit.FontFamily, $"{context}: number and unit must resolve the same font family");
-        TestAssertions.AssertEqual(number.FontWeight, unit.FontWeight, $"{context}: number and unit must resolve the same font weight");
-        TestAssertions.AssertEqual(numberRun.GlyphTypeface.FamilyNames.Values.First(), unitRun.GlyphTypeface.FamilyNames.Values.First(),
-            $"{context}: actual number and unit glyphs must resolve a compatible font family");
-        TestAssertions.AssertEqual(numberRun.GlyphTypeface.Weight, unitRun.GlyphTypeface.Weight,
-            $"{context}: actual number and unit glyphs must resolve a compatible font weight");
-        TestAssertions.AssertEqual(true, Math.Abs(numberBaseline.Y - unitBaseline.Y) < .01,
-            $"{context}: unit and number must share a typographic baseline; number={numberBaseline.Y:F4}, unit={unitBaseline.Y:F4}");
-        TestAssertions.AssertEqual(11d, unitRun.FontRenderingEmSize,
-            $"{context}: both units must use the smaller 11-DIP descriptive size");
-        TestAssertions.AssertEqual(true, unitRun.FontRenderingEmSize < numberRun.FontRenderingEmSize,
-            $"{context}: both units must be smaller than the native number");
-        var numberDrawing = GlyphDrawings(VisualTreeHelper.GetDrawing(number)).Single();
-        var unitDrawing = GlyphDrawings(VisualTreeHelper.GetDrawing(unit)).Single();
-        TestAssertions.AssertEqual(editor.FindResource("TextFillColorPrimaryBrush"), numberDrawing.ForegroundBrush,
-            $"{context}: the native number must retain its primary foreground");
-        TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), unitDrawing.ForegroundBrush,
-            $"{context}: both units must render with the dynamic secondary foreground");
-        var space = new FormattedText(" ", CultureInfo.CurrentCulture, number.FlowDirection,
-            new Typeface(number.FontFamily, number.FontStyle, number.FontWeight, number.FontStretch), number.FontSize,
-            number.Foreground, VisualTreeHelper.GetDpi(number).PixelsPerDip).WidthIncludingTrailingWhitespace;
-        var gap = unitBaseline.X - Bounds(number, editor).Right;
-        TestAssertions.AssertEqual(true, gap > 0 && gap <= space + .01,
-            $"{context}: number and separate unit must have at most an ordinary same-font space; gap={gap:F3}, space={space:F3}");
-        new NumericPhraseReference(editor, number, unit).AssertMatches(context);
-        var hit = VisualTreeHelper.HitTest(editor, unit.TranslatePoint(new Point(unit.ActualWidth / 2, unit.ActualHeight / 2), editor));
-        TestAssertions.AssertEqual(unit, hit?.VisualHit, $"{context}: the unit's visual hit must remain outside the numeric button");
+        var numbers = NumericGlyphObservation.Read(number, editor);
+        var units = NumericGlyphObservation.Read(unit, editor);
+        try
+        {
+            NumericGlyphObservation.AssertText(numbers, number.Text, context + "/resting-number");
+            NumericGlyphObservation.AssertText(units, unit.Text, context + "/resting-unit");
+            // Shared requested typography remains a contract. The literal native
+            // phrase below verifies each actual glyph face, including fallback.
+            TestAssertions.AssertEqual(number.FontFamily, unit.FontFamily, $"{context}: number and unit must resolve the same font family");
+            TestAssertions.AssertEqual(number.FontWeight, unit.FontWeight, $"{context}: number and unit must resolve the same font weight");
+            TestAssertions.AssertEqual(number.FontStyle, unit.FontStyle, $"{context}: number and unit must resolve the same font style");
+            TestAssertions.AssertEqual(number.FontStretch, unit.FontStretch, $"{context}: number and unit must resolve the same font stretch");
+            foreach (var glyph in numbers)
+            {
+                TestAssertions.AssertEqual(number.FontSize, glyph.EmSize, $"{context}: every number glyph must retain its native size");
+                TestAssertions.AssertEqual(editor.FindResource("TextFillColorPrimaryBrush"), glyph.Brush,
+                    $"{context}: every native number glyph must retain its primary foreground");
+            }
+            foreach (var glyph in units)
+            {
+                TestAssertions.AssertEqual(11d, glyph.EmSize, $"{context}: every unit glyph must use the smaller 11-DIP descriptive size");
+                TestAssertions.AssertEqual(true, glyph.EmSize < number.FontSize, $"{context}: both units must be smaller than the native number");
+                TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), glyph.Brush,
+                    $"{context}: every unit glyph must render with the dynamic secondary foreground");
+                foreach (var numeric in numbers)
+                    TestAssertions.AssertEqual(true, Math.Abs(numeric.Baseline.Y - glyph.Baseline.Y) < .01,
+                        $"{context}: every unit and number glyph must share a typographic baseline; number={numeric.Baseline.Y:F4}, unit={glyph.Baseline.Y:F4}");
+            }
+            var space = new FormattedText(" ", CultureInfo.CurrentCulture, number.FlowDirection,
+                new Typeface(number.FontFamily, number.FontStyle, number.FontWeight, number.FontStretch), number.FontSize,
+                number.Foreground, VisualTreeHelper.GetDpi(number).PixelsPerDip).WidthIncludingTrailingWhitespace;
+            var gap = units.Min(glyph => glyph.Baseline.X) - Bounds(number, editor).Right;
+            TestAssertions.AssertEqual(true, gap > 0 && gap <= space + .01,
+                $"{context}: number and separate unit must have at most an ordinary same-font space; gap={gap:F3}, space={space:F3}");
+            new NumericPhraseReference(editor, number, unit).AssertMatches(context);
+            var hit = VisualTreeHelper.HitTest(editor, unit.TranslatePoint(new Point(unit.ActualWidth / 2, unit.ActualHeight / 2), editor));
+            TestAssertions.AssertEqual(unit, hit?.VisualHit, $"{context}: the unit's visual hit must remain outside the numeric button");
+            }
+        catch
+        {
+            DumpFailure(context, numbers, units);
+            throw;
+        }
     }
 
     internal static void AssertEditing(InlineNumericEditor editor, TextBox input, TextBlock unit, string context)
     {
         if (unit.Visibility != Visibility.Visible) return;
         var viewport = Visuals(input).OfType<Visual>().Single(element => element.GetType().Name == "TextBoxView");
-        var number = new[] { viewport }.Concat(Visuals(viewport).OfType<Visual>())
-            .SelectMany(owner => Glyphs(VisualTreeHelper.GetDrawing(owner)).Select(run => (Owner: owner, Run: run))).Single();
-        TestAssertions.AssertEqual(input.FontSize, number.Run.FontRenderingEmSize, $"{context}: editor must retain its native numeric size");
-        var unitDrawing = GlyphDrawings(VisualTreeHelper.GetDrawing(unit)).Single();
-        TestAssertions.AssertEqual(11d, unitDrawing.GlyphRun.FontRenderingEmSize, $"{context}: editing must preserve the 11-DIP unit");
-        TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), unitDrawing.ForegroundBrush, $"{context}: editing must preserve the dynamic secondary unit");
-        var numberBaseline = number.Owner.TransformToAncestor(editor).Transform(number.Run.BaselineOrigin);
-        var unitBaseline = unit.TransformToAncestor(editor).Transform(Glyphs(VisualTreeHelper.GetDrawing(unit)).Single().BaselineOrigin);
-        TestAssertions.AssertEqual(true, Math.Abs(numberBaseline.Y - unitBaseline.Y) < .01,
-            $"{context}: centering the native edit draft must preserve the separate unit baseline");
+        var numbers = NumericGlyphObservation.Read(viewport, editor);
+        var units = NumericGlyphObservation.Read(unit, editor);
+        try
+        {
+            NumericGlyphObservation.AssertText(numbers, input.Text, context + "/editing-number");
+            NumericGlyphObservation.AssertText(units, unit.Text, context + "/editing-unit");
+            foreach (var number in numbers)
+            {
+                TestAssertions.AssertEqual(input.FontSize, number.EmSize, $"{context}: every editor glyph must retain its native numeric size");
+                TestAssertions.AssertEqual(editor.FindResource("TextFillColorPrimaryBrush"), number.Brush, $"{context}: every editor glyph must retain primary foreground");
+            }
+            foreach (var glyph in units)
+            {
+                TestAssertions.AssertEqual(11d, glyph.EmSize, $"{context}: editing must preserve every 11-DIP unit glyph");
+                TestAssertions.AssertEqual(editor.FindResource("TextFillColorSecondaryBrush"), glyph.Brush, $"{context}: editing must preserve every dynamic secondary unit glyph");
+                foreach (var number in numbers)
+                    TestAssertions.AssertEqual(true, Math.Abs(number.Baseline.Y - glyph.Baseline.Y) < .01,
+                        $"{context}: centering every native edit glyph must preserve the separate unit baseline");
+            }
+            var button = (Button)editor.FindName("DisplayButton");
+            var label = Visuals(button).OfType<TextBlock>().Single();
+            new NumericPhraseReference(editor, label, unit).AssertEditingMatches(input, viewport, context);
+        }
+        catch
+        {
+            DumpFailure(context, numbers, units);
+            throw;
+        }
     }
 
     private static string Font(DependencyObject element) => $"{element.GetValue(TextBlock.FontFamilyProperty)}/{element.GetValue(TextBlock.FontSizeProperty)}/{element.GetValue(TextBlock.FontWeightProperty)}/{element.GetValue(TextBlock.FontStyleProperty)}";
@@ -214,27 +244,17 @@ internal static class NumericTypographySuite
 
     private static void DumpGlyphs(Visual visual, UIElement root, string name)
     {
-        foreach (var glyph in Glyphs(VisualTreeHelper.GetDrawing(visual)))
-            Console.WriteLine($"GLYPH {name} baseline={visual.TransformToAncestor(root).Transform(glyph.BaselineOrigin)} em={glyph.FontRenderingEmSize} family={glyph.GlyphTypeface.FamilyNames.Values.First()} weight={glyph.GlyphTypeface.Weight} lineBounds={glyph.ComputeAlignmentBox()} inkBounds={glyph.ComputeInkBoundingBox()}");
-        foreach (var child in Visuals(visual).OfType<Visual>())
-            foreach (var glyph in Glyphs(VisualTreeHelper.GetDrawing(child)))
-                Console.WriteLine($"GLYPH {name} baseline={child.TransformToAncestor(root).Transform(glyph.BaselineOrigin)} em={glyph.FontRenderingEmSize} family={glyph.GlyphTypeface.FamilyNames.Values.First()} weight={glyph.GlyphTypeface.Weight} lineBounds={glyph.ComputeAlignmentBox()} inkBounds={glyph.ComputeInkBoundingBox()}");
+        Console.WriteLine($"GLYPH {name} {NumericGlyphObservation.Describe(NumericGlyphObservation.Read(visual, root))}");
     }
 
-    private static IEnumerable<GlyphRunDrawing> GlyphDrawings(Drawing? drawing)
+    private static void DumpFailure(string context, NumericGlyphObservation.Glyph[] numbers, NumericGlyphObservation.Glyph[] units)
     {
-        if (drawing is GlyphRunDrawing glyph) yield return glyph;
-        if (drawing is DrawingGroup group)
-            foreach (var child in group.Children)
-                foreach (var run in GlyphDrawings(child)) yield return run;
-    }
-
-    private static IEnumerable<GlyphRun> Glyphs(Drawing? drawing)
-    {
-        if (drawing is GlyphRunDrawing glyph) yield return glyph.GlyphRun;
-        if (drawing is DrawingGroup group)
-            foreach (var child in group.Children)
-                foreach (var run in Glyphs(child)) yield return run;
+        try
+        {
+            Console.WriteLine($"GLYPH-FAIL {context}/number {NumericGlyphObservation.Describe(numbers)}");
+            Console.WriteLine($"GLYPH-FAIL {context}/unit {NumericGlyphObservation.Describe(units)}");
+        }
+        catch { Console.WriteLine("GLYPH-FAIL detail unavailable; retaining original assertion failure."); }
     }
 
     private static IEnumerable<DependencyObject> Visuals(DependencyObject root)

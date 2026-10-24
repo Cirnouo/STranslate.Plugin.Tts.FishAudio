@@ -1,7 +1,15 @@
 if (args.Contains("--numeric-typography-tests"))
 {
+    await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
     await NumericTypographySuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-typography-tests") + 1));
     Console.WriteLine("Numeric typography regressions passed.");
+    return;
+}
+
+if (args.Contains("--numeric-glyph-observation-tests"))
+{
+    await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
+    Console.WriteLine("Numeric glyph observation regressions passed.");
     return;
 }
 
@@ -439,6 +447,7 @@ await ApiKeySettingsCardSuite.RunAllAsync();
 await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
 await SettingsControlAlignmentSuite.RunAllAsync();
 await VoiceCardInkSuite.RunAsync();
+await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 // Preserve the existing ink suite's first-use DPI characterization before
 // the new numeric group explicitly warms actual DPI on compiled text views.
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
