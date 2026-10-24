@@ -26,6 +26,10 @@ internal static class ApiKeySettingsCardSuite
             Console.WriteLine($"[api-key-layout] width and saturation matrix, draft length {draft.Length}.");
             await RunOnStaThreadAsync(() => WidthMatrix(draft));
         }
+        Console.WriteLine("[api-key-layout] controlled smaller password metrics.");
+        await RunOnStaThreadAsync(() => WidthMatrix(Drafts[1], 12, requireWrappedSaturation: true));
+        Console.WriteLine("[api-key-layout] controlled larger password metrics.");
+        await RunOnStaThreadAsync(() => WidthMatrix(Drafts[2], 16));
         foreach (var locale in UiLocales.All)
         {
             Console.WriteLine($"[api-key-layout] localized header {locale}.");
@@ -38,9 +42,14 @@ internal static class ApiKeySettingsCardSuite
         }
     }
 
-    private static void WidthMatrix(string draft)
+    private static void WidthMatrix(string draft, double? passwordFontSize = null, bool requireWrappedSaturation = false)
     {
         using var fixture = new Fixture(draft);
+        if (passwordFontSize is { } fontSize)
+        {
+            fixture.Password.FontSize = fontSize;
+            fixture.PeerPassword.FontSize = fontSize;
+        }
         fixture.Layout(1200);
         var natural = fixture.PeerPassword.ActualWidth;
         foreach (var width in Widths.Concat(Widths.Reverse()))
@@ -48,11 +57,7 @@ internal static class ApiKeySettingsCardSuite
             fixture.Layout(width);
             fixture.AssertGeometry($"draft length {draft.Length}, width {width}");
             if (draft.Length < 1000 && (width <= 475 || width >= 800))
-            {
-                Near(fixture.PeerPassword.ActualWidth, fixture.Password.ActualWidth, "Native low/high field width must survive");
-                Near(Right(fixture.PeerPassword, fixture.Peer), Right(fixture.Password, fixture.Card), "Native low/high right edge must survive");
-                fixture.AssertNativeHeaderGeometry();
-            }
+                fixture.AssertNativeGeometry($"draft length {draft.Length}, width {width}");
         }
         if (draft.Length is 0 or 1000) return;
 
@@ -61,15 +66,40 @@ internal static class ApiKeySettingsCardSuite
         fixture.Layout(1200);
         var saturation = 1200 - (fixture.AvailableInputWidth - natural);
         var samples = Enumerable.Range(-8, 17).Select(i => saturation + i * .25).ToArray();
+        var constrainedSamples = 0;
+        var naturalSamples = 0;
+        var wrappedSamples = 0;
         foreach (var width in samples.Concat(samples.Reverse()))
         {
             fixture.Layout(width);
-            fixture.AssertGeometry($"saturation/{draft.Length}/{width:F2}");
-            Near(Math.Min(natural, fixture.AvailableInputWidth), fixture.Password.ActualWidth, "Field must continuously fill available room then saturate at native natural width");
+            var context = $"draft={draft.Length}, font={fixture.Password.FontSize:F2}, natural={natural:F3}, saturation={saturation:F3}, sample={width:F3}, native={fixture.State(fixture.Peer)}, scoped={fixture.State(fixture.Card)}, slot={fixture.AvailableInputWidth:F3}";
+            fixture.AssertGeometry(context);
+            if (fixture.State(fixture.Peer) == "Right")
+            {
+                Near(Math.Min(natural, fixture.AvailableInputWidth), fixture.Password.ActualWidth, $"{context}: horizontal field must fill available room then saturate at native natural width");
+                if (fixture.AvailableInputWidth < natural - .1) constrainedSamples++;
+                if (fixture.AvailableInputWidth >= natural) naturalSamples++;
+            }
+            else
+            {
+                AssertEqual("RightWrapped", fixture.State(fixture.Peer), $"{context}: nonhorizontal saturation samples must use the native wrapped state");
+                fixture.AssertNativeGeometry(context);
+                wrappedSamples++;
+            }
         }
+        // Font metrics can move a legacy key's entire saturation neighborhood
+        // below the native transition. Prefixed keys and the larger-font peer
+        // must still exercise both real horizontal regimes in both directions.
+        if (draft.Length == 51)
+        {
+            AssertEqual(true, constrainedSamples > 0, $"font {fixture.Password.FontSize}: saturation samples must include constrained native Right input");
+            AssertEqual(true, naturalSamples > 0, $"font {fixture.Password.FontSize}: saturation samples must include natural-width native Right input");
+        }
+        if (requireWrappedSaturation)
+            AssertEqual(true, wrappedSamples > 0, "The smaller-font regression must exercise saturation samples in the native wrapped state");
         fixture.Layout(1200);
         Near(natural, fixture.Password.ActualWidth, "Growth must return to the same native natural width");
-        Console.WriteLine($"[api-key-layout] draft length {draft.Length}: native natural width {natural:F2}, saturation at {saturation:F2} DIP, quarter-DIP grow/shrink samples passed.");
+        Console.WriteLine($"[api-key-layout] draft length {draft.Length}, font {fixture.Password.FontSize:F2}: native natural width {natural:F2}, saturation at {saturation:F2} DIP, quarter-DIP grow/shrink samples passed (Right constrained={constrainedSamples}, natural={naturalSamples}; wrapped={wrappedSamples}).");
     }
 
     private static void LocalizedHeaders(string locale)
@@ -215,8 +245,10 @@ internal static class ApiKeySettingsCardSuite
 
         internal string? State(SettingsCard card) => Group(card).CurrentState?.Name;
 
-        internal void AssertNativeHeaderGeometry()
+        internal void AssertNativeGeometry(string context)
         {
+            Near(PeerPassword.ActualWidth, Password.ActualWidth, $"{context}: native field width must survive");
+            Near(Right(PeerPassword, Peer), Right(Password, Card), $"{context}: native field right edge must survive");
             foreach (var (element, peer) in new (FrameworkElement, FrameworkElement)[]
             {
                 (Header, PeerHeader),
@@ -224,10 +256,10 @@ internal static class ApiKeySettingsCardSuite
                 ((FrameworkElement)Card.HeaderIcon, (FrameworkElement)Peer.HeaderIcon),
             })
             {
-                Near(Left(peer, Peer), Left(element, Card), "Native low/high header/link/icon left edge must survive");
-                Near(peer.TranslatePoint(new Point(), Peer).Y, element.TranslatePoint(new Point(), Card).Y, "Native low/high header/link/icon top edge must survive");
-                Near(peer.ActualWidth, element.ActualWidth, "Native low/high header/link/icon width must survive");
-                Near(peer.ActualHeight, element.ActualHeight, "Native low/high header/link/icon height must survive");
+                Near(Left(peer, Peer), Left(element, Card), $"{context}: native header/link/icon left edge must survive");
+                Near(peer.TranslatePoint(new Point(), Peer).Y, element.TranslatePoint(new Point(), Card).Y, $"{context}: native header/link/icon top edge must survive");
+                Near(peer.ActualWidth, element.ActualWidth, $"{context}: native header/link/icon width must survive");
+                Near(peer.ActualHeight, element.ActualHeight, $"{context}: native header/link/icon height must survive");
             }
         }
 
