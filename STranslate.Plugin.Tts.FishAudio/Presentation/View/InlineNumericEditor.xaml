@@ -46,8 +46,8 @@
                    FontWeight="{Binding FontWeight, ElementName=DisplayButton}"
                    FontStyle="{Binding FontStyle, ElementName=DisplayButton}"
                    FontStretch="{Binding FontStretch, ElementName=DisplayButton}"
-                   LineStackingStrategy="BlockLineHeight"
-                   Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                   LineStackingStrategy="BlockLineHeight" FontSize="11"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}">
             <TextBlock.LineHeight>
                 <MultiBinding Converter="{StaticResource NumericTextLineMetric}">
                     <Binding ElementName="DisplayButton" Path="FontFamily" />
@@ -60,16 +60,6 @@
                     <Binding ElementName="DisplayButton" Path="FontSize" />
                 </MultiBinding>
             </TextBlock.BaselineOffset>
-            <TextBlock.Style>
-                <Style TargetType="TextBlock">
-                    <Setter Property="FontSize" Value="{Binding FontSize, ElementName=DisplayButton}" />
-                    <Style.Triggers>
-                        <Trigger Property="Text" Value="×">
-                            <Setter Property="FontSize" Value="{DynamicResource CaptionTextBlockFontSize}" />
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </TextBlock.Style>
         </TextBlock>
     </Grid>
 </UserControl>

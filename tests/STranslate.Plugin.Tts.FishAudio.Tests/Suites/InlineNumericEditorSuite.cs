@@ -37,7 +37,9 @@ internal static class InlineNumericEditorSuite
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(culture);
             var settings = new Settings { SelectedModel = "s2-pro", Speed = 1.25, Volume = -10 };
-            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+            var pluginContext = CreateContext(settings: settings);
+            var storage = (ContextProxy)(object)pluginContext;
+            using var vm = new SettingsViewModel(pluginContext, settings);
             var view = SettingsLayoutSuite.CreateThemedView(vm);
             view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{language}.xaml"), UriKind.Absolute) });
             view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
@@ -76,6 +78,7 @@ internal static class InlineNumericEditorSuite
                 var slider = Descendants(view).OfType<Slider>().Single(slider => BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path == property);
                 var sliderBounds = Bounds(slider, row);
                 NumericTypographySuite.AssertResting(editor, label, unit, context);
+                NumericTypographySuite.AssertUnitRoutes(view, editor, unit, () => storage.SaveCount, context);
                 Near(dpi, VisualTreeHelper.GetDpi(input).DpiScaleX, $"{context}: the compiled input must inherit the requested actual root DPI");
                 Near(180, slider.ActualWidth, $"{context}: compact labels must preserve the native slider length");
                 Near(displayBounds.Right - 3, labelBounds.Right, $"{context}: rendered resting text must reach the field's padded right edge");
@@ -132,6 +135,7 @@ internal static class InlineNumericEditorSuite
                 SettingsLayoutSuite.Layout(view, width);
                 AssertEqual(rowBounds, Bounds(editor, row), $"{context}: cancelling must restore the same row bounds");
             }
+            NumericTypographySuite.AssertThemeTransition(view, Descendants(view).OfType<InlineNumericEditor>().ToArray(), dark);
             Console.WriteLine($"[inline-numeric] {language}/{culture}/{(dark ? "dark" : "light")}/{dpi * 100}%: compact geometry, native viewport and caret checks passed at 400/600 DIP.");
         }
         finally { CultureInfo.CurrentCulture = originalCulture; }
