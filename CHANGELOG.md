@@ -31,7 +31,7 @@
 ### Fixed
 
 - 修复搜索页码输入可粘贴非数字及越界草稿未即时限制的问题；仅接受数字，超过当前可访问最大页码时立即调回上限。
-- 修复搜索结果与已选声音两个试听入口：通过宿主 HTTP 下载声音自带的 sample 后本地播放，沿用代理并限制下载时长和大小；请求期间立即显示加载与取消状态，停止、切换及关闭后迟到结果不会重新播放（[#2](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/2)、[#6](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/6)）。
+- 修复搜索结果与已选声音两个试听入口：通过宿主 HTTP 下载声音自带的 sample 后本地播放，沿用代理并限制下载时长和大小；请求期间立即显示加载与取消状态，停止、切换及关闭后迟到结果不会重新播放。搜索试听开始后，重新搜索、应用条件或翻页不再打断播放；再次出现的同 ID 卡片可显示进度并停止，已移除卡片尚未完成的加载仍会取消（[#2](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/2)、[#6](https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/issues/6)）。
 - API Key 输入、清空和粘贴后立即保存，无需失去焦点。
 - 核采样多样性使用 0.05 的客户端下限，迁移旧零值并在请求中一致保护，避免发送上游拒绝的零值；表现力仍允许零。
 

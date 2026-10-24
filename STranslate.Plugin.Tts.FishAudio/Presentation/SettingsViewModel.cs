@@ -823,7 +823,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             case nameof(SearchResults):
             case nameof(ByIdResults):
             case nameof(FavoriteResults):
-                _previewRefreshCoordinator.OnSearchResultsChanged();
+                _previewRefreshCoordinator.OnSearchResultsChanged(retainAcceptedSearchPlayback: e.PropertyName == nameof(SearchResults));
                 SyncFavoriteState();
                 SyncPreviewStateToResults();
                 return;

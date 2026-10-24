@@ -80,7 +80,7 @@ internal static partial class PreviewSuite
         {
             await scenario.PlayAsync();
             scenario.ViewModel.SearchResults = [];
-            AssertEqual(null, scenario.ViewModel.PreviewingVoiceId, "Removing an active search result must stop its preview");
+            AssertEqual(scenario.Id, scenario.ViewModel.PreviewingVoiceId, "Search replacement retains accepted playback independently of its old presentation");
         }
     }
 

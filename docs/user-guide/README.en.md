@@ -61,7 +61,7 @@ Likes are saved on this computer, survive restart and do not synchronize with yo
 
 In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
-Changing the voice or replacing/removing its card stops its preview.
+Once a search sample is playing, searching again, applying search options (even unchanged) or changing search pages keeps it playing, including when a query fails or is canceled. A matching card found again shows current progress and can Stop. Playback ends with the sample, Stop, another preview, a selected-voice or Key change, or closing the plugin. Replacing the source card while its sample is still loading cancels that pending preview; replacing a By-ID card or removing the originating liked card still stops its preview.
 
 ## 3. Models and costs
 
