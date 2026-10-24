@@ -48,6 +48,57 @@ internal static class NumericAlignmentLifecycleSuite
                 "Readiness scenario must actually replace the native fallback typeface");
             NumericBottomSuite.AssertAligned(button, unit, editor, "same-text/new-native-font");
 
+            var retainedCommittedAnchor = ((TranslateTransform)unit.RenderTransform).Y;
+            var retainedCommittedBottom = NumericBottomSuite.OutlineBottom(button, editor);
+            var retainedValue = editor.Value;
+            var retainedSaves = storage.SaveCount;
+            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            SettingsLayoutSuite.Layout(view);
+            input.Text = "-10.00";
+            SettingsLayoutSuite.Layout(view);
+            AssertEqual(true, Math.Abs(((TranslateTransform)unit.RenderTransform).Y - retainedCommittedAnchor) > 1,
+                "Invariant-point draft must have a different native bottom from the committed comma display");
+            var originalTemplate = button.Template;
+            button.Template = (ControlTemplate)XamlReader.Parse("""
+                <ControlTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" TargetType="Button">
+                  <ContentPresenter />
+                </ControlTemplate>
+                """);
+            button.ApplyTemplate();
+            AssertEqual(0, NumericGlyphObservation.Read(button, editor).Length,
+                "Hidden template replacement must remove the retained committed native drawing");
+            foreach (var partial in new[] { "", "-", ".", ",", "-.", "-," })
+            {
+                input.Text = partial;
+                SettingsLayoutSuite.Layout(view);
+                AssertEqual(retainedCommittedAnchor, ((TranslateTransform)unit.RenderTransform).Y,
+                    "Unavailable committed drawing must restore the last committed anchor rather than the previous dot draft");
+                AssertEqual(partial, input.Text, "Retained committed anchor must preserve incomplete draft text");
+                AssertEqual(retainedValue, editor.Value, "Retained committed anchor must not commit a value");
+                AssertEqual(retainedSaves, storage.SaveCount, "Retained committed anchor must not save");
+            }
+            var retainedUnitFont = NumericGlyphObservation.Read(unit, editor)[0].Typeface.FontUri;
+            var originalFamily = button.FontFamily;
+            button.FontFamily = new FontFamily("Times New Roman");
+            SettingsLayoutSuite.Layout(view);
+            AssertEqual(0, NumericGlyphObservation.Read(button, editor).Length,
+                "Committed drawing must remain unavailable during the unit-context change");
+            AssertEqual(false, retainedUnitFont == NumericGlyphObservation.Read(unit, editor)[0].Typeface.FontUri,
+                "Retained-anchor scenario must actually change the resolved native unit typeface");
+            AssertEqual(true, Math.Abs(NumericBottomSuite.OutlineBottom(unit, editor) - retainedCommittedBottom) < .01,
+                "Fresh native unit metrics must preserve the retained committed bottom after a unit font change");
+            AssertEqual("-,", input.Text, "Unit-context alignment must preserve the incomplete draft");
+            AssertEqual(retainedValue, editor.Value, "Unit-context alignment must preserve the committed value");
+            AssertEqual(retainedSaves, storage.SaveCount, "Unit-context alignment must not save");
+            button.FontFamily = originalFamily;
+            SettingsLayoutSuite.Layout(view);
+            input.Text = "-2,00";
+            SettingsLayoutSuite.Layout(view);
+            NumericBottomSuite.AssertAligned(input, unit, editor, "visible digits after missing committed drawing");
+            button.Template = originalTemplate;
+            input.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, new FakePresentationSource(), 0, Key.Escape) { RoutedEvent = Keyboard.KeyDownEvent });
+            SettingsLayoutSuite.Layout(view);
+
             button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             SettingsLayoutSuite.Layout(view);
             input.Text = "-10,00";

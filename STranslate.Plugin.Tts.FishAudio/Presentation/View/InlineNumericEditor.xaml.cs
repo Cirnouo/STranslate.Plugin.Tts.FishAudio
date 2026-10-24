@@ -31,6 +31,7 @@ public partial class InlineNumericEditor : UserControl
     internal TimeProvider WheelTimeProvider { set => _wheel.TimeProvider = value; }
     private bool _observingDisplayTemplate;
     private readonly TranslateTransform _unitTranslation = new();
+    private double? _committedNumberBottom;
     private AlignmentContext? _alignmentContext;
     private DispatcherOperation? _alignmentOperation;
     private bool _alignmentAttached;
@@ -138,10 +139,19 @@ public partial class InlineNumericEditor : UserControl
             var hasDigits = current.Number.Text.Any(character => character is >= '0' and <= '9');
             Visual number = IsEditing && hasDigits ? EditorBox : DisplayButton;
             var text = IsEditing && hasDigits ? current.Number.Text : DisplayButton.Content?.ToString() ?? "";
-            if (!NativeTextOutline.TryBottom(number, this, text, out var numberBottom)
-                || !NativeTextOutline.TryBottom(UnitText, this, current.Unit.Text, out var unitBottom)
-                || current != CaptureAlignment()) return;
+            if (!NativeTextOutline.TryBottom(UnitText, this, current.Unit.Text, out var unitBottom)) return;
+            if (!NativeTextOutline.TryBottom(number, this, text, out var numberBottom))
+            {
+                // A collapsed display can lose its drawing after template
+                // replacement. Never mistake a noncommitting draft's shift
+                // for the last validated committed-display bottom. Fresh unit
+                // metrics still apply if its font/context changed meanwhile.
+                if (!IsEditing || hasDigits || _committedNumberBottom is not { } committed) return;
+                numberBottom = committed;
+            }
+            if (current != CaptureAlignment()) return;
             var shift = _unitTranslation.Y + numberBottom - unitBottom;
+            if (!IsEditing || !hasDigits) _committedNumberBottom = numberBottom;
             if (Math.Abs(shift - _unitTranslation.Y) > .000001) _unitTranslation.Y = shift;
         }));
     }
