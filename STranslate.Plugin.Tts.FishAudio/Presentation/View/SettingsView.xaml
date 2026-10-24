@@ -421,15 +421,15 @@
                 Text="https://api.fish.audio" />
         </ui:SettingsCard>
 
-        <ui:SettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey}">
-            <ui:SettingsCard.Description>
+        <view:ApiKeySettingsCard Header="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey}">
+            <view:ApiKeySettingsCard.Description>
                 <ui:HyperlinkButton
                     Content="fish.audio"
                     NavigateUri="https://fish.audio/app/api-keys" />
-            </ui:SettingsCard.Description>
-            <ui:SettingsCard.HeaderIcon>
+            </view:ApiKeySettingsCard.Description>
+            <view:ApiKeySettingsCard.HeaderIcon>
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Key_24_Regular}" />
-            </ui:SettingsCard.HeaderIcon>
+            </view:ApiKeySettingsCard.HeaderIcon>
             <Grid>
                 <PasswordBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" helpers:PasswordBoxHelper.PasswordRevealMode="Hidden"
                     IsEnabled="{Binding IsApiKeyInputEnabled}"
@@ -445,7 +445,7 @@
                     <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
                 </Button>
             </Grid>
-        </ui:SettingsCard>
+        </view:ApiKeySettingsCard>
 
         <!-- ════════ 声音 ════════ -->
 
