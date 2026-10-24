@@ -165,18 +165,18 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string SearchQuery { get; set; }
 
-    public string? SearchLanguage { get; private set; }
+    public IReadOnlyList<string> SearchLanguages { get; private set; } = Array.AsReadOnly(Array.Empty<string>());
     public string SearchSort { get; private set; } = "score";
-    public bool HasSearchAdjustments => SearchLanguage is not null || SearchSort != "score";
+    public bool HasSearchAdjustments => SearchLanguages.Count != 0 || SearchSort != "score";
 
-    internal Task ApplySearchOptionsAsync(string? language, string sort) =>
-        _voiceDiscoveryCoordinator.ApplySearchOptionsAsync(language, sort);
+    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) =>
+        _voiceDiscoveryCoordinator.ApplySearchOptionsAsync(languages, sort);
 
     private void ApplySearchOptions(VoiceSearchCriteria criteria)
     {
-        SearchLanguage = criteria.Language;
+        SearchLanguages = criteria.Languages;
         SearchSort = criteria.SortParameter;
-        OnPropertyChanged(nameof(SearchLanguage));
+        OnPropertyChanged(nameof(SearchLanguages));
         OnPropertyChanged(nameof(SearchSort));
         OnPropertyChanged(nameof(HasSearchAdjustments));
     }

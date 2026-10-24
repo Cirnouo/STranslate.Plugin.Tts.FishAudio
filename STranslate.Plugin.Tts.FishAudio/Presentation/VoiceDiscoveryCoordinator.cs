@@ -96,8 +96,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _committedSearchCriteria.WithQuery(_getSearchQuery()), resetOnEmptyResponse: true);
 
-    internal Task ApplySearchOptionsAsync(string? language, string sort) => ExecuteSearchAsync(1,
-        new VoiceSearchCriteria(_getSearchQuery(), language, VoiceSearchCriteria.ParseSort(sort)), resetOnEmptyResponse: true);
+    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) => ExecuteSearchAsync(1,
+        new VoiceSearchCriteria(_getSearchQuery(), languages, VoiceSearchCriteria.ParseSort(sort)), resetOnEmptyResponse: true);
 
     internal int PageInputMaximum => _pagination.InputMaximum(_highestVisitedPage);
 

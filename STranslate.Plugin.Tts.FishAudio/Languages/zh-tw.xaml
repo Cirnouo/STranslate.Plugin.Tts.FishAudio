@@ -124,7 +124,7 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">zh-TW</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">其他語言</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">搜尋選項</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">語言</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">語言（可複選）</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">全部語言</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">排序</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">相關優先</sys:String>

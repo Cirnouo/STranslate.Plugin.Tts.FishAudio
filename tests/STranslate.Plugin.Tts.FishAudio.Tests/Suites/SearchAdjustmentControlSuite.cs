@@ -2,6 +2,9 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -35,7 +38,7 @@ internal static class SearchAdjustmentControlSuite
         await RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync);
         if (group is "titles") return;
         foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
-        await RunOnStaThreadAsync(DraftsApplyAndNestedInputAsync);
+        await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
         await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
         await RunOnStaThreadAsync(WindowAndScrollLifetime);
         await RunOnStaThreadAsync(ShortViewportKeepsPopupInsideVisibleArea);
@@ -47,7 +50,7 @@ internal static class SearchAdjustmentControlSuite
     }
 
     private static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
-        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
+        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
     {
         var elapsed = Stopwatch.StartNew();
         var phases = new ConcurrentQueue<string>();
@@ -75,7 +78,7 @@ internal static class SearchAdjustmentControlSuite
             try
             {
                 // Bound observation off the shared STA; never replace/cancel/retry its work.
-                await Task.Run(() => (observe ?? (pending => pending))(completion.Task)).WaitAsync(TimeSpan.FromSeconds(20)).ConfigureAwait(false);
+                await BoundMatrixObservation(Task.Run(() => (observe ?? (pending => pending))(completion.Task)), observationTimeProvider).ConfigureAwait(false);
                 Stage("same action observation completed; original deadline remains failed");
             }
             catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
@@ -88,6 +91,9 @@ internal static class SearchAdjustmentControlSuite
             throw;
         }
     }
+
+    private static Task BoundMatrixObservation(Task observation, TimeProvider? timeProvider = null) =>
+        observation.WaitAsync(TimeSpan.FromSeconds(20), timeProvider ?? TimeProvider.System);
 
     internal static async Task MatrixDiagnosticsPreserveFailuresWithoutRetryAsync()
     {
@@ -123,16 +129,45 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(0, observations, "An action-owned timeout must not be observed as an outer deadline");
         AssertEqual(1, runs, "An action-owned timeout must not run the action again");
 
-        caught = null; observations = 0; output.Clear();
-        try
-        {
-            await ObserveMatrixActionAsync("observation-fixture", _ => throw new InvalidOperationException("Must not replace queued work"),
-                dispatch: _ => throw outer,
-                observe: _ => { observations++; return Task.FromException(new TimeoutException("Synthetic observation timeout")); }, write: output.Add);
-        }
+        // Inspect the real helper's Task directly so an early expiry cannot hide
+        // behind scheduling of the outer async catch/continuation.
+        var exactClock = new ManualStreamingTimeProvider();
+        var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var exactBound = BoundMatrixObservation(incomplete.Task, exactClock);
+        exactClock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(false, exactBound.IsCompleted, "The real observation bound stays incomplete at 19999ms");
+        exactClock.Advance(TimeSpan.FromMilliseconds(1));
+        AssertEqual(true, exactBound.IsCompleted, "The real observation bound expires at exactly 20000ms");
+        try { await exactBound; throw new InvalidOperationException("The observation did not expire"); }
+        catch (TimeoutException) { }
+        AssertEqual(false, incomplete.Task.IsCompleted, "The bound never cancels or replaces its incomplete observation");
+        incomplete.SetResult();
+
+        caught = null; observations = 0; runs = 0; output.Clear();
+        var dispatches = 0;
+        var clock = new ManualStreamingTimeProvider();
+        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? sameCompletion = null;
+        var bounded = ObserveMatrixActionAsync("observation-fixture", _ => runs++,
+            dispatch: callback => { dispatches++; queued = callback; throw outer; },
+            observe: completion => { sameCompletion = completion; observations++; observing.TrySetResult(); return completion; },
+            write: output.Add, observationTimeProvider: clock);
+        await observing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        clock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 19999ms");
+        AssertEqual(false, sameCompletion!.IsCompleted, "The same queued action is still incomplete before expiration");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        try { await bounded.WaitAsync(TimeSpan.FromSeconds(2)); }
         catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "A later observation timeout must not replace the original outer failure");
-        AssertEqual(1, observations, "An incomplete action gets one bounded observation, without retry");
+        AssertEqual(true, ReferenceEquals(outer, caught), "The real 20000ms observation deadline must preserve original outer-error identity");
+        AssertEqual(1, observations, "An incomplete action gets exactly one bounded observation");
+        AssertEqual(1, dispatches, "Expiration never dispatches a replacement or retry");
+        AssertEqual(0, runs, "Expiration does not execute or replace the queued action");
+        AssertEqual(false, sameCompletion.IsCompleted, "Expiration does not cancel the original action/completion");
+        AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The real bound records observation expiration");
+        queued!();
+        await sameCompletion.WaitAsync(TimeSpan.FromSeconds(2));
+        AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
 
         output.Clear();
         await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
@@ -180,21 +215,60 @@ internal static class SearchAdjustmentControlSuite
             "Each native sort choice presents only its readable title without helper descriptions");
         AssertEqual("Most used first", Part<RadioButton>(control, "PopularityRadio").Content as string, "Popularity retains its rich title");
         AssertEqual("Newest first", Part<RadioButton>(control, "CreationRadio").Content as string, "Creation order retains its rich title");
+        AssertNotNull(control.FindName("LanguageTiles"), "Language options must be eleven equal toggle tiles");
+        var tile = Tiles(control).Single(item => (string)item.Tag == "en");
+        foreach (var key in new[] { Key.Enter, Key.Space })
+        {
+            tile.Focus();
+            var previous = tile.IsChecked;
+            LocalKey(tile, key); Drain();
+            AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior");
+            AssertEqual(true, IsOpen(control), "Tile keyboard activation preserves the popup");
+            AssertEqual(0, http.GetCallCount, "Tile keyboard activation cannot invoke Apply");
+        }
         Part<RadioButton>(control, "PopularityRadio").Focus();
-        var surface = Part<Border>(control, "PopupSurface");
-        var enter = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(surface)!, Environment.TickCount, Key.Enter)
-        { RoutedEvent = Keyboard.PreviewKeyDownEvent, Source = Part<RadioButton>(control, "PopularityRadio") };
-        InputManager.Current.ProcessInput(enter); Drain();
-        AssertEqual(true, enter.Handled, "Enter in popup choices applies once and cannot reach the search TextBox binding");
-        AssertEqual(false, IsOpen(control), "Enter closes search adjustments");
+        LocalKey(Part<RadioButton>(control, "PopularityRadio"), Key.Enter); Drain();
+        AssertEqual(true, IsOpen(control), "Native radio Enter stays local without Apply");
+        var apply = Part<Button>(control, "ApplyButton");
+        apply.Focus(); LocalKey(apply, Key.Enter); Drain();
+        AssertEqual(false, IsOpen(control), "Explicit keyboard Apply closes search adjustments");
         AssertEqual(1, http.GetCallCount, "Keyboard Apply invokes exactly one page-one GET");
         await vm.SearchVoicesCommand.ExecuteAsync(null);
         AssertEqual(2, http.GetCallCount, "Explicit Search remains independent of popup keyboard Apply");
     }
 
+    // This hidden HWND cannot acquire OS keyboard focus. Exercise native class
+    // handlers with an explicit focus-state fixture; physical Tab is host acceptance.
+    private static void LocalKey(FrameworkElement target, Key key)
+    {
+        var focusKey = (DependencyPropertyKey)typeof(UIElement).GetField("IsKeyboardFocusedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var previous = target.IsKeyboardFocused;
+        target.SetValue(focusKey, true);
+        try
+        {
+            foreach (var routed in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.KeyDownEvent, Keyboard.PreviewKeyUpEvent, Keyboard.KeyUpEvent })
+            {
+                var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
+                { RoutedEvent = routed, Source = target };
+                target.RaiseEvent(args);
+            }
+        }
+        finally { target.SetValue(focusKey, previous); }
+    }
+
+    private static ToggleButton[] Tiles(FrameworkElement control) => Part<Grid>(control, "LanguageTiles").Children.OfType<ToggleButton>().ToArray();
+    private static void Toggle(FrameworkElement control, string code)
+    {
+        var tile = Tiles(control).Single(item => (string)item.Tag == code);
+        var peer = UIElementAutomationPeer.CreatePeerForElement(tile)!;
+        ((IToggleProvider)peer.GetPattern(PatternInterface.Toggle)!).Toggle();
+        Drain();
+    }
+    private static string[] Selected(FrameworkElement control) => Tiles(control).Where(tile => tile.IsChecked == true).Select(tile => (string)tile.Tag).ToArray();
+
     // Draft controls must have no network side effects. Apply must capture the
     // current TextBox once, including an unchanged refresh and keyboard activation.
-    private static async Task DraftsApplyAndNestedInputAsync()
+    private static async Task DraftsApplyAndTileInputAsync()
     {
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -205,20 +279,30 @@ internal static class SearchAdjustmentControlSuite
         var control = Control(view);
         Open(control);
         AssertEqual(true, IsOpen(control), "The embedded action opens a native popup");
-        var combo = Part<ComboBox>(control, "LanguageCombo");
-        AssertEqual(11, combo.Items.Count, "One All option plus the ten approved scalar languages");
-        combo.SelectedIndex = 4;
+        AssertEqual(11, Tiles(control).Length, "All and ten approved languages use equal tiles");
+        AssertEnumerableEqual(new[] { "" }, Selected(control), "All alone is the default");
+        Toggle(control, "ja"); Toggle(control, "en");
+        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Specific languages toggle independently and exclude All");
+        Toggle(control, "en"); Toggle(control, "ja");
+        AssertEnumerableEqual(new[] { "" }, Selected(control), "Clearing the final specific restores All");
+        foreach (var code in new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }) Toggle(control, code);
+        AssertEqual(10, Selected(control).Length, "Selecting all ten specifics remains filtered");
+        AssertEqual(false, Tiles(control)[0].IsChecked, "All ten does not select All");
+        Toggle(control, "");
+        AssertEnumerableEqual(new[] { "" }, Selected(control), "All clears every specific");
+        Toggle(control, "ja");
         Part<RadioButton>(control, "CreationRadio").IsChecked = true;
         AssertEqual(0, http.GetCallCount, "Draft language/sort edits never call the provider");
         Click(control, "ResetButton");
-        AssertEqual(0, combo.SelectedIndex, "Reset drafts All");
+        AssertEnumerableEqual(new[] { "" }, Selected(control), "Reset drafts All");
         AssertEqual(true, Part<RadioButton>(control, "RelevanceRadio").IsChecked, "Reset drafts relevance");
         AssertEqual(0, http.GetCallCount, "Reset never calls the provider");
         Click(control, "CloseButton");
         AssertEqual(false, IsOpen(control), "Close dismisses without applying");
         AssertEqual(0, http.GetCallCount, "Close discards drafts without a request");
         Open(control);
-        combo.SelectedIndex = 4;
+        AssertEnumerableEqual(new[] { "" }, Selected(control), "Reopening discards the former draft");
+        Toggle(control, "ja"); Toggle(control, "en");
         Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
         var input = (TextBox)view.FindName("VoiceSearchInput");
         input.Text = "visible & query";
@@ -227,29 +311,19 @@ internal static class SearchAdjustmentControlSuite
         Drain();
         AssertEqual(false, IsOpen(control), "Apply closes immediately");
         AssertEqual(1, http.GetCallCount, "Apply invokes exactly one request");
-        AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
+        AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=en&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
         Open(control);
-        AssertEqual(4, combo.SelectedIndex, "Reopening starts from successfully applied language");
+        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from successful selections");
         var surface = Part<Border>(control, "PopupSurface");
-        combo.IsDropDownOpen = true; Drain();
-        var nested = NativeComboPopup(combo);
-        AssertEqual(true, nested.IsOpen, "Language picker uses the native child Popup");
-        var nestedRoot = (FrameworkElement)nested.Child;
-        InputManager.Current.ProcessInput(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-        { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = nestedRoot });
-        AssertEqual(true, IsOpen(control), "Blank space inside the exact native dropdown is owned input");
-        Visuals(nestedRoot).OfType<ScrollViewer>().First().ScrollToVerticalOffset(50); Drain();
-        AssertEqual(true, IsOpen(control), "Nested dropdown scrolling is not ancestor page scrolling");
-        // Native ComboBox may dismiss its child after a staged mouse event; reopen
-        // that same picker before testing Escape against its active source.
-        combo.IsDropDownOpen = true; Drain();
-        var key = Escape((FrameworkElement)NativeComboPopup(combo).Child);
-        AssertEqual(true, key.Handled, "The first Escape is consumed by the dropdown");
-        AssertEqual(false, combo.IsDropDownOpen, "First Escape closes only the native dropdown");
-        AssertEqual(true, IsOpen(control), "First Escape preserves the adjustment drafts");
-        Escape(surface);
-        AssertEqual(false, IsOpen(control), "Second Escape closes adjustments");
+        var scroll = Part<ScrollViewer>(control, "PopupScroll");
+        scroll.ScrollToVerticalOffset(50); Drain();
+        AssertEqual(true, IsOpen(control), "Internal body scrolling preserves adjustment drafts");
+        Toggle(control, "ru");
+        var key = Escape(surface);
+        AssertEqual(true, key.Handled, "Escape is consumed by the adjustment overlay");
+        AssertEqual(false, IsOpen(control), "Escape closes adjustments directly");
         AssertEqual(true, Part<Button>(control, "AdjustmentButton").IsKeyboardFocused, "Escape returns focus to the embedded trigger");
+        AssertEqual(1, http.GetCallCount, "Escape discards drafts without another GET");
         Open(control);
         Click(control, "ApplyButton"); Drain();
         AssertEqual(2, http.GetCallCount, "Unchanged compiled Apply still refreshes exactly once");
@@ -357,11 +431,28 @@ internal static class SearchAdjustmentControlSuite
                 "A short viewport chooses the available side of the trigger with a visible gap");
             var contentScroll = Part<ScrollViewer>(control, "PopupScroll");
             AssertEqual(true, contentScroll.ExtentHeight > contentScroll.ViewportHeight, "A popup taller than available space scrolls internally");
+            foreach (var name in new[] { "CloseButton", "ResetButton", "ApplyButton" })
+            {
+                var action = Part<Button>(control, name);
+                var actionBounds = action.TransformToAncestor(surface).TransformBounds(new Rect(action.RenderSize));
+                AssertEqual(true, actionBounds.Top >= 0 && actionBounds.Bottom <= surface.ActualHeight, "Header/footer actions stay reachable outside the scrolling body");
+            }
+            Tiles(control).Last().BringIntoView(); Drain();
+            AssertEqual(true, IsOpen(control), "Bringing a clipped tile into view scrolls only the internal body");
+            AssertEqual(true, contentScroll.VerticalOffset > 0, "Keyboard/focus BringIntoView can reach the final language row");
+            SavePopupProof(surface, $"short-viewport-{(nearBottom ? "above" : "below")}-native{dpi.DpiScaleX * 100:0}");
             Click(control, "CloseButton");
         }
     }
 
-    // Incorrect inset/padding/DPI conversion or selected-only flag templates must
+    private static void SavePopupProof(FrameworkElement surface, string name)
+    {
+        var directory = Path.Combine(Path.GetDirectoryName(FindRepoFile("build.ps1"))!, ".scratch", "task-8", "popup-proof");
+        Directory.CreateDirectory(directory);
+        SaveBitmap(RenderGlyph(surface, surface), Path.Combine(directory, name + ".png"));
+    }
+
+    // Incorrect inset/padding/DPI conversion or missing/mismatched tile flags must
     // fail against the actual themed TextBox viewport and popup presentation source.
     private static void GeometryAndFlags(string locale, bool dark, double dpi, Action<string> stage)
     {
@@ -374,7 +465,13 @@ internal static class SearchAdjustmentControlSuite
         SetLocale(view, locale);
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-        stage("locale/theme ready; source attach/layout begin");
+        // Headless STA has no Application/OS accent initialization. Supply a labeled
+        // palette state, retaining the production DynamicResource and native metrics.
+        var accentPalette = new SolidColorBrush(dark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8));
+        view.Resources["AccentFillColorDefaultBrush"] = accentPalette;
+        view.Resources["RadioButtonOuterEllipseCheckedFill"] = accentPalette;
+        view.Resources["RadioButtonOuterEllipseCheckedStroke"] = accentPalette;
+        stage("locale/theme ready (concrete accent fixture); source attach/layout begin");
         var source = Attach(view);
         stage("source attach/layout ready");
         FrameworkElement? diagnosticControl = null;
@@ -425,31 +522,69 @@ internal static class SearchAdjustmentControlSuite
                 var screenScale = (ownerRight - ownerLeft) / view.ActualWidth;
                 AssertEqual(true, left >= ownerLeft + 7 * screenScale - 1 && right <= ownerRight - 7 * screenScale + 1, $"Device-pixel placement contains the native Popup in the settings viewport ({locale}/{dpi}/{width}: {left}..{right} owner {ownerLeft}..{ownerRight}, popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX}, viewDpi={VisualTreeHelper.GetDpi(view).DpiScaleX})");
                 AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Popup surface resolves an opaque native theme brush");
-                var combo = Part<ComboBox>(control, "LanguageCombo");
-                AssertEnumerableEqual(new string?[] { null, "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }, combo.Items.Cast<object>().Select(Code), "Presets retain the exact scalar codes and order");
-                combo.SelectedIndex = 1; Drain();
-                AssertEqual(true, Visuals(combo).OfType<LanguageFlagImage>().Any(item => item.IsVisible), "The selected native ComboBox item renders a flag");
-                stage($"width={width}: native dropdown begin");
-                combo.IsDropDownOpen = true; Drain();
-                stage($"width={width}: native dropdown open/drain ready");
-                var child = NativeComboPopup(combo).Child;
-                AssertEqual(10, Visuals(child).OfType<LanguageFlagImage>().Count(item => item.IsVisible), "Every language dropdown item renders its flag while All has none");
-                combo.IsDropDownOpen = false;
-                stage($"width={width}: native dropdown closed");
+                var tiles = Tiles(control);
+                AssertEnumerableEqual(new[] { "", "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }, tiles.Select(tile => (string)tile.Tag), "Preset tiles keep their approved order");
+                for (var index = 0; index < tiles.Length; index++)
+                {
+                    var tile = tiles[index];
+                    AssertEqual(32d, tile.ActualHeight, "Every tile has the same 32-DIP height");
+                    AssertEqual(tiles[0].ActualWidth, tile.ActualWidth, "All and specific tiles have equal width");
+                    AssertEqual(index == 0 ? 0 : ((index + 1) / 2) * 2, Grid.GetRow(tile), "All owns its first row and preset pairs follow below");
+                    AssertEqual(index == 0 ? 0 : ((index - 1) % 2) * 2, Grid.GetColumn(tile), "All occupies only the left cell");
+                    var name = AutomationProperties.GetName(tile);
+                    AssertEqual(true, !string.IsNullOrWhiteSpace(name), "Every tile exposes its full localized name");
+                    AssertEqual(name, tile.ToolTip as string, "Tooltip retains the full accessible name");
+                    var label = Visuals(tile).OfType<TextBlock>().Single();
+                    AssertEqual(TextTrimming.CharacterEllipsis, label.TextTrimming, "Constrained names trim without changing tile dimensions");
+                    AssertEqual(true, label.ActualWidth <= tile.ActualWidth && label.ActualHeight <= tile.ActualHeight, "Native text stays within the tile");
+                }
+                var firstBounds = tiles[1].TransformToAncestor(Part<Grid>(control, "LanguageTiles")).TransformBounds(new Rect(tiles[1].RenderSize));
+                var secondBounds = tiles[2].TransformToAncestor(Part<Grid>(control, "LanguageTiles")).TransformBounds(new Rect(tiles[2].RenderSize));
+                AssertEqual(6d, secondBounds.Left - firstBounds.Right, "Columns have a six-DIP gap");
+                AssertEqual(10, Visuals(Part<Grid>(control, "LanguageTiles")).OfType<LanguageFlagImage>().Count(item => item.Visibility == Visibility.Visible), "Ten specifics have embedded flags while All has none");
+                foreach (var tile in tiles.Skip(1))
+                {
+                    var flag = Visuals(tile).OfType<LanguageFlagImage>().Single();
+                    AssertEqual(true, ReferenceEquals(VoiceLanguagePresentation.Describe((string)tile.Tag, locale).Flag, flag.Source), "Each tile reuses the matching embedded atlas flag");
+                    AssertEqual(true, tile.Focusable && KeyboardNavigation.GetIsTabStop(tile), "Every native toggle remains keyboard reachable");
+                }
+                if (dpi == 1.25 && (locale == "en" || (locale == "ru" && width == 320)))
+                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-all-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}");
+                Toggle(control, "en"); Toggle(control, "zh");
+                foreach (var tile in tiles)
+                {
+                    var selected = tile.IsChecked == true;
+                    var border = (Border)tile.Template.FindName("TileBorder", tile);
+                    AssertEqual(true, ReferenceEquals(tile.BorderBrush, border.BorderBrush), "Selected border resolves through the template binding");
+                    if (selected)
+                        AssertEqual(true, ReferenceEquals(view.FindResource("AccentFillColorDefaultBrush"), border.BorderBrush), "Selected tiles resolve the current native accent resource");
+                    var check = Visuals(tile).OfType<System.Windows.Shapes.Path>().Single();
+                    AssertEqual(selected ? Visibility.Visible : Visibility.Hidden, check.Visibility, "Only selected tiles show the decorative check");
+                    AssertEqual(false, check.Focusable, "The check adds no separate focus target");
+                }
+                if (dpi == 1.25 && (locale == "en" || (locale == "ru" && width == 320)))
+                    SavePopupProof(surface, $"{locale}-{(dark ? "dark" : "light")}-{width:0}-multiple-accentfixture-owner125-popup{VisualTreeHelper.GetDpi(surface).DpiScaleX * 100:0}");
                 foreach (var next in UiLocales.All)
                 {
                     stage($"width={width}: locale={next} begin");
                     SetLocale(view, next); Drain();
                     stage($"width={width}: locale={next} replacement/drain ready");
-                    AssertEqual("en", Code(combo.SelectedItem), "Live locale replacement preserves the draft selection");
+                    AssertEnumerableEqual(new[] { "en", "zh" }, Selected(control), "Live locale replacement preserves the entire draft set");
                     AssertEqual(true, IsOpen(control), "Live locale replacement updates the same open popup");
+                    foreach (var tile in tiles)
+                    {
+                        var code = (string)tile.Tag;
+                        var expected = code.Length == 0 ? (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_Search_AllLanguages") : VoiceLanguagePresentation.Describe(code, next).Name;
+                        AssertEqual(expected, AutomationProperties.GetName(tile), "Each live locale supplies the full tile caption");
+                        AssertEqual(expected, tile.ToolTip as string, "Locale changes refresh full tooltips");
+                    }
                 }
                 SetLocale(view, locale); Drain();
                 var relevance = Part<RadioButton>(control, "RelevanceRadio").Content as string;
                 AssertEqual(locale == "zh-cn" ? "相关优先" : locale == "en" ? "Relevance first" : (string)view.FindResource("STranslate_Plugin_Tts_FishAudio_Search_Relevance"), relevance, "Score uses the approved localized relevance-first label");
                 stage($"width={width}: popup cleanup begin");
                 Click(control, "CloseButton");
-                stage($"width={width}: popup cleanup ready open={IsOpen(control)} dropdown={combo.IsDropDownOpen} inputOwned={control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(control)}");
+                stage($"width={width}: popup cleanup ready open={IsOpen(control)} inputOwned={control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(control)}");
             }
         }
         finally
@@ -460,7 +595,6 @@ internal static class SearchAdjustmentControlSuite
         }
     }
 
-    private static string? Code(object item) => (string?)item.GetType().GetProperty("Code")!.GetValue(item);
 
     // A popup-only template/color override must diverge from a separate native
     // peer using the exact same SDK theme, including its checked inner glyph.
@@ -544,7 +678,6 @@ internal static class SearchAdjustmentControlSuite
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var stream = File.Create(path); encoder.Save(stream);
     }
-    private static Popup NativeComboPopup(ComboBox combo) => (Popup)(combo.Template.FindName("PART_Popup", combo) ?? combo.Template.FindName("Popup", combo));
     private static KeyEventArgs Escape(FrameworkElement root)
     {
         var key = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(root)!, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent };

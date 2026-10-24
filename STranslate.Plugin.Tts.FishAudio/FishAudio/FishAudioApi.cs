@@ -93,8 +93,8 @@ internal static class FishAudioApi
         var url = $"{ApiBase}/model?page_size={pageSize}&page_number={pageNumber}&sort_by={criteria.SortParameter}";
         if (!string.IsNullOrWhiteSpace(criteria.Query))
             url += $"&title={Uri.EscapeDataString(criteria.Query)}";
-        if (criteria.Language is not null)
-            url += $"&language={Uri.EscapeDataString(criteria.Language)}";
+        foreach (var language in criteria.Languages)
+            url += $"&language={Uri.EscapeDataString(language)}";
 
         var json = await context.HttpService.GetAsync(url, option, ct);
         return JsonSerializer.Deserialize<ModelListResponse>(json);

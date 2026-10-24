@@ -18,14 +18,14 @@
 - Register new regression scenarios in Program.cs. Run focused tests while iterating and the full executable runner before each task commit. Final combined verification is ./build.ps1 -Release -Clean -Test and inspection of its actual .spkg.
 - Persistent UI text uses DynamicResource in all seven locales. User guides have five languages; maintenance docs are English and CHANGELOG prose Chinese. Published changelog baseline is v1.1.2, verified through GitHub Releases on 2026-10-24. Preserve published history.
 - Use gpt-6.1-sol for subagents and xhigh for reviews/decisions. Implement tasks sequentially; do not concurrently edit shared XAML/ViewModel files. Implementers must not spawn helpers or reviewers.
-- Commit, push, PR, CI monitoring, squash merge to remote main, local main fast-forward and managed-worktree archive are user-authorized. Retain the PR attachment to this chat. No manifest bump, tag or GitHub Release.
+- Commit, push, PR, CI monitoring, squash merge to remote main, local main fast-forward and managed-worktree archive are user-authorized. Retain all PR attachments to this chat. No manifest bump, tag or GitHub Release.
 
 ## Review Focus
 
 - Actual pointer mapping and wheel event ownership must remain correct at endpoints, signed zero and prequalification partial deltas.
 - Focused native text viewports must fit -10.00 plus the caret at fractional DPI, without layout shifts or clipping; the later Task 9 requires centered editing rather than cross-state right-edge equality.
 - Old timer callbacks and identical replacement errors must not clear new messages.
-- Nested native ComboBox popups must not be dismissed as outside clicks, and failed/stale searches must not publish mismatched filters/results.
+- Native language tiles retain local keyboard/automation activation and finite caption layout; failed/stale searches must not publish mismatched filters/results.
 - Optional date metadata must round-trip and authoritatively clear across every card/cache/startup/preview path without crossing credential or persistence boundaries.
 
 ### Task 1: Native slider point clicks and shared wheel dwell
@@ -87,6 +87,10 @@
 - [ ] Add compiled layout/interaction tests for all four card locations, absent data, long text, language overflow, action commands/progress/focus, 320/400/480/640 widths, seven locales, light/dark and 100/125/150% DPI. Test local date boundaries deterministically and full tooltip semantics.
 - [ ] Update current specs/ADRs/resources/guides and consolidate Chinese Unreleased against published v1.1.2 without modifying published history or manifest version.
 - [ ] Run focused GREEN and full runner, self-review and commit. Suggested subject: feat(voices): show creation dates in refreshed voice cards.
+
+### Task 8: Approved language tile multiselect
+
+Implemented as a separate search follow-up, superseding the original Task 4 dropdown. Use two equal columns of 32-DIP toggle tiles with 6-DIP gaps; All Languages occupies the left cell of its own first row. Preserve the ten preset pairs and flags. Default All is exclusive with specifics; clearing the final specific restores All, while all ten specific choices remain a filtered set. Capture detached immutable selections in preset order and serialize repeated language keys in one request. Preserve draft/Apply/committed paging, credentials, cancellation and overlay ownership, replacing obsolete ComboBox-only handling. Provider combination semantics remain unspecified; promise neither AND nor OR. Task 8 also replaces the stub diagnostic-timeout regression with injected-clock coverage of the same incomplete action at 19999/20000 ms, preserving the original outer failure and existing action deadlines.
 
 ## Final verification and delivery
 

@@ -1,8 +1,10 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using static STranslate.Plugin.Tts.FishAudio.View.SettingsOverlayOwnership;
 
@@ -12,7 +14,8 @@ internal sealed record SearchLanguageOption(string? Code, string Name, ImageSour
 
 public partial class SearchAdjustmentControl : UserControl
 {
-    private static readonly string[] LanguageCodes = ["en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt"];
+    private readonly HashSet<string> _draftLanguages = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ToggleButton> _languageTiles = new(StringComparer.Ordinal);
     private static readonly DependencyProperty UiLocaleProperty = DependencyProperty.Register("UiLocale", typeof(string),
         typeof(SearchAdjustmentControl), new PropertyMetadata("en", LabelsChanged));
     private static readonly DependencyProperty AllCaptionProperty = DependencyProperty.Register("AllCaption", typeof(string),
@@ -21,8 +24,8 @@ public partial class SearchAdjustmentControl : UserControl
     private readonly List<ScrollViewer> _scrollOwners = [];
     private FrameworkElement? _owner;
     private Window? _window;
-    private Popup? _comboPopup;
     private bool _ownsInput;
+    private bool _updatingDraftTiles;
 
     public SearchAdjustmentControl()
     {
@@ -34,8 +37,6 @@ public partial class SearchAdjustmentControl : UserControl
         DataContextChanged += (_, _) => ClosePopup();
         Unloaded += (_, _) => ClosePopup();
         IsVisibleChanged += (_, _) => { if (!IsVisible) ClosePopup(); };
-        LanguageCombo.DropDownOpened += (_, _) => _comboPopup = LanguageCombo.Template.FindName("PART_Popup", LanguageCombo) as Popup
-            ?? LanguageCombo.Template.FindName("Popup", LanguageCombo) as Popup;
         RefreshLabels();
     }
 
@@ -44,17 +45,56 @@ public partial class SearchAdjustmentControl : UserControl
 
     private void RefreshLabels()
     {
-        if (LanguageCombo is null) return;
-        var selected = (LanguageCombo.SelectedItem as SearchLanguageOption)?.Code;
+        if (LanguageTiles is null) return;
         var locale = (string)GetValue(UiLocaleProperty);
         var options = new List<SearchLanguageOption> { new(null, (string)GetValue(AllCaptionProperty), null) };
-        foreach (var code in LanguageCodes)
+        foreach (var code in VoiceSearchCriteria.PresetLanguages)
         {
             var label = VoiceLanguagePresentation.Describe(code, locale);
             options.Add(new(code, label.Name, label.Flag));
         }
-        LanguageCombo.ItemsSource = options;
-        LanguageCombo.SelectedIndex = options.FindIndex(option => option.Code == selected);
+        for (var index = 0; index < options.Count; index++)
+        {
+            var option = options[index];
+            var code = option.Code ?? "";
+            if (!_languageTiles.TryGetValue(code, out var tile))
+            {
+                tile = new ToggleButton { Tag = code, Style = (Style)FindResource("LanguageTileStyle") };
+                tile.Checked += LanguageTile_CheckedChanged;
+                tile.Unchecked += LanguageTile_CheckedChanged;
+                Grid.SetRow(tile, index == 0 ? 0 : ((index + 1) / 2) * 2);
+                Grid.SetColumn(tile, index == 0 ? 0 : ((index - 1) % 2) * 2);
+                _languageTiles.Add(code, tile);
+                LanguageTiles.Children.Add(tile);
+            }
+            tile.Content = option;
+            tile.ToolTip = option.Name;
+            AutomationProperties.SetName(tile, option.Name);
+        }
+        UpdateDraftTiles();
+    }
+
+    private void LanguageTile_CheckedChanged(object sender, RoutedEventArgs args)
+    {
+        if (_updatingDraftTiles) return;
+        var tile = (ToggleButton)sender;
+        var code = (string)tile.Tag;
+        if (code.Length == 0) _draftLanguages.Clear();
+        else if (tile.IsChecked == true) _draftLanguages.Add(code);
+        else _draftLanguages.Remove(code);
+        UpdateDraftTiles();
+        args.Handled = true;
+    }
+
+    private void UpdateDraftTiles()
+    {
+        _updatingDraftTiles = true;
+        try
+        {
+            foreach (var (code, tile) in _languageTiles)
+                tile.IsChecked = code.Length == 0 ? _draftLanguages.Count == 0 : _draftLanguages.Contains(code);
+        }
+        finally { _updatingDraftTiles = false; }
     }
 
     private void Adjustment_Click(object sender, RoutedEventArgs args)
@@ -67,8 +107,9 @@ public partial class SearchAdjustmentControl : UserControl
     private void OpenPopup()
     {
         if (AdjustmentPopup.IsOpen || !IsLoaded || !IsVisible || DataContext is not SettingsViewModel vm) return;
-        LanguageCombo.SelectedValue = vm.SearchLanguage;
-        if (vm.SearchLanguage is null) LanguageCombo.SelectedIndex = 0;
+        _draftLanguages.Clear();
+        _draftLanguages.UnionWith(vm.SearchLanguages);
+        UpdateDraftTiles();
         RelevanceRadio.IsChecked = vm.SearchSort == "score";
         PopularityRadio.IsChecked = vm.SearchSort == "task_count";
         CreationRadio.IsChecked = vm.SearchSort == "created_at";
@@ -97,13 +138,12 @@ public partial class SearchAdjustmentControl : UserControl
             AdjustmentPopup.IsOpen = true;
         }
         catch { ReleaseOwnership(); throw; }
-        LanguageCombo.Focus();
+        _languageTiles[""].Focus();
     }
 
     private void ClosePopup(bool returnFocus = false)
     {
         if (!AdjustmentPopup.IsOpen && !_ownsInput) return;
-        LanguageCombo.IsDropDownOpen = false;
         AdjustmentPopup.IsOpen = false;
         ReleaseOwnership();
         if (returnFocus && AdjustmentButton.IsLoaded && AdjustmentButton.IsVisible) AdjustmentButton.Focus();
@@ -113,8 +153,6 @@ public partial class SearchAdjustmentControl : UserControl
     {
         if (!_ownsInput) return;
         _ownsInput = false;
-        LanguageCombo.IsDropDownOpen = false;
-        _comboPopup = null;
         InputManager.Current.PreProcessInput -= ObserveInput;
         foreach (var viewer in _scrollOwners)
         {
@@ -143,21 +181,20 @@ public partial class SearchAdjustmentControl : UserControl
         if (args.StagingItem.Input is KeyEventArgs { Key: Key.Escape } key
             && (key.RoutedEvent == Keyboard.PreviewKeyDownEvent || key.RoutedEvent == Keyboard.KeyDownEvent))
         {
-            if (LanguageCombo.IsDropDownOpen) LanguageCombo.IsDropDownOpen = false;
-            else ClosePopup(true);
+            ClosePopup(true);
             key.Handled = true;
         }
         else if (args.StagingItem.Input is MouseButtonEventArgs mouse
                  && (mouse.RoutedEvent == Mouse.PreviewMouseDownEvent || mouse.RoutedEvent == Mouse.MouseDownEvent)
                  && (mouse.OriginalSource ?? Mouse.DirectlyOver) is DependencyObject source
-                 && !IsWithin(source, AdjustmentButton) && !IsWithin(source, PopupSurface)
-                 && !(_comboPopup is { IsOpen: true, Child: { } child } && IsWithin(source, child))) ClosePopup();
+                 && !IsWithin(source, AdjustmentButton) && !IsWithin(source, PopupSurface)) ClosePopup();
     }
 
     private void Close_Click(object sender, RoutedEventArgs args) { ClosePopup(true); args.Handled = true; }
     private void Reset_Click(object sender, RoutedEventArgs args)
     {
-        LanguageCombo.SelectedIndex = 0;
+        _draftLanguages.Clear();
+        UpdateDraftTiles();
         RelevanceRadio.IsChecked = true;
         args.Handled = true;
     }
@@ -165,14 +202,16 @@ public partial class SearchAdjustmentControl : UserControl
     {
         args.Handled = true;
         if (!AdjustmentPopup.IsOpen || DataContext is not SettingsViewModel vm) return;
-        var language = (LanguageCombo.SelectedItem as SearchLanguageOption)?.Code;
+        var languages = VoiceSearchCriteria.PresetLanguages.Where(_draftLanguages.Contains).ToArray();
         var sort = PopularityRadio.IsChecked == true ? "task_count" : CreationRadio.IsChecked == true ? "created_at" : "score";
         ClosePopup(true);
-        await vm.ApplySearchOptionsAsync(language, sort);
+        await vm.ApplySearchOptionsAsync(languages, sort);
     }
     private void Popup_PreviewKeyDown(object sender, KeyEventArgs args)
     {
-        if (args.Key == Key.Enter && !LanguageCombo.IsDropDownOpen && Keyboard.FocusedElement is not Button)
+        var source = args.OriginalSource as DependencyObject;
+        if (args.Key == Key.Enter && Keyboard.FocusedElement is not ButtonBase
+            && source is not ButtonBase && (source is null || !Ancestors(source).OfType<ButtonBase>().Any()))
             Apply_Click(sender, args);
     }
 
@@ -242,7 +281,6 @@ public partial class SearchAdjustmentControl : UserControl
     private void Reposition()
     {
         if (AdjustmentPopup is null || !AdjustmentPopup.IsOpen || _owner is null) return;
-        LanguageCombo.IsDropDownOpen = false;
         if (!PreparePopupBounds()) { ClosePopup(); return; }
         AdjustmentPopup.HorizontalOffset = AdjustmentPopup.HorizontalOffset == 0 ? .01 : 0;
     }

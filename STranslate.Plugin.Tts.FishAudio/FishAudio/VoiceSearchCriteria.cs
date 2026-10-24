@@ -6,7 +6,8 @@ internal enum VoiceSearchSort { Score, TaskCount, CreatedAt }
 internal sealed class VoiceSearchCriteria
 {
     internal string Query { get; }
-    internal string? Language { get; }
+    internal static IReadOnlyList<string> PresetLanguages { get; } = Array.AsReadOnly(new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" });
+    internal IReadOnlyList<string> Languages { get; }
     internal VoiceSearchSort Sort { get; }
     internal string SortParameter => Sort switch
     {
@@ -15,17 +16,22 @@ internal sealed class VoiceSearchCriteria
         _ => "score",
     };
 
-    internal VoiceSearchCriteria(string query, string? language = null, VoiceSearchSort sort = VoiceSearchSort.Score)
+    internal VoiceSearchCriteria(string query, IEnumerable<string>? languages = null, VoiceSearchSort sort = VoiceSearchSort.Score)
     {
-        if (language is not (null or "en" or "zh" or "de" or "ja" or "fr" or "es" or "ko" or "ar" or "ru" or "pt"))
-            throw new ArgumentOutOfRangeException(nameof(language));
+        var selected = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var language in languages ?? [])
+        {
+            if (!PresetLanguages.Contains(language, StringComparer.Ordinal))
+                throw new ArgumentOutOfRangeException(nameof(languages));
+            selected.Add(language);
+        }
         if (!Enum.IsDefined(sort)) throw new ArgumentOutOfRangeException(nameof(sort));
         Query = query;
-        Language = language;
+        Languages = Array.AsReadOnly(PresetLanguages.Where(selected.Contains).ToArray());
         Sort = sort;
     }
 
-    internal VoiceSearchCriteria WithQuery(string query) => new(query, Language, Sort);
+    internal VoiceSearchCriteria WithQuery(string query) => new(query, Languages, Sort);
     internal static VoiceSearchSort ParseSort(string sort) => sort switch
     {
         "score" => VoiceSearchSort.Score,

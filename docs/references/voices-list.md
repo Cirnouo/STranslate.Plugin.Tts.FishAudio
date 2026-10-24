@@ -8,7 +8,7 @@
 | `page_number` | Integer at least 1, default 1. |
 | `title` | Optional title search. |
 | `sort_by` | `score` (default), `task_count`, or `created_at`. |
-| `language` | Optional scalar string language filter, such as `en` or `zh`; All omits it. |
+| `language` | Optional `array<string> \| string \| null` language filter; absent/null means no language filter. |
 | `tag`, `title_language` | Optional filters; preserve the schema's accepted representation. |
 | `self` | Default false; true selects the active workspace's voices. |
 | `author_id` | Public-author filter, ignored with `self=true`. |
@@ -26,7 +26,9 @@ All cases read existing data. No `self=true` account enumeration, mutation, gene
 
 ## Search options: contract and bounded observations
 
-The [pinned official OpenAPI schema](https://github.com/fishaudio/docs/blob/9e9b9e8b1a23a08c2105f4ad7e609dcb723a3bd1/api-reference/openapi.json) documents the three `sort_by` values and scalar `language` string. It does not document a sort-direction parameter, tie order or a numeric `score` field/formula. The plugin explicitly sends one selected sort, sends at most one language and omits the language parameter for All. Its presets are `en`, `zh`, `de`, `ja`, `fr`, `es`, `ko`, `ar`, `ru` and `pt`; these UI presets are not a provider capability whitelist.
+The [pinned official OpenAPI schema](https://github.com/fishaudio/docs/blob/9e9b9e8b1a23a08c2105f4ad7e609dcb723a3bd1/api-reference/openapi.json) documents the three `sort_by` values and `language` as `array<string> | string | null`, with no enum or array-length limit. It does not document a sort-direction parameter, tie order or a numeric `score` field/formula. The plugin explicitly sends one selected sort and omits the language parameter for All. Specific selections use repeated keys, for example `language=en&language=zh`, in preset order in one GET. Its presets are `en`, `zh`, `de`, `ja`, `fr`, `es`, `ko`, `ar`, `ru` and `pt`; these UI presets are not a provider capability whitelist.
+
+The [pinned official Go SDK](https://github.com/fishaudio/fish-audio-go/blob/4b6149bd1722a886c448f43c4f30ba3adbd11ec7/voices.go#L155) calls `query.Add("language", lang)` per value. The [pinned Python request owner](https://github.com/fishaudio/fish-audio-python/blob/448150989781e6f91c3ca9f6cc59711a87df8130/src/fishaudio/resources/voices.py#L21) accepts a string or list and forwards query parameters to HTTPX. These sources establish multiple-value request representation, not AND/OR semantics. Three bounded public metadata GETs on 2026-10-24 at page size one accepted `language=en`, `language=zh` and `language=en&language=zh`; the repeated-key result had ja/zh/en metadata. All reported approximate limited totals of 1000. One item and capped totals cannot prove the language combination operator or synthesis capability. No key, cookie, synthesis or audio download was used.
 
 On 2026-10-24, three separate unauthenticated public first-page GET observations used `page_size=6&page_number=1` with `task_count` (03:02:28 UTC), `created_at` (03:02:31 UTC) and `score` (03:02:35 UTC). The popularity response counts were 19962974, 4952573, 4202767, 4007516, 3279050 and 2993860, descending; creation timestamps were latest first. The score response exposed no numeric score and was monotonic in neither count nor creation date. No raw response capture was retained for these observations. They establish only the ordering seen on those first pages, not a documented direction, stable tie order, global ranking or future guarantee. The observations did not use credentials/cookies, retry or synthesize speech.
 
