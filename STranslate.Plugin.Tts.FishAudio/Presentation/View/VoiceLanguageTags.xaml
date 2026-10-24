@@ -54,22 +54,24 @@
         </StackPanel>
         <Popup x:Name="LanguagePopup" PlacementTarget="{Binding ElementName=MoreButton}" Placement="Custom"
                StaysOpen="True" AllowsTransparency="True" Focusable="False">
-            <Border x:Name="PopupSurface" Width="290" Padding="12" CornerRadius="8" BorderThickness="1"
-                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+            <Border x:Name="PopupSurface" Width="290" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
+                    BorderBrush="{DynamicResource FlyoutBorderThemeBrush}"
                     Background="{DynamicResource FlyoutPresenterBackground}"
+                    TextElement.FontFamily="{DynamicResource ContentControlThemeFontFamily}"
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}">
-                <StackPanel>
-                    <DockPanel Margin="0,0,0,10">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <DockPanel x:Name="PopupHeader" Margin="0,0,0,10">
                         <TextBlock x:Name="RemainingCount" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="8,0,0,0"
                                    FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                         <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Languages_More}" FontSize="12" FontWeight="Medium" TextWrapping="Wrap"/>
                     </DockPanel>
-                    <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                    <ScrollViewer x:Name="PopupScroll" Grid.Row="1" MaxHeight="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                                   Focusable="True" KeyboardNavigation.TabNavigation="Cycle"
                                   AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Languages_More}">
                         <view:LanguageWrapPanel x:Name="PopupPanel" HorizontalGap="6" VerticalGap="7"/>
                     </ScrollViewer>
-                </StackPanel>
+                </Grid>
             </Border>
         </Popup>
     </Grid>

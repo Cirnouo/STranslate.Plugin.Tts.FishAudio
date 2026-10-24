@@ -17,8 +17,9 @@ public partial class VoiceLanguageTags : UserControl
         typeof(string), typeof(VoiceLanguageTags), new PropertyMetadata("en", PresentationChanged));
     private static readonly DependencyProperty MoreCaptionProperty = DependencyProperty.Register("MoreCaption",
         typeof(string), typeof(VoiceLanguageTags), new PropertyMetadata("", PresentationChanged));
-    private static readonly DependencyProperty PopupOwnerProperty = DependencyProperty.RegisterAttached("PopupOwner",
-        typeof(VoiceLanguageTags), typeof(VoiceLanguageTags));
+    private readonly object _ownershipToken = new();
+    private readonly PopupScrollbarLane _scrollbarLane;
+    internal PopupMaterial Material { get; }
 
     private FrameworkElement? _owner;
     private Window? _window;
@@ -42,9 +43,13 @@ public partial class VoiceLanguageTags : UserControl
     }
     internal bool IsPopupOpen => LanguagePopup.IsOpen;
 
-    public VoiceLanguageTags()
+    public VoiceLanguageTags() : this(null) { }
+
+    internal VoiceLanguageTags(IPopupBackdropApi? backdropApi)
     {
         InitializeComponent();
+        _scrollbarLane = new PopupScrollbarLane(PopupScroll);
+        Material = new PopupMaterial(LanguagePopup, PopupSurface, backdropApi);
         MoreButton.TagsOwner = this;
         SetResourceReference(UiLocaleProperty, "STranslate_Plugin_Tts_FishAudio_Languages_UiLocale");
         SetResourceReference(MoreCaptionProperty, "STranslate_Plugin_Tts_FishAudio_Languages_More");
@@ -116,6 +121,7 @@ public partial class VoiceLanguageTags : UserControl
         base.OnDpiChanged(oldDpi, newDpi);
         _naturalWidths = null;
         InvalidateMeasure();
+        Reposition();
     }
 
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs args)
@@ -220,16 +226,15 @@ public partial class VoiceLanguageTags : UserControl
     {
         if (IsPopupOpen || _inlineCount < 1 || _codes.Count <= _inlineCount || !IsVisible || !IsLoaded) return;
         _window = Window.GetWindow(this);
-        _owner = Ancestors(this).OfType<SettingsView>().FirstOrDefault()
-            ?? (FrameworkElement?)_window ?? this;
-        if (_owner.GetValue(PopupOwnerProperty) is VoiceLanguageTags other) other.ClosePopup();
-        _owner.SetValue(PopupOwnerProperty, this);
+        _owner = SettingsOverlayOwnership.FindOwner(this);
+        SettingsOverlayOwnership.Acquire(_owner, _ownershipToken, () => ClosePopup());
         _owner.SizeChanged += OwnerSizeChanged;
         _owner.IsVisibleChanged += OwnerVisibilityChanged;
         foreach (var viewer in Ancestors(this).OfType<ScrollViewer>())
         {
             _scrollOwners.Add(viewer);
             viewer.ScrollChanged += OwnerScrollChanged;
+            viewer.SizeChanged += OwnerSizeChanged;
         }
         if (_window is not null)
         {
@@ -239,9 +244,20 @@ public partial class VoiceLanguageTags : UserControl
         }
         InputManager.Current.PreProcessInput += ObserveInput;
         _ownsPopupInput = true;
-        PopupSurface.Width = Math.Max(1, Math.Min(290, _owner.ActualWidth - 16));
-        try { LanguagePopup.IsOpen = true; }
-        catch { ReleasePopupOwnership(); throw; }
+        try
+        {
+            if (!PreparePopupBounds()) { ReleasePopupOwnership(); return; }
+            _scrollbarLane.Begin();
+            Material.Begin();
+            LanguagePopup.IsOpen = true;
+            if (PresentationSource.FromVisual(PopupSurface) is null || !PreparePopupBounds()) { ClosePopup(); return; }
+        }
+        catch
+        {
+            // Retirement must not replace the failure that prevented opening.
+            try { ClosePopup(); } catch { }
+            throw;
+        }
         MoreButton.IsExpanded = true;
     }
 
@@ -257,9 +273,14 @@ public partial class VoiceLanguageTags : UserControl
     {
         if (!_ownsPopupInput) return;
         _ownsPopupInput = false;
+        _scrollbarLane.End();
         MoreButton.IsExpanded = false;
         InputManager.Current.PreProcessInput -= ObserveInput;
-        foreach (var viewer in _scrollOwners) viewer.ScrollChanged -= OwnerScrollChanged;
+        foreach (var viewer in _scrollOwners)
+        {
+            viewer.ScrollChanged -= OwnerScrollChanged;
+            viewer.SizeChanged -= OwnerSizeChanged;
+        }
         _scrollOwners.Clear();
         if (_window is not null)
         {
@@ -271,10 +292,12 @@ public partial class VoiceLanguageTags : UserControl
         {
             _owner.SizeChanged -= OwnerSizeChanged;
             _owner.IsVisibleChanged -= OwnerVisibilityChanged;
-            if (ReferenceEquals(_owner.GetValue(PopupOwnerProperty), this)) _owner.ClearValue(PopupOwnerProperty);
+            SettingsOverlayOwnership.Release(_owner, _ownershipToken);
         }
         _window = null;
         _owner = null;
+        // Retire all input/overlay subscriptions even if native cleanup fails.
+        Material.End();
     }
 
     private void ObserveInput(object sender, PreProcessInputEventArgs args)
@@ -302,36 +325,18 @@ public partial class VoiceLanguageTags : UserControl
         if (args.OriginalSource is ScrollViewer viewer && _scrollOwners.Contains(viewer)
             && (args.VerticalChange != 0 || args.HorizontalChange != 0)) ClosePopup();
     }
+    private bool PreparePopupBounds() => PopupViewport.Prepare(MoreButton, _owner, _scrollOwners,
+        PopupSurface, PopupScroll, [RemainingCount], 290, 280);
     private void Reposition()
     {
         if (!IsPopupOpen || _owner is null) return;
-        PopupSurface.Width = Math.Max(1, Math.Min(290, _owner.ActualWidth - 16));
-        // Changing the offset asks WPF to re-run custom placement after move/resize.
+        if (!PreparePopupBounds()) { ClosePopup(); return; }
+        // Changing the offset asks WPF to re-run native custom placement.
         LanguagePopup.HorizontalOffset = LanguagePopup.HorizontalOffset == 0 ? .01 : 0;
     }
 
-    private CustomPopupPlacement[] PlacePopup(Size popupSize, Size targetSize, Point offset)
-    {
-        var anchor = MoreButton.PointToScreen(new Point());
-        var dpi = VisualTreeHelper.GetDpi(MoreButton);
-        var left = anchor.X - 12 * dpi.DpiScaleX;
-        // WPF invokes custom placement with screen-space (device-pixel) sizes
-        // and adds the returned device-pixel offset to the target's screen point.
-        var top = anchor.Y + targetSize.Height + 7 * dpi.DpiScaleY;
-        var work = MonitorWorkArea(anchor);
-        var minX = work.Left;
-        var maxX = work.Right;
-        if (_owner is { ActualWidth: > 0 })
-        {
-            var origin = _owner.PointToScreen(new Point());
-            minX = Math.Max(minX, origin.X + 8 * dpi.DpiScaleX);
-            maxX = Math.Min(maxX, origin.X + (_owner.ActualWidth - 8) * dpi.DpiScaleX);
-        }
-        left = Math.Clamp(left, minX, Math.Max(minX, maxX - popupSize.Width));
-        top = Math.Clamp(top, work.Top, Math.Max(work.Top, work.Bottom - popupSize.Height));
-        return [new CustomPopupPlacement(new Point(left - anchor.X, top - anchor.Y), PopupPrimaryAxis.None)];
-    }
-
+    private CustomPopupPlacement[] PlacePopup(Size popupSize, Size targetSize, Point offset) =>
+        PopupViewport.Place(MoreButton, _owner, _scrollOwners, popupSize, targetSize, alignRight: false);
     private static bool IsWithin(DependencyObject child, DependencyObject owner) =>
         ReferenceEquals(child, owner) || Ancestors(child).Contains(owner);
     private static IEnumerable<DependencyObject> Ancestors(DependencyObject child)
@@ -342,7 +347,7 @@ public partial class VoiceLanguageTags : UserControl
         ? VisualTreeHelper.GetParent(child) ?? LogicalTreeHelper.GetParent(child)
         : LogicalTreeHelper.GetParent(child);
 
-    private static Rect MonitorWorkArea(Point point)
+    internal static Rect MonitorWorkArea(Point point)
     {
         var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
         var monitor = MonitorFromPoint(new NativePoint { X = (int)point.X, Y = (int)point.Y }, 2);

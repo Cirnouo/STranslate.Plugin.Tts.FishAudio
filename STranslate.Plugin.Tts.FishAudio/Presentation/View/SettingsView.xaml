@@ -796,13 +796,16 @@
                             ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Search}">
                         <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Search_24_Regular}" FontSize="16" />
                     </Button>
-                    <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False"
-                        ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchPlaceholder}"
-                        Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}">
-                        <TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding SearchVoicesCommand}" />
-                        </TextBox.InputBindings>
-                    </TextBox>
+                    <Grid>
+                        <TextBox x:Name="VoiceSearchInput" helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,40,6"
+                            ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchPlaceholder}"
+                            Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchVoicesCommand}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <view:SearchAdjustmentControl x:Name="SearchAdjustments" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    </Grid>
                 </DockPanel>
                 <ikw:SimpleStackPanel Spacing="8" Visibility="{Binding HasSearched, Converter={StaticResource BtvConverter}}">
                     <DockPanel LastChildFill="True">

@@ -165,6 +165,22 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string SearchQuery { get; set; }
 
+    public IReadOnlyList<string> SearchLanguages { get; private set; } = Array.AsReadOnly(Array.Empty<string>());
+    public string SearchSort { get; private set; } = "score";
+    public bool HasSearchAdjustments => SearchLanguages.Count != 0 || SearchSort != "score";
+
+    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) =>
+        _voiceDiscoveryCoordinator.ApplySearchOptionsAsync(languages, sort);
+
+    private void ApplySearchOptions(VoiceSearchCriteria criteria)
+    {
+        SearchLanguages = criteria.Languages;
+        SearchSort = criteria.SortParameter;
+        OnPropertyChanged(nameof(SearchLanguages));
+        OnPropertyChanged(nameof(SearchSort));
+        OnPropertyChanged(nameof(HasSearchAdjustments));
+    }
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SearchVoicesCommand))]
     public partial bool IsSearching { get; set; }
@@ -357,7 +373,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             isFacadeDisposed: () => _isDisposed,
             setByIdResult: item => ByIdResults = item is null ? [] : [item],
             metadataCache: _voiceMetadataCache, getApiKey: () => _settings.ApiKey,
-            timeProvider: voiceIdErrorTimeProvider, runOnUiThread: RunOnUiThread);
+            timeProvider: voiceIdErrorTimeProvider, runOnUiThread: RunOnUiThread,
+            setAppliedSearchOptions: ApplySearchOptions);
         _previewRefreshCoordinator = new PreviewRefreshCoordinator(
             context: context,
             getCachedVoiceId: () => CachedVoiceId,

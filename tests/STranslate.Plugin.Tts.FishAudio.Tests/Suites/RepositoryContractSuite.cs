@@ -24,7 +24,7 @@ internal static class RepositoryContractSuite
         {
             var root = System.Xml.Linq.XDocument.Load(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml")).Root!;
             var entries = root.Elements().ToArray();
-            AssertEqual(107, entries.Length, $"{locale} must have all 107 own resources without fallback");
+            AssertEqual(116, entries.Length, $"{locale} must have all 116 own resources without fallback");
             AssertEqual(true, entries.All(entry => entry.Name.LocalName == "String"
                 && ((string?)entry.Attribute(keyName))?.StartsWith(prefix, StringComparison.Ordinal) == true
                 && !string.IsNullOrWhiteSpace(entry.Value)), $"{locale} must have nonempty keyed string resources");

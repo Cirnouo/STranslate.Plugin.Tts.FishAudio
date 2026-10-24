@@ -3,6 +3,7 @@ using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Model;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
+using Microsoft.Extensions.Logging;
 
 namespace STranslate.Plugin.Tts.FishAudio.Presentation;
 
@@ -41,7 +42,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private ITimer? _voiceIdErrorTimer;
     private long _voiceIdErrorVersion;
     private VoiceSearchPagination _pagination = VoiceSearchPagination.Initial;
-    private string _committedSearchQuery = "";
+    private VoiceSearchCriteria _committedSearchCriteria = new("");
+    private readonly Action<VoiceSearchCriteria> _setAppliedSearchOptions;
     private int _highestVisitedPage = 1;
 
     internal VoiceDiscoveryCoordinator(
@@ -64,7 +66,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         Func<bool> isFacadeDisposed,
         Action<VoiceSearchItem?>? setByIdResult = null,
         VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null,
-        TimeProvider? timeProvider = null, Action<Action>? runOnUiThread = null)
+        TimeProvider? timeProvider = null, Action<Action>? runOnUiThread = null,
+        Action<VoiceSearchCriteria>? setAppliedSearchOptions = null)
     {
         _context = context;
         _getApiKey = getApiKey ?? (() => "");
@@ -86,24 +89,28 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         _setVoiceIdError = setVoiceIdError;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _runOnUiThread = runOnUiThread ?? (action => action());
+        _setAppliedSearchOptions = setAppliedSearchOptions ?? (_ => { });
         _setSubmittingVoiceId = setSubmittingVoiceId;
         _isFacadeDisposed = isFacadeDisposed;
     }
 
-    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _getSearchQuery(), resetOnEmptyResponse: true);
+    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _committedSearchCriteria.WithQuery(_getSearchQuery()), resetOnEmptyResponse: true);
+
+    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) => ExecuteSearchAsync(1,
+        new VoiceSearchCriteria(_getSearchQuery(), languages, VoiceSearchCriteria.ParseSort(sort)), resetOnEmptyResponse: true);
 
     internal int PageInputMaximum => _pagination.InputMaximum(_highestVisitedPage);
 
     internal async Task NextPageAsync()
     {
         if (_pagination.HasNextPage)
-            await ExecuteSearchAsync(_pagination.Page + 1, _committedSearchQuery);
+            await ExecuteSearchAsync(_pagination.Page + 1, _committedSearchCriteria);
     }
 
     internal async Task PrevPageAsync()
     {
         if (_pagination.Page > 1)
-            await ExecuteSearchAsync(_pagination.Page - 1, _committedSearchQuery);
+            await ExecuteSearchAsync(_pagination.Page - 1, _committedSearchCriteria);
     }
 
     internal async Task CommitPageInputAsync()
@@ -113,7 +120,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
             && requestedPage != _pagination.Page)
         {
             _setPageInput(requestedPage.ToString());
-            await ExecuteSearchAsync(requestedPage, _committedSearchQuery);
+            await ExecuteSearchAsync(requestedPage, _committedSearchCriteria);
         }
         else
         {
@@ -285,8 +292,9 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio,
     };
 
-    private async Task ExecuteSearchAsync(int requestedPage, string query, bool resetOnEmptyResponse = false)
+    private async Task ExecuteSearchAsync(int requestedPage, VoiceSearchCriteria criteria, bool resetOnEmptyResponse = false)
     {
+        if (_isDisposed || _isFacadeDisposed()) return;
         var apiKey = _getApiKey();
         var credentialScope = VoiceMetadataCache.CredentialScope(apiKey);
         var operationId = BeginSearchOperation(out var cts);
@@ -294,51 +302,68 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         try
         {
             var response = await FishAudioApi.SearchModelsAsync(
-                _context, FishAudioApi.MetadataApiKey(apiKey), query, SearchPageSize, requestedPage, cts.Token);
+                _context, FishAudioApi.MetadataApiKey(apiKey), criteria, SearchPageSize, requestedPage, cts.Token);
 
             if (!IsCurrentSearchOperation(operationId))
                 return;
 
             if (response is null)
-            {
-                if (resetOnEmptyResponse)
-                {
-                    _pagination = new VoiceSearchPagination(1, 0, true, 1, false, false);
-                    _committedSearchQuery = query;
-                    _highestVisitedPage = 1;
-                    _setSearchPagination(_pagination);
-                    _setPageInput("1");
-                    _setSearchResults([]);
-                }
-                return;
-            }
+                throw new InvalidOperationException("Fish Audio voice search returned an empty response.");
 
-            _pagination = VoiceSearchPagination.FromResponse(response, requestedPage, SearchPageSize);
-            _committedSearchQuery = query;
-            _highestVisitedPage = resetOnEmptyResponse ? requestedPage : Math.Max(_highestVisitedPage, requestedPage);
-            _setSearchPagination(_pagination);
-            _setPageInput(requestedPage.ToString());
-            _setHasSearched(true);
-            if (!IsCurrentSearchOperation(operationId))
-                return;
-            var results = (response.Items ?? []).Where(IsSelectableVoice).Select(model => MapSearchResult(model, credentialScope)).ToList();
-            if (!IsCurrentSearchOperation(operationId))
-                return;
-            _setSearchResults(results);
-            _syncPreviewStateToResults();
+            // Validate and detach provider data before changing the last successful
+            // relationship. Queue one publication unit, then recheck its owner there.
+            var pagination = VoiceSearchPagination.FromResponse(response, requestedPage, SearchPageSize);
+            var metadata = (response.Items ?? []).Where(IsSelectableVoice).Select(model => VoiceMetadata.FromModel(model)).ToArray();
+            var results = metadata.Select(CreateSearchItem).ToList();
+            _runOnUiThread(() =>
+            {
+                if (!IsCurrentSearchOperation(operationId)) return;
+                _pagination = pagination;
+                _committedSearchCriteria = criteria;
+                _highestVisitedPage = resetOnEmptyResponse ? requestedPage : Math.Max(_highestVisitedPage, requestedPage);
+                _setSearchPagination(pagination);
+                _setPageInput(requestedPage.ToString());
+                _setHasSearched(true);
+                _setSearchResults(results);
+                _setAppliedSearchOptions(criteria);
+                _syncPreviewStateToResults();
+
+                // Covers/cache notifications are enrichment, after the complete
+                // successful snapshot (and canonical page bound) is visible.
+                for (var index = 0; index < results.Count && IsCurrentSearchOperation(operationId); index++)
+                {
+                    try
+                    {
+                        _metadataCache.Put(metadata[index], credentialScope);
+                        if (!IsCurrentSearchOperation(operationId)) return;
+                        ResolveCover(results[index]);
+                    }
+                    catch (Exception)
+                    {
+                        // Enrichment cannot turn a valid metadata response into a
+                        // partially failed Apply. Never log remote URLs or text.
+                        _context.Logger.LogWarning("Voice search display enrichment failed.");
+                    }
+                }
+            });
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
         }
         catch (Exception ex)
         {
-            if (IsCurrentSearchOperation(operationId))
-                _context.Snackbar.ShowError(FishAudioRequestPolicy.GetUserFacingError(_context, ex));
+            _runOnUiThread(() =>
+            {
+                if (IsCurrentSearchOperation(operationId))
+                    _context.Snackbar.ShowError(FishAudioRequestPolicy.GetUserFacingError(_context, ex));
+            });
         }
         finally
         {
-            if (IsCurrentSearchOperation(operationId))
-                _setSearching(false);
+            _runOnUiThread(() =>
+            {
+                if (IsCurrentSearchOperation(operationId)) _setSearching(false);
+            });
             CompleteSearchOperation(cts);
             cts.Dispose();
         }
@@ -356,20 +381,25 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
 
     private VoiceSearchItem MapMetadata(VoiceMetadata metadata)
     {
-        var item = new VoiceSearchItem
-        {
-            Id = metadata.VoiceId,
-            Title = metadata.Title,
-            Description = metadata.Description,
-            AuthorName = metadata.AuthorName,
-            TaskCount = metadata.TaskCount,
-            Languages = metadata.Languages,
-            SampleAudioUrl = metadata.SampleAudioUrl,
-            CoverImage = metadata.CoverImage,
-        };
-        item.CoverUrl = _resolveCoverImageUrl(item.Id, item.CoverImage, 64, url => item.CoverUrl = url);
+        var item = CreateSearchItem(metadata);
+        ResolveCover(item);
         return item;
     }
+
+    private static VoiceSearchItem CreateSearchItem(VoiceMetadata metadata) => new()
+    {
+        Id = metadata.VoiceId,
+        Title = metadata.Title,
+        Description = metadata.Description,
+        AuthorName = metadata.AuthorName,
+        TaskCount = metadata.TaskCount,
+        Languages = metadata.Languages,
+        SampleAudioUrl = metadata.SampleAudioUrl,
+        CoverImage = metadata.CoverImage,
+    };
+
+    private void ResolveCover(VoiceSearchItem item) =>
+        item.CoverUrl = _resolveCoverImageUrl(item.Id, item.CoverImage, 64, url => item.CoverUrl = url);
 
     private long BeginSearchOperation(out CancellationTokenSource cts)
     {

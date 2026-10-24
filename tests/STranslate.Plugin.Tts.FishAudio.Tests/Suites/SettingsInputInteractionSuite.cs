@@ -414,7 +414,7 @@ internal static class SettingsInputInteractionSuite
             vm.VoiceIdInput = "0123456789abcdef";
             vm.BrowseMode = VoiceBrowseMode.Search;
             Layout(view, width);
-            AssertEqual(new Thickness(10, 5, 6, 6), search.Padding, "Search must retain the installed native padding");
+            AssertEqual(new Thickness(10, 5, 40, 6), search.Padding, "Search retains native text insets and reserves its embedded adjustment action");
             AssertEqual(VerticalAlignment.Top, search.VerticalContentAlignment, "Search vertical placement must remain unchanged");
             AssertEqual(14d, search.FontSize, "Search must keep native text metrics");
             var searchCaret = search.GetRectFromCharacterIndex(0);

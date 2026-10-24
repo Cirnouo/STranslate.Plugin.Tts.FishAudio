@@ -123,4 +123,13 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_RepositoryLink_Failed">Proje deposu açılamadı. Varsayılan tarayıcı ayarlarınızı kontrol edin.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_UiLocale">tr</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Languages_More">Diğer diller</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Adjustments">Arama seçenekleri</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Language">Diller (çoklu seçim)</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_AllLanguages">Tüm diller</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Sort">Sıralama</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Relevance">Alaka düzeyine göre</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Popularity">En çok kullanılanlar</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Önce en yeniler</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Sıfırla</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Kapat</sys:String>
 </ResourceDictionary>

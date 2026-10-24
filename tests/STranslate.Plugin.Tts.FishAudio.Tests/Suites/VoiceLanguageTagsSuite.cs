@@ -26,6 +26,7 @@ internal static class VoiceLanguageTagsSuite
 
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
+        if (proofDirectory is not null) SearchAdjustmentControlSuite.WriteProofAssembly(proofDirectory);
         await RunOnStaThreadAsync(() =>
         {
             var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja" } } };
@@ -41,12 +42,75 @@ internal static class VoiceLanguageTagsSuite
         await RunOnStaThreadAsync(ResponsivePrefixFitsOneRowWithoutACap);
         await RunOnStaThreadAsync(FitThresholdsAndLongLabels);
         await RunOnStaThreadAsync(InheritedFontMetricsRefreshTheSameInstance);
-        await RunOnStaThreadAsync(PopupOwnsInputAndLifetime);
-        await RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup);
+        await RunLifetimeAsync();
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
         foreach (var width in new[] { 320d, 400, 480, 640 })
             await RunOnStaThreadAsync(() => RenderCompiledCards(width, dpi, dark, proofDirectory));
+    }
+
+    internal static async Task RunLifetimeAsync()
+    {
+        await RunOnStaThreadAsync(PopupInitializationFailureRetiresOwnership);
+        await RunOnStaThreadAsync(PopupOwnsInputAndLifetime);
+        await RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup);
+    }
+
+    private static void PopupInitializationFailureRetiresOwnership()
+    {
+        foreach (var (failAfterSource, failInChrome) in new[] { (true, false), (true, true), (false, false) })
+        {
+            var original = new InvalidOperationException("Injected popup material initialization failure");
+            var cleanup = new IOException("Injected native material cleanup failure");
+            var tags = new VoiceLanguageTags(new FailingPopupBackdropApi(original, cleanup, failAfterSource, failInChrome)) { Languages = Codes };
+            var scroll = new ScrollViewer { Content = tags, Height = 220 };
+            AddResources(scroll, "en");
+            using var source = new HwndSource(new HwndSourceParameters("Fish Audio popup initialization failure fixture")
+            { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
+            source.RootVisual = scroll;
+            SettingsLayoutSuite.Layout(scroll, 400);
+            Exception? caught = null;
+            try { tags.OpenPopup(); }
+            catch (Exception error) { caught = error; }
+            try
+            {
+                if (failAfterSource)
+                {
+                    AssertEqual<Exception?>(null, caught, "Optional native application failure uses opaque fallback without escaping HWND creation");
+                    AssertEqual(true, tags.IsPopupOpen, "A material failure preserves the usable native popup");
+                    AssertEqual(true, ReferenceEquals(original, tags.Material.Failure), "The first native failure retains its identity and HRESULT");
+                    AssertEqual(true, ReferenceEquals(cleanup, tags.Material.CleanupFailure), "Cleanup failure is retained separately from the primary failure");
+                    AssertEqual(false, tags.Material.AttributeAccepted, "A failed application never claims accepted material");
+                    AssertEqual(true, ((Border)tags.FindName("PopupSurface")).Background is SolidColorBrush { Color.A: 255 }, "Failed native application has explicit opaque flyout chrome");
+                    tags.ClosePopup();
+                }
+                else AssertEqual(true, ReferenceEquals(original, caught), "The original pre-HWND initialization failure is preserved");
+                AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
+                    "A failed material Begin must retire input/overlay subscriptions before returning the error");
+                AssertEqual(false, tags.IsPopupOpen, "A failed initialization cannot leave a native popup open");
+                AssertEqual(IntPtr.Zero, tags.Material.Handle, "A failed initialization owns no stale popup source");
+                AssertEqual<object?>(null, typeof(VoiceLanguageTags).GetField("_owner", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags), "Retirement releases the per-view overlay owner before native cleanup");
+                var key = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent, Source = scroll };
+                InputManager.Current.ProcessInput(key);
+                AssertEqual(false, key.Handled, "No retired popup input handler consumes Escape after initialization failure/close");
+            }
+            finally { try { tags.ClosePopup(); } catch { /* The assertions retain the primary failure. */ } }
+        }
+    }
+
+    private sealed class FailingPopupBackdropApi(Exception failure, Exception cleanupFailure, bool failAfterSource, bool failInChrome) : IPopupBackdropApi
+    {
+        public bool IsSupported => failAfterSource ? true : throw failure;
+        public PopupBackdropResult Apply(IntPtr handle, bool dark) => failInChrome ? new(0, 0, 3) : throw failure;
+        public void UpdateChrome(IntPtr handle, bool dark) { if (failInChrome) throw failure; }
+        public void Remove(IntPtr handle) { if (failAfterSource) throw cleanupFailure; }
+    }
+
+    internal static async Task RunProofsAsync(string directory)
+    {
+        SearchAdjustmentControlSuite.WriteProofAssembly(directory);
+        foreach (var dark in new[] { false, true })
+            await RunOnStaThreadAsync(() => RenderCompiledCards(320, 1.25, dark, directory));
     }
 
     private static void LabelsUseExplicitCultureAndTrustedFlags()
@@ -187,10 +251,18 @@ internal static class VoiceLanguageTagsSuite
         scroll.ScrollToVerticalOffset(10); Drain();
         AssertEqual(false, tags.IsPopupOpen, "Ancestor scroll dismisses the old anchor");
         tags.Languages = Enumerable.Range(0, 105).Select(index => $"x{index}").ToArray();
+        // The old 80-DIP owner cannot fit the measured localized header/chrome
+        // after screen insets. Give this internal-scroll case a usable viewport;
+        // fixed-chrome refusal is covered separately by the popup edge suite.
+        scroll.Height = 160;
         SettingsLayoutSuite.Layout(scroll, 480); tags.OpenPopup(); Drain();
+        AssertEqual(true, tags.IsPopupOpen, "The internal-scroll case opens within a viewport that fits measured fixed chrome");
         var popupScroller = Visuals(surface).OfType<ScrollViewer>().Single();
-        AssertEqual(280d, popupScroller.ViewportHeight, "A large remaining language list is bounded by the 280 DIP scroll viewport");
+        AssertEqual(true, popupScroller.ViewportHeight > 0 && popupScroller.ViewportHeight <= 280,
+            "A large remaining list is bounded by 280 DIP and the actual short visible viewport after fixed chrome");
         AssertEqual(true, popupScroller.ScrollableHeight > 0, "All remaining languages stay accessible through vertical scrolling");
+        SearchAdjustmentControlSuite.AssertScrollbarExclusion(popupScroller,
+            ((Panel)tags.FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "remaining language pills");
         popupScroller.ScrollToVerticalOffset(20); Drain();
         AssertEqual(true, tags.IsPopupOpen, "Scrolling the popup itself does not dismiss its remaining languages");
         tags.OpenPopup();
@@ -203,7 +275,8 @@ internal static class VoiceLanguageTagsSuite
     {
         var tags = new VoiceLanguageTags { Languages = Codes };
         AddResources(tags, "en");
-        var window = new Window { Content = tags, Width = 400, Height = 240, Left = -10000, Top = -10000,
+        // Visible-viewport containment intentionally refuses an off-monitor owner.
+        var window = new Window { Content = tags, Width = 400, Height = 240, Left = 120, Top = 120, Opacity = 0,
             ShowInTaskbar = false, ShowActivated = false, WindowStyle = WindowStyle.None };
         try
         {
@@ -439,6 +512,13 @@ internal static class VoiceLanguageTagsSuite
         var nativeSurface = (Border)nativeTags[1].FindName("PopupSurface");
         Drain(); nativeSurface.UpdateLayout();
         AssertEqual(290d, nativeSurface.ActualWidth, "The native popup retains its approved 290 DIP body");
+        var nativePopupSource = (HwndSource)PresentationSource.FromVisual(nativeSurface);
+        var material = nativeTags[1].Material;
+        Console.WriteLine($"[popup-material/languages] hwnd=0x{nativePopupSource.Handle:X}; owner=0x{source.Handle:X}; layered={nativePopupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; ownerRequestedDpi={dpi:0.##}; popupActualDpi={VisualTreeHelper.GetDpi(nativeSurface).DpiScaleX:0.##}; visibleBlur=UNVERIFIED");
+        var nativeViewer = (ScrollViewer)nativeTags[1].FindName("PopupScroll");
+        if (nativeViewer.ScrollableHeight > 0)
+            SearchAdjustmentControlSuite.AssertScrollbarExclusion(nativeViewer,
+                ((Panel)nativeTags[1].FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "compiled remaining suffix");
         if (proofDirectory is not null)
             Save(nativeSurface, Path.Combine(proofDirectory, $"popup-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
         var origin = nativeSurface.PointToScreen(new Point());

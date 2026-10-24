@@ -79,7 +79,7 @@ internal static class FishAudioApi
     }
 
     public static async Task<ModelListResponse?> SearchModelsAsync(
-        IPluginContext context, string apiKey, string? query, int pageSize, int pageNumber, CancellationToken ct)
+        IPluginContext context, string apiKey, VoiceSearchCriteria criteria, int pageSize, int pageNumber, CancellationToken ct)
     {
         var option = new Options
         {
@@ -90,9 +90,11 @@ internal static class FishAudioApi
             },
         };
 
-        var url = $"{ApiBase}/model?page_size={pageSize}&page_number={pageNumber}&sort_by=score";
-        if (!string.IsNullOrWhiteSpace(query))
-            url += $"&title={Uri.EscapeDataString(query)}";
+        var url = $"{ApiBase}/model?page_size={pageSize}&page_number={pageNumber}&sort_by={criteria.SortParameter}";
+        if (!string.IsNullOrWhiteSpace(criteria.Query))
+            url += $"&title={Uri.EscapeDataString(criteria.Query)}";
+        foreach (var language in criteria.Languages)
+            url += $"&language={Uri.EscapeDataString(language)}";
 
         var json = await context.HttpService.GetAsync(url, option, ct);
         return JsonSerializer.Deserialize<ModelListResponse>(json);

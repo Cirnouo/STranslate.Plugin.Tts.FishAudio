@@ -1,3 +1,21 @@
+if (args.Contains("--popup-proof-tests"))
+{
+    var directory = args.ElementAtOrDefault(Array.IndexOf(args, "--popup-proof-tests") + 1)
+        ?? throw new ArgumentException("A private proof directory is required");
+    await SearchAdjustmentControlSuite.RunAllAsync("proof", directory);
+    await VoiceLanguageTagsSuite.RunProofsAsync(directory);
+    Console.WriteLine("Representative popup proofs passed.");
+    return;
+}
+
+if (args.Contains("--popup-lifetime-tests"))
+{
+    await SearchAdjustmentControlSuite.RunAllAsync("lifetime");
+    await VoiceLanguageTagsSuite.RunLifetimeAsync();
+    Console.WriteLine("Popup lifetime regressions passed.");
+    return;
+}
+
 if (args.Contains("--numeric-typography-tests"))
 {
     await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
@@ -13,12 +31,34 @@ if (args.Contains("--numeric-glyph-observation-tests"))
     return;
 }
 
+if (args.Contains("--search-adjustment-diagnostic-tests"))
+{
+    await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+    Console.WriteLine("Search adjustment deadline diagnostic regressions passed.");
+    return;
+}
+
 if (args.Contains("--streaming-cancellation-probe-tests"))
 {
     await StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync();
     await StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync();
     await StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync();
     Console.WriteLine("Streaming cancellation probe regressions passed.");
+    return;
+}
+
+if (args.Contains("--search-adjustment-control-tests"))
+{
+    await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+    await SearchAdjustmentControlSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--search-adjustment-control-tests") + 1));
+    Console.WriteLine("Search adjustment control tests passed.");
+    return;
+}
+
+if (args.Contains("--search-adjustment-request-tests"))
+{
+    await SearchAdjustmentSuite.RunRequestsAsync();
+    Console.WriteLine("Search adjustment request tests passed.");
     return;
 }
 
@@ -457,4 +497,7 @@ await ProjectRepositoryLinkSuite.RunAllAsync();
 await VoiceLanguageSuite.RunAllAsync();
 await VoiceLanguageTagsSuite.RunAllAsync();
 await PageEntrySuite.RunAllAsync();
+await SearchAdjustmentSuite.RunRequestsAsync();
+await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+await SearchAdjustmentControlSuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

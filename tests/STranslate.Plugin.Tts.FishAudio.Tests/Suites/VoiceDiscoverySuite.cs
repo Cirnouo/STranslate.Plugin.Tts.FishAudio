@@ -863,9 +863,9 @@ internal static class VoiceDiscoverySuite
         await coordinator.SearchVoicesAsync();
 
         AssertEnumerableEqual(
-            new[] { "pagination", "input", "searched", "cover", "results", "sync" },
+            new[] { "pagination", "input", "searched", "results", "sync", "cover" },
             events,
-            "Search should publish pagination state before resolving result covers");
+            "Search publishes its complete metadata/navigation snapshot before resolving result covers");
     }
 
     internal static async Task DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync()
