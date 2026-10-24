@@ -17,11 +17,22 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
+        <!-- Repository-owned rounded contour, shared by outline/filled Like actions and their tab. -->
+        <Geometry x:Key="VoiceLikeHeartGeometry">M 12,4 C 11.2,4 10.6,2.5 8.7,1.7 C 5.8,0.4 2.5,1.75 1.3,4.5 C -1,9.8 3.4,15.4 10,20.2 C 11.2,21.1 12.8,21.1 14,20.2 C 20.6,15.4 25,9.8 22.7,4.5 C 21.5,1.75 18.2,0.4 15.3,1.7 C 13.4,2.5 12.8,4 12,4 Z</Geometry>
+        <SolidColorBrush x:Key="VoiceLikeFilledBrush" Color="#FC3D49" />
         <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <conv:VoiceCreationDateConverter x:Key="VoiceCreationDateConverter" />
+        <conv:VoiceDescriptionVisibilityConverter x:Key="VoiceDescriptionVisibilityConverter" />
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
         <conv:ProgressToDashOffsetConverter x:Key="ProgressToDashOffsetConverter" />
         <BooleanToVisibilityConverter x:Key="BtvConverter" />
+        <DataTemplate x:Key="VoiceTitleCopyToolTipTemplate">
+            <StackPanel>
+                <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+                <TextBlock Text="{Binding}" MaxWidth="360" TextWrapping="Wrap" />
+            </StackPanel>
+        </DataTemplate>
         <Style x:Key="VoiceTitleButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="0" />
@@ -30,9 +41,10 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
             <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
             <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Content.Text, RelativeSource={RelativeSource Self}}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -167,118 +179,133 @@
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                     CornerRadius="6">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
-                        <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
-                                Background="Transparent" BorderThickness="0"
-                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                CommandParameter="{Binding}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
-                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
-                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
-                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <Path Width="18" Height="18" Stretch="Fill" StrokeThickness="1.5" StrokeLineJoin="Round"
-                                  Data="M 12,2 L 14.94,8.04 L 21.61,9.02 L 16.8,13.72 L 17.93,20.36 L 12,17.22 L 6.07,20.36 L 7.2,13.72 L 2.39,9.02 L 9.06,8.04 Z">
-                                <Path.Style>
-                                    <Style TargetType="Path">
-                                        <Setter Property="Fill" Value="Transparent" />
-                                        <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsFavorite}" Value="True">
-                                                <Setter Property="Fill" Value="#FFFFC857" />
-                                                <Setter Property="Stroke" Value="#FFFFC857" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Path.Style>
-                            </Path>
-                        </Button>
-                        <Grid Width="36" Height="36" Margin="0,0,4,0"
-                              Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                            <Ellipse x:Name="SRestBorder" StrokeThickness="1"
-                                     Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
-                            <Ellipse x:Name="STrack" StrokeThickness="1.5"
-                                     Stroke="#1FFFFFFF" Fill="Transparent" Visibility="Collapsed" />
-                            <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="White" Fill="Transparent"
-                                     StrokeDashArray="72.26 72.26"
-                                     StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
-                                     StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform Angle="-90"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                            <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
-                                  IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                                <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                                <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                         StrokeDashArray="18 54" StrokeDashCap="Round" />
-                            </Grid>
-                            <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                    Width="36" Height="36"
-                                    Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                    CommandParameter="{Binding}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
-                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsPreparingPreview}" Value="True">
-                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                                <Grid>
-                                    <view:InkCenteredGlyph x:Name="SIcon" FontFamily="Segoe MDL2 Assets" FontSize="12"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
-                                    <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
-                                            HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
-                                </Grid>
-                            </Button>
-                        </Grid>
-                        <Button IsEnabled="{Binding CanToggleSelection}"
-                                Command="{Binding DataContext.SelectVoiceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                CommandParameter="{Binding}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource BareIconButtonStyle}">
-                                    <Setter Property="Content" Value="&#xE73E;" />
-                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" />
-                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsApplied}" Value="True">
-                                            <Setter Property="Content" Value="&#xE711;" />
-                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
-                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                    <Ellipse DockPanel.Dock="Left" Width="40" Height="40" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Ellipse DockPanel.Dock="Left" Width="48" Height="48" Margin="0,4,8,0" VerticalAlignment="Top">
                         <Ellipse.Fill>
                             <ImageBrush ImageSource="{Binding CoverUrl}" Stretch="UniformToFill" />
                         </Ellipse.Fill>
                     </Ellipse>
                     <StackPanel VerticalAlignment="Center">
-                        <Button Style="{StaticResource VoiceTitleButtonStyle}"
-                                Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                CommandParameter="{Binding Id}">
-                            <TextBlock Text="{Binding Title}" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
-                        </Button>
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
+                                <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
+                                        Background="Transparent" BorderThickness="0"
+                                        Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
+                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Path Width="18" Stretch="Uniform" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                          Data="{StaticResource VoiceLikeHeartGeometry}">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="Transparent" />
+                                                <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                                        <Setter Property="Stroke" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button>
+                                <Grid Width="36" Height="36" Margin="0,0,4,0"
+                                      Visibility="{Binding SampleAudioUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                                    <Ellipse x:Name="SRestBorder" StrokeThickness="1"
+                                             Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent" />
+                                    <Ellipse x:Name="STrack" StrokeThickness="1.5"
+                                             Stroke="#1FFFFFFF" Fill="Transparent" Visibility="Collapsed" />
+                                    <Ellipse x:Name="SArc" StrokeThickness="1.5" Stroke="White" Fill="Transparent"
+                                             StrokeDashArray="72.26 72.26"
+                                             StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                                             StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                        <Ellipse.RenderTransform>
+                                            <RotateTransform Angle="-90"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsPreparingPreview}"
+                                          IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                                        <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                                        <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                                 StrokeDashArray="18 54" StrokeDashCap="Round" />
+                                    </Grid>
+                                    <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                            Width="36" Height="36"
+                                            Command="{Binding DataContext.ToggleSearchItemPreviewCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsBeingPreviewed}" Value="True">
+                                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsPreparingPreview}" Value="True">
+                                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <Grid>
+                                            <view:InkCenteredGlyph x:Name="SIcon" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Glyph="&#xE768;" />
+                                            <Border x:Name="SStopIcon" Width="9" Height="9" CornerRadius="1" Background="White"
+                                                    HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+                                        </Grid>
+                                    </Button>
+                                </Grid>
+                                <Button IsEnabled="{Binding CanToggleSelection}"
+                                        Command="{Binding DataContext.SelectVoiceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource BareIconButtonStyle}">
+                                            <Setter Property="Content" Value="&#xE73E;" />
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Apply}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                    <Setter Property="Content" Value="&#xE711;" />
+                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
+                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                            <view:VoiceHeaderPanel MinHeight="32" UseLayoutRounding="False" ClipToBounds="True"
+                                                  TitleText="{Binding Text, ElementName=CardTitleText}" AuthorText="{Binding AuthorName}">
+                                <Button HorizontalAlignment="Stretch" Style="{StaticResource VoiceTitleButtonStyle}"
+                                        Command="{Binding DataContext.CopyVoiceIdCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding Id}">
+                                    <Button.ToolTip>
+                                        <ToolTip Content="{Binding PlacementTarget.Content.Text, RelativeSource={RelativeSource Self}}"
+                                                 ContentTemplate="{StaticResource VoiceTitleCopyToolTipTemplate}" />
+                                    </Button.ToolTip>
+                                    <TextBlock x:Name="CardTitleText" Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis"
+                                               AutomationProperties.HelpText="{Binding Title}" />
+                                </Button>
+                                <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding AuthorName}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           ToolTip="{Binding AuthorName}" AutomationProperties.Name="{Binding AuthorName}" />
+                            </view:VoiceHeaderPanel>
+                        </DockPanel>
                         <TextBlock Text="{Binding Description}"
+                                   Visibility="{Binding Description, Converter={StaticResource VoiceDescriptionVisibilityConverter}}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
                                    TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
                         <view:VoiceLanguageTags Languages="{Binding Languages}" />
@@ -297,13 +324,25 @@
                         <TextBlock Text="{Binding MetadataError}" FontSize="11" MaxWidth="280" TextWrapping="Wrap"
                                    Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                    Visibility="{Binding MetadataError, Converter={StaticResource StringToVisibilityConverter}}" />
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding AuthorName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
-                            <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11">
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
                                 <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Popularity}" />
                                 <Run Text="{Binding TaskCount, Converter={StaticResource TaskCountConverter}, Mode=OneWay}" />
                             </TextBlock>
-                        </StackPanel>
+                            <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       Text="{Binding CreatedAt, Converter={StaticResource VoiceCreationDateConverter}}"
+                                       AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt}">
+                                <TextBlock.ToolTip>
+                                    <ToolTip DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <StackPanel>
+                                            <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt}" />
+                                            <TextBlock Text="{Binding CreatedAt, Converter={StaticResource VoiceCreationDateConverter}, ConverterParameter=Full}" />
+                                        </StackPanel>
+                                    </ToolTip>
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                        </Grid>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -462,99 +501,54 @@
             CornerRadius="8"
             Padding="12">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
-                    <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
-                            Background="Transparent" BorderThickness="0"
-                            Command="{Binding ToggleSelectedVoiceFavoriteCommand}"
-                            Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
-                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsSelectedVoiceFavorite}" Value="True">
-                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
-                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                        <Path Width="18" Height="18" Stretch="Fill" StrokeThickness="1.5" StrokeLineJoin="Round"
-                              Data="M 12,2 L 14.94,8.04 L 21.61,9.02 L 16.8,13.72 L 17.93,20.36 L 12,17.22 L 6.07,20.36 L 7.2,13.72 L 2.39,9.02 L 9.06,8.04 Z">
-                            <Path.Style>
-                                <Style TargetType="Path">
-                                    <Setter Property="Fill" Value="Transparent" />
-                                    <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsSelectedVoiceFavorite}" Value="True">
-                                            <Setter Property="Fill" Value="#FFFFC857" />
-                                            <Setter Property="Stroke" Value="#FFFFC857" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Path.Style>
-                        </Path>
-                    </Button>
-                    <!-- 试听按钮（带进度环） -->
-                    <Grid Width="36" Height="36" Margin="0,0,4,0"
-                          Visibility="{Binding CachedVoiceSampleUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                        <Ellipse x:Name="DisplayRestBorder" StrokeThickness="1"
-                                 Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <Ellipse x:Name="DisplayTrack" StrokeThickness="1.5"
-                                 Stroke="#1FFFFFFF" Fill="Transparent"
-                                 Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
-                        <Ellipse StrokeThickness="1.5" Stroke="White" Fill="Transparent"
-                                 StrokeDashArray="72.26 72.26"
-                                 StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
-                                 StrokeDashCap="Round"
-                                 RenderTransformOrigin="0.5,0.5"
-                                 Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}">
-                            <Ellipse.RenderTransform>
-                                <RotateTransform Angle="-90"/>
-                            </Ellipse.RenderTransform>
-                        </Ellipse>
-                        <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
-                              IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
-                            <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
-                                     StrokeDashArray="18 54" StrokeDashCap="Round" />
-                        </Grid>
-                        <Button Background="Transparent" BorderThickness="0" Padding="0"
-                                Width="36" Height="36"
-                                Command="{Binding ToggleDisplayPreviewCommand}">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
-                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsDisplayVoicePreparing}" Value="True">
-                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                            <Grid>
-                                <view:InkCenteredGlyph FontFamily="Segoe MDL2 Assets" FontSize="13"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <view:InkCenteredGlyph.Style>
-                                        <Style TargetType="view:InkCenteredGlyph">
-                                            <Setter Property="Glyph" Value="&#xE768;" />
+                <Ellipse DockPanel.Dock="Left" Width="56" Height="56" Margin="0,4,12,0" VerticalAlignment="Top"
+                         Visibility="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
+                    </Ellipse.Fill>
+                </Ellipse>
+                <StackPanel VerticalAlignment="Center">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0" UseLayoutRounding="False">
+                            <Button Width="32" Height="32" Margin="0,0,4,0" Padding="6"
+                                    Background="Transparent" BorderThickness="0"
+                                    Command="{Binding ToggleSelectedVoiceFavoriteCommand}"
+                                    Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
+                                        <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Add}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelectedVoiceFavorite}" Value="True">
+                                                <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
+                                                <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Favorite_Remove}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <Path Width="18" Stretch="Uniform" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                      Data="{StaticResource VoiceLikeHeartGeometry}">
+                                    <Path.Style>
+                                        <Style TargetType="Path">
+                                            <Setter Property="Fill" Value="Transparent" />
+                                            <Setter Property="Stroke" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelectedVoiceFavorite}" Value="True">
+                                                    <Setter Property="Fill" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                                    <Setter Property="Stroke" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                            </Button>
+                            <!-- 试听按钮（带进度环） -->
+                            <Grid Width="36" Height="36" Margin="0,0,4,0"
+                                  Visibility="{Binding CachedVoiceSampleUrl, Converter={StaticResource StringToVisibilityConverter}}">
+                                <Ellipse x:Name="DisplayRestBorder" StrokeThickness="1"
+                                         Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" Fill="Transparent">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
                                             <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
@@ -562,61 +556,129 @@
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </view:InkCenteredGlyph.Style>
-                                </view:InkCenteredGlyph>
-                                <Border Width="10" Height="10" CornerRadius="1" Background="White"
-                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                        Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <Ellipse x:Name="DisplayTrack" StrokeThickness="1.5"
+                                         Stroke="#1FFFFFFF" Fill="Transparent"
+                                         Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}" />
+                                <Ellipse StrokeThickness="1.5" Stroke="White" Fill="Transparent"
+                                         StrokeDashArray="72.26 72.26"
+                                         StrokeDashOffset="{Binding PreviewProgress, Converter={StaticResource ProgressToDashOffsetConverter}}"
+                                         StrokeDashCap="Round"
+                                         RenderTransformOrigin="0.5,0.5"
+                                         Visibility="{Binding IsDisplayVoicePreviewing, Converter={StaticResource BtvConverter}}">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform Angle="-90"/>
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Grid Style="{StaticResource PreviewPreparingSpinner}" Tag="{Binding IsDisplayVoicePreparing}"
+                                      IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
+                                    <Grid.RenderTransform><RotateTransform /></Grid.RenderTransform>
+                                    <Ellipse Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.5" Fill="Transparent"
+                                             StrokeDashArray="18 54" StrokeDashCap="Round" />
+                                </Grid>
+                                <Button Background="Transparent" BorderThickness="0" Padding="0"
+                                        Width="36" Height="36"
+                                        Command="{Binding ToggleDisplayPreviewCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_PlaySample}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsDisplayVoicePreviewing}" Value="True">
+                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_Stop}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDisplayVoicePreparing}" Value="True">
+                                                    <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                    <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_Preview_CancelLoading}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Grid>
+                                        <view:InkCenteredGlyph Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <view:InkCenteredGlyph.Style>
+                                                <Style TargetType="view:InkCenteredGlyph">
+                                                    <Setter Property="Glyph" Value="&#xE768;" />
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDisplayVoicePreviewActive}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </view:InkCenteredGlyph.Style>
+                                        </view:InkCenteredGlyph>
+                                        <Border Width="10" Height="10" CornerRadius="1" Background="White"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                Visibility="{Binding IsDisplayVoicePreviewActive, Converter={StaticResource BtvConverter}}" />
+                                    </Grid>
+                                </Button>
                             </Grid>
-                        </Button>
-                    </Grid>
-                    <Button
-                        Style="{StaticResource BareIconButtonStyle}"
-                        Command="{Binding ClearVoiceCommand}"
-                        Content="&#xE711;"
-                        ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}"
-                        AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}"
-                        Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}" />
-                </StackPanel>
-                <Ellipse DockPanel.Dock="Left" Width="48" Height="48" Margin="0,0,12,0" VerticalAlignment="Center"
-                         Visibility="{Binding CachedVoiceCoverUrl, Converter={StaticResource StringToVisibilityConverter}}">
-                    <Ellipse.Fill>
-                        <ImageBrush ImageSource="{Binding CachedVoiceCoverUrl}" Stretch="UniformToFill" />
-                    </Ellipse.Fill>
-                </Ellipse>
-                <StackPanel VerticalAlignment="Center">
-                    <Button Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
-                            CommandParameter="{Binding CachedVoiceId}">
-                        <TextBlock FontWeight="Medium" FontSize="14" TextTrimming="CharacterEllipsis">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
-                                    <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
-                                            <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        </Button>
+                            <Button
+                                Style="{StaticResource BareIconButtonStyle}"
+                                Command="{Binding ClearVoiceCommand}"
+                                Content="&#xE711;"
+                                ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}"
+                                AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}"
+                                Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}" />
+                        </StackPanel>
+                        <view:VoiceHeaderPanel MinHeight="32" UseLayoutRounding="False" ClipToBounds="True"
+                                              TitleText="{Binding Text, ElementName=SelectedTitleText}" AuthorText="{Binding CachedVoiceAuthor}">
+                            <Button HorizontalAlignment="Stretch" Style="{StaticResource VoiceTitleButtonStyle}" Command="{Binding CopyVoiceIdCommand}"
+                                    CommandParameter="{Binding CachedVoiceId}">
+                                <Button.ToolTip>
+                                    <ToolTip Content="{Binding PlacementTarget.Content.Text, RelativeSource={RelativeSource Self}}"
+                                             ContentTemplate="{StaticResource VoiceTitleCopyToolTipTemplate}" />
+                                </Button.ToolTip>
+                                <TextBlock x:Name="SelectedTitleText" FontWeight="Medium" FontSize="14" TextTrimming="CharacterEllipsis"
+                                           AutomationProperties.HelpText="{Binding Text, RelativeSource={RelativeSource Self}}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="{Binding CachedVoiceTitle}" />
+                                            <Setter Property="Visibility" Value="{Binding CachedVoiceTitle, Converter={StaticResource StringToVisibilityConverter}}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding CachedVoiceId}" Value="{x:Null}">
+                                                    <Setter Property="Text" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_RandomVoice}" />
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                            <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{Binding CachedVoiceAuthor}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       ToolTip="{Binding CachedVoiceAuthor}" AutomationProperties.Name="{Binding CachedVoiceAuthor}" />
+                        </view:VoiceHeaderPanel>
+                    </DockPanel>
                     <TextBlock Text="{Binding CachedVoiceDescription}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" MaxHeight="36"
-                               Visibility="{Binding CachedVoiceDescription, Converter={StaticResource StringToVisibilityConverter}}" />
+                               Visibility="{Binding CachedVoiceDescription, Converter={StaticResource VoiceDescriptionVisibilityConverter}}" />
                     <view:VoiceLanguageTags Languages="{Binding CachedVoiceLanguages}" />
-                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                        <TextBlock Text="{Binding CachedVoiceAuthor}"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
-                                   Visibility="{Binding CachedVoiceAuthor, Converter={StaticResource StringToVisibilityConverter}}" />
-                        <TextBlock Margin="12,0,0,0" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11"
-                                   Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
+                    <Grid Margin="0,4,0,0" Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
                             <Run Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Popularity}" />
                             <Run Text="{Binding CachedVoiceTaskCount, Converter={StaticResource TaskCountConverter}, Mode=OneWay}" />
                         </TextBlock>
-                    </StackPanel>
+                        <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                   Text="{Binding CachedVoiceCreatedAt, Converter={StaticResource VoiceCreationDateConverter}}"
+                                   AutomationProperties.Name="{DynamicResource STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt}">
+                            <TextBlock.ToolTip>
+                                <ToolTip DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt}" />
+                                        <TextBlock Text="{Binding CachedVoiceCreatedAt, Converter={StaticResource VoiceCreationDateConverter}, ConverterParameter=Full}" />
+                                    </StackPanel>
+                                </ToolTip>
+                            </TextBlock.ToolTip>
+                        </TextBlock>
+                    </Grid>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -766,8 +828,22 @@
                         </Style>
                     </Button.Style>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{Binding Foreground, ElementName=FavoritesTabLabel}"
-                                   VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <Path Width="12" Stretch="Uniform" StrokeThickness="1" StrokeLineJoin="Round"
+                              Data="{StaticResource VoiceLikeHeartGeometry}"
+                              VerticalAlignment="Center" Margin="0,0,4,0">
+                            <Path.Style>
+                                <Style TargetType="Path">
+                                    <Setter Property="Fill" Value="Transparent" />
+                                    <Setter Property="Stroke" Value="{Binding Foreground, ElementName=FavoritesTabLabel}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFavoritesMode}" Value="True">
+                                            <Setter Property="Fill" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                            <Setter Property="Stroke" Value="{StaticResource VoiceLikeFilledBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Path.Style>
+                        </Path>
                         <TextBlock x:Name="FavoritesTabLabel" Text="{DynamicResource STranslate_Plugin_Tts_FishAudio_Tab_Favorites}" VerticalAlignment="Center" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">

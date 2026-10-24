@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using STranslate.Plugin.Tts.FishAudio.Configuration;
 
 namespace STranslate.Plugin.Tts.FishAudio.Model;
 
@@ -28,6 +29,16 @@ public class ModelListResponse
 
 public class ModelEntity
 {
+    private DateTimeOffset? _createdAt;
+
+    [JsonPropertyName("created_at")]
+    [JsonConverter(typeof(VoiceCreationDateJsonConverter))]
+    public DateTimeOffset? CreatedAt
+    {
+        get => _createdAt;
+        set => _createdAt = value?.ToUniversalTime();
+    }
+
     [JsonPropertyName("_id")]
     public string Id { get; set; } = "";
 

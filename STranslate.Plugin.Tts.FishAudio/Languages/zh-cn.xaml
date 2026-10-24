@@ -116,18 +116,18 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">语音合成失败，请检查系统网络连接和模型服务状态。</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">收藏夹</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">喜欢</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">应用</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">收藏声音</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">取消收藏</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">还没有收藏声音。点击声音卡片上的星标即可收藏。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">展开收藏声音</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">收起收藏声音</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">最多可收藏 300 个声音，请先取消一个收藏再添加。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">当前无法修改收藏。请检查收藏声音文件后重试。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">收藏保存失败，请重试。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">喜欢</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">取消喜欢</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">还没有喜欢的声音。点击声音卡片上的喜欢即可保存。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">展开喜欢的声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">收起喜欢的声音</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">最多可喜欢 300 个声音，请先取消喜欢一个声音再添加。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">喜欢的声音目前只读，请检查本地喜欢列表文件后重试。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">保存喜欢的声音失败，请重试。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">正在加载声音信息…</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">无法读取收藏声音文件。已有收藏会保留；文件恢复可读后才能修改收藏。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">无法读取本地喜欢列表文件。已保存的喜欢保留，在文件可读取前无法更改。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">复制声音 ID</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">声音 ID 已复制</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">无法复制声音 ID，请重试。</sys:String>
@@ -143,4 +143,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">最新优先</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">重置</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">关闭</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">创建时间</sys:String>
 </ResourceDictionary>

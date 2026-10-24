@@ -105,18 +105,18 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">音声合成に失敗しました。システムのネットワーク接続とモデルサービスの状態を確認してください。</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">お気に入り</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">いいね</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">適用</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">お気に入りに追加</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">お気に入りから削除</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">お気に入りはまだありません。ボイスカードの星をクリックして保存できます。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">お気に入りを展開</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">お気に入りを折りたたむ</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">保存できるボイスは 300 件までです。追加する前にお気に入りを削除してください。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">現在、お気に入りを変更できません。お気に入りのファイルを確認して再試行してください。</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">お気に入りを保存できませんでした。もう一度お試しください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">いいね</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">いいねを取り消す</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">いいねしたボイスはまだありません。ボイスカードの「いいね」で保存できます。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">いいねしたボイスを展開</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">いいねしたボイスを折りたたむ</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">いいねできるボイスは最大300件です。先に1件のいいねを取り消してください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">いいねしたボイスは現在読み取り専用です。ローカルのリストファイルを確認して再試行してください。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">いいねしたボイスを保存できませんでした。再試行してください。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">音声情報を読み込み中…</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">お気に入りのファイルを読み込めません。既存のお気に入りは保持されます。ファイルを読み込めるようになるまで変更できません。</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">ローカルのいいねリストファイルを読み取れません。既存のいいねは保持され、読み取れるまで変更できません。</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">音声 ID をコピー</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">音声 ID をコピーしました</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">音声 ID をコピーできませんでした。もう一度お試しください。</sys:String>
@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">新着順</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">リセット</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">閉じる</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">作成日時</sys:String>
 </ResourceDictionary>

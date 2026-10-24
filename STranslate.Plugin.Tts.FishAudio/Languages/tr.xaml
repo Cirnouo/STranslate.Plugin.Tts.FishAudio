@@ -105,18 +105,18 @@
 
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Streaming_Failed">Konuşma sentezi başarısız oldu. Sistem ağ bağlantısını ve model hizmetinin durumunu kontrol edin.</sys:String>
 
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Favoriler</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Tab_Favorites">Beğeniler</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Apply">Uygula</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Favorilere ekle</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Favorilerden kaldır</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">Henüz favori ses yok. Kaydetmek için ses kartındaki yıldıza tıklayın.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Favori sesleri genişlet</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Favori sesleri daralt</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">En fazla 300 ses kaydedebilirsiniz. Yeni bir ses eklemeden önce favorilerden birini kaldırın.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Favoriler şu anda salt okunur. Favoriler dosyasını kontrol edip yeniden deneyin.</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Favoriler kaydedilemedi. Yeniden deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Add">Beğen</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorite_Remove">Beğenmekten vazgeç</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Empty">Henüz beğenilen ses yok. Kaydetmek için ses kartında Beğen’e tıklayın.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Expand">Beğenilen sesleri genişlet</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Collapse">Beğenilen sesleri daralt</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_Limit">En fazla 300 ses beğenebilirsiniz. Önce bir sesi beğenmekten vazgeçin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_ReadOnly">Beğenilen sesler şu anda salt okunur. Yerel liste dosyasını kontrol edip tekrar deneyin.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_SaveFailed">Beğenilen sesler kaydedilemedi. Tekrar deneyin.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_LoadingMetadata">Ses bilgileri yükleniyor…</sys:String>
-    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Favoriler dosyası okunamadı. Mevcut favoriler korunur; dosya yeniden okunabilir olana kadar değişiklik yapılamaz.</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Favorites_LoadFailed">Yerel beğenilen sesler dosyası okunamadı. Mevcut beğeniler korunur; dosya okunana kadar değişiklik yapılamaz.</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId">Ses ID&apos;sini kopyala</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Success">Ses ID&apos;si kopyalandı</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_CopyVoiceId_Failed">Ses ID&apos;si kopyalanamadı. Yeniden deneyin.</sys:String>
@@ -132,4 +132,5 @@
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_CreationTime">Önce en yeniler</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Reset">Sıfırla</sys:String>
     <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Search_Close">Kapat</sys:String>
+    <sys:String x:Key="STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt">Oluşturulma tarihi</sys:String>
 </ResourceDictionary>

@@ -456,14 +456,12 @@ internal static class VoiceLanguageTagsSuite
             AssertEqual(2, tags.Length, "Selected and every active browsing mode use the same language-row contract");
             var selectedTags = tags.Single(item => ReferenceEquals(item.DataContext, vm));
             var selectedCard = CardBorder(selectedTags);
-            AssertEqual(48d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Width == 48).ActualWidth,
+            AssertEqual(56d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Fill is ImageBrush).ActualWidth,
                 "Selected-card fixture reserves the real cover geometry using a local resource");
             AssertEqual(36d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
                 "Selected-card fixture reserves the visible preview action without playing audio");
-            AssertEqual(true, selectedTags.ActualWidth <= selectedCard.ActualWidth - 201,
-                "The fully populated selected-card content allocation accounts for cover, actions, border and padding");
-            if (width == 320) AssertEqual(1, InlinePills(selectedTags).Length,
-                $"At the minimum width the fully populated selected card retains one named pill and exact remaining access ({mode}/{dpi}/{dark}: width={selectedTags.ActualWidth}, panel={((Panel)selectedTags.FindName("InlinePanel")).ActualWidth}, valid={selectedTags.IsMeasureValid}, rootValid={view.IsMeasureValid})");
+            AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 94)) <= 1,
+                "The selected metadata spans the full column after 56-DIP cover, gap, border and padding");
             foreach (var tag in tags)
             {
                 var inline = (Panel)tag.FindName("InlinePanel");

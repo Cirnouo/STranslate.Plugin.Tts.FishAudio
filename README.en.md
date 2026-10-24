@@ -25,7 +25,7 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 
 ## Features
 
-- **Voice discovery**: Search by name, browse pages and preview voices, look up a voice ID before applying it, and star voices to keep local favorites.
+- **Voice discovery**: Search by name, browse pages and preview voices, look up a voice ID before applying it, and like voices to save them locally.
 - **Streaming speech**: Send text in segments while receiving and playing audio; long text can start before the whole synthesis finishes.
 - **Audio formats**: PCM is the default; choose MP3 and its bitrate for slower connections.
 - **Synthesis controls**: Adjust model, speed, volume, loudness normalization, expressiveness, diversity and latency mode.
@@ -47,7 +47,7 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 ## Quick start
 
 1. Enter your [Fish Audio API Key](https://fish.audio/app/api-keys) in the plugin settings.
-2. Search and preview voices, then use the tick for **Apply**; you can also query an ID with its magnifier or choose from **Favorites**. The cross clears an applied voice.
+2. Search and preview voices, then use the tick for **Apply**; you can also query an ID with its magnifier or choose from **Likes**. The cross clears an applied voice.
 3. Choose a synthesis model and audio format, adjust parameters as needed, then read text aloud in STranslate.
 
 ## User guide

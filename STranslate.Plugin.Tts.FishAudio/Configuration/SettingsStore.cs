@@ -290,6 +290,7 @@ public static class SettingsStore
                 AuthorName = source.CachedVoice.AuthorName,
                 TaskCount = source.CachedVoice.TaskCount,
                 Languages = source.CachedVoice.Languages,
+                CreatedAt = source.CachedVoice.CreatedAt,
                 SampleAudioUrl = source.CachedVoice.SampleAudioUrl,
             };
         target.IsS21ProFreePromoDismissed = source.IsS21ProFreePromoDismissed;

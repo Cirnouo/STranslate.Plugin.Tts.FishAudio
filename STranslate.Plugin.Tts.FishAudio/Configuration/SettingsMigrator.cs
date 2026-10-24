@@ -35,6 +35,7 @@ internal static class SettingsMigrator
         "TaskCount",
         "SampleAudioUrl",
         "Languages",
+        "CreatedAt",
     ];
 
     internal static Settings Read(JsonElement root)
@@ -227,6 +228,8 @@ internal static class SettingsMigrator
                 || !original.EnumerateArray().All(item => item.ValueKind == JsonValueKind.String)
                 || !original.EnumerateArray().Select(item => item.GetString()).SequenceEqual(cached.Languages);
         }
+        if (ReadCandidate(properties, "CreatedAt", VoiceCreationDate.TryRead, out DateTimeOffset? createdAt, settings) == CandidateState.Valid)
+            cached.CreatedAt = createdAt;
         return cached;
     }
 

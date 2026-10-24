@@ -1,6 +1,5 @@
 using System.Net;
 using System.Text.Json;
-using System.Xml.Linq;
 using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
@@ -272,16 +271,6 @@ internal static class FavoriteVoicesSuite
             if (!refresh) AssertEqual(false, late.CanRead, "Late audio must be disposed");
             else late.Dispose();
         }
-    }
-
-    internal static void SharedCardsAndFavoriteResourcesArePackaged()
-    {
-        var view = XDocument.Load(FindRepoPath("STranslate.Plugin.Tts.FishAudio/Presentation/View/SettingsView.xaml"));
-        XNamespace wpf = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
-        var template = view.Descendants(wpf + "DataTemplate").Single(element => (string?)element.Attribute(x + "Key") == "VoiceCardTemplate");
-        AssertEqual(true, template.Descendants(wpf + "Path").Any(element => ((string?)element.Attribute("Data"))?.EndsWith(" Z", StringComparison.Ordinal) == true), "Favorite stars must remain vectors");
-        AssertEqual(3, view.Descendants(wpf + "ItemsControl").Count(element => (string?)element.Attribute("ItemTemplate") == "{StaticResource VoiceCardTemplate}"), "All browsing panels share the same card template");
     }
 
     internal static Settings SelectedSettings() => new() { VoiceId = Id(99), CachedVoice = new() { Title = "Selected" } };

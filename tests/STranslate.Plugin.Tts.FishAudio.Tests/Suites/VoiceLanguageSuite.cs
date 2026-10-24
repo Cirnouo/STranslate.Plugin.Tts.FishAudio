@@ -16,11 +16,14 @@ internal static class VoiceLanguageSuite
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = """
-            {"total":1,"items":[{"_id":"11111111111111111111111111111111","title":"Voice","languages":[" EN ","zh_CN","en",null,"","xx-Unknown","ja","ko"]}]}
+            {"total":1,"items":[{"_id":"11111111111111111111111111111111","title":"Voice","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":[" EN ","zh_CN","en",null,"","xx-Unknown","ja","ko"]}]}
             """;
         using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
         await view.SearchVoicesCommand.ExecuteAsync(null);
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), view.SearchResults.Single().CreatedAt, "Search maps provider creation date");
         view.SelectVoiceCommand.Execute(view.SearchResults.Single());
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), view.CachedVoiceCreatedAt, "Selected facade applies searched date");
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), settings.CachedVoice!.CreatedAt, "Applying search persists creation date");
         using var saved = JsonDocument.Parse(JsonSerializer.Serialize(settings));
         var cached = saved.RootElement.GetProperty("CachedVoice");
         AssertEqual(true, cached.TryGetProperty("Languages", out var languages), "Applying a searched voice must persist provider language metadata");
@@ -42,24 +45,30 @@ internal static class VoiceLanguageSuite
         var cache = new VoiceMetadataCache();
         var directory = CreateTempDirectory();
         var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"_id":"22222222222222222222222222222222","title":"By ID","languages":["FR","de","tr","ru"]}""";
+        http.GetResponseJson = """{"_id":"22222222222222222222222222222222","title":"By ID","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["FR","de","tr","ru"]}""";
         using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service,
             pluginSettingsDirectoryPath: directory), settings, null, null, voiceMetadataCache: cache);
         view.VoiceIdInput = "22222222222222222222222222222222";
         await view.SubmitVoiceIdCommand.ExecuteAsync(null);
         var card = view.ByIdResults.Single();
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), card.CreatedAt, "By-ID maps creation date");
         AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, card.Languages, "Independent By-ID HTTP result retains every normalized language");
         view.SelectVoiceCommand.Execute(card);
         AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.CachedVoiceLanguages, "Selected facade follows applied card metadata");
         view.ToggleFavoriteCommand.Execute(card);
         view.SwitchToFavoritesCommand.Execute(null);
         AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.FavoriteResults.Single().Languages, "Favorite cache hit retains languages");
-        cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "Refresh", Languages = new[] { "JA" } }));
+        AssertEqual(card.CreatedAt, view.FavoriteResults.Single().CreatedAt, "Favorite cache hit preserves creation date");
+        cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "Refresh", Languages = new[] { "JA" }, CreatedAt = VoiceCreationDateSuite.Date.AddDays(1) }));
+        AssertEqual(VoiceCreationDateSuite.Date.AddDays(1).ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Cache refresh replaces favorite creation date");
         AssertEnumerableEqual(new[] { "ja" }, view.FavoriteResults.Single().Languages, "Cache update replaces favorite languages");
         cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "No languages" }));
         AssertEqual(0, card.Languages.Count, "Authoritative empty metadata clears a By-ID card's former languages");
         AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "Authoritative empty metadata clears favorite languages");
+        AssertEqual<DateTimeOffset?>(null, card.CreatedAt, "Absent authoritative date clears By-ID date");
+        AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Absent authoritative date clears favorite date");
         view.ClearVoiceCommand.Execute(null);
+        AssertEqual<DateTimeOffset?>(null, view.CachedVoiceCreatedAt, "Clearing selected voice clears creation date");
         AssertEqual(0, view.CachedVoiceLanguages.Count, "Explicit selection clearing clears selected language metadata");
         AssertEqual<CachedVoiceInfo?>(null, settings.CachedVoice, "Clearing selection removes the saved snapshot");
 
@@ -68,10 +77,13 @@ internal static class VoiceLanguageSuite
         var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         http.GetAsyncHandler = (_, _, _) => pending.Task;
         view.FavoriteResults.Single().Languages = new[] { "stale" };
+        view.FavoriteResults.Single().CreatedAt = VoiceCreationDateSuite.Date;
         view.SwitchToFavoritesCommand.Execute(null);
         AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "A reused favorite placeholder clears old language tags");
-        pending.SetResult("""{"title":"Fresh favorite","languages":["KO","en"]}""");
+        AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Favorite placeholder reset clears former date");
+        pending.SetResult("""{"title":"Fresh favorite","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["KO","en"]}""");
         await view.PendingFavoriteMetadataTask;
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Favorite detail miss maps creation date");
         AssertEnumerableEqual(new[] { "ko", "en" }, view.FavoriteResults.Single().Languages, "A favorite detail miss maps provider languages");
     }
 
@@ -123,20 +135,32 @@ internal static class VoiceLanguageSuite
         var settings = new Settings { VoiceId = "33333333333333333333333333333333",
             CachedVoice = new() { Title = "Old", Languages = new[] { "en" } } };
         var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"title":"Startup","languages":["ZH_cn","JA"]}""";
+        http.GetResponseJson = """{"title":"Startup","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["ZH_cn","JA"]}""";
         using (var plugin = new Main())
         {
             plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
             await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), settings.CachedVoice!.CreatedAt, "Startup conditional persistence includes creation date");
+            AssertEqual(settings.CachedVoice.CreatedAt, plugin.GetOrCreateSettingsViewModel().CachedVoiceCreatedAt, "Startup selected facade carries creation date");
             AssertEnumerableEqual(new[] { "zh-cn", "ja" }, settings.CachedVoice!.Languages, "Startup refresh persists normalized languages");
             AssertEnumerableEqual(new[] { "zh-cn", "ja" }, plugin.GetOrCreateSettingsViewModel().CachedVoiceLanguages, "Startup selected display exposes refreshed languages");
         }
+        http.GetResponseJson = """{"title":"Startup without a date"}""";
+        using (var plugin = new Main())
+        {
+            plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            AssertEqual<DateTimeOffset?>(null, settings.CachedVoice!.CreatedAt, "Startup absent authoritative date clears stored date");
+            AssertEqual<DateTimeOffset?>(null, plugin.GetOrCreateSettingsViewModel().CachedVoiceCreatedAt, "Startup absent date clears selected facade date");
+        }
         settings = new Settings { VoiceId = "33333333333333333333333333333333",
-            CachedVoice = new() { Title = "Old", Languages = new[] { "en" }, SampleAudioUrl = ExpiredUrl } };
-        http.GetResponseJson = """{"title":"Preview","languages":[],"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
+            CachedVoice = new() { Title = "Old", Languages = new[] { "en" }, CreatedAt = VoiceCreationDateSuite.Date, SampleAudioUrl = ExpiredUrl } };
+        http.GetResponseJson = """{"title":"Preview","created_at":null,"languages":[],"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
         using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings, null, null,
             previewAudioPlayerFactory: () => new TestPreviewAudioPlayer());
         await view.ToggleDisplayPreviewCommand.ExecuteAsync(null);
+        AssertEqual<DateTimeOffset?>(null, settings.CachedVoice!.CreatedAt, "Selected preview null date clears stored date");
+        AssertEqual<DateTimeOffset?>(null, view.CachedVoiceCreatedAt, "Selected preview null date clears visible date");
         AssertEqual(0, settings.CachedVoice!.Languages.Count, "Selected preview authoritative empty languages clear the saved snapshot");
         AssertEqual(0, view.CachedVoiceLanguages.Count, "Selected preview authoritative empty languages clear visible tags");
     }
@@ -144,9 +168,11 @@ internal static class VoiceLanguageSuite
     internal static async Task DirectPreviewRefreshAssignsLanguagesAsync()
     {
         using var network = OverrideNetworkAvailability(true);
-        var card = new VoiceSearchItem { Id = "44444444444444444444444444444444", Title = "Old", Languages = new[] { "en" }, SampleAudioUrl = ExpiredUrl };
+        var card = new VoiceSearchItem { Id = "44444444444444444444444444444444", Title = "Old", Languages = new[] { "en" }, CreatedAt = VoiceCreationDateSuite.Date.AddDays(-1), SampleAudioUrl = ExpiredUrl };
         var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"title":"Refresh","languages":["KO","ja"],"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
+        http.GetResponseJson = """{"title":"Refresh","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["KO","ja"],"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
+        var dateChanged = false;
+        card.PropertyChanged += (_, args) => dateChanged |= args.PropertyName == nameof(card.CreatedAt);
         var changed = false;
         card.PropertyChanged += (_, args) => changed |= args.PropertyName == nameof(card.Languages);
         // No ViewModel cache subscriber: this proves the coordinator's direct assignment path.
@@ -155,12 +181,15 @@ internal static class VoiceLanguageSuite
             _ => false, _ => { }, (_, _, _, _) => "", () => false);
         await coordinator.ToggleSearchItemPreviewAsync(card);
         AssertEnumerableEqual(new[] { "ko", "ja" }, card.Languages, "Direct search preview refresh replaces language metadata without cache event assistance");
+        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), card.CreatedAt, "Preview coordinator direct update includes creation date without subscribers");
+        AssertEqual(true, dateChanged, "Direct creation date refresh notifies bindings");
         AssertEqual(true, changed, "Replacing card languages notifies bindings");
         card.SampleAudioUrl = ExpiredUrl;
         http.GetResponseJson = """{"title":"Empty","languages":null,"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
         coordinator.OnSearchResultsChanged();
         await coordinator.ToggleSearchItemPreviewAsync(card); // Stops the previous playback owner.
         await coordinator.ToggleSearchItemPreviewAsync(card);
+        AssertEqual<DateTimeOffset?>(null, card.CreatedAt, "Direct preview absent date clears former date");
         AssertEqual(0, card.Languages.Count, "Direct preview null language metadata clears former tags");
     }
 

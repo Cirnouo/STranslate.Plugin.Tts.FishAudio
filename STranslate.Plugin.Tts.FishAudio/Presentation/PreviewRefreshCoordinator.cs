@@ -251,6 +251,7 @@ internal sealed class PreviewRefreshCoordinator : IDisposable
         item.AuthorName = model.Author?.Nickname ?? "";
         item.TaskCount = model.TaskCount;
         item.Languages = model.Languages;
+        item.CreatedAt = model.CreatedAt;
         item.SampleAudioUrl = model.Samples.FirstOrDefault()?.Audio;
         item.CoverImage = model.CoverImage;
         var coverImage = item.CoverImage;
