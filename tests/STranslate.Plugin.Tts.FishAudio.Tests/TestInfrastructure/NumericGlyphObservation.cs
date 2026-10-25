@@ -110,7 +110,20 @@ internal static class NumericGlyphObservation
     internal static string Describe(Glyph[] glyphs) => string.Join("; ", glyphs.Select(glyph =>
         FormattableString.Invariant($"char={glyph.CharacterStart}:{string.Join(",", glyph.Text.Select(character => $"U+{(int)character:X4}"))} glyph={glyph.Index} baseline={glyph.Baseline.X:F5},{glyph.Baseline.Y:F5} origin={glyph.Origin.X:F5},{glyph.Origin.Y:F5} em={glyph.EmSize} font={string.Join(",", glyph.Typeface.FamilyNames.Values.Distinct())}/{Path.GetFileName(glyph.Typeface.FontUri.LocalPath)}/{glyph.Typeface.Style}/{glyph.Typeface.Weight}/{glyph.Typeface.Stretch} brush={glyph.Brush} brushOpacity={glyph.Brush.Opacity} drawingOpacity={glyph.DrawingOpacity}")));
 
-    private static IEnumerable<(GlyphRunDrawing Drawing, Matrix Transform, double Opacity)> Runs(Visual owner, Visual root, double opacity = 1)
+    internal static double OutlineBottom(Glyph[] glyphs)
+    {
+        var bounds = Rect.Empty;
+        foreach (var glyph in glyphs)
+        {
+            var transform = glyph.Transform;
+            transform.OffsetX = glyph.Origin.X;
+            transform.OffsetY = glyph.Origin.Y;
+            bounds.Union(new MatrixTransform(transform).TransformBounds(glyph.Typeface.GetGlyphOutline(glyph.Index, glyph.EmSize, glyph.EmSize).Bounds));
+        }
+        return bounds.Bottom;
+    }
+
+    internal static IEnumerable<(GlyphRunDrawing Drawing, Matrix Transform, double Opacity)> Runs(Visual owner, Visual root, double opacity = 1)
     {
         var mapping = owner.TransformToAncestor(root);
         var origin = mapping.Transform(new Point());

@@ -113,6 +113,11 @@ internal static class InlineNumericEditorSuite
                     SettingsLayoutSuite.Layout(view, width);
                     AssertNumericViewport(input, value);
                     AssertCaretAndCenter(input, view, context);
+                    if (unit.Visibility == Visibility.Visible)
+                    {
+                        var textView = VisualDescendants(input).OfType<Visual>().Single(element => element.GetType().Name == "TextBoxView");
+                        NumericBottomSuite.AssertAligned(textView, unit, editor, context + "/live-draft-" + value);
+                    }
                 }
                 var expectedUnit = property switch { "Speed" => "×", "Volume" => "dB", _ => "" };
                 AssertEqual(expectedUnit, unit.Text, $"{context}: units must be separate from the editable numeric draft");

@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace STranslate.Plugin.Tts.FishAudio.View;
 
@@ -28,12 +30,25 @@ public partial class InlineNumericEditor : UserControl
     private readonly NumericWheelAdjustment _wheel = new();
     internal TimeProvider WheelTimeProvider { set => _wheel.TimeProvider = value; }
     private bool _observingDisplayTemplate;
+    private readonly TranslateTransform _unitTranslation = new();
+    private double? _committedNumberBottom;
+    private AlignmentContext? _alignmentContext;
+    private DispatcherOperation? _alignmentOperation;
+    private bool _alignmentAttached;
+    private int _alignmentGeneration;
+    private sealed record TextContext(string Text, FontFamily Family, double Size, FontStyle Style,
+        FontWeight Weight, FontStretch Stretch, string Language, FlowDirection Flow,
+        TextFormattingMode Formatting, double PixelsPerDip, Size Bounds, Point Origin, ControlTemplate? Template = null);
+    private sealed record AlignmentContext(TextContext Number, TextContext Unit, bool Editing);
     private readonly System.ComponentModel.DependencyPropertyDescriptor _displayTemplate =
         System.ComponentModel.DependencyPropertyDescriptor.FromProperty(Control.TemplateProperty, typeof(Button));
 
     public InlineNumericEditor()
     {
         InitializeComponent();
+        UnitText.RenderTransform = _unitTranslation;
+        AttachAlignment();
+        Loaded += (_, _) => AttachAlignment();
         DataObject.AddPastingHandler(EditorBox, EditorBox_Pasting);
         DisplayButton.Loaded += (_, _) => { ObserveDisplayTemplate(); RestartDisplayHover(); };
         DisplayButton.Unloaded += (_, _) =>
@@ -44,7 +59,7 @@ public partial class InlineNumericEditor : UserControl
             _observingDisplayTemplate = false;
         };
         RefreshDisplay();
-        Unloaded += (_, _) => { EndEdit(commit: false); _wheel.EndHover(); };
+        Unloaded += (_, _) => { DetachAlignment(); EndEdit(commit: false); _wheel.EndHover(); };
     }
 
     private static void OnValueChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
@@ -68,6 +83,77 @@ public partial class InlineNumericEditor : UserControl
         UnitText.Visibility = string.IsNullOrEmpty(Unit) ? Visibility.Collapsed : Visibility.Visible;
         AutomationProperties.SetName(DisplayButton, $"{Label} {DisplayButton.Content} {Unit}".Trim());
         AutomationProperties.SetName(EditorBox, Label);
+    }
+
+    private void AttachAlignment()
+    {
+        if (_alignmentAttached) return;
+        _alignmentAttached = true;
+        _alignmentContext = null;
+        LayoutUpdated += AlignmentLayoutUpdated;
+    }
+
+    private void DetachAlignment()
+    {
+        _alignmentAttached = false;
+        LayoutUpdated -= AlignmentLayoutUpdated;
+        _alignmentGeneration++;
+        _alignmentOperation?.Abort();
+        _alignmentOperation = null;
+        _alignmentContext = null;
+    }
+
+    private AlignmentContext CaptureAlignment()
+    {
+        Control number = IsEditing ? EditorBox : DisplayButton;
+        var text = IsEditing ? EditorBox.Text : DisplayButton.Content?.ToString() ?? "";
+        var numeric = new TextContext(text, number.FontFamily, number.FontSize, number.FontStyle,
+            number.FontWeight, number.FontStretch, number.Language.IetfLanguageTag, number.FlowDirection,
+            TextOptions.GetTextFormattingMode(number), VisualTreeHelper.GetDpi(number).PixelsPerDip,
+            number.RenderSize, number.TranslatePoint(new Point(), this), number.Template);
+        var origin = UnitText.TranslatePoint(new Point(), this);
+        origin.Y -= _unitTranslation.Y;
+        var unit = new TextContext(UnitText.Text, UnitText.FontFamily, UnitText.FontSize, UnitText.FontStyle,
+            UnitText.FontWeight, UnitText.FontStretch, UnitText.Language.IetfLanguageTag, UnitText.FlowDirection,
+            TextOptions.GetTextFormattingMode(UnitText), VisualTreeHelper.GetDpi(UnitText).PixelsPerDip,
+            UnitText.RenderSize, origin);
+        return new(numeric, unit, IsEditing);
+    }
+
+    private void AlignmentLayoutUpdated(object? sender, EventArgs args)
+    {
+        if (UnitText.Visibility != Visibility.Visible || _alignmentOperation is not null
+            || !IsAncestorOf(DisplayButton) || !IsAncestorOf(EditorBox) || !IsAncestorOf(UnitText)) return;
+        var context = CaptureAlignment();
+        if (_alignmentContext == context) return;
+        _alignmentContext = context;
+        var generation = _alignmentGeneration;
+        // Loaded priority runs after pending Render work. One bounded callback
+        // per changed context; missing/stale drawings never trigger a retry loop.
+        _alignmentOperation = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            _alignmentOperation = null;
+            if (!_alignmentAttached || generation != _alignmentGeneration) return;
+            var current = CaptureAlignment();
+            _alignmentContext = current;
+            var hasDigits = current.Number.Text.Any(character => character is >= '0' and <= '9');
+            Visual number = IsEditing && hasDigits ? EditorBox : DisplayButton;
+            var text = IsEditing && hasDigits ? current.Number.Text : DisplayButton.Content?.ToString() ?? "";
+            if (!NativeTextOutline.TryBottom(UnitText, this, current.Unit.Text, out var unitBottom)) return;
+            if (!NativeTextOutline.TryBottom(number, this, text, out var numberBottom))
+            {
+                // A collapsed display can lose its drawing after template
+                // replacement. Never mistake a noncommitting draft's shift
+                // for the last validated committed-display bottom. Fresh unit
+                // metrics still apply if its font/context changed meanwhile.
+                if (!IsEditing || hasDigits || _committedNumberBottom is not { } committed) return;
+                numberBottom = committed;
+            }
+            if (current != CaptureAlignment()) return;
+            var shift = _unitTranslation.Y + numberBottom - unitBottom;
+            if (!IsEditing || !hasDigits) _committedNumberBottom = numberBottom;
+            if (Math.Abs(shift - _unitTranslation.Y) > .000001) _unitTranslation.Y = shift;
+        }));
     }
 
     private void DisplayButton_Click(object sender, RoutedEventArgs args)

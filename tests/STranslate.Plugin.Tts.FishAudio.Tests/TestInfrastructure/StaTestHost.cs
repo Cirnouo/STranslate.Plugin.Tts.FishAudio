@@ -2,37 +2,38 @@ using System.Windows.Threading;
 
 internal static class StaTestHost
 {
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(5);
     private static readonly Lazy<Task<Dispatcher>> SharedDispatcher = new(StartDispatcher);
 
     internal static Task RunOnStaThreadAsync(Action action) =>
-        RunOnStaThreadAsync(action, TestTimeout);
+        RunOnStaThreadAsync(action, RegressionExecution.Timeout);
 
     internal static async Task RunOnStaThreadAsync(Action action, TimeSpan executionTimeout)
     {
-        if (executionTimeout <= TimeSpan.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(executionTimeout));
-        }
+        RegressionExecution.ValidateTimeout(executionTimeout);
 
-        var dispatcher = await SharedDispatcher.Value.WaitAsync(TestTimeout);
+        var dispatcher = await RegressionExecution.WaitAsync(SharedDispatcher.Value);
         if (dispatcher.CheckAccess())
         {
             action();
             return;
         }
-        await dispatcher.InvokeAsync(action).Task.WaitAsync(executionTimeout);
+        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(action).Task, executionTimeout);
     }
 
-    internal static async Task RunOnStaThreadAsync(Func<Task> action)
+    internal static Task RunOnStaThreadAsync(Func<Task> action) =>
+        RunOnStaThreadAsync(action, RegressionExecution.Timeout);
+
+    internal static async Task RunOnStaThreadAsync(Func<Task> action, TimeSpan executionTimeout)
     {
-        var dispatcher = await SharedDispatcher.Value.WaitAsync(TestTimeout);
+        RegressionExecution.ValidateTimeout(executionTimeout);
+
+        var dispatcher = await RegressionExecution.WaitAsync(SharedDispatcher.Value);
         if (dispatcher.CheckAccess())
         {
             await action();
             return;
         }
-        await dispatcher.InvokeAsync(action).Task.Unwrap().WaitAsync(TestTimeout);
+        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(action).Task.Unwrap(), executionTimeout);
     }
 
     private static Task<Dispatcher> StartDispatcher()

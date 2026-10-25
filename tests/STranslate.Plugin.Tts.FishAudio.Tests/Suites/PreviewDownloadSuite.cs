@@ -97,7 +97,7 @@ internal static partial class PreviewSuite
             return release.Task; // Deliberately ignore cancellation, then return a late stream.
         };
         var first = scenario.PlayAsync();
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await started.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(scenario.Id, scenario.ViewModel.PreparingPreviewVoiceId, "Pending downloads must show the preparation indicator");
         if (trigger == "second-click") await scenario.PlayAsync();
         else if (trigger == "voice-change") scenario.ViewModel.VoiceId = "22222222222222222222222222222222";
@@ -109,7 +109,7 @@ internal static partial class PreviewSuite
         AssertEqual(false, scenario.Item.IsPreparingPreview, "Stop/switch/removal/dispose must clear search preparation");
         var late = new CountingPreviewStream(3);
         release.SetResult(late);
-        await first.WaitAsync(TimeSpan.FromSeconds(2));
+        await first.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, late.Disposed, "A late resource returned after cancellation must be disposed");
         AssertEqual(0, scenario.Player.PlayCallCount, "A stale download must never start playback");
         AssertEqual(null, scenario.Snackbar.LastError, "User cancellation must remain quiet");
@@ -126,13 +126,13 @@ internal static partial class PreviewSuite
             return Task.FromResult<Stream>(new MemoryStream([1, 2, 3]));
         };
         var first = scenario.PlayAsync();
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await started.Task.WaitAsync(RegressionExecution.Timeout);
         var item = new VoiceSearchItem { Id = "22222222222222222222222222222222", SampleAudioUrl = PreviewScenario.Url };
         scenario.ViewModel.SearchResults = [item];
         await scenario.ViewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
         var late = new CountingPreviewStream(3);
         release.SetResult(late);
-        await first.WaitAsync(TimeSpan.FromSeconds(2));
+        await first.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(item.Id, scenario.ViewModel.PreviewingVoiceId, "Late selected download must not replace the new search preview");
         AssertEqual(1, scenario.Player.PlayCallCount, "Only the current entry may play");
         AssertEqual(true, late.Disposed, "Stale cross-entry response must close");
@@ -166,12 +166,12 @@ internal static partial class PreviewSuite
             (_, buffer) => { plays++; buffer.Dispose(); }, update => update(settings), _ => { }, (_, _, _, _) => "", () => false, clock,
             applyPreparingState: id => preparingVoiceId = id);
         var pending = coordinator.ToggleDisplayPreviewAsync();
-        await body.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await body.Started.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(settings.VoiceId, preparingVoiceId, "The shared refresh/download deadline must keep preparation visible while its body is pending");
         clock.Advance(TimeSpan.FromSeconds(5));
         AssertEqual(false, body.Token.IsCancellationRequested, "The whole budget should still have one second remaining");
         clock.Advance(TimeSpan.FromSeconds(1));
-        await pending.WaitAsync(TimeSpan.FromSeconds(2));
+        await pending.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, body.Token.IsCancellationRequested, "Body reading must stop at the original 15-second deadline");
         AssertEqual(true, body.Disposed, "Timed-out body must close");
         AssertEqual(0, plays, "A timed-out preparation must not start a player");
@@ -250,7 +250,7 @@ internal static partial class PreviewSuite
             ViewModel.SearchResults = [_item];
         }
         internal Task PlayAsync() => (_search ? ViewModel.ToggleSearchItemPreviewCommand.ExecuteAsync(_item)
-            : ViewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null)).WaitAsync(TimeSpan.FromSeconds(2));
+            : ViewModel.ToggleDisplayPreviewCommand.ExecuteAsync(null)).WaitAsync(RegressionExecution.Timeout);
         public void Dispose() => ViewModel.Dispose();
     }
 

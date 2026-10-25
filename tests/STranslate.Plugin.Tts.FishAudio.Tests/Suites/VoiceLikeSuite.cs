@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows;
@@ -22,7 +23,27 @@ internal static class VoiceLikeSuite
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 320d, 640d })
-            await RunOnStaThreadAsync(() => InspectLikeState(locale, dark, width));
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+        {
+            var name = $"{locale}/{(dark ? "dark" : "light")}/{width:0}/{mode}";
+            var elapsed = Stopwatch.StartNew();
+            long enteredAt = -1;
+            try
+            {
+                await RunOnStaThreadAsync(() =>
+                {
+                    Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+                    InspectLikeState(locale, dark, width, mode);
+                });
+            }
+            catch
+            {
+                try { Console.Error.WriteLine($"[voice-like/{name}] failed after {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms."); }
+                catch { /* Diagnostics cannot replace the original action failure. */ }
+                throw;
+            }
+            Console.WriteLine($"[voice-like/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; ordinary shared-STA action.");
+        }
         Console.WriteLine("Like state, seven-locale accessibility, narrow tabs and legacy ID compatibility passed.");
     }
 
@@ -50,7 +71,7 @@ internal static class VoiceLikeSuite
         AssertHeartAspect((System.Windows.Shapes.Path)like.Content);
     });
 
-    private static void InspectLikeState(string locale, bool dark, double width)
+    private static void InspectLikeState(string locale, bool dark, double width, VoiceBrowseMode mode)
     {
         const string id = "0123456789abcdef0123456789abcdef";
         const string other = "1123456789abcdef0123456789abcdef";
@@ -86,60 +107,58 @@ internal static class VoiceLikeSuite
             "ru" => ("Нравится", "Убрать отметку «Нравится»"),
             "tr" => ("Beğen", "Beğenmekten vazgeç"), _ => ("Like", "Unlike"),
         };
-        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+        vm.FavoriteResults = [item]; vm.BrowseMode = mode;
+        SettingsLayoutSuite.Layout(view, width);
+        var browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item) && IsShown(button));
+        var heart = (System.Windows.Shapes.Path)browse.Content;
+        foreach (var button in new[] { selected, browse })
         {
-            vm.FavoriteResults = [item]; vm.BrowseMode = mode;
-            SettingsLayoutSuite.Layout(view, width);
-            var browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item) && IsShown(button));
-            var heart = (System.Windows.Shapes.Path)browse.Content;
-            foreach (var button in new[] { selected, browse })
-            {
-                AssertEqual(32d, button.ActualWidth, "Like keeps its original hit width");
-                AssertEqual(32d, button.ActualHeight, "Like keeps its original hit height");
-                AssertEqual(true, button.Focusable, "Like retains keyboard reachability");
-                AssertEqual(unlike, AutomationProperties.GetName(button), "Persisted likes expose localized Unlike");
-                AssertEqual(AutomationProperties.GetName(button), button.ToolTip, "Tooltip and accessible action agree");
-                var path = (System.Windows.Shapes.Path)button.Content;
-                AssertEqual(true, ReferenceEquals(geometry, path.Data), "All four locations share the same closed heart");
-                AssertEqual(18d, path.Width, "Card heart keeps the vector allocation");
-                AssertEqual(1.5d, path.StrokeThickness, "Card heart keeps its native stroke width");
-                AssertEqual(referenceRed, ((SolidColorBrush)path.Fill).Color, "Liked hearts use the supplied reference red in both themes");
-                AssertEqual(referenceRed, ((SolidColorBrush)path.Stroke).Color, "Filled heart outline uses the same reference red");
-                AssertHeartAspect(path);
-            }
-            var changedAccent = new SolidColorBrush(Color.FromRgb(0x90, 0x50, 0xB0));
-            view.Resources["AccentFillColorDefaultBrush"] = changedAccent;
-            SettingsLayoutSuite.Layout(view, width);
-            AssertEqual(referenceRed, ((SolidColorBrush)selectedHeart.Fill).Color, "A live accent change preserves the selected heart's reference red");
-            AssertEqual(referenceRed, ((SolidColorBrush)heart.Fill).Color, "A live accent change preserves the browse heart's reference red");
-            view.Resources["AccentFillColorDefaultBrush"] = accent;
-            // Avoid metadata requests from mutation refresh while exercising the same real commands.
-            vm.BrowseMode = VoiceBrowseMode.Search;
-            vm.FavoriteResults = [];
-            Click(selected);
-            SettingsLayoutSuite.Layout(view, width);
-            AssertEqual(false, item.IsFavorite, "Unlike updates matching cards independently of selection");
-            AssertEqual(id, settings.VoiceId, "Unlike leaves the applied voice unchanged");
-            AssertEnumerableEqual(new[] { other }, JsonSerializer.Deserialize<string[]>(File.ReadAllText(file))!, "Unlike removes only its own persisted ID");
-            AssertEqual(Colors.Transparent, ((SolidColorBrush)selectedHeart.Fill).Color, "Unlike restores selected outline");
-            AssertEqual(like, AutomationProperties.GetName(selected), "Removed like exposes localized Like");
-            vm.FavoriteResults = [item]; vm.BrowseMode = mode;
-            SettingsLayoutSuite.Layout(view, width);
-            browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item) && IsShown(button));
-            AssertEqual(like, AutomationProperties.GetName(browse), "Unliked browse card offers Like");
-            var outline = (System.Windows.Shapes.Path)browse.Content;
-            AssertEqual(Colors.Transparent, ((SolidColorBrush)outline.Fill).Color, "Unliked browse heart remains outlined");
-            AssertEqual(true, ReferenceEquals(geometry, outline.Data) && ReferenceEquals(geometry, selectedHeart.Data),
-                "Outline and filled card states retain the same refined silhouette");
-            AssertHeartAspect(outline);
-            vm.BrowseMode = VoiceBrowseMode.Search;
-            vm.FavoriteResults = [];
-            Click(browse);
-            SettingsLayoutSuite.Layout(view, width);
-            AssertEqual(true, vm.IsSelectedVoiceFavorite, "Browse Like updates the selected facade");
-            AssertEnumerableEqual(new[] { other, id }, JsonSerializer.Deserialize<string[]>(File.ReadAllText(file))!, "Like appends the same ID without metadata or order changes");
-            AssertEqual(12345L, item.TaskCount, "Like never reinterprets provider popularity");
+            AssertEqual(32d, button.ActualWidth, "Like keeps its original hit width");
+            AssertEqual(32d, button.ActualHeight, "Like keeps its original hit height");
+            AssertEqual(true, button.Focusable, "Like retains keyboard reachability");
+            AssertEqual(unlike, AutomationProperties.GetName(button), "Persisted likes expose localized Unlike");
+            AssertEqual(AutomationProperties.GetName(button), button.ToolTip, "Tooltip and accessible action agree");
+            var path = (System.Windows.Shapes.Path)button.Content;
+            AssertEqual(true, ReferenceEquals(geometry, path.Data), "All four locations share the same closed heart");
+            AssertEqual(18d, path.Width, "Card heart keeps the vector allocation");
+            AssertEqual(1.5d, path.StrokeThickness, "Card heart keeps its native stroke width");
+            AssertEqual(referenceRed, ((SolidColorBrush)path.Fill).Color, "Liked hearts use the supplied reference red in both themes");
+            AssertEqual(referenceRed, ((SolidColorBrush)path.Stroke).Color, "Filled heart outline uses the same reference red");
+            AssertHeartAspect(path);
         }
+        var changedAccent = new SolidColorBrush(Color.FromRgb(0x90, 0x50, 0xB0));
+        view.Resources["AccentFillColorDefaultBrush"] = changedAccent;
+        SettingsLayoutSuite.Layout(view, width);
+        AssertEqual(referenceRed, ((SolidColorBrush)selectedHeart.Fill).Color, "A live accent change preserves the selected heart's reference red");
+        AssertEqual(referenceRed, ((SolidColorBrush)heart.Fill).Color, "A live accent change preserves the browse heart's reference red");
+        view.Resources["AccentFillColorDefaultBrush"] = accent;
+        // Avoid metadata requests from mutation refresh while exercising the same real commands.
+        vm.BrowseMode = VoiceBrowseMode.Search;
+        vm.FavoriteResults = [];
+        Click(selected);
+        SettingsLayoutSuite.Layout(view, width);
+        AssertEqual(false, item.IsFavorite, "Unlike updates matching cards independently of selection");
+        AssertEqual(id, settings.VoiceId, "Unlike leaves the applied voice unchanged");
+        AssertEnumerableEqual(new[] { other }, JsonSerializer.Deserialize<string[]>(File.ReadAllText(file))!, "Unlike removes only its own persisted ID");
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)selectedHeart.Fill).Color, "Unlike restores selected outline");
+        AssertEqual(like, AutomationProperties.GetName(selected), "Removed like exposes localized Like");
+        vm.FavoriteResults = [item]; vm.BrowseMode = mode;
+        SettingsLayoutSuite.Layout(view, width);
+        browse = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.ToggleFavoriteCommand) && ReferenceEquals(button.CommandParameter, item) && IsShown(button));
+        AssertEqual(like, AutomationProperties.GetName(browse), "Unliked browse card offers Like");
+        var outline = (System.Windows.Shapes.Path)browse.Content;
+        AssertEqual(Colors.Transparent, ((SolidColorBrush)outline.Fill).Color, "Unliked browse heart remains outlined");
+        AssertEqual(true, ReferenceEquals(geometry, outline.Data) && ReferenceEquals(geometry, selectedHeart.Data),
+            "Outline and filled card states retain the same refined silhouette");
+        AssertHeartAspect(outline);
+        vm.BrowseMode = VoiceBrowseMode.Search;
+        vm.FavoriteResults = [];
+        Click(browse);
+        SettingsLayoutSuite.Layout(view, width);
+        AssertEqual(true, vm.IsSelectedVoiceFavorite, "Browse Like updates the selected facade");
+        AssertEnumerableEqual(new[] { other, id }, JsonSerializer.Deserialize<string[]>(File.ReadAllText(file))!, "Like appends the same ID without metadata or order changes");
+        AssertEqual(12345L, item.TaskCount, "Like never reinterprets provider popularity");
+        if (mode != VoiceBrowseMode.Favorites) return;
         using var reloaded = new FavoriteVoiceStore(directory);
         AssertEnumerableEqual(new[] { other, id }, reloaded.Read(), "The unchanged ID-only format survives reopening");
         vm.BrowseMode = VoiceBrowseMode.Favorites;

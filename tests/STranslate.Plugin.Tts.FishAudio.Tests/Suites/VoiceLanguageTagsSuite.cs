@@ -35,7 +35,7 @@ internal static class VoiceLanguageTagsSuite
             SettingsLayoutSuite.Layout(view, 480);
             AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
                 "Selected compiled card must render its language metadata in the reusable control");
-        }, TimeSpan.FromSeconds(15));
+        }, RegressionExecution.Timeout);
         await RunOnStaThreadAsync(LabelsUseExplicitCultureAndTrustedFlags);
         await RunOnStaThreadAsync(PartitionAndDictionaryReplacement);
         await RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow);
@@ -46,56 +46,55 @@ internal static class VoiceLanguageTagsSuite
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
         foreach (var width in new[] { 320d, 400, 480, 640 })
-            await RunOnStaThreadAsync(() => RenderCompiledCards(width, dpi, dark, proofDirectory));
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            await RunOnStaThreadAsync(() => RenderCompiledCards(width, dpi, dark, mode, proofDirectory));
     }
 
     internal static async Task RunLifetimeAsync()
     {
-        await RunOnStaThreadAsync(PopupInitializationFailureRetiresOwnership);
+        foreach (var (failAfterSource, failInChrome) in new[] { (true, false), (true, true), (false, false) })
+            await RunOnStaThreadAsync(() => PopupInitializationFailureRetiresOwnership(failAfterSource, failInChrome));
         await RunOnStaThreadAsync(PopupOwnsInputAndLifetime);
         await RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup);
     }
 
-    private static void PopupInitializationFailureRetiresOwnership()
+    private static void PopupInitializationFailureRetiresOwnership(bool failAfterSource, bool failInChrome)
     {
-        foreach (var (failAfterSource, failInChrome) in new[] { (true, false), (true, true), (false, false) })
+        var original = new InvalidOperationException("Injected popup material initialization failure");
+        var cleanup = new IOException("Injected native material cleanup failure");
+        var tags = new VoiceLanguageTags(new FailingPopupBackdropApi(original, cleanup, failAfterSource, failInChrome)) { Languages = Codes };
+        var scroll = new ScrollViewer { Content = tags, Height = 220 };
+        AddResources(scroll, "en");
+        using var source = new HwndSource(new HwndSourceParameters("Fish Audio popup initialization failure fixture")
+        { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
+        source.RootVisual = scroll;
+        SettingsLayoutSuite.Layout(scroll, 400);
+        Exception? caught = null;
+        try { tags.OpenPopup(); }
+        catch (Exception error) { caught = error; }
+        try
         {
-            var original = new InvalidOperationException("Injected popup material initialization failure");
-            var cleanup = new IOException("Injected native material cleanup failure");
-            var tags = new VoiceLanguageTags(new FailingPopupBackdropApi(original, cleanup, failAfterSource, failInChrome)) { Languages = Codes };
-            var scroll = new ScrollViewer { Content = tags, Height = 220 };
-            AddResources(scroll, "en");
-            using var source = new HwndSource(new HwndSourceParameters("Fish Audio popup initialization failure fixture")
-            { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
-            source.RootVisual = scroll;
-            SettingsLayoutSuite.Layout(scroll, 400);
-            Exception? caught = null;
-            try { tags.OpenPopup(); }
-            catch (Exception error) { caught = error; }
-            try
+            if (failAfterSource)
             {
-                if (failAfterSource)
-                {
-                    AssertEqual<Exception?>(null, caught, "Optional native application failure uses opaque fallback without escaping HWND creation");
-                    AssertEqual(true, tags.IsPopupOpen, "A material failure preserves the usable native popup");
-                    AssertEqual(true, ReferenceEquals(original, tags.Material.Failure), "The first native failure retains its identity and HRESULT");
-                    AssertEqual(true, ReferenceEquals(cleanup, tags.Material.CleanupFailure), "Cleanup failure is retained separately from the primary failure");
-                    AssertEqual(false, tags.Material.AttributeAccepted, "A failed application never claims accepted material");
-                    AssertEqual(true, ((Border)tags.FindName("PopupSurface")).Background is SolidColorBrush { Color.A: 255 }, "Failed native application has explicit opaque flyout chrome");
-                    tags.ClosePopup();
-                }
-                else AssertEqual(true, ReferenceEquals(original, caught), "The original pre-HWND initialization failure is preserved");
-                AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
-                    "A failed material Begin must retire input/overlay subscriptions before returning the error");
-                AssertEqual(false, tags.IsPopupOpen, "A failed initialization cannot leave a native popup open");
-                AssertEqual(IntPtr.Zero, tags.Material.Handle, "A failed initialization owns no stale popup source");
-                AssertEqual<object?>(null, typeof(VoiceLanguageTags).GetField("_owner", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags), "Retirement releases the per-view overlay owner before native cleanup");
-                var key = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent, Source = scroll };
-                InputManager.Current.ProcessInput(key);
-                AssertEqual(false, key.Handled, "No retired popup input handler consumes Escape after initialization failure/close");
+                AssertEqual<Exception?>(null, caught, "Optional native application failure uses opaque fallback without escaping HWND creation");
+                AssertEqual(true, tags.IsPopupOpen, "A material failure preserves the usable native popup");
+                AssertEqual(true, ReferenceEquals(original, tags.Material.Failure), "The first native failure retains its identity and HRESULT");
+                AssertEqual(true, ReferenceEquals(cleanup, tags.Material.CleanupFailure), "Cleanup failure is retained separately from the primary failure");
+                AssertEqual(false, tags.Material.AttributeAccepted, "A failed application never claims accepted material");
+                AssertEqual(true, ((Border)tags.FindName("PopupSurface")).Background is SolidColorBrush { Color.A: 255 }, "Failed native application has explicit opaque flyout chrome");
+                tags.ClosePopup();
             }
-            finally { try { tags.ClosePopup(); } catch { /* The assertions retain the primary failure. */ } }
+            else AssertEqual(true, ReferenceEquals(original, caught), "The original pre-HWND initialization failure is preserved");
+            AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
+                "A failed material Begin must retire input/overlay subscriptions before returning the error");
+            AssertEqual(false, tags.IsPopupOpen, "A failed initialization cannot leave a native popup open");
+            AssertEqual(IntPtr.Zero, tags.Material.Handle, "A failed initialization owns no stale popup source");
+            AssertEqual<object?>(null, typeof(VoiceLanguageTags).GetField("_owner", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags), "Retirement releases the per-view overlay owner before native cleanup");
+            var key = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent, Source = scroll };
+            InputManager.Current.ProcessInput(key);
+            AssertEqual(false, key.Handled, "No retired popup input handler consumes Escape after initialization failure/close");
         }
+        finally { try { tags.ClosePopup(); } catch { /* The assertions retain the primary failure. */ } }
     }
 
     private sealed class FailingPopupBackdropApi(Exception failure, Exception cleanupFailure, bool failAfterSource, bool failInChrome) : IPopupBackdropApi
@@ -110,7 +109,8 @@ internal static class VoiceLanguageTagsSuite
     {
         SearchAdjustmentControlSuite.WriteProofAssembly(directory);
         foreach (var dark in new[] { false, true })
-            await RunOnStaThreadAsync(() => RenderCompiledCards(320, 1.25, dark, directory));
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            await RunOnStaThreadAsync(() => RenderCompiledCards(320, 1.25, dark, mode, directory));
     }
 
     private static void LabelsUseExplicitCultureAndTrustedFlags()
@@ -424,7 +424,7 @@ internal static class VoiceLanguageTagsSuite
     private static ContentControl[] InlinePills(VoiceLanguageTags tags) => ((Panel)tags.FindName("InlinePanel")).Children
         .OfType<ContentControl>().Where(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible).ToArray();
 
-    private static void RenderCompiledCards(double width, double dpi, bool dark, string? proofDirectory)
+    private static void RenderCompiledCards(double width, double dpi, bool dark, VoiceBrowseMode mode, string? proofDirectory)
     {
         var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Nora · Warm and Gentle Audiobook Narration Voice", Description = "Soft and clear, for audiobooks and everyday conversation.", AuthorName = "Nora Studio", Languages = Codes, SampleAudioUrl = "https://example.invalid/sample.mp3" } };
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -448,86 +448,86 @@ internal static class VoiceLanguageTagsSuite
         // an automatic infinite-width layout during the dispatcher drain.
         source.RootVisual = view;
         typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
-        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+        vm.BrowseMode = mode;
+        SettingsLayoutSuite.Layout(view, width);
+        var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
+        AssertEqual(2, tags.Length, "Selected and every active browsing mode use the same language-row contract");
+        var selectedTags = tags.Single(item => ReferenceEquals(item.DataContext, vm));
+        var selectedCard = CardBorder(selectedTags);
+        AssertEqual(56d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Fill is ImageBrush).ActualWidth,
+            "Selected-card fixture reserves the real cover geometry using a local resource");
+        AssertEqual(56d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
+            "Selected-card fixture reserves the visible preview action without playing audio");
+        AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 94)) <= 1,
+            "The selected metadata spans the full column after 56-DIP cover, gap, border and padding");
+        foreach (var tag in tags)
         {
-            vm.BrowseMode = mode;
-            SettingsLayoutSuite.Layout(view, width);
-            var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
-            AssertEqual(2, tags.Length, "Selected and every active browsing mode use the same language-row contract");
-            var selectedTags = tags.Single(item => ReferenceEquals(item.DataContext, vm));
-            var selectedCard = CardBorder(selectedTags);
-            AssertEqual(56d, Visuals(selectedCard).OfType<System.Windows.Shapes.Ellipse>().Single(item => item.Fill is ImageBrush).ActualWidth,
-                "Selected-card fixture reserves the real cover geometry using a local resource");
-            AssertEqual(56d, Visuals(selectedCard).OfType<Button>().Single(item => ReferenceEquals(item.Command, vm.ToggleDisplayPreviewCommand)).ActualWidth,
-                "Selected-card fixture reserves the visible preview action without playing audio");
-            AssertEqual(true, Math.Abs(selectedTags.ActualWidth - (selectedCard.ActualWidth - 94)) <= 1,
-                "The selected metadata spans the full column after 56-DIP cover, gap, border and padding");
-            foreach (var tag in tags)
+            var inline = (Panel)tag.FindName("InlinePanel");
+            AssertEqual(true, double.IsFinite(tag.ActualWidth) && tag.ActualWidth > 0, "Content column has a finite positive width");
+            foreach (FrameworkElement child in inline.Children)
             {
-                var inline = (Panel)tag.FindName("InlinePanel");
-                AssertEqual(true, double.IsFinite(tag.ActualWidth) && tag.ActualWidth > 0, "Content column has a finite positive width");
-                foreach (FrameworkElement child in inline.Children)
-                {
-                    if (child.Visibility != Visibility.Visible) continue;
-                    var point = child.TranslatePoint(new Point(), inline);
-                    AssertEqual(true, point.X >= -.1 && point.X + child.ActualWidth <= inline.ActualWidth + .1, "Every flag pill and +N stays within the content column");
-                }
-                var visiblePills = inline.Children.OfType<ContentControl>().Where(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible).ToArray();
-                if (visiblePills.Length > 1)
-                    foreach (var pill in visiblePills)
-                    {
-                        var label = Visuals(pill).OfType<TextBlock>().Single();
-                        var full = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize };
-                        typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [full, VisualTreeHelper.GetDpi(label)]);
-                        full.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                        AssertEqual(true, label.ActualWidth + .01 >= full.DesiredSize.Width,
-                            $"Every multi-pill prefix retains full localized names ({width}/{dpi}: {label.Text}, viewport={label.ActualWidth}, full={full.DesiredSize.Width}, pill={pill.Width})");
-                        AssertEqual(false, HasEllipsis(VisualTreeHelper.GetDrawing(label)),
-                            $"A fitting multi-pill label must not draw an ellipsis ({width}/{dpi}: {label.Text}, viewport={label.ActualWidth}, full={full.DesiredSize.Width}, pill={pill.Width})");
-                    }
+                if (child.Visibility != Visibility.Visible) continue;
+                var point = child.TranslatePoint(new Point(), inline);
+                AssertEqual(true, point.X >= -.1 && point.X + child.ActualWidth <= inline.ActualWidth + .1, "Every flag pill and +N stays within the content column");
             }
-            var commands = Visuals(view).OfType<Button>().Where(button => IsPresented(button) && ReferenceEquals(button.Command, vm.SelectVoiceCommand)).ToArray();
-            AssertEqual(1, commands.Length, "Language pills preserve the existing selection action");
-            AssertEqual(32d, commands[0].ActualWidth, "Selection geometry remains unchanged");
-            if (proofDirectory is not null && mode == VoiceBrowseMode.ById)
-            {
-                Save(view, Path.Combine(proofDirectory, $"cards-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
-                for (var index = 0; index < tags.Length; index++)
+            var visiblePills = inline.Children.OfType<ContentControl>().Where(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible).ToArray();
+            if (visiblePills.Length > 1)
+                foreach (var pill in visiblePills)
                 {
-                    var outer = CardBorder(tags[index]);
-                    Save(outer, Path.Combine(proofDirectory, $"card-{index}-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
+                    var label = Visuals(pill).OfType<TextBlock>().Single();
+                    var full = new TextBlock { Text = label.Text, FontFamily = label.FontFamily, FontSize = label.FontSize };
+                    typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [full, VisualTreeHelper.GetDpi(label)]);
+                    full.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                    AssertEqual(true, label.ActualWidth + .01 >= full.DesiredSize.Width,
+                        $"Every multi-pill prefix retains full localized names ({width}/{dpi}: {label.Text}, viewport={label.ActualWidth}, full={full.DesiredSize.Width}, pill={pill.Width})");
+                    AssertEqual(false, HasEllipsis(VisualTreeHelper.GetDrawing(label)),
+                        $"A fitting multi-pill label must not draw an ellipsis ({width}/{dpi}: {label.Text}, viewport={label.ActualWidth}, full={full.DesiredSize.Width}, pill={pill.Width})");
                 }
+        }
+        var commands = Visuals(view).OfType<Button>().Where(button => IsPresented(button) && ReferenceEquals(button.Command, vm.SelectVoiceCommand)).ToArray();
+        AssertEqual(1, commands.Length, "Language pills preserve the existing selection action");
+        AssertEqual(32d, commands[0].ActualWidth, "Selection geometry remains unchanged");
+        if (proofDirectory is not null && mode == VoiceBrowseMode.ById)
+        {
+            Save(view, Path.Combine(proofDirectory, $"cards-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
+            for (var index = 0; index < tags.Length; index++)
+            {
+                var outer = CardBorder(tags[index]);
+                Save(outer, Path.Combine(proofDirectory, $"card-{index}-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
             }
         }
-        vm.BrowseMode = VoiceBrowseMode.ById;
-        SettingsLayoutSuite.Layout(view, width);
-        var nativeTags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
-        nativeTags[0].OpenPopup();
-        AssertEqual(true, nativeTags[0].IsPopupOpen, "Selected card trigger opens its native Popup");
-        nativeTags[1].OpenPopup();
-        AssertEqual(false, nativeTags[0].IsPopupOpen, "Only one overlay is owned by a settings view");
-        AssertEqual(true, nativeTags[1].IsPopupOpen, "The second card transfers overlay ownership");
-        var nativeSurface = (Border)nativeTags[1].FindName("PopupSurface");
-        Drain(); nativeSurface.UpdateLayout();
-        AssertEqual(290d, nativeSurface.ActualWidth, "The native popup retains its approved 290 DIP body");
-        var nativePopupSource = (HwndSource)PresentationSource.FromVisual(nativeSurface);
-        var material = nativeTags[1].Material;
-        Console.WriteLine($"[popup-material/languages] hwnd=0x{nativePopupSource.Handle:X}; owner=0x{source.Handle:X}; layered={nativePopupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; ownerRequestedDpi={dpi:0.##}; popupActualDpi={VisualTreeHelper.GetDpi(nativeSurface).DpiScaleX:0.##}; visibleBlur=UNVERIFIED");
-        var nativeViewer = (ScrollViewer)nativeTags[1].FindName("PopupScroll");
-        if (nativeViewer.ScrollableHeight > 0)
-            SearchAdjustmentControlSuite.AssertScrollbarExclusion(nativeViewer,
-                ((Panel)nativeTags[1].FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "compiled remaining suffix");
-        if (proofDirectory is not null)
-            Save(nativeSurface, Path.Combine(proofDirectory, $"popup-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
-        var origin = nativeSurface.PointToScreen(new Point());
-        var ownerOrigin = view.PointToScreen(new Point());
-        var right = nativeSurface.PointToScreen(new Point(nativeSurface.ActualWidth, 0)).X;
-        var ownerRight = view.PointToScreen(new Point(view.ActualWidth, 0)).X;
-        AssertEqual(true, origin.X >= ownerOrigin.X + 7 && right <= ownerRight - 7,
-            $"Custom native placement contains the Popup horizontally inside the settings viewport ({width}/{dpi}: popup {origin.X}..{right}, view {ownerOrigin.X}..{ownerRight})");
-        nativeTags[1].ClosePopup();
-        var chosen = vm.CachedVoiceId;
-        AssertEqual(AppliedKey, chosen, "Language overlay actions never apply or clear a voice");
+        if (mode == VoiceBrowseMode.ById)
+        {
+            vm.BrowseMode = VoiceBrowseMode.ById;
+            SettingsLayoutSuite.Layout(view, width);
+            var nativeTags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
+            nativeTags[0].OpenPopup();
+            AssertEqual(true, nativeTags[0].IsPopupOpen, "Selected card trigger opens its native Popup");
+            nativeTags[1].OpenPopup();
+            AssertEqual(false, nativeTags[0].IsPopupOpen, "Only one overlay is owned by a settings view");
+            AssertEqual(true, nativeTags[1].IsPopupOpen, "The second card transfers overlay ownership");
+            var nativeSurface = (Border)nativeTags[1].FindName("PopupSurface");
+            Drain(); nativeSurface.UpdateLayout();
+            AssertEqual(290d, nativeSurface.ActualWidth, "The native popup retains its approved 290 DIP body");
+            var nativePopupSource = (HwndSource)PresentationSource.FromVisual(nativeSurface);
+            var material = nativeTags[1].Material;
+            Console.WriteLine($"[popup-material/languages] hwnd=0x{nativePopupSource.Handle:X}; owner=0x{source.Handle:X}; layered={nativePopupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; ownerRequestedDpi={dpi:0.##}; popupActualDpi={VisualTreeHelper.GetDpi(nativeSurface).DpiScaleX:0.##}; visibleBlur=UNVERIFIED");
+            var nativeViewer = (ScrollViewer)nativeTags[1].FindName("PopupScroll");
+            if (nativeViewer.ScrollableHeight > 0)
+                SearchAdjustmentControlSuite.AssertScrollbarExclusion(nativeViewer,
+                    ((Panel)nativeTags[1].FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "compiled remaining suffix");
+            if (proofDirectory is not null)
+                Save(nativeSurface, Path.Combine(proofDirectory, $"popup-{width:0}-{dpi * 100:0}-{(dark ? "dark" : "light")}.png"), dpi);
+            var origin = nativeSurface.PointToScreen(new Point());
+            var ownerOrigin = view.PointToScreen(new Point());
+            var right = nativeSurface.PointToScreen(new Point(nativeSurface.ActualWidth, 0)).X;
+            var ownerRight = view.PointToScreen(new Point(view.ActualWidth, 0)).X;
+            AssertEqual(true, origin.X >= ownerOrigin.X + 7 && right <= ownerRight - 7,
+                $"Custom native placement contains the Popup horizontally inside the settings viewport ({width}/{dpi}: popup {origin.X}..{right}, view {ownerOrigin.X}..{ownerRight})");
+            nativeTags[1].ClosePopup();
+            var chosen = vm.CachedVoiceId;
+            AssertEqual(AppliedKey, chosen, "Language overlay actions never apply or clear a voice");
+        }
     }
 
     private static void AddResources(FrameworkElement root, string locale)

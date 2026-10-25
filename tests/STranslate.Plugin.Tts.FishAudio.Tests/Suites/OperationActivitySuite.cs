@@ -78,17 +78,17 @@ internal static class OperationActivitySuite
             foreach (var worker in workers)
                 worker.Start();
 
-            workersStartedInsideCallback = workersReady.Wait(TimeSpan.FromSeconds(2));
+            workersStartedInsideCallback = workersReady.Wait(RegressionExecution.Timeout);
             workersCompletedInsideCallback = workersStartedInsideCallback
-                && workersCompleted.Wait(TimeSpan.FromSeconds(1));
+                && workersCompleted.Wait(RegressionExecution.Timeout);
         });
 
         counter.Begin();
         counter.End();
 
-        AssertEqual(true, workersCompleted.Wait(TimeSpan.FromSeconds(2)), "Cross-thread operations should finish after the setter callback returns");
+        AssertEqual(true, workersCompleted.Wait(RegressionExecution.Timeout), "Cross-thread operations should finish after the setter callback returns");
         foreach (var worker in workers!)
-            worker.Join();
+            AssertEqual(true, worker.Join(RegressionExecution.Timeout), "Each completed worker must exit within the regression cleanup guard");
 
         AssertEqual(true, workersStartedInsideCallback, "Both worker operations should start while the setter callback is active");
         AssertEqual(true, workersCompletedInsideCallback, "The setter callback should not hold the operation gate while waiting for worker operations");
@@ -150,7 +150,7 @@ internal static class OperationActivitySuite
                 IsBackground = true,
             };
             reentrantWorker.Start();
-            if (!reentrantWorkerCompleted.Wait(TimeSpan.FromSeconds(2)))
+            if (!reentrantWorkerCompleted.Wait(RegressionExecution.Timeout))
                 throw new TimeoutException("The reentrant Begin did not complete inside the setter callback.");
 
             throwOnRecoveryPublication = true;
@@ -168,7 +168,8 @@ internal static class OperationActivitySuite
             caughtException = ex;
         }
 
-        reentrantWorker?.Join();
+        if (reentrantWorker is not null)
+            AssertEqual(true, reentrantWorker.Join(RegressionExecution.Timeout), "The reentrant worker must exit within the regression cleanup guard");
         AssertEqual(typeof(AggregateException), caughtException?.GetType(), "A failed recovery publication should report both publication exceptions");
         var aggregateException = (AggregateException)caughtException!;
         AssertEqual(2, aggregateException.InnerExceptions.Count, "Recovery failure should retain both observable publication exceptions");
@@ -223,7 +224,7 @@ internal static class OperationActivitySuite
                 IsBackground = true,
             };
             reentrantWorker.Start();
-            reentrantWorkerCompletedInsideCallback = reentrantWorkerCompleted.Wait(TimeSpan.FromSeconds(2));
+            reentrantWorkerCompletedInsideCallback = reentrantWorkerCompleted.Wait(RegressionExecution.Timeout);
             throw expectedException;
         });
 
@@ -238,7 +239,8 @@ internal static class OperationActivitySuite
             caughtException = ex;
         }
 
-        reentrantWorker?.Join();
+        if (reentrantWorker is not null)
+            AssertEqual(true, reentrantWorker.Join(RegressionExecution.Timeout), "The reentrant worker must exit within the regression cleanup guard");
         AssertEqual(true, reentrantWorkerCompletedInsideCallback, "The reentrant Begin should complete before the failing setter callback returns");
         AssertEqual(expectedException, caughtException, "End should propagate the original observable publication exception");
         AssertEqual(2, activePublicationCount, "The pending active state should be published before the original exception is rethrown");
@@ -280,18 +282,18 @@ internal static class OperationActivitySuite
         var plugin = new Main();
 
         plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await startupCreditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await startupCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         viewModel.BeginApiKeyOperation();
 
         releaseStartupCredit.SetResult("{\"credit\":\"45.67\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit overlap to complete");
 
         AssertEqual(true, viewModel.IsApiKeyInputLocked, "Startup completion should not unlock the overlapping TTS operation");
 
         var manualRefreshTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
-        await manualCreditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await manualCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, viewModel.IsLoadingCredit, "Manual refresh should become the active credit operation");
         AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual refresh should keep the API Key locked while TTS is active");
 
@@ -309,7 +311,7 @@ internal static class OperationActivitySuite
         };
 
         releaseManualCredit.SetResult("{\"credit\":\"56.78\"}");
-        await manualRefreshTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await manualRefreshTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(true, reentrantTtsStarted, "Manual completion should deterministically start the final reentrant TTS operation");
         AssertEqual(false, viewModel.IsLoadingCredit, "Manual completion should clear credit loading after startup has completed");
@@ -362,7 +364,7 @@ internal static class OperationActivitySuite
             }
         };
 
-        await Task.Run(viewModel.EndApiKeyOperation).WaitAsync(TimeSpan.FromSeconds(2));
+        await Task.Run(viewModel.EndApiKeyOperation).WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(true, injectedNewOperation, "The test should inject Begin after the old End changes the observable lock state");
         AssertEqual(true, viewModel.IsApiKeyInputLocked, "PropertyChanged reentrancy should restore the active API Key lock without deadlocking");

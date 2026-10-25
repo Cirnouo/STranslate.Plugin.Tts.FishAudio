@@ -9,7 +9,8 @@ using STranslate.Plugin.Tts.FishAudio.View;
 using static TestAssertions;
 
 // Independent native mixed-run line: no production line-metric converter,
-// guessed suffix offset, phase search or relaxed baseline allowance.
+// guessed suffix offset or phase search. The baseline-native reference remains
+// historical characterization; only its suffix is independently contour-aligned.
 internal sealed class NumericPhraseReference
 {
     private readonly TextBlock _line;
@@ -68,7 +69,8 @@ internal sealed class NumericPhraseReference
         NumericGlyphObservation.Compare(actualNumbers, nativeNumbers, new Vector(), context + "/number");
         var actualOrigin = actualUnits[0].Baseline;
         var nativeOrigin = nativeUnits[0].Baseline;
-        NumericGlyphObservation.Compare(actualUnits, nativeUnits, new Vector(actualOrigin.X - nativeOrigin.X, 0), context + "/unit");
+        var suffixShift = NumericGlyphObservation.OutlineBottom(nativeNumbers) - NumericGlyphObservation.OutlineBottom(nativeUnits);
+        NumericGlyphObservation.Compare(actualUnits, nativeUnits, new Vector(actualOrigin.X - nativeOrigin.X, suffixShift), context + "/unit");
         var numberEnd = actualNumbers.Max(glyph => glyph.Baseline.X + glyph.Advance.X);
         var nativeNumberEnd = nativeNumbers.Max(glyph => glyph.Baseline.X + glyph.Advance.X);
         Near(actualNumbers[0].Baseline.X, nativeNumbers[0].Baseline.X, context + ": numeric origin and physical horizontal phase must match");
@@ -82,12 +84,14 @@ internal sealed class NumericPhraseReference
         AssertEqual(true, compactGap > 0 && compactGap <= literalSpace + .01,
             $"{context}: compact gap must fit within one native ordinary space; gap={compactGap:F5}, space={literalSpace:F5}");
         Near(actualNumbers[0].Baseline.Y, nativeNumbers[0].Baseline.Y, context + ": native prefix baseline");
-        Near(actualOrigin.Y, nativeOrigin.Y, context + ": native suffix baseline");
-        AssertEqual(false, MatchesSuffix(actualOrigin, nativeOrigin + new Vector(0, 3 / _dpi), compactGap, literalSpace),
+        Near(nativeNumbers[0].Baseline.Y, nativeOrigin.Y, context + ": historical baseline-native reference characterization");
+        var alignedOrigin = nativeOrigin + new Vector(0, suffixShift);
+        Near(actualOrigin.Y, alignedOrigin.Y, context + ": independently contour-aligned native suffix");
+        AssertEqual(false, MatchesSuffix(actualOrigin, alignedOrigin + new Vector(0, 3 / _dpi), compactGap, literalSpace),
             $"{context}: fixed +3-physical-pixel native reference suffix displacement must fail the native comparison");
-        AssertEqual(false, MatchesSuffix(actualOrigin + new Vector(3 / _dpi, 0), nativeOrigin, compactGap + 3 / _dpi, literalSpace),
+        AssertEqual(false, MatchesSuffix(actualOrigin + new Vector(3 / _dpi, 0), alignedOrigin, compactGap + 3 / _dpi, literalSpace),
             $"{context}: fixed +3-physical-pixel horizontal suffix displacement must fail the native comparison");
-        AssertEqual(true, MatchesSuffix(actualOrigin, nativeOrigin, compactGap, literalSpace), context + ": actual suffix must satisfy the native phrase comparison");
+        AssertEqual(true, MatchesSuffix(actualOrigin, alignedOrigin, compactGap, literalSpace), context + ": actual suffix must satisfy the independently aligned native phrase comparison");
         Console.WriteLine($"PHRASE {context} dpi={_dpi} number={_number.Text} unit={_unit.Text} compactAdvanceGap={compactGap:F5} literalSpace={literalSpace:F5} baselineActual={actualOrigin.Y:F5} baselineNative={nativeOrigin.Y:F5} suffixXActual={actualOrigin.X:F5} suffixXNative={nativeOrigin.X:F5} runs={Runs(_line, _root).Count()} formatting={TextOptions.GetTextFormattingMode(_line)} rounding={_line.UseLayoutRounding}");
     }
 
@@ -102,7 +106,8 @@ internal sealed class NumericPhraseReference
         NumericGlyphObservation.Compare(actual, nativeNumbers, new Vector(actual[0].Baseline.X - nativeNumbers[0].Baseline.X, 0), context + "/editing-number");
         var units = NumericGlyphObservation.Read(_unit, _editor);
         NumericGlyphObservation.AssertText(units, _unit.Text, context + "/editing-unit");
-        NumericGlyphObservation.Compare(units, nativeUnits, new Vector(units[0].Baseline.X - nativeUnits[0].Baseline.X, 0), context + "/editing-unit");
+        var suffixShift = NumericGlyphObservation.OutlineBottom(nativeNumbers) - NumericGlyphObservation.OutlineBottom(nativeUnits);
+        NumericGlyphObservation.Compare(units, nativeUnits, new Vector(units[0].Baseline.X - nativeUnits[0].Baseline.X, suffixShift), context + "/editing-unit");
     }
 
     private (NumericGlyphObservation.Glyph[] Numbers, NumericGlyphObservation.Glyph[] Units) NativeGlyphs(string context)
@@ -130,7 +135,7 @@ internal sealed class NumericPhraseReference
             drawing.DrawRectangle(background, null, new Rect(0, 0, 320, 112));
             drawing.DrawText(new FormattedText($"Compiled fixture ({(editing ? "edit" : "rest")})", CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, typeface, 12, foreground, _dpi), new Point(8, 8));
-            drawing.DrawText(new FormattedText("Literal native single line", CultureInfo.InvariantCulture,
+            drawing.DrawText(new FormattedText("Historical baseline-native line", CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, typeface, 12, foreground, _dpi), new Point(8, 64));
             drawing.PushTransform(new TranslateTransform(210, 0));
             drawing.DrawRectangle(new VisualBrush(_editor) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top },

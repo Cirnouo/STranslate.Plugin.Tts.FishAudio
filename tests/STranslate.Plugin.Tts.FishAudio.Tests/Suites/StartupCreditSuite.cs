@@ -28,7 +28,7 @@ internal static class StartupCreditSuite
             var plugin = new Main();
 
             plugin.Init(CreateContext(settings: settings, httpService: httpService, logger: logger));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
             AssertEqual(
                 0,
@@ -56,7 +56,7 @@ internal static class StartupCreditSuite
         var plugin = new Main();
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(
             1,
@@ -69,7 +69,7 @@ internal static class StartupCreditSuite
         AssertEqual($"Bearer {AppliedKey}", headers["Authorization"], "Startup credit refresh should use the API Key snapshot");
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(
             2,
@@ -89,7 +89,7 @@ internal static class StartupCreditSuite
         var plugin = new Main();
 
         plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var viewModel = plugin.GetOrCreateSettingsViewModel();
 
         AssertEqual("23.45", viewModel.UserCredit, "A completed startup credit result should be visible when settings first opens");
@@ -117,7 +117,7 @@ internal static class StartupCreditSuite
         var plugin = new Main();
 
         plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await creditStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await creditStarted.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(false, plugin.PendingStartupTask.IsCompleted, "Main.Init should return without waiting for startup credit refresh");
 
         var viewModel = plugin.GetOrCreateSettingsViewModel();
@@ -128,7 +128,7 @@ internal static class StartupCreditSuite
         AssertEqual(false, viewModel.RefreshCreditCommand.CanExecute(null), "Pending startup credit refresh should disable manual credit refresh");
 
         releaseCredit.SetResult("{\"credit\":\"34.56\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit attachment to complete");
 
         AssertEqual("34.56", viewModel.UserCredit, "Pending startup credit success should update the balance");
@@ -153,7 +153,7 @@ internal static class StartupCreditSuite
         plugin.Init(
             CreateContext(snackbar, settings, httpService, logger: logger),
             FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var viewModel = plugin.GetOrCreateSettingsViewModel();
 
         AssertEqual("", viewModel.UserCredit, "Failed startup credit refresh should keep the not-loaded placeholder state");
@@ -175,7 +175,7 @@ internal static class StartupCreditSuite
         var plugin = new Main();
 
         plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var viewModel = plugin.GetOrCreateSettingsViewModel();
 
         AssertEqual("", viewModel.UserCredit, "A null startup credit value should keep the not-loaded placeholder state");
@@ -197,7 +197,7 @@ internal static class StartupCreditSuite
 
         viewModel.ApiKey = DraftKey;
         releaseCredit.SetResult("{\"credit\":\"45.67\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "changed-key startup credit attachment to complete");
 
         AssertEqual("", viewModel.UserCredit, "Startup credit result should be ignored after the API Key changes");
@@ -225,13 +225,13 @@ internal static class StartupCreditSuite
                 ? "{\"credit\":\"56.78\"}"
                 : "{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
         plugin.Init(CreateContext(settings: settings, httpService: newHttpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         AssertEqual(false, ReferenceEquals(oldViewModel, newViewModel), "Reinitialization should replace the old settings ViewModel");
         AssertEqual("56.78", newViewModel.UserCredit, "The current initialization cycle should apply its credit result");
 
         releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit attachment to release its lock");
 
         AssertEqual("56.78", newViewModel.UserCredit, "An old initialization cycle should not overwrite current credit");
@@ -263,8 +263,8 @@ internal static class StartupCreditSuite
         ((ContextProxy)(object)newContext).OnLoad = () => releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
 
         plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit lock to release during reload");
 
@@ -291,7 +291,7 @@ internal static class StartupCreditSuite
         var viewModel = plugin.GetOrCreateSettingsViewModel();
 
         plugin.Dispose();
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "disposed startup credit attachment to complete");
 
         AssertEqual("", viewModel.UserCredit, "Disposed settings ViewModel should ignore startup credit results");
@@ -324,7 +324,7 @@ internal static class StartupCreditSuite
                     return;
 
                 replacementPublished.TrySetResult();
-                releasePublicationWindow.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releasePublicationWindow.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
         plugin.Init(
             CreateContext(settings: new Settings { ApiKey = AppliedKey }, httpService: oldHttpService),
@@ -342,19 +342,19 @@ internal static class StartupCreditSuite
             plugin.Init(
                 CreateContext(settings: new Settings { ApiKey = DraftKey }, httpService: newHttpService),
                 FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1)));
-        await replacementPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await replacementPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !oldViewModel.IsLoadingCredit, "old startup credit observer to finish inside the publication window");
         var oldCreditDuringPublicationWindow = oldViewModel.UserCredit;
 
         releasePublicationWindow.SetResult();
-        await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await reinitializeTask.WaitAsync(RegressionExecution.Timeout);
         var replacementInitCompletedWithCreditPending = !plugin.PendingStartupTask.IsCompleted;
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         releaseNewCredit.SetResult("{\"credit\":\"12.34\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !newViewModel.IsLoadingCredit, "replacement startup credit observer to finish");
 
         AssertEqual("", oldCreditDuringPublicationWindow, "Publishing a replacement state should immediately invalidate the old startup credit result");

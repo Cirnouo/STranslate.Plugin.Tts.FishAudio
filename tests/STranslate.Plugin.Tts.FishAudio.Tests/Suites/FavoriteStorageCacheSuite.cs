@@ -43,21 +43,21 @@ internal static class FavoriteStorageCacheSuite
         using var store = new FavoriteVoiceStore(directory, (temporary, destination) =>
         {
             started.Set();
-            if (!release.Wait(TimeSpan.FromSeconds(3))) throw new TimeoutException("Test release missing");
+            if (!release.Wait(RegressionExecution.Timeout)) throw new TimeoutException("Test release missing");
             File.Move(temporary, destination, true);
         });
         var writer = Task.Run(() => SettingsStore.TryExecuteWithWriteLease(runtime, lease, () => store.SetFavorite(Id(1), true)));
-        AssertEqual(true, started.Wait(TimeSpan.FromSeconds(2)), "The authorized file transaction should reach its commit boundary");
+        AssertEqual(true, started.Wait(RegressionExecution.Timeout), "The authorized file transaction should reach its commit boundary");
         try
         {
-            var snapshot = await Task.Run(() => SettingsStore.CaptureSnapshot(runtime)).WaitAsync(TimeSpan.FromSeconds(2));
+            var snapshot = await Task.Run(() => SettingsStore.CaptureSnapshot(runtime)).WaitAsync(RegressionExecution.Timeout);
             AssertEqual(runtime.ApiKey, snapshot.ApiKey, "A slow favorite file write must not acquire the short settings snapshot lock");
             var retirement = Task.Run(() => { retireStarted.Set(); SettingsStore.Retire(runtime, lease); });
-            AssertEqual(true, retireStarted.Wait(TimeSpan.FromSeconds(2)), "Retirement should be attempting the persistence gate");
+            AssertEqual(true, retireStarted.Wait(RegressionExecution.Timeout), "Retirement should be attempting the persistence gate");
             AssertEqual(false, retirement.IsCompleted, "Retirement must wait for an already-authorized atomic commit");
             release.Set();
-            AssertEqual(true, await writer.WaitAsync(TimeSpan.FromSeconds(2)), "An already-authorized write should complete before retirement");
-            await retirement.WaitAsync(TimeSpan.FromSeconds(2));
+            AssertEqual(true, await writer.WaitAsync(RegressionExecution.Timeout), "An already-authorized write should complete before retirement");
+            await retirement.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(false, SettingsStore.TryExecuteWithWriteLease(runtime, lease, () => store.SetFavorite(Id(2), true)), "Retirement that wins first must reject the next file write");
             AssertEnumerableEqual(new[] { Id(1) }, store.Read(), "Retired generation must not add another ID");
         }
@@ -111,7 +111,7 @@ internal static class FavoriteStorageCacheSuite
         var afterRemoval = view.PendingFavoriteMetadataTask;
         AssertEqual(1, view.FavoritePage, "Removing the only final-page placeholder must immediately clamp");
         pending.SetResult(Detail(7, "Late detail"));
-        await Task.WhenAll(oldPage, newPage, afterRemoval).WaitAsync(TimeSpan.FromSeconds(2));
+        await Task.WhenAll(oldPage, newPage, afterRemoval).WaitAsync(RegressionExecution.Timeout);
         AssertEqual(false, cache.TryGet(Id(7), out _), "Removed originating-card results may not publish metadata into the shared cache");
         using var store = new FavoriteVoiceStore(directory);
         AssertEqual(false, store.Read().Contains(Id(7)), "Late metadata cannot restore a removed bookmark");
@@ -158,7 +158,7 @@ internal static class FavoriteStorageCacheSuite
         firstHttp.GetResponseJson = JsonSerializer.Serialize(new { total = 1, items = new[] { new { _id = Id(1), title = "Shared search", samples = Array.Empty<object>() } } });
         using var plugin = new Main();
         plugin.Init(CreateContext(httpService: firstService, pluginSettingsDirectoryPath: directory));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var original = plugin.GetOrCreateSettingsViewModel();
         await original.SearchVoicesCommand.ExecuteAsync(null);
         original.VoiceIdInput = Id(1);
@@ -167,7 +167,7 @@ internal static class FavoriteStorageCacheSuite
         original.ToggleFavoriteCommand.Execute(original.SearchResults[0]);
         var (nextService, nextHttp) = TestHttpServiceProxy.Create();
         plugin.Init(CreateContext(httpService: nextService, pluginSettingsDirectoryPath: directory));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var replacement = plugin.GetOrCreateSettingsViewModel();
         replacement.SwitchToFavoritesCommand.Execute(null);
         await replacement.PendingFavoriteMetadataTask;
@@ -208,7 +208,7 @@ internal static class FavoriteStorageCacheSuite
 
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(3);
+        var deadline = DateTime.UtcNow.Add(RegressionExecution.Timeout);
         while (!predicate())
         {
             if (DateTime.UtcNow >= deadline) throw new TimeoutException("Offline cache work did not finish");

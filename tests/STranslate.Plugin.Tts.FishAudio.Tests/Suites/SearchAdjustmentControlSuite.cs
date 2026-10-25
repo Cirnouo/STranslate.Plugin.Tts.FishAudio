@@ -37,13 +37,13 @@ internal static class SearchAdjustmentControlSuite
             await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
             await RunOnStaThreadAsync(WindowAndScrollLifetime);
             await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            await RunMaterialFallbackAsync();
             return;
         }
         if (group is "material")
         {
             await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            await RunMaterialFallbackAsync();
             return;
         }
         if (group is "radio")
@@ -54,7 +54,7 @@ internal static class SearchAdjustmentControlSuite
         if (group is "edges")
         {
             await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
-            await RunOnStaThreadAsync(ViewportClampsAcrossTriggerOrRefuses);
+            await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
             return;
         }
         await RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync);
@@ -64,9 +64,9 @@ internal static class SearchAdjustmentControlSuite
         await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
         await RunOnStaThreadAsync(WindowAndScrollLifetime);
         await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
-        await RunOnStaThreadAsync(ViewportClampsAcrossTriggerOrRefuses);
+        await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
         await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-        await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+        await RunMaterialFallbackAsync();
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
@@ -74,28 +74,30 @@ internal static class SearchAdjustmentControlSuite
                 stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory));
     }
 
-    private static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
-        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+    internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
+        Func<Action, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
+        string prefix = "search-adjustment", string details = "320/480 DIP.", TimeSpan? executionTimeout = null)
     {
+        var actionTimeout = executionTimeout ?? RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
         var phases = new ConcurrentQueue<string>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? actionFailure = null;
         long enteredAt = -1;
         void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
-        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[search-adjustment/{name}] {phase}"); }
-        Stage("queued with original 5s action deadline");
+        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); }
+        Stage(FormattableString.Invariant($"queued with {(executionTimeout is null ? "shared" : "explicit")} {actionTimeout.TotalSeconds}s action deadline"));
         try
         {
-            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(() =>
+            await (dispatch ?? ((callback, timeout) => RunOnStaThreadAsync(callback, timeout)))(() =>
             {
                 Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
                 Stage("entered");
                 try { action(Stage); }
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed"); completion.TrySetResult(); }
-            });
-            (write ?? Console.WriteLine)($"[search-adjustment/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; 320/480 DIP.");
+            }, actionTimeout);
+            (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={actionTimeout.TotalSeconds}s; {details}");
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
@@ -128,11 +130,12 @@ internal static class SearchAdjustmentControlSuite
         var observations = 0;
         Exception? caught = null;
         var output = new List<string>();
+        TimeSpan? explicitBudget = null;
         try
         {
             await ObserveMatrixActionAsync("queued-fixture", stage => { runs++; stage("action body"); },
-                dispatch: callback => { queued = callback; throw outer; },
-                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add);
+                dispatch: (callback, timeout) => { explicitBudget = timeout; queued = callback; throw outer; },
+                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add, executionTimeout: TimeSpan.FromSeconds(20));
         }
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(outer, caught), "Observing a queued action must preserve the original outer deadline exception");
@@ -140,13 +143,15 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, runs, "Observation must execute that queued action once, without a replacement or retry");
         AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "A pre-entry deadline must report its queue boundary");
         AssertEqual(true, output.Any(line => line.Contains("action body", StringComparison.Ordinal)), "Failure output must retain the recorded phases");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), explicitBudget, "The explicit action budget must reach the dispatch boundary");
+        AssertEqual(true, output.Any(line => line.Contains("queued with explicit 20s action deadline", StringComparison.Ordinal)), "The queued diagnostic must describe the budget passed to dispatch");
 
         var inner = new TimeoutException("Synthetic action timeout");
         runs = 0; observations = 0; caught = null; output.Clear();
         try
         {
             await ObserveMatrixActionAsync("inner-fixture", _ => { runs++; throw inner; },
-                dispatch: callback => { callback(); return Task.CompletedTask; },
+                dispatch: (callback, _) => { callback(); return Task.CompletedTask; },
                 observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
         }
         catch (Exception error) { caught = error; }
@@ -174,15 +179,15 @@ internal static class SearchAdjustmentControlSuite
         var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Task? sameCompletion = null;
         var bounded = ObserveMatrixActionAsync("observation-fixture", _ => runs++,
-            dispatch: callback => { dispatches++; queued = callback; throw outer; },
+            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
             observe: completion => { sameCompletion = completion; observations++; observing.TrySetResult(); return completion; },
             write: output.Add, observationTimeProvider: clock);
-        await observing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await observing.Task.WaitAsync(RegressionExecution.Timeout);
         clock.Advance(TimeSpan.FromMilliseconds(19999));
         AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 19999ms");
         AssertEqual(false, sameCompletion!.IsCompleted, "The same queued action is still incomplete before expiration");
         clock.Advance(TimeSpan.FromMilliseconds(1));
-        try { await bounded.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(outer, caught), "The real 20000ms observation deadline must preserve original outer-error identity");
         AssertEqual(1, observations, "An incomplete action gets exactly one bounded observation");
@@ -191,14 +196,329 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(false, sameCompletion.IsCompleted, "Expiration does not cancel the original action/completion");
         AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The real bound records observation expiration");
         queued!();
-        await sameCompletion.WaitAsync(TimeSpan.FromSeconds(2));
+        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
 
         output.Clear();
+        TimeSpan? defaultBudget = null;
         await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
-            dispatch: callback => { callback(); return Task.CompletedTask; }, write: output.Add);
+            dispatch: (callback, timeout) => { defaultBudget = timeout; callback(); return Task.CompletedTask; }, write: output.Add);
         AssertEqual(1, output.Count, "A successful action emits one compact line");
         AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), defaultBudget, "An omitted action budget must use the shared execution dispatch boundary");
+        AssertEqual(true, output[0].Contains("deadline=20s", StringComparison.Ordinal), "Matrix success diagnostics describe the actual shared dispatch guard");
+    }
+
+    private static async Task ObserveViewportActionAsync(Func<Action<string>, Task> action,
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null,
+        Action<string>? write = null, TimeProvider? observationTimeProvider = null, Func<Action, Task>? scheduleReport = null)
+    {
+        var executionTimeout = RegressionExecution.Timeout;
+        var elapsed = Stopwatch.StartNew();
+        var phases = new ConcurrentQueue<string>();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? actionFailure = null;
+        long enteredAt = -1;
+        var phaseAttempts = 0;
+        void Stage(string phase)
+        {
+            try
+            {
+                if (Interlocked.Increment(ref phaseAttempts) <= 256)
+                    phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+            }
+            catch { /* Phase reporting cannot replace the action outcome. */ }
+        }
+        void Write(string text) { try { (write ?? Console.WriteLine)(text); } catch { /* Preserve the primary outcome. */ } }
+        async Task ReportAsync(bool failed, bool observeCompletion)
+        {
+            var retired = 0;
+            // One guard covers scheduling, original completion observation and output together.
+            // A blocked external writer cannot be interrupted; retire later writes and return
+            // the original outcome without granting output a second diagnostic allowance.
+            var diagnostic = Task.Run(async () =>
+            {
+                try
+                {
+                    if (observeCompletion)
+                    {
+                        try
+                        {
+                            await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                            var eventual = Volatile.Read(ref actionFailure);
+                            Stage(eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
+                        }
+                        catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
+                    }
+                    if (Volatile.Read(ref retired) != 0) return;
+                    await (scheduleReport ?? (report => Task.Run(report)))(() =>
+                    {
+                        if (failed)
+                        {
+                            foreach (var phase in phases)
+                            {
+                                if (Volatile.Read(ref retired) != 0) break;
+                                Write($"[search-viewport] {phase}");
+                            }
+                        }
+                        else if (Volatile.Read(ref retired) == 0)
+                            Write(FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain."));
+                    }).ConfigureAwait(false);
+                }
+                catch { /* Best-effort diagnostics cannot replace the original outcome. */ }
+            });
+            try
+            {
+                if (failed) await BoundMatrixObservation(diagnostic, observationTimeProvider).ConfigureAwait(false);
+                else await RegressionExecution.WaitAsync(diagnostic, timeProvider: observationTimeProvider).ConfigureAwait(false);
+            }
+            catch { /* Deadline or output failure leaves the original outcome intact. */ }
+            finally { Interlocked.Exchange(ref retired, 1); }
+        }
+        Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
+        Func<Task> callback = async () =>
+        {
+            Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+            Stage("entered");
+            try { await action(Stage); }
+            catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
+            finally
+            {
+                Stage("action completed after original source and VM cleanup/unwind");
+                completion.TrySetResult();
+            }
+        };
+        try
+        {
+            await (dispatch ?? ((body, timeout) => RunOnStaThreadAsync(body, timeout)))(callback, executionTimeout).ConfigureAwait(false);
+            await ReportAsync(false, observeCompletion: false).ConfigureAwait(false);
+        }
+        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        {
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
+            await ReportAsync(true, observeCompletion: true).ConfigureAwait(false);
+            throw;
+        }
+        catch
+        {
+            await ReportAsync(true, observeCompletion: false).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    internal static async Task ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync()
+    {
+        var output = new List<string>();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        TimeSpan? budget = null;
+        var runs = 0;
+        var cleanup = false;
+        var pending = ObserveViewportActionAsync(async stage =>
+        {
+            runs++; stage("private held phase"); entered.SetResult();
+            try { await release.Task; }
+            finally { cleanup = true; }
+        }, dispatch: (callback, timeout) => { budget = timeout; return callback(); }, write: output.Add);
+        await entered.Task.WaitAsync(RegressionExecution.Timeout);
+        AssertEqual(false, pending.IsCompleted, "The async viewport observer cannot accept an action before its await completes");
+        AssertEqual(0, output.Count, "An incomplete action cannot publish a success summary");
+        release.SetResult();
+        await pending.WaitAsync(RegressionExecution.Timeout);
+        AssertEqual(true, cleanup, "Successful completion follows the complete action's cleanup");
+        AssertEqual(1, runs, "An async action executes exactly once");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), budget, "The shared execution budget reaches injected async dispatch");
+        AssertEqual(1, output.Count, "Success emits one compact summary");
+        AssertEqual(true, output[0].Contains("execution=20s", StringComparison.Ordinal), "Success diagnostics use the same dispatched duration");
+        AssertEqual(false, output[0].Contains("private held phase", StringComparison.Ordinal), "Success does not dump buffered private phases");
+
+        var inner = new TimeoutException("Synthetic action-owned timeout");
+        var outer = new TimeoutException("Synthetic outer deadline");
+        Exception? caught = null;
+        var observations = 0;
+        output.Clear();
+        try
+        {
+            await ObserveViewportActionAsync(async _ => { await Task.Yield(); throw inner; },
+                dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: _ => throw new IOException("Synthetic reporting failure"));
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(inner, caught), "An async action-owned timeout retains identity even if failure reporting throws");
+        AssertEqual(0, observations, "An action-owned timeout must bypass outer-deadline observation");
+
+        Func<Task>? queued = null;
+        var dispatches = 0;
+        runs = 0; observations = 0; caught = null; cleanup = false; output.Clear();
+        var cleanupObserved = false;
+        try
+        {
+            await ObserveViewportActionAsync(async stage => { runs++; try { await Task.Yield(); stage("late original action"); } finally { cleanup = true; } },
+                dispatch: (callback, timeout) => { dispatches++; budget = timeout; queued = callback; throw outer; },
+                observe: async completion => { observations++; await queued!(); await completion; cleanupObserved = cleanup; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Late original completion cannot turn an outer deadline into success");
+        AssertEqual(true, cleanupObserved, "Same-action completion is published after cleanup");
+        AssertEqual(1, dispatches, "Late completion must not dispatch replacement work");
+        AssertEqual(1, runs, "Only the same queued callback may run");
+        AssertEqual(1, observations, "An outer timeout observes its one original completion");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), budget, "Failure dispatch receives the shared execution budget");
+        AssertEqual(true, output.Any(line => line.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Failure diagnostics describe the dispatched duration");
+
+        var secondary = new IOException("Synthetic observation failure");
+        caught = null; observations = 0; output.Clear();
+        try
+        {
+            await ObserveViewportActionAsync(_ => Task.CompletedTask,
+                dispatch: (callback, _) => { queued = callback; throw outer; },
+                observe: _ => { observations++; throw secondary; }, write: output.Add);
+        }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "A secondary observation fault cannot replace the primary deadline");
+        AssertEqual(1, observations, "A secondary failure does not retry observation");
+        AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "A finite observation fault is reported while diagnostic time remains");
+        await queued!();
+
+        var clock = new ObservationRegistrationClock();
+        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task? sameCompletion = null;
+        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+        var bounded = ObserveViewportActionAsync(_ => { runs++; return Task.CompletedTask; },
+            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
+            observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return completion; },
+            write: output.Add, observationTimeProvider: clock);
+        await observing.Task.WaitAsync(RegressionExecution.Timeout);
+        await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
+        clock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(false, bounded.IsCompleted, "The same-action observer cannot expire before 20000ms");
+        AssertEqual(false, sameCompletion!.IsCompleted, "The original callback is still incomplete at 19999ms");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(outer, caught), "Observation expiry preserves the original deadline identity");
+        AssertEqual(1, dispatches, "Observation expiry must not dispatch a replacement or retry");
+        AssertEqual(1, observations, "Observation expires after its single bounded attempt");
+        AssertEqual(0, runs, "Expiry does not run queued replacement work");
+        AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry cannot cancel or complete the original action");
+        AssertEqual(1, clock.TimerCount, "Observation and best-effort output share exactly one diagnostic deadline");
+        await queued!();
+        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
+        AssertEqual(1, runs, "Only the original action completes after expiry");
+
+        await ViewportReportingSharesOneBoundedAllowanceAsync();
+    }
+
+    private static async Task ViewportReportingSharesOneBoundedAllowanceAsync()
+    {
+        foreach (var scenario in new[] { "owned-writer", "outer-partial-observation", "successful-summary" })
+        {
+            var clock = new ObservationRegistrationClock();
+            var primary = new IOException("Synthetic held-reporter action fault");
+            var outer = new TimeoutException("Synthetic held-reporter outer deadline");
+            var actionRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reporterEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reportCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reporterRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var writerRelease = new ManualResetEventSlim();
+            Task actionTask = Task.CompletedTask;
+            Task reportTask = Task.CompletedTask;
+            var runs = 0;
+            var writes = 0;
+            Exception? caught = null;
+            var pending = ObserveViewportActionAsync(async _ =>
+            {
+                runs++;
+                if (scenario == "owned-writer") { await Task.Yield(); throw primary; }
+                if (scenario == "outer-partial-observation") await actionRelease.Task;
+            }, dispatch: (callback, _) =>
+            {
+                actionTask = callback();
+                if (scenario == "outer-partial-observation") throw outer;
+                return actionTask;
+            }, observe: completion => { observing.SetResult(); return completion; },
+                write: _ =>
+                {
+                    Interlocked.Increment(ref writes);
+                    if (scenario == "owned-writer") { reporterEntered.SetResult(); writerRelease.Wait(); }
+                }, observationTimeProvider: clock, scheduleReport: report =>
+                {
+                    reportTask = scenario == "owned-writer" ? Task.Run(report) : Task.Run(async () =>
+                    {
+                        reporterEntered.SetResult();
+                        await reporterRelease.Task;
+                        report();
+                    });
+                    reportCreated.SetResult();
+                    return reportTask;
+                });
+            try
+            {
+                await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
+                if (scenario == "outer-partial-observation")
+                {
+                    await observing.Task.WaitAsync(RegressionExecution.Timeout);
+                    clock.Advance(TimeSpan.FromSeconds(7));
+                    actionRelease.SetResult();
+                }
+                await reporterEntered.Task.WaitAsync(RegressionExecution.Timeout);
+                await reportCreated.Task.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(1, clock.ActiveTimers, "Reporting retains the original active guard after observation/scheduling");
+                AssertEqual(1, clock.TimerCount, "Reporting cannot renew the diagnostic allowance after partial observation");
+                clock.Advance(TimeSpan.FromMilliseconds(scenario == "outer-partial-observation" ? 12999 : 19999));
+                AssertEqual(false, pending.IsCompleted, "Held reporting remains incomplete at total 19999ms");
+                clock.Advance(TimeSpan.FromMilliseconds(1));
+                try { await pending.WaitAsync(RegressionExecution.Timeout); }
+                catch (Exception error) { caught = error; }
+                AssertEqual(true, scenario == "successful-summary" ? caught is null : ReferenceEquals(scenario == "owned-writer" ? primary : outer, caught),
+                    "At total 20000ms auxiliary reporting preserves the exact original success or failure");
+                AssertEqual(1, runs, "Held reporting never retries or replaces the original action");
+                AssertEqual(false, reportTask.IsCompleted, "The outcome returns while the external writer or reporter is still held");
+                AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Held scheduling cannot emit a success or failure before release");
+            }
+            finally
+            {
+                actionRelease.TrySetResult();
+                reporterRelease.TrySetResult();
+                writerRelease.Set();
+                try { await actionTask.WaitAsync(RegressionExecution.Timeout); } catch (IOException error) when (ReferenceEquals(error, primary)) { }
+                await reportTask.WaitAsync(RegressionExecution.Timeout);
+                try { await pending.WaitAsync(RegressionExecution.Timeout); }
+                catch (Exception error) when (ReferenceEquals(error, primary) || ReferenceEquals(error, outer)) { }
+            }
+            AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Retirement suppresses later buffered output after the allowance expires");
+        }
+    }
+
+    private sealed class ObservationRegistrationClock : TimeProvider
+    {
+        private readonly ManualStreamingTimeProvider _clock = new();
+        internal TaskCompletionSource TimerCreated { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal int TimerCount;
+        internal int ActiveTimers;
+        public override long TimestampFrequency => _clock.TimestampFrequency;
+        public override long GetTimestamp() => _clock.GetTimestamp();
+        public override DateTimeOffset GetUtcNow() => _clock.GetUtcNow();
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            var timer = _clock.CreateTimer(callback, state, dueTime, period);
+            Interlocked.Increment(ref TimerCount);
+            Interlocked.Increment(ref ActiveTimers);
+            TimerCreated.TrySetResult();
+            return new TrackedTimer(this, timer);
+        }
+        internal void Advance(TimeSpan elapsed) => _clock.Advance(elapsed);
+        private sealed class TrackedTimer(ObservationRegistrationClock owner, ITimer timer) : ITimer
+        {
+            private int _disposed;
+            public bool Change(TimeSpan dueTime, TimeSpan period) => timer.Change(dueTime, period);
+            public void Dispose()
+            {
+                if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                { timer.Dispose(); Interlocked.Decrement(ref owner.ActiveTimers); }
+            }
+            public ValueTask DisposeAsync() { Dispose(); return ValueTask.CompletedTask; }
+        }
     }
 
     private static FrameworkElement Control(SettingsView view)
@@ -228,36 +548,39 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
     }
 
-    private static void PopupMaterialFallbackAndSourceLifetimes()
+    private static async Task RunMaterialFallbackAsync()
     {
         foreach (var supported in new[] { false, true })
         foreach (var result in new[] { new PopupBackdropResult(0, unchecked((int)0x80004005), 3), new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 3) })
-        {
-            var settings = new Settings();
-            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-            var view = SettingsLayoutSuite.CreateThemedView(vm);
-            using var ownerSource = Attach(view);
-            var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
-            var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
-            var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
-            var material = new PopupMaterial(popup, surface, api);
-            material.Begin(); popup.IsOpen = true; Drain();
-            var first = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
-            AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
-            AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
-            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
-            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
-            popup.IsOpen = false; Drain();
-            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
-            var calls = api.Applied.Count;
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
-            AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
-            material.Begin(); popup.IsOpen = true; Drain();
-            var second = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
-            popup.IsOpen = false; material.End(); Drain();
-        }
+            await RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result));
+    }
+
+    private static void PopupMaterialFallbackAndSourceLifetimes(bool supported, PopupBackdropResult result)
+    {
+        var settings = new Settings();
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        using var ownerSource = Attach(view);
+        var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
+        var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
+        var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
+        var material = new PopupMaterial(popup, surface, api);
+        material.Begin(); popup.IsOpen = true; Drain();
+        var first = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+        AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
+        AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
+        AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+        AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+        popup.IsOpen = false; Drain();
+        AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+        var calls = api.Applied.Count;
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+        AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
+        material.Begin(); popup.IsOpen = true; Drain();
+        var second = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+        popup.IsOpen = false; material.End(); Drain();
     }
 
     private sealed class TestPopupBackdropApi : IPopupBackdropApi
@@ -333,11 +656,18 @@ internal static class SearchAdjustmentControlSuite
         target.SetValue(focusKey, true);
         try
         {
-            foreach (var routed in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.KeyDownEvent, Keyboard.PreviewKeyUpEvent, Keyboard.KeyUpEvent })
+            if (key == Key.Space)
+                NativeKeyboardStateFixture.Run((HwndSource)PresentationSource.FromVisual(target)!, RaiseEvents);
+            else RaiseEvents();
+
+            void RaiseEvents()
             {
-                var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
-                { RoutedEvent = routed, Source = target };
-                target.RaiseEvent(args);
+                foreach (var routed in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.KeyDownEvent, Keyboard.PreviewKeyUpEvent, Keyboard.KeyUpEvent })
+                {
+                    var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
+                    { RoutedEvent = routed, Source = target };
+                    target.RaiseEvent(args);
+                }
             }
         }
         finally { target.SetValue(focusKey, previous); }
@@ -574,51 +904,89 @@ internal static class SearchAdjustmentControlSuite
         for (DependencyObject? current = item; current is not null; current = VisualTreeHelper.GetParent(current)) yield return current;
     }
 
-    private static async Task ViewportClampsAcrossTriggerOrRefuses()
+    private static async Task ViewportClampsAcrossTriggerOrRefuses(Action<string> stage)
     {
+        stage("fake search setup begin");
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = """{"total":24,"items":[{"_id":"0123456789abcdef0123456789abcdef","title":"Retained voice","type":"tts","samples":[]}]}""";
+        stage("viewmodel construction begin");
         using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+        stage("viewmodel construction end");
         vm.SearchQuery = "retained query";
+        stage("fake search apply begin");
         await vm.ApplySearchOptionsAsync(["en"], "task_count");
+        stage("fake search apply end");
         var successfulResults = vm.SearchResults;
         var requestCount = http.GetCallCount;
+        stage("successful search baselines captured");
+        stage("compiled view construction begin");
         var view = SettingsLayoutSuite.CreateThemedView(vm);
+        stage("compiled view construction end");
         var scroll = new ScrollViewer { Content = view, Height = 220 };
+        stage("native source construction begin");
         using var source = new HwndSource(new HwndSourceParameters("Fish Audio centered short popup fixture")
         { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
+        stage("native source construction end");
+        stage("source attach begin");
         source.RootVisual = scroll;
+        stage("source attach end");
+        stage("initial source layout begin");
         SettingsLayoutSuite.Layout(scroll, 400);
+        stage("initial source layout end");
         var control = Control(view);
+        stage("initial scroll and original drain begin");
         scroll.ScrollToVerticalOffset(control.TransformToAncestor(view).Transform(new Point()).Y - 96); Drain();
+        stage("initial scroll and original drain end");
+        stage("search/centered vertical open" + " begin");
         Open(control);
+        stage("search/centered vertical open" + " end");
         AssertEqual(true, IsOpen(control), "A centered trigger can use the complete visible viewport when neither side fits fixed chrome and an option");
         var surface = Part<Border>(control, "PopupSurface");
         var trigger = Part<Button>(control, "AdjustmentButton");
         AssertEqual(true, surface.PointToScreen(new Point()).Y < trigger.PointToScreen(new Point()).Y
             && surface.PointToScreen(new Point(0, surface.ActualHeight)).Y > trigger.PointToScreen(new Point(0, trigger.ActualHeight)).Y,
             "The useful constrained popup can clamp across the trigger");
+        stage("search/setup" + "/fixed actions begin");
         AssertFixedActions(control, surface);
+        stage("search/setup" + "/fixed actions end");
+        stage("search/setup close" + " begin");
         Click(control, "CloseButton");
+        stage("search/setup close" + " end");
+        stage("height refusal layout and drain begin");
         scroll.Height = 70; SettingsLayoutSuite.Layout(scroll, 400); Drain();
+        stage("height refusal layout and drain end");
+        stage("search/height refusal open" + " begin");
         Open(control);
+        stage("search/height refusal open" + " end");
         AssertEqual(false, IsOpen(control), "A viewport smaller than measured fixed chrome coherently refuses the popup");
         AssertEqual(false, (bool)control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control)!,
             "Refusal retires input and overlay ownership");
 
         scroll.Height = 280;
+        stage("height refusal assertions complete");
         foreach (var (locale, dark) in new[] { ("en", false), ("ru", true) })
         {
+            stage("search/" + locale + "/locale-theme begin");
             scroll.Width = 400;
+            stage("search/" + locale + "/dictionary replace begin");
             SetLocale(view, locale);
             view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
             ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            stage("search/" + locale + "/locale-theme replacement end");
+            stage("search/" + locale + "/locale wide layout-drain" + " begin");
             SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            stage("search/" + locale + "/locale wide layout-drain" + " end");
+            stage("search/" + locale + "/locale wide open" + " begin");
             Open(control);
+            stage("search/" + locale + "/locale wide open" + " end");
             AssertEqual(true, IsOpen(control), "A sufficiently wide viewport opens with native localized actions");
+            stage("search/" + locale + "/locale wide" + "/fixed actions begin");
             AssertFixedActions(control, surface);
+            stage("search/" + locale + "/locale wide" + "/fixed actions end");
+            stage("search/" + locale + "/locale wide" + "/fixed captions begin");
             AssertFixedCaptions(control, surface);
+            stage("search/" + locale + "/locale wide" + "/fixed captions end");
             var reset = Part<Button>(control, "ResetButton");
             var apply = Part<Button>(control, "ApplyButton");
             // Independent boundary from the already rendered complete actions,
@@ -627,39 +995,66 @@ internal static class SearchAdjustmentControlSuite
                 + surface.Padding.Left + surface.Padding.Right + surface.BorderThickness.Left + surface.BorderThickness.Right;
             var presenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
             var viewportOverhead = scroll.ActualWidth - presenter.ActualWidth + 16;
+            stage("search/" + locale + "/draft changes begin");
             Toggle(control, "ja");
             Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+            stage("search/" + locale + "/draft changes end");
+            stage("search/" + locale + "/draft changes complete; narrow begin");
             scroll.Width = requiredWidth - 2 + viewportOverhead;
+            stage("search/" + locale + "/locale narrow layout-drain" + " begin");
             SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            stage("search/" + locale + "/locale narrow layout-drain" + " end");
             var rejectedWidth = (presenter.PointToScreen(new Point(presenter.ActualWidth, 0)).X - presenter.PointToScreen(new Point()).X)
                 / PopupViewport.ScreenScale(control).DpiScaleX - 16;
             AssertEqual(false, IsOpen(control), "Narrowing an open viewport below its complete native footer width closes the popup");
+            stage("search/" + locale + "/locale narrow retirement" + " begin");
             AssertHorizontalRetirement(control, view);
+            stage("search/" + locale + "/locale narrow retirement" + " complete");
+            stage("search/" + locale + "/locale narrow open" + " begin");
             Open(control);
+            stage("search/" + locale + "/locale narrow open" + " end");
             AssertEqual(false, IsOpen(control), "A tall viewport narrower than localized fixed actions refuses reopening");
+            stage("search/" + locale + "/locale narrow retirement" + " begin");
             AssertHorizontalRetirement(control, view);
+            stage("search/" + locale + "/locale narrow retirement" + " complete");
             if (locale == "ru")
             {
+                stage("search/ru/original 150 width begin");
                 scroll.Width = 150;
+                stage("search/ru refusal layout-drain" + " begin");
                 SettingsLayoutSuite.Layout(scroll, 400); Drain();
+                stage("search/ru refusal layout-drain" + " end");
                 foreach (var attempt in new[] { 1, 2 })
                 {
+                    stage("search/ru/refusal attempt " + attempt + "/open" + " begin");
                     Open(control);
+                    stage("search/ru/refusal attempt " + attempt + "/open" + " end");
                     AssertEqual(false, IsOpen(control), $"The original 150-DIP Russian narrow viewport refuses open {attempt}");
+                    stage("search/ru/original refusal retirement" + " begin");
                     AssertHorizontalRetirement(control, view);
+                    stage("search/ru/original refusal retirement" + " complete");
                 }
             }
+            stage("search/" + locale + "/width retirement invariants begin");
             AssertEqual(requestCount, http.GetCallCount, "Width retirement and refused reopening issue no GET");
             AssertEqual(true, ReferenceEquals(successfulResults, vm.SearchResults), "Width refusal retains successful result objects");
             AssertEnumerableEqual(new[] { "en" }, vm.SearchLanguages, "Width retirement cannot apply language drafts");
             AssertEqual("task_count", vm.SearchSort, "Width retirement cannot apply sort drafts");
             AssertEqual(1, vm.SearchPage, "Width retirement preserves successful pagination");
+            stage("search/" + locale + "/width retirement invariants complete");
 
+            stage("search/" + locale + "/sufficient width restore begin");
             scroll.Width = requiredWidth + 2 + viewportOverhead;
+            stage("search/" + locale + "/locale restored layout-drain-open" + " begin");
             SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
+            stage("search/" + locale + "/locale restored layout-drain-open" + " end");
             AssertEqual(true, IsOpen(control), "Restoring enough width reopens without a forced maximum-width floor");
+            stage("search/" + locale + "/locale restored" + "/fixed actions begin");
             AssertFixedActions(control, surface);
+            stage("search/" + locale + "/locale restored" + "/fixed actions end");
+            stage("search/" + locale + "/locale restored" + "/fixed captions begin");
             AssertFixedCaptions(control, surface);
+            stage("search/" + locale + "/locale restored" + "/fixed captions end");
             AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen restores successful languages after discarded drafts");
             AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Reopen restores successful sort");
             var top = surface.PointToScreen(new Point());
@@ -669,25 +1064,47 @@ internal static class SearchAdjustmentControlSuite
             AssertEqual(true, top.X >= visibleTop.X && bottom.X <= visibleBottom.X + 1 && top.Y >= visibleTop.Y && bottom.Y <= visibleBottom.Y + 1,
                 "The reopened shell remains inside the complete visible viewport on both axes");
             Console.WriteLine($"[popup-horizontal/{locale}/{(dark ? "dark" : "light")}] rendered boundary={requiredWidth:0.###} DIP; rejected requested={requiredWidth - 2:0.###}/actual={rejectedWidth:0.###}; reopened shell={surface.ActualWidth:0.###}; viewport={presenter.ActualWidth:0.###}x{presenter.ActualHeight:0.###}; sourceDpi={PopupViewport.ScreenScale(control).DpiScaleX:0.##}; popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX:0.##}; captions complete; draft/noGET/cleanup preserved");
+            stage("search/" + locale + "/close" + " begin");
             Click(control, "CloseButton");
+            stage("search/" + locale + "/close" + " end");
+            stage("search/" + locale + "/locale restored retirement" + " begin");
             AssertHorizontalRetirement(control, view);
+            stage("search/" + locale + "/locale restored retirement" + " complete");
         }
+        stage("search/original 400 restore begin");
         scroll.Width = 400;
+        stage("search/400 restored layout-drain-open" + " begin");
         SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
+        stage("search/400 restored layout-drain-open" + " end");
         AssertEqual(true, IsOpen(control), "Restoring the original 400-DIP viewport reopens after repeated narrow refusal");
+        stage("search/400 restored" + "/fixed actions begin");
         AssertFixedActions(control, surface);
+        stage("search/400 restored" + "/fixed actions end");
+        stage("search/400 restored" + "/fixed captions begin");
         AssertFixedCaptions(control, surface);
+        stage("search/400 restored" + "/fixed captions end");
+        stage("search/400 restored close" + " begin");
         Click(control, "CloseButton");
+        stage("search/400 restored close" + " end");
+        stage("search/400 restored retirement" + " begin");
         AssertHorizontalRetirement(control, view);
+        stage("search/400 restored retirement" + " complete");
         AssertEqual(requestCount, http.GetCallCount, "All width-only transitions leave the last successful request untouched");
+        stage("search original 400 restoration and no-GET complete");
 
         // The shared helper must use this shell's own fixed count, not impose the
         // search footer's larger width on read-only language overflow.
+        stage("language control construction begin");
         var tags = new VoiceLanguageTags { Languages = new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt", "it", "nl" } };
         tags.Resources.MergedDictionaries.Add(view.Resources);
+        stage("language construction and original resource attachment end");
+        stage("same-source scroll content replacement begin");
         scroll.Content = tags;
+        stage("same-source scroll content replacement end");
         scroll.Width = 150;
+        stage("language initial layout-drain-open begin");
         SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
+        stage("language initial layout-drain-open end");
         AssertEqual(true, tags.IsPopupOpen, "Language overflow can open below the search footer's width requirement");
         var languageSurface = (Border)tags.FindName("PopupSurface");
         var count = (TextBlock)tags.FindName("RemainingCount");
@@ -695,8 +1112,12 @@ internal static class SearchAdjustmentControlSuite
             + languageSurface.BorderThickness.Left + languageSurface.BorderThickness.Right;
         var languagePresenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
         var languageOverhead = scroll.ActualWidth - languagePresenter.ActualWidth + 16;
+        stage("language own-count width measurements complete");
+        stage("language insufficient width begin");
         scroll.Width = languageMinimum - 2 + languageOverhead;
+        stage("language narrow layout-drain begin");
         SettingsLayoutSuite.Layout(scroll, 400); Drain();
+        stage("language narrow layout-drain end");
         var rejectedLanguageWidth = (languagePresenter.PointToScreen(new Point(languagePresenter.ActualWidth, 0)).X - languagePresenter.PointToScreen(new Point()).X)
             / PopupViewport.ScreenScale(tags).DpiScaleX - 16;
         AssertEqual(false, tags.IsPopupOpen, "Language overflow closes when its own fixed count cannot fit");
@@ -705,16 +1126,26 @@ internal static class SearchAdjustmentControlSuite
             "Language width retirement detaches input");
         AssertEqual(0d, ((ScrollViewer)tags.FindName("PopupScroll")).Padding.Right, "Language width retirement restores scrollbar padding");
         AssertEqual(false, Escape(scroll).Handled, "Retired language input cannot consume Escape");
+        stage("language material input padding and Escape retirement complete");
+        stage("language insufficient reopen begin");
         tags.OpenPopup(); Drain();
+        stage("language insufficient reopen end");
         AssertEqual(false, tags.IsPopupOpen, "Language overflow refuses a still insufficient width");
+        stage("language sufficient width restore begin");
         scroll.Width = languageMinimum + 2 + languageOverhead;
+        stage("language restored layout-drain-open begin");
         SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
+        stage("language restored layout-drain-open end");
         AssertEqual(true, tags.IsPopupOpen, "Language overflow reopens at its own sufficient width");
         var countBounds = count.TransformToAncestor(languageSurface).TransformBounds(new Rect(count.RenderSize));
         AssertEqual(true, countBounds.Left >= 0 && countBounds.Right <= languageSurface.ActualWidth, "The reopened fixed count remains fully visible");
+        stage("language restored full count assertion complete");
         Console.WriteLine($"[popup-horizontal/languages/ru] native required={languageMinimum:0.###} DIP; rejected requested={languageMinimum - 2:0.###}/actual={rejectedLanguageWidth:0.###}; reopened={languageSurface.ActualWidth:0.###}; count={count.Text}");
+        stage("language close begin");
         tags.ClosePopup();
+        stage("language close end");
         AssertEqual(requestCount, http.GetCallCount, "Language width transitions issue no GET");
+        stage("all body assertions complete; original source then VM disposals pending");
     }
 
     private static void AssertHorizontalRetirement(FrameworkElement control, FrameworkElement root)

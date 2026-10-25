@@ -37,7 +37,7 @@ internal static class AvatarPreviewSuite
         {
             var elapsed = Stopwatch.StartNew();
             var name = $"{mode}/{(dark ? "Dark" : "Light")}/{dpi * 100}%/{width}";
-            Console.WriteLine($"[avatar-preview/{name}] queued with 5s action deadline.");
+            Console.WriteLine(FormattableString.Invariant($"[avatar-preview/{name}] queued with {RegressionExecution.Timeout.TotalSeconds}s action deadline."));
             var lastLayoutSubstage = "not entered";
             try
             {
@@ -236,7 +236,7 @@ internal static class AvatarPreviewSuite
             try
             {
                 ((IInvokeProvider)new ButtonAutomationPeer(selected).GetPattern(PatternInterface.Invoke)!).Invoke();
-                await acceptedPlayback.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                await acceptedPlayback.Task.WaitAsync(RegressionExecution.Timeout);
             }
             finally { vm.PropertyChanged -= playingPublished; }
             Layout();
@@ -251,7 +251,7 @@ internal static class AvatarPreviewSuite
             try
             {
                 ((IInvokeProvider)new ButtonAutomationPeer(title).GetPattern(PatternInterface.Invoke)!).Invoke();
-                await clipboardWrite.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                await clipboardWrite.Task.WaitAsync(RegressionExecution.Timeout);
             }
             finally { clipboardWrite = null; }
             vm.BrowseMode = VoiceBrowseMode.Search;

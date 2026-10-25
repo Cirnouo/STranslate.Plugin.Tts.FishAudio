@@ -28,7 +28,7 @@ internal static class VoiceDiscoverySuite
             clock.BeforeNextTimerReturns = () =>
             {
                 creationEntered.SetResult();
-                AssertEqual(true, releaseCreation.Wait(TimeSpan.FromSeconds(2)), "The test must release the same paused timer creation");
+                AssertEqual(true, releaseCreation.Wait(RegressionExecution.Timeout), "The test must release the same paused timer creation");
             };
             var settings = new Settings();
             using var view = CreateTimedDiscoveryView(CreateContext(settings: settings), settings, clock);
@@ -36,7 +36,7 @@ internal static class VoiceDiscoverySuite
             var lateErrorChanges = 0;
             try
             {
-                await creationEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+                await creationEntered.Task.WaitAsync(RegressionExecution.Timeout);
                 if (retirement == "dispose")
                     view.Dispose();
                 else
@@ -49,7 +49,7 @@ internal static class VoiceDiscoverySuite
             finally
             {
                 releaseCreation.Set();
-                await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+                await lookup.WaitAsync(RegressionExecution.Timeout);
             }
             AssertEqual(true, clock.Timers[0].IsDisposed, "A timer whose creation lost ownership must be disposed");
             AssertEqual(0, lateErrorChanges, "A timer creation finishing after retirement cannot publish an old error");
@@ -167,7 +167,7 @@ internal static class VoiceDiscoverySuite
         var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
         AssertEqual<string?>(null, view.VoiceIdError, "A new lookup must clear the previous error while pending");
         pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}");
-        await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+        await lookup.WaitAsync(RegressionExecution.Timeout);
         var card = view.ByIdResults.Single();
         clock.Advance(TimeSpan.FromSeconds(5));
         AssertEqual<string?>(null, view.VoiceIdError, "Successful lookup must remain error-free");
@@ -260,7 +260,7 @@ internal static class VoiceDiscoverySuite
             var expectedError = view.VoiceIdError;
             if (fail) pending.SetException(new InvalidOperationException("late failure"));
             else pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Late\"}");
-            await lookup.WaitAsync(TimeSpan.FromSeconds(2));
+            await lookup.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(expectedError, view.VoiceIdError, "Cancellation-ignoring completion cannot republish an error");
             AssertEqual(0, view.ByIdResults.Count, "Cancellation-ignoring completion cannot republish a card");
             clock.Advance(TimeSpan.FromSeconds(5));
@@ -432,12 +432,12 @@ internal static class VoiceDiscoverySuite
         };
 
         var firstSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
         var secondSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
         releaseSecond.SetResult("{\"total\":0,\"items\":[]}");
 
-        await secondSearch.WaitAsync(TimeSpan.FromSeconds(2));
-        await firstSearch.WaitAsync(TimeSpan.FromSeconds(2));
+        await secondSearch.WaitAsync(RegressionExecution.Timeout);
+        await firstSearch.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(2, calls, "A new voice search should start even when a previous search is still pending");
         AssertEqual(false, viewModel.IsSearching, "Search busy state should recover after replacing a pending search");
@@ -456,9 +456,9 @@ internal static class VoiceDiscoverySuite
 
         viewModel.VoiceIdInput = "33333333333333333333333333333333";
         var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await byIdStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
         viewModel.Dispose();
-        await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await submitTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing the view model should cancel by-ID lookup and restore busy state");
     }
@@ -480,10 +480,10 @@ internal static class VoiceDiscoverySuite
         };
 
         var searchTask = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await searchStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
         viewModel.Dispose();
         releaseSearch.SetResult("{\"total\":1,\"items\":[{\"_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"title\":\"Late Search\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}");
-        await searchTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await searchTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsSearching, "Disposing during search should restore search busy state");
         AssertEqual(false, viewModel.HasSearched, "Search completion after dispose should not mark search as completed");
@@ -511,10 +511,10 @@ internal static class VoiceDiscoverySuite
         };
 
         var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await byIdStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
         viewModel.Dispose();
         releaseById.SetResult("{\"_id\":\"cccccccccccccccccccccccccccccccc\",\"title\":\"Late Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await submitTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await submitTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
         AssertEqual(0, viewModel.ByIdResults.Count, "By-ID completion after disposal must not publish an Apply card");
@@ -746,13 +746,13 @@ internal static class VoiceDiscoverySuite
             SearchQuery = "first",
         };
         var first = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
         viewModel.SearchQuery = "second";
         await viewModel.SearchVoicesCommand.ExecuteAsync(null);
         releaseFirst.SetResult(CreateSearchResponse(
             new { total = 1000000, total_is_exact = false, max_offset = 1000, has_more = true },
             new { _id = "old", title = "Stale result" }));
-        await first.WaitAsync(TimeSpan.FromSeconds(2));
+        await first.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(2, viewModel.SearchTotalPages, "A replaced response must not overwrite applied pagination");
         AssertEqual("New result", viewModel.SearchResults[0].Title, "A replaced response must not overwrite applied cards");
         viewModel.SearchQuery = "uncommitted edit";
@@ -908,8 +908,8 @@ internal static class VoiceDiscoverySuite
 
         var searchTask = viewModel.SearchVoicesCommand.ExecuteAsync(null);
         var byIdTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await searchStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        await byIdStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
+        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, viewModel.IsSearching, "Search should be busy before disposal");
         AssertEqual(true, viewModel.IsSubmittingVoiceId, "By-ID lookup should be busy before disposal");
 
@@ -932,8 +932,8 @@ internal static class VoiceDiscoverySuite
 
         releaseSearch.SetResult("{\"total\":0,\"items\":[]}");
         releaseById.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await searchTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await byIdTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await searchTask.WaitAsync(RegressionExecution.Timeout);
+        await byIdTask.WaitAsync(RegressionExecution.Timeout);
         viewModel.Dispose();
     }
 }

@@ -24,7 +24,7 @@ internal static class StreamingEntrySuite
         var session = new StreamingSessionDouble();
         using var plugin = CreatePlugin(() => session);
         plugin.Init(CreateContext(settings: settings, httpService: httpService, audioPlayer: hostAudio));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         network.Set(true);
         await plugin.PlayAudioAsync("A prefix and its tail.");
 
@@ -45,11 +45,11 @@ internal static class StreamingEntrySuite
         var session = new StreamingSessionDouble { Handler = (_, _, token) => release.Task.WaitAsync(token) };
         using var plugin = CreatePlugin(() => session);
         plugin.Init(CreateContext(settings: settings));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         network.Set(true);
         var playback = plugin.PlayAudioAsync("Immutable prefix and a longer tail.");
-        await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await session.Entered.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, viewModel.IsApiKeyInputLocked, "Active streaming should lock its captured ViewModel key");
         viewModel.Speed = 1.75;
         viewModel.Mp3Bitrate = 64;
@@ -58,7 +58,7 @@ internal static class StreamingEntrySuite
         AssertEqual(128, session.Request.Mp3Bitrate, "Later settings edits must not change active bitrate");
         AssertEqual("mp3", session.Request.AudioFormat, "Active format must remain immutable");
         release.TrySetResult();
-        await playback.WaitAsync(TimeSpan.FromSeconds(2));
+        await playback.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(false, viewModel.IsApiKeyInputLocked, "Completion should release only its own key operation");
     }
 
@@ -79,18 +79,18 @@ internal static class StreamingEntrySuite
         var created = 0;
         using var plugin = CreatePlugin(() => ++created == 1 ? first : final);
         plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         network.Set(true);
         var firstCall = plugin.PlayAudioAsync("first");
-        await first.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await first.Entered.Task.WaitAsync(RegressionExecution.Timeout);
         var secondCall = plugin.PlayAudioAsync("second");
-        await cleanupEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await cleanupEntered.Task.WaitAsync(RegressionExecution.Timeout);
         var thirdCall = plugin.PlayAudioAsync("third");
         AssertEqual(1, created, "Replacement calls must not create new output before prior cleanup completes");
         releaseCleanup.TrySetResult();
         await AssertCanceledAsync(firstCall);
         await AssertCanceledAsync(secondCall);
-        await thirdCall.WaitAsync(TimeSpan.FromSeconds(2));
+        await thirdCall.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(2, created, "A superseded waiting call must not create a redundant synthesis session");
         AssertEqual("third", final.Text, "Only the latest call may acquire output after retirement");
         AssertEqual(1, first.DisposeCount, "Cancelled output must be disposed before replacement starts");
@@ -106,10 +106,10 @@ internal static class StreamingEntrySuite
             var snackbar = new TestSnackbar();
             using var plugin = CreatePlugin(() => session);
             plugin.Init(CreateContext(snackbar: snackbar, settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             network.Set(true);
             var playback = plugin.PlayAudioAsync("cancel", caller.Token);
-            await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await session.Entered.Task.WaitAsync(RegressionExecution.Timeout);
             if (dispose) plugin.Dispose(); else caller.Cancel();
             await AssertCanceledAsync(playback);
             AssertEqual(true, session.CancellationObserved, "Caller/disposal must reach the owned streaming token");
@@ -138,10 +138,10 @@ internal static class StreamingEntrySuite
             };
             using var plugin = CreatePlugin(() => session);
             plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             network.Set(true);
             var playback = plugin.PlayAudioAsync("synchronous cancel", caller.Token);
-            await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await session.Entered.Task.WaitAsync(RegressionExecution.Timeout);
             try
             {
                 if (dispose) plugin.Dispose(); else caller.Cancel();
@@ -181,7 +181,7 @@ internal static class StreamingEntrySuite
         var session = new StreamingSessionDouble();
         using var plugin = CreatePlugin(() => session);
         plugin.Init(CreateContext(snackbar: snackbar, settings: settings, logger: logger));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         network.Set(true);
         session.Handler = (_, _, _) => throw new System.IO.InvalidDataException(AppliedKey + " http://user:private-password@localhost:8080");
         await plugin.PlayAudioAsync("transport failure");
@@ -192,7 +192,7 @@ internal static class StreamingEntrySuite
 
     internal static async Task AssertCanceledAsync(Task operation)
     {
-        try { await operation.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await operation.WaitAsync(RegressionExecution.Timeout); }
         catch (TaskCanceledException) { return; }
         throw new InvalidOperationException("Expected a quiet host-compatible TaskCanceledException.");
     }

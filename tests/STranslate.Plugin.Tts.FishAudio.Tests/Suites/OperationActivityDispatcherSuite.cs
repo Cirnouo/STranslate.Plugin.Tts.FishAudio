@@ -14,7 +14,7 @@ internal static class OperationActivityDispatcherSuite
     internal static async Task PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync()
     {
         // Independent error and cancellation cases each retain the shared STA's
-        // five-second budget (aggregate execution allowance: five -> ten seconds).
+        // shared execution guard (two separately owned actions).
         foreach (var cancel in new[] { false, true })
             await ObserveDispatcherActionAsync(cancel ? "cancellation" : "timeout", stage => PlaybackRetiresBoundCommandsAsync(cancel, stage));
     }
@@ -49,7 +49,7 @@ internal static class OperationActivityDispatcherSuite
             plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel),
                 snackbar: snackbar, logger: logger));
             stage("initialization complete; startup wait begin");
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             stage("startup complete; ViewModel begin");
             var viewModel = plugin.GetOrCreateSettingsViewModel();
             // A real WPF command listener retains its owning dispatcher even
@@ -70,7 +70,7 @@ internal static class OperationActivityDispatcherSuite
             stage("blocking playback wait begin");
 
             Exception? failure = null;
-            try { playback.WaitAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult(); }
+            try { playback.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult(); }
             catch (Exception error) { failure = error; }
             stage("blocking playback wait complete");
             if (cancel)
@@ -120,24 +120,25 @@ internal static class OperationActivityDispatcherSuite
     }
 
     private static async Task ObserveDispatcherActionAsync(string name, Func<Action<string>, Task> action,
-        Func<Func<Task>, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
     {
+        var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? actionFailure = null;
         var entered = 0;
         void Stage(string stage) => (write ?? Console.WriteLine)($"[activity-dispatcher/{name}] {stage} after {elapsed.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
-        Stage("queued");
+        Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
-            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(async () =>
+            await (dispatch ?? ((callback, timeout) => RunOnStaThreadAsync(callback, timeout)))(async () =>
             {
                 Volatile.Write(ref entered, 1);
                 Stage("entered");
                 try { await action(Stage); }
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { completion.TrySetResult(); Stage("action completed"); }
-            });
+            }, executionTimeout);
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
@@ -160,11 +161,12 @@ internal static class OperationActivityDispatcherSuite
         var runs = 0;
         var observations = 0;
         var messages = new List<string>();
+        TimeSpan? executionBudget = null;
         Exception? caught = null;
         try
         {
             await ObserveDispatcherActionAsync("fixture-outer", _ => { runs++; return Task.CompletedTask; },
-                dispatch: callback => { queued = callback; return Task.FromException(outer); },
+                dispatch: (callback, timeout) => { executionBudget = timeout; queued = callback; return Task.FromException(outer); },
                 observe: async completion => { observations++; await queued!(); await completion; }, write: messages.Add);
         }
         catch (Exception error) { caught = error; }
@@ -172,12 +174,14 @@ internal static class OperationActivityDispatcherSuite
         AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
         AssertEqual(1, observations, "The outer deadline must observe the same action once");
         AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), executionBudget, "Activity injected async dispatch receives the shared execution guard");
+        AssertEqual(true, messages.Any(message => message.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
 
         caught = null;
         try
         {
             await ObserveDispatcherActionAsync("fixture-observation-deadline", _ => throw new InvalidOperationException("Must not rerun"),
-                dispatch: _ => Task.FromException(outer),
+                dispatch: (_, _) => Task.FromException(outer),
                 observe: _ => Task.FromException(new TimeoutException("Synthetic observation deadline")), write: messages.Add);
         }
         catch (Exception error) { caught = error; }
@@ -191,7 +195,7 @@ internal static class OperationActivityDispatcherSuite
         try
         {
             await ObserveDispatcherActionAsync("fixture-entered", async _ => { runs++; await enteredRelease.Task; },
-                dispatch: callback => { originalAction = callback(); return Task.FromException(outer); },
+                dispatch: (callback, _) => { originalAction = callback(); return Task.FromException(outer); },
                 observe: async completion => { observations++; enteredRelease.SetResult(); await completion; await originalAction!; }, write: messages.Add);
         }
         catch (Exception error) { caught = error; }
@@ -205,7 +209,7 @@ internal static class OperationActivityDispatcherSuite
         try
         {
             await ObserveDispatcherActionAsync("fixture-inner", _ => Task.FromException(inner),
-                dispatch: callback => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add);
+                dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add);
         }
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(inner, caught), "An action's own startup timeout must retain its exact exception");
@@ -224,12 +228,12 @@ internal static class OperationActivityDispatcherSuite
                 using var viewModel = new SettingsViewModel(CreateContext(), new Settings());
                 var pasteButton = new Button { Command = viewModel.PasteApiKeyCommand };
                 viewModel.BeginApiKeyOperation();
-                Task.Run(viewModel.EndApiKeyOperation).WaitAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult();
+                Task.Run(viewModel.EndApiKeyOperation).WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
                 viewModel.BeginApiKeyOperation();
                 Drain(dispatcher);
                 AssertEqual(true, viewModel.IsApiKeyInputLocked, "A queued old End must publish the newer active count");
                 AssertEqual(false, pasteButton.IsEnabled, "A queued old End must not enable a newer operation's command");
-                Task.Run(viewModel.EndApiKeyOperation).WaitAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult();
+                Task.Run(viewModel.EndApiKeyOperation).WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
                 Drain(dispatcher);
                 AssertEqual(false, viewModel.IsApiKeyInputLocked, "The newer final End must unlock on the dispatcher");
                 AssertEqual(true, pasteButton.IsEnabled, "The command must become enabled after the final UI publication");

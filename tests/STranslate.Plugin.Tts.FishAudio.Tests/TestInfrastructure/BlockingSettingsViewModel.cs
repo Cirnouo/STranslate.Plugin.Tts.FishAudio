@@ -29,6 +29,6 @@ internal sealed class BlockingSettingsViewModel : SettingsViewModel
             settingsWriteLease: settingsWriteLease)
     {
         constructionSnapshotCaptured.TrySetResult();
-        releaseConstruction.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        releaseConstruction.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
     }
 }

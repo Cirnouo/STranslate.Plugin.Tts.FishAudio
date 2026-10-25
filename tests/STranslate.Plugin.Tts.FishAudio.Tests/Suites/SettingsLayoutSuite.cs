@@ -39,7 +39,7 @@ internal static class SettingsLayoutSuite
 
     internal static async Task InlineNumericInteractionsAsync()
     {
-        // Every locale retains the same shared STA and five-second action
+        // Every locale retains the same shared STA and shared execution action
         // deadline. CI must not fit eight complete UI fixtures into one action.
         foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
             await RunOnStaThreadAsync(() => InlineNumericEditorSuite.RunForCulture(CreateThemedView, Layout, language, culture));
@@ -57,7 +57,8 @@ internal static class SettingsLayoutSuite
             SelectedVoiceHeartSharesFavoriteState,
             PasteButtonsReserveInputSpace,
             SelectionAndPagingActionsUseBareIcons,
-            LoudnessCardFollowsModelCapability,
+            () => LoudnessCardFollowsModelCapability(false),
+            () => LoudnessCardFollowsModelCapability(true),
             TopPMinimumKeepsSliderTracksAligned,
             ResultTogglesKeepIndependentViewState,
             SharedVoiceCardReflectsMetadataState,
@@ -445,25 +446,22 @@ internal static class SettingsLayoutSuite
         DrainBindings();
     }
 
-    private static void LoudnessCardFollowsModelCapability()
+    private static void LoudnessCardFollowsModelCapability(bool stored)
     {
-        foreach (var stored in new[] { false, true })
-        {
-            var settings = new Settings { NormalizeLoudness = stored, SelectedModel = FishAudioModelPolicy.S1Model };
-            using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
-            var view = CreateThemedView(viewModel);
-            DrainBindings();
-            var toggle = Descendants(view).OfType<ToggleSwitch>().Single(control =>
-                BindingOperations.GetBinding(control, ToggleSwitch.IsOnProperty)?.Path.Path == nameof(SettingsViewModel.NormalizeLoudness));
-            var card = Ancestor<SettingsCard>(toggle);
-            AssertEqual(Visibility.Collapsed, card.Visibility, "S1 must hide the entire unavailable loudness card");
-            AssertEqual(stored, settings.NormalizeLoudness, "Hiding loudness must preserve its saved value");
-            viewModel.SelectedModel = FishAudioModelPolicy.S21ProModel;
-            DrainBindings();
-            AssertEqual(Visibility.Visible, card.Visibility, "S2.1 must restore the supported loudness card");
-            AssertEqual(true, toggle.IsEnabled, "The restored loudness setting must be usable");
-            AssertEqual(stored, toggle.IsOn, "The restored setting must display its saved value");
-        }
+        var settings = new Settings { NormalizeLoudness = stored, SelectedModel = FishAudioModelPolicy.S1Model };
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = CreateThemedView(viewModel);
+        DrainBindings();
+        var toggle = Descendants(view).OfType<ToggleSwitch>().Single(control =>
+            BindingOperations.GetBinding(control, ToggleSwitch.IsOnProperty)?.Path.Path == nameof(SettingsViewModel.NormalizeLoudness));
+        var card = Ancestor<SettingsCard>(toggle);
+        AssertEqual(Visibility.Collapsed, card.Visibility, "S1 must hide the entire unavailable loudness card");
+        AssertEqual(stored, settings.NormalizeLoudness, "Hiding loudness must preserve its saved value");
+        viewModel.SelectedModel = FishAudioModelPolicy.S21ProModel;
+        DrainBindings();
+        AssertEqual(Visibility.Visible, card.Visibility, "S2.1 must restore the supported loudness card");
+        AssertEqual(true, toggle.IsEnabled, "The restored loudness setting must be usable");
+        AssertEqual(stored, toggle.IsOn, "The restored setting must display its saved value");
     }
 
     private static void TopPMinimumKeepsSliderTracksAligned()

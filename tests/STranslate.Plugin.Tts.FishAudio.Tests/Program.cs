@@ -1,3 +1,54 @@
+if (args.Contains("--execution-guard-tests"))
+{
+    await RegressionExecutionSuite.RunAsync();
+    Console.WriteLine("Regression execution guard contracts passed.");
+    return;
+}
+
+if (args.Contains("--native-key-state-tests"))
+{
+    await NativeKeyboardStateSuite.RunAsync();
+    Console.WriteLine("Native keyboard state fixture regressions passed.");
+    return;
+}
+
+if (args.Contains("--control-cursor-late-combo-tests"))
+{
+    await ControlCursorSuite.RunLateComboAsync();
+    Console.WriteLine("Late-realized native Bitrate combo cursor tests passed.");
+    return;
+}
+
+if (args.Contains("--release-documentation-tests"))
+{
+    RepositoryContractSuite.Release112MetadataIsComplete();
+    RepositoryContractSuite.Release111MetadataIsComplete();
+    RepositoryContractSuite.Release110MetadataIsComplete();
+    Console.WriteLine("Published release documentation contracts passed.");
+    return;
+}
+
+if (args.Contains("--control-cursor-lifecycle-tests"))
+{
+    await ControlCursorSuite.RunLifecycleAsync();
+    Console.WriteLine("Control cursor local-reload and foreign-removal tests passed.");
+    return;
+}
+
+if (args.Contains("--control-cursor-tests"))
+{
+    await ControlCursorSuite.RunAsync();
+    Console.WriteLine("Control cursor tests passed.");
+    return;
+}
+
+if (args.Contains("--voice-description-tests"))
+{
+    await VoiceDescriptionSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-description-tests") + 1));
+    Console.WriteLine("Voice description tests passed.");
+    return;
+}
+
 if (args.Contains("--popup-proof-tests"))
 {
     var directory = args.ElementAtOrDefault(Array.IndexOf(args, "--popup-proof-tests") + 1)
@@ -65,6 +116,19 @@ if (args.Contains("--preview-ownership-compatibility-tests"))
     return;
 }
 
+if (args.Contains("--numeric-bottom-tests"))
+{
+    await NumericBottomSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-bottom-tests") + 1));
+    Console.WriteLine("Numeric visible-bottom regressions passed.");
+    return;
+}
+
+if (args.Contains("--numeric-bottom-lifecycle-tests"))
+{
+    await NumericAlignmentLifecycleSuite.RunAsync();
+    return;
+}
+
 if (args.Contains("--numeric-typography-tests"))
 {
     await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
@@ -83,6 +147,7 @@ if (args.Contains("--numeric-glyph-observation-tests"))
 if (args.Contains("--search-adjustment-diagnostic-tests"))
 {
     await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+    await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
     Console.WriteLine("Search adjustment deadline diagnostic regressions passed.");
     return;
 }
@@ -384,6 +449,7 @@ OperationActivitySuite.OperationActivityCounterPublishesPendingStateBeforeRethro
 await OperationActivitySuite.OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync();
 OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangingReentrancy();
 await OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync();
+await RegressionExecutionSuite.RunAsync();
 await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
 await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
 await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
@@ -574,6 +640,8 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 // Preserve the existing ink suite's first-use DPI characterization before
 // the new numeric group explicitly warms actual DPI on compiled text views.
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
+await NumericBottomSuite.RunAsync(null);
+await NumericAlignmentLifecycleSuite.RunAsync();
 
 await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
@@ -584,8 +652,12 @@ await VoiceLanguageTagsSuite.RunAllAsync();
 await PageEntrySuite.RunAllAsync();
 await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
+await NativeKeyboardStateSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
+await VoiceDescriptionSuite.RunAsync();
+await ControlCursorSuite.RunAsync();
 await VoiceLikeSuite.RunAllAsync();
 await AvatarPreviewSuite.RunAllAsync();
 await SearchPreviewRetentionSuite.RunAllAsync();

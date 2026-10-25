@@ -15,7 +15,7 @@ Use meaningful behavior/compatibility regressions at fake network, clock, storag
 | Before | Canonical owner |
 |---|---|
 | Editing C# behavior, settings, concurrency or UI bindings | [C# policy](docs/policies/csharp.md), the affected [current domain specification](docs/specs/README.md), and its linked ADRs; use [glossary terms](docs/glossary.md). |
-| Choosing verification or claiming completion | [Verification policy](docs/policies/verification.md). |
+| Designing or modifying tests, choosing verification or claiming completion | [Verification policy](docs/policies/verification.md). |
 | Changing streaming protocol, text preparation or playback | [Streaming validation policy](docs/policies/streaming-validation.md) and the affected streaming specs. |
 | Calling real Fish Audio APIs, handling keys or publishing response evidence | [API evidence policy](docs/policies/api-evidence.md). |
 | Editing README, guides, maintenance docs or moving their assets | [Documentation policy](docs/policies/documentation.md); README and guides have five languages, changelog prose is Chinese, other maintenance docs are English. |

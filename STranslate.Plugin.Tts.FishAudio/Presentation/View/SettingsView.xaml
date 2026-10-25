@@ -14,7 +14,7 @@
     d:DataContext="{d:DesignInstance Type=vm:SettingsViewModel}"
     d:DesignHeight="1400"
     d:DesignWidth="600"
-    mc:Ignorable="d">
+    mc:Ignorable="d" view:ActionCursor.IsScope="True">
 
     <UserControl.Resources>
         <!-- Repository-owned rounded contour, shared by outline/filled Like actions and their tab. -->
@@ -41,6 +41,18 @@
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <conv:VoiceCreationDateConverter x:Key="VoiceCreationDateConverter" />
         <conv:VoiceDescriptionVisibilityConverter x:Key="VoiceDescriptionVisibilityConverter" />
+        <DataTemplate x:Key="VoiceDescriptionToolTipTemplate">
+            <TextBlock Text="{Binding}" MaxWidth="360" TextWrapping="Wrap" />
+        </DataTemplate>
+        <Style x:Key="VoiceDescriptionStyle" TargetType="TextBlock">
+            <!-- A fractional native line extent must not round down and hide its last line. -->
+            <Setter Property="UseLayoutRounding" Value="False" />
+            <Style.Triggers>
+                <Trigger Property="Visibility" Value="Collapsed">
+                    <Setter Property="ToolTipService.IsEnabled" Value="False" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         <conv:TaskCountConverter x:Key="TaskCountConverter" />
         <conv:AvatarPreviewRingConverter x:Key="AvatarPreviewRingConverter" />
         <conv:AvatarPreviewRingConverter x:Key="AvatarPreparingRingConverter" IsIndeterminate="True" />
@@ -89,7 +101,6 @@
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_CopyVoiceId}" />
             <Setter Property="AutomationProperties.HelpText" Value="{Binding Content.Text, RelativeSource={RelativeSource Self}}" />
             <Setter Property="Template">
@@ -383,16 +394,20 @@
                                     <TextBlock x:Name="CardTitleText" Text="{Binding Title}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis"
                                                AutomationProperties.HelpText="{Binding Title}" />
                                 </Button>
-                                <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <TextBlock Text="{Binding AuthorName}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                                <TextBlock Text="·" Margin="6,0,6,0" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding AuthorName}" FontSize="11" FontWeight="Normal" TextTrimming="CharacterEllipsis"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                            ToolTip="{Binding AuthorName}" AutomationProperties.Name="{Binding AuthorName}" />
                             </view:VoiceHeaderPanel>
                         </DockPanel>
-                        <TextBlock Text="{Binding Description}"
+                        <TextBlock Text="{Binding Description}" Style="{StaticResource VoiceDescriptionStyle}"
                                    Visibility="{Binding Description, Converter={StaticResource VoiceDescriptionVisibilityConverter}}"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"
-                                   TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30" />
+                                   TextTrimming="WordEllipsis" TextWrapping="Wrap" MaxHeight="30">
+                            <TextBlock.ToolTip>
+                                <ToolTip Content="{Binding Description}" ContentTemplate="{StaticResource VoiceDescriptionToolTipTemplate}" />
+                            </TextBlock.ToolTip>
+                        </TextBlock>
                         <view:VoiceLanguageTags Languages="{Binding Languages}" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0"
                                     Visibility="{Binding IsLoadingMetadata, Converter={StaticResource BtvConverter}}">
@@ -453,7 +468,7 @@
             BorderThickness="1"
             CornerRadius="8"
             ClipToBounds="True"
-            Cursor="Hand"
+            view:ActionCursor.IsAction="True"
             MouseLeftButtonUp="S21ProFreePromoCard_MouseLeftButtonUp">
             <Grid>
                 <Viewbox Stretch="Uniform" StretchDirection="DownOnly">
@@ -758,16 +773,20 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </Button>
-                            <TextBlock Text="·" Margin="6,0,6,0" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <TextBlock Text="{Binding CachedVoiceAuthor}" FontSize="12" FontWeight="Normal" TextTrimming="CharacterEllipsis"
+                            <TextBlock Text="·" Margin="6,0,6,0" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{Binding CachedVoiceAuthor}" FontSize="11" FontWeight="Normal" TextTrimming="CharacterEllipsis"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        ToolTip="{Binding CachedVoiceAuthor}" AutomationProperties.Name="{Binding CachedVoiceAuthor}" />
                         </view:VoiceHeaderPanel>
                     </DockPanel>
-                    <TextBlock Text="{Binding CachedVoiceDescription}"
+                    <TextBlock Text="{Binding CachedVoiceDescription}" Style="{StaticResource VoiceDescriptionStyle}"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontSize="12" TextWrapping="Wrap" TextTrimming="WordEllipsis" MaxHeight="36"
-                               Visibility="{Binding CachedVoiceDescription, Converter={StaticResource VoiceDescriptionVisibilityConverter}}" />
+                               Visibility="{Binding CachedVoiceDescription, Converter={StaticResource VoiceDescriptionVisibilityConverter}}">
+                        <TextBlock.ToolTip>
+                            <ToolTip Content="{Binding CachedVoiceDescription}" ContentTemplate="{StaticResource VoiceDescriptionToolTipTemplate}" />
+                        </TextBlock.ToolTip>
+                    </TextBlock>
                     <view:VoiceLanguageTags Languages="{Binding CachedVoiceLanguages}" />
                     <Grid Margin="0,4,0,0" Visibility="{Binding CachedVoiceId, Converter={StaticResource StringToVisibilityConverter}}">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

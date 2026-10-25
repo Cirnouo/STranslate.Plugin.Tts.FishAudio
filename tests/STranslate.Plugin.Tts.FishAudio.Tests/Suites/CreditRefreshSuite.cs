@@ -46,13 +46,13 @@ internal static class CreditRefreshSuite
         };
 
         var commandTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
-        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual credit refresh should lock API Key input while the request is running");
         AssertEqual(false, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be disabled while API Key input is locked");
 
         releaseRequest.SetResult("{\"credit\":\"4.56\"}");
-        await commandTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await commandTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsApiKeyInputLocked, "Manual credit refresh should unlock API Key input after the request completes");
         AssertEqual(true, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be enabled after API Key input unlocks");

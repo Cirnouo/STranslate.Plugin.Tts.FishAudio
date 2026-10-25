@@ -139,7 +139,7 @@ internal static class VoiceLanguageSuite
         using (var plugin = new Main())
         {
             plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), settings.CachedVoice!.CreatedAt, "Startup conditional persistence includes creation date");
             AssertEqual(settings.CachedVoice.CreatedAt, plugin.GetOrCreateSettingsViewModel().CachedVoiceCreatedAt, "Startup selected facade carries creation date");
             AssertEnumerableEqual(new[] { "zh-cn", "ja" }, settings.CachedVoice!.Languages, "Startup refresh persists normalized languages");
@@ -149,7 +149,7 @@ internal static class VoiceLanguageSuite
         using (var plugin = new Main())
         {
             plugin.Init(CreateContext(settings: settings, httpService: service), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             AssertEqual<DateTimeOffset?>(null, settings.CachedVoice!.CreatedAt, "Startup absent authoritative date clears stored date");
             AssertEqual<DateTimeOffset?>(null, plugin.GetOrCreateSettingsViewModel().CachedVoiceCreatedAt, "Startup absent date clears selected facade date");
         }

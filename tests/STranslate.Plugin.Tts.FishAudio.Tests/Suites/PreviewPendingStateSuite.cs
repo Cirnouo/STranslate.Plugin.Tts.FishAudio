@@ -38,7 +38,7 @@ internal static partial class PreviewSuite
         finally
         {
             response.SetResult(new MemoryStream([1, 2, 3]));
-            await first.WaitAsync(TimeSpan.FromSeconds(2));
+            await first.WaitAsync(RegressionExecution.Timeout);
         }
     }
 
@@ -132,7 +132,7 @@ internal static partial class PreviewSuite
             AssertEqual(!searchFirst, scenario.Item.IsPreparingPreview, "Only the current search target may show preparation");
 
             newResponse.SetResult(new MemoryStream([1, 2, 3]));
-            await next.WaitAsync(TimeSpan.FromSeconds(2));
+            await next.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(null, scenario.ViewModel.PreparingPreviewVoiceId, "The current successful request must clear its own spinner");
             AssertEqual(currentId, scenario.ViewModel.PreviewingVoiceId, "Only the current request may start playback");
         }
@@ -201,6 +201,6 @@ internal static partial class PreviewSuite
         while (queue.TryDequeue(out var publish)) publish();
         AssertEqual(null, visibleId, "Disposal must publish idle even if preparing callbacks were queued");
         response.SetResult(new MemoryStream([1]));
-        await next.WaitAsync(TimeSpan.FromSeconds(2));
+        await next.WaitAsync(RegressionExecution.Timeout);
     }
 }
