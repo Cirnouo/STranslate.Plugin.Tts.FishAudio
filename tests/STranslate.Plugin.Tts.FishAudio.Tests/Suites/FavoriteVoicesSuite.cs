@@ -9,6 +9,76 @@ using static TestAssertions;
 
 internal static class FavoriteVoicesSuite
 {
+    internal static void NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder()
+    {
+        var directory = CreateTempDirectory();
+        var cache = new VoiceMetadataCache();
+        cache.Put(Metadata(1));
+        cache.Put(Metadata(2));
+        var settings = SelectedSettings();
+        var context = CreateContext(settings: settings, pluginSettingsDirectoryPath: directory);
+        var commits = 0;
+        void Commit(string temporary, string destination) { commits++; File.Move(temporary, destination, true); }
+        using var store = new FavoriteVoiceStore(directory, Commit);
+        using var view = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache, favoriteVoiceStore: store);
+        var first = new VoiceSearchItem { Id = Id(1) };
+        var second = new VoiceSearchItem { Id = Id(2) };
+        view.SearchResults = [first, second];
+        view.ToggleFavoriteCommand.Execute(first);
+        view.ToggleFavoriteCommand.Execute(second);
+        AssertEnumerableEqual(new[] { Id(2), Id(1) }, view.FavoriteResults.Select(card => card.Id), "A later Like must display before the earlier Like");
+        AssertEnumerableEqual(new[] { Id(1), Id(2) }, store.Read(), "Presentation must preserve durable addition order");
+        var bytes = File.ReadAllBytes(FilePath(directory));
+        AssertEnumerableEqual(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[] { Id(1), Id(2) })), bytes, "Storage remains the exact ID-only UTF-8 array");
+        store.SetFavorite(Id(1), true);
+        AssertEnumerableEqual(bytes, File.ReadAllBytes(FilePath(directory)), "An already-satisfied explicit Like neither moves nor rewrites an ID");
+        view.SwitchToFavoritesCommand.Execute(null);
+        using (var restartedStore = new FavoriteVoiceStore(directory, Commit))
+        using (var restarted = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache, favoriteVoiceStore: restartedStore))
+            AssertEnumerableEqual(new[] { Id(2), Id(1) }, restarted.FavoriteResults.Select(card => card.Id), "A fresh facade uses the same newest-first presentation");
+        AssertEqual(2, commits, "Already-satisfied Like, reload and fresh facade perform no atomic write");
+        AssertEnumerableEqual(bytes, File.ReadAllBytes(FilePath(directory)), "Reload and restart do not rewrite the durable file");
+        view.ToggleFavoriteCommand.Execute(first);
+        view.ToggleFavoriteCommand.Execute(first);
+        AssertEnumerableEqual(new[] { Id(1), Id(2) }, view.FavoriteResults.Select(card => card.Id), "Unlike followed by Like makes that voice globally newest");
+        AssertEnumerableEqual(new[] { Id(2), Id(1) }, store.Read(), "Re-like appends through the ordinary durable mutation");
+        using var relikedRestart = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache);
+        AssertEnumerableEqual(new[] { Id(1), Id(2) }, relikedRestart.FavoriteResults.Select(card => card.Id), "Re-like order survives restart");
+        AssertEqual(Id(99), settings.VoiceId, "Like ordering preserves selection");
+        AssertEqual("Selected", settings.CachedVoice!.Title, "Like ordering preserves the selected metadata snapshot");
+        AssertEqual(0, ((ContextProxy)(object)context).SaveCount, "Like ordering never writes host Settings");
+    }
+
+    internal static void LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage()
+    {
+        var directory = CreateTempDirectory();
+        File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 12).Select(Id)));
+        var bytes = File.ReadAllBytes(FilePath(directory));
+        var cache = new VoiceMetadataCache();
+        for (var number = 1; number <= 13; number++) cache.Put(Metadata(number));
+        using var view = new SettingsViewModel(CreateContext(pluginSettingsDirectoryPath: directory), new Settings(), null, null, voiceMetadataCache: cache);
+        AssertEnumerableEqual(new[] { 12, 11, 10, 9, 8, 7 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Legacy page one shows the newest six additions globally");
+        view.SwitchToFavoritesCommand.Execute(null);
+        view.FavoriteNextPageCommand.Execute(null);
+        AssertEnumerableEqual(new[] { 6, 5, 4, 3, 2, 1 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Legacy page two continues the reversed sequence without duplication");
+        AssertEnumerableEqual(bytes, File.ReadAllBytes(FilePath(directory)), "Legacy paging and reload preserve exact storage bytes");
+        view.ToggleFavoriteCommand.Execute(new VoiceSearchItem { Id = Id(13) });
+        AssertEqual(2, view.FavoritePage, "A new Like must not force navigation to page one");
+        AssertEqual("2", view.FavoritePageInput, "A new Like preserves the current page input");
+        AssertEqual(13, view.FavoriteCount, "A new Like updates the exact count");
+        AssertEnumerableEqual(new[] { 7, 6, 5, 4, 3, 2 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "The retained second page reflects the global insertion");
+        view.FavoritePrevPageCommand.Execute(null);
+        AssertEnumerableEqual(new[] { 13, 12, 11, 10, 9, 8 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "The new Like is first on page one");
+        view.FavoritePageInput = "3";
+        view.CommitFavoritePageInputCommand.Execute(null);
+        AssertEqual(Id(1), view.FavoriteResults.Single().Id, "The true final-page item remains the oldest surviving addition");
+        view.ToggleFavoriteCommand.Execute(view.FavoriteResults.Single());
+        AssertEqual(2, view.FavoritePage, "Removing the only final-page item preserves the existing clamp");
+        AssertEnumerableEqual(new[] { 7, 6, 5, 4, 3, 2 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Clamping retains the exact expected global page");
+        using var store = new FavoriteVoiceStore(directory);
+        AssertEnumerableEqual(Enumerable.Range(2, 12).Select(Id), store.Read(), "Global display reversal never reverses durable writes");
+    }
+
     internal static async Task FavoriteRequestsUseCurrentCredentialAsync()
     {
         foreach (var key in new[] { "configured-favorite-key", "", " \t" })
@@ -125,7 +195,7 @@ internal static class FavoriteVoicesSuite
         var duplicate = new VoiceSearchItem { Id = Id(13), Title = "Duplicate" };
         view.SearchResults = [item, duplicate];
         view.ByIdResults = [new VoiceSearchItem { Id = Id(13), Title = "By ID" }];
-        AssertEqual("Favorite 1", view.FavoriteResults[0].Title, "Favorites should use the shared cache immediately");
+        AssertEqual("Favorite 12", view.FavoriteResults[0].Title, "Newest favorites should use the shared cache immediately");
         view.ToggleFavoriteCommand.Execute(item);
         AssertEqual(13, view.FavoriteCount, "Adding a favorite should update local count");
         AssertEqual(true, item.IsFavorite && duplicate.IsFavorite && view.ByIdResults[0].IsFavorite, "Matching cards share favorite state by ID");
@@ -133,12 +203,20 @@ internal static class FavoriteVoicesSuite
         view.FavoritePageInput = "3";
         view.CommitFavoritePageInputCommand.Execute(null);
         AssertEqual(1, view.FavoriteResults.Count, "Favorite pagination includes its partial final page");
+        AssertEqual(Id(1), view.FavoriteResults.Single().Id, "The oldest addition is the true final-page item");
+        var finalDuplicate = new VoiceSearchItem { Id = Id(1), Title = "Final-page duplicate" };
+        var anotherFinalDuplicate = new VoiceSearchItem { Id = Id(1), Title = "Another final-page duplicate" };
+        var finalById = new VoiceSearchItem { Id = Id(1), Title = "Final-page By ID" };
+        view.SearchResults = [item, duplicate, finalDuplicate, anotherFinalDuplicate];
+        view.ByIdResults = [view.ByIdResults[0], finalById];
+        AssertEqual(true, finalDuplicate.IsFavorite && anotherFinalDuplicate.IsFavorite && finalById.IsFavorite, "The actual final-page ID starts liked across all duplicate cards");
         view.ToggleFavoriteCommand.Execute(view.FavoriteResults[0]);
         AssertEqual(12, view.FavoriteCount, "Removing a favorite immediately updates count");
         AssertEqual(2, view.FavoritePage, "Removing the last final-page item clamps to the preceding page");
         AssertEqual("2", view.FavoritePageInput, "Clamping updates page input");
         AssertEqual(6, view.FavoriteResults.Count, "Clamping rebuilds the visible six-card page");
-        AssertEqual(false, item.IsFavorite || duplicate.IsFavorite || view.ByIdResults[0].IsFavorite, "Removal clears all matching stars");
+        AssertEqual(false, finalDuplicate.IsFavorite || anotherFinalDuplicate.IsFavorite || finalById.IsFavorite, "Removal clears all matching Search/By-ID hearts for the actual final-page ID");
+        AssertEqual(true, item.IsFavorite && duplicate.IsFavorite && view.ByIdResults[0].IsFavorite, "Removing the final-page ID preserves all matching hearts for the newer Like");
         view.FavoritePageInput = "999";
         view.CommitFavoritePageInputCommand.Execute(null);
         AssertEqual("2", view.FavoritePageInput, "Invalid page input restores current page");

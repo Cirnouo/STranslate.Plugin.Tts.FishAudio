@@ -109,18 +109,28 @@ internal static class AcceptedPreviewContinuitySuite
     private static async Task FavoriteBrowsingAsync()
     {
         using var network = OverrideNetworkAvailability(true);
-        using var scenario = new Scenario(Origin.Favorite, favoriteIds: Enumerable.Range(1, 7).Select(i => i.ToString("x32")).ToArray());
+        using var scenario = new Scenario(Origin.Favorite, favoriteIds: Enumerable.Range(1, 6).Select(i => i.ToString("x32")).ToArray());
+        var origin = scenario.View.FavoriteResults.Single(item => item.Id == "00000000000000000000000000000001");
+        await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
+        scenario.CaptureAcceptedTimer();
+        var buffer = scenario.Player.LastOpenedStream!;
+        var playingId = origin.Id;
+        var detailRequests = scenario.Http.GetCallCount;
+        scenario.View.ToggleFavoriteCommand.Execute(scenario.View.SearchResults.Single(item => item.Id == OtherId));
+        AssertEqual(1, scenario.View.FavoritePage, "Liking another voice retains the current page");
+        AssertEqual(OtherId, scenario.View.FavoriteResults[0].Id, "The newly liked other voice appears first");
+        AssertEqual(false, scenario.View.FavoriteResults.Contains(origin), "The global reorder shifts the accepted origin off page one");
+        AssertEqual(false, origin.IsPreviewActive, "The shifted-off-page object releases its presentation state");
+        AssertEqual(detailRequests, scenario.Http.GetCallCount, "Reordering alone does not refresh preview metadata");
+        AssertRetained(scenario, buffer, playingId);
         scenario.View.FavoriteNextPageCommand.Execute(null);
         var final = scenario.View.FavoriteResults.Single();
-        // Use ID lookup, not ordering: Task6 may reverse the durable-order presentation.
+        AssertEqual(playingId, final.Id, "The accepted origin is now the only second-page item");
+        AssertEqual(true, final.IsBeingPreviewed, "The new current presentation projects the existing accepted output");
         scenario.View.FavoritePrevPageCommand.Execute(null);
         scenario.View.FavoritePageInput = "2";
         scenario.View.CommitFavoritePageInputCommand.Execute(null);
         final = scenario.View.FavoriteResults.Single(item => item.Id == final.Id);
-        await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(final);
-        scenario.CaptureAcceptedTimer();
-        var buffer = scenario.Player.LastOpenedStream!;
-        var playingId = final.Id;
         scenario.View.FavoritePrevPageCommand.Execute(null);
         AssertEqual(false, final.IsPreviewActive, "Leaving a Favorite page retires the old presentation object");
         AssertRetained(scenario, buffer, playingId);

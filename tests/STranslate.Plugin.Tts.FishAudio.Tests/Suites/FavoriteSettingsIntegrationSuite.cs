@@ -61,7 +61,7 @@ internal static class FavoriteSettingsIntegrationSuite
         {
             AssertEqual(2, view.FavoriteCount, "Independent IDs must load alongside migrated Settings");
             AssertEqual(false, view.FavoriteResults[0].HasMetadata, "A restart without memory cache must show a removable ID placeholder");
-            AssertEqual(Id(1), view.FavoriteResults[0].Title, "A cache miss displays the ID instead of dropping the favorite");
+            AssertEqual(Id(2), view.FavoriteResults[0].Title, "A cache miss displays the newest ID instead of dropping the favorite");
         }
         AssertEqual(expected, JsonSerializer.Serialize(legacy), "Loading favorites must preserve the key, selected voice/cache and every synthesis parameter");
         using var restarted = new SettingsViewModel(CreateContext(settings: legacy, pluginSettingsDirectoryPath: directory), legacy);

@@ -59,6 +59,8 @@ The lower-right date uses your system time zone (`yyyy-MM-dd`); hover for the co
 
 Likes are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved liked voice.
 
+Newly liked voices appear first. Unlike and like a voice again to return it to the front; the order survives restart. Adding a Like from a later page keeps you on that page. Return to page one to see the newest addition.
+
 In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
 Once a sample is playing from any card, Apply/Clear, Like/Unlike, queries, paging, panel changes and Key edits keep it playing. A matching card that appears again shows current progress and can Stop, even if sample information is temporarily missing. Playback ends with the sample, manual Stop, another preview, a playback failure or closing the plugin. While a sample is still loading, changing selection or the Key, or removing its source card, cancels that loading operation; click Preview again when needed.
