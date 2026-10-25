@@ -37,13 +37,13 @@ internal static class SearchAdjustmentControlSuite
             await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
             await RunOnStaThreadAsync(WindowAndScrollLifetime);
             await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            await RunMaterialFallbackAsync();
             return;
         }
         if (group is "material")
         {
             await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-            await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+            await RunMaterialFallbackAsync();
             return;
         }
         if (group is "radio")
@@ -66,7 +66,7 @@ internal static class SearchAdjustmentControlSuite
         await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
         await RunOnStaThreadAsync(ViewportClampsAcrossTriggerOrRefuses);
         await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-        await RunOnStaThreadAsync(PopupMaterialFallbackAndSourceLifetimes);
+        await RunMaterialFallbackAsync();
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
@@ -235,36 +235,39 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
     }
 
-    private static void PopupMaterialFallbackAndSourceLifetimes()
+    private static async Task RunMaterialFallbackAsync()
     {
         foreach (var supported in new[] { false, true })
         foreach (var result in new[] { new PopupBackdropResult(0, unchecked((int)0x80004005), 3), new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 3) })
-        {
-            var settings = new Settings();
-            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-            var view = SettingsLayoutSuite.CreateThemedView(vm);
-            using var ownerSource = Attach(view);
-            var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
-            var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
-            var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
-            var material = new PopupMaterial(popup, surface, api);
-            material.Begin(); popup.IsOpen = true; Drain();
-            var first = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
-            AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
-            AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
-            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
-            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
-            popup.IsOpen = false; Drain();
-            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
-            var calls = api.Applied.Count;
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
-            AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
-            material.Begin(); popup.IsOpen = true; Drain();
-            var second = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
-            popup.IsOpen = false; material.End(); Drain();
-        }
+            await RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result));
+    }
+
+    private static void PopupMaterialFallbackAndSourceLifetimes(bool supported, PopupBackdropResult result)
+    {
+        var settings = new Settings();
+        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        using var ownerSource = Attach(view);
+        var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
+        var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
+        var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
+        var material = new PopupMaterial(popup, surface, api);
+        material.Begin(); popup.IsOpen = true; Drain();
+        var first = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+        AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
+        AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
+        AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+        AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+        popup.IsOpen = false; Drain();
+        AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+        var calls = api.Applied.Count;
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+        AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
+        material.Begin(); popup.IsOpen = true; Drain();
+        var second = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+        popup.IsOpen = false; material.End(); Drain();
     }
 
     private sealed class TestPopupBackdropApi : IPopupBackdropApi
