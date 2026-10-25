@@ -116,8 +116,11 @@ internal static class InputClearControlSuite
             if (keyboardActivation)
             {
                 AssertEqual(true, button.IsKeyboardFocused, "The owned-source keyboard fixture focuses the native clear button");
-                button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(button), Environment.TickCount, Key.Space) { RoutedEvent = Keyboard.KeyDownEvent });
-                button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(button), Environment.TickCount, Key.Space) { RoutedEvent = Keyboard.KeyUpEvent });
+                NativeKeyboardStateFixture.Run((HwndSource)PresentationSource.FromVisual(button), () =>
+                {
+                    button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(button), Environment.TickCount, Key.Space) { RoutedEvent = Keyboard.KeyDownEvent });
+                    button.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(button), Environment.TickCount, Key.Space) { RoutedEvent = Keyboard.KeyUpEvent });
+                });
             }
             else
             {
