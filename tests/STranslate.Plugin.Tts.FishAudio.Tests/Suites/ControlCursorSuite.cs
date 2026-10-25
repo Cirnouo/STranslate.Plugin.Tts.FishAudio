@@ -19,7 +19,7 @@ using static VoiceDescriptionSuite;
 internal static class ControlCursorSuite
 {
     internal static Task RunLateComboAsync() => SearchAdjustmentControlSuite.ObserveMatrixActionAsync(
-        "pcm-to-mp3", stage => Inspect(320, false, stage), prefix: "cursor", details: "actual late-realized Bitrate combo.");
+        "pcm-to-mp3", stage => Inspect(320, false, CursorWorkflow.Format, stage), prefix: "cursor", details: "actual late-realized Bitrate combo.");
 
     internal static Task RunLifecycleAsync() => SearchAdjustmentControlSuite.ObserveMatrixActionAsync("lifecycle", stage =>
     {
@@ -38,7 +38,9 @@ internal static class ControlCursorSuite
         }, prefix: "cursor", details: "ordinary 5s construction action.");
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 320d, 640 })
-            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{width}/{dark}", stage => Inspect(width, dark, stage), prefix: "cursor", details: "plugin native routed events.");
+        foreach (var workflow in new[] { CursorWorkflow.Format, CursorWorkflow.Search, CursorWorkflow.ById, CursorWorkflow.Favorites, CursorWorkflow.General, CursorWorkflow.Overlays })
+            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{workflow}/{width}/{dark}",
+                stage => Inspect(width, dark, workflow, stage), prefix: "cursor", details: "independently owned plugin native interaction workflow.");
         foreach (var lifecycle in new[] { false, true })
         foreach (var dark in new[] { false, true })
             await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{(lifecycle ? "lifecycle" : "parts-template")}/{dark}", stage =>
@@ -52,39 +54,56 @@ internal static class ControlCursorSuite
             }, prefix: "cursor", details: "500 DIP native peers.");
     }
 
-    private static void Inspect(double width, bool dark, Action<string> stage)
+    private enum CursorWorkflow { Format, Search, ById, Favorites, General, Overlays }
+
+    private static void Inspect(double width, bool dark, CursorWorkflow workflow, Action<string> stage)
     {
+        stage("VM/settings setup begin");
         const string id = "0123456789abcdef0123456789abcdef";
         var settings = new Settings { VoiceId = id, CachedVoice = new()
         { Title = "Selected", AuthorName = "Author", Description = "Passive description", Languages = ["en", "ja", "ko", "fr", "de", "es", "pt", "ru", "tr", "zh"], SampleAudioUrl = "https://example.invalid/sample.mp3" } };
+        // Only Format owns the fresh PCM transition; other workflows start in its completed state.
+        if (workflow != CursorWorkflow.Format) settings.AudioFormat = "mp3";
         var context = ContextProxy.CreateContext(settings: settings);
         using var vm = new SettingsViewModel(context, settings);
         var item = new VoiceSearchItem { Id = id, Title = "Result", AuthorName = "Author", Description = "Passive description", Languages = settings.CachedVoice.Languages, SampleAudioUrl = settings.CachedVoice.SampleAudioUrl };
         vm.SearchResults = [item]; vm.ByIdResults = [item]; vm.FavoriteResults = [item]; vm.HasSearched = true;
+        if (workflow is CursorWorkflow.General or CursorWorkflow.Overlays) vm.BrowseMode = VoiceBrowseMode.Favorites;
+        stage("VM/card setup completed; view/theme construction begin");
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         AddOfflineAccent(view);
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+        stage("view/theme ready; native source construction begin");
         using var source = new HwndSource(new HwndSourceParameters("Offline routed cursor fixture")
         { Width = 900, Height = 2000, WindowStyle = unchecked((int)0x80000000) });
         source.RootVisual = view;
         SettingsLayoutSuite.Layout(view, width);
         stage("plugin source construction/layout completed");
         var saved = ((ContextProxy)(object)context).SaveCount;
-        var initialCombos = Visuals(view).OfType<ComboBox>().ToArray();
-        var initialBitrate = initialCombos.SingleOrDefault(combo => BindingOperations.GetBinding(combo, Selector.SelectedItemProperty)?.Path.Path == nameof(vm.Mp3Bitrate));
-        Console.WriteLine($"[cursor/initial/{width}/{dark}] PCM visibleCombos={initialCombos.Count(combo => combo.IsVisible)} visualCombos={initialCombos.Length}; bitrateInVisualTree={initialBitrate is not null}; bitrateLoaded={initialBitrate?.IsLoaded}; bitrateVisible={initialBitrate?.IsVisible}; scopeEnabled={ActionCursor.GetIsScope(view)}");
-        AssertEqual(3, initialCombos.Count(control => control.IsVisible), "PCM initially hides the fourth Bitrate combo");
-        vm.AudioFormat = "mp3"; SettingsLayoutSuite.Layout(view, width);
-        saved++;
-        var visibleCombos = Visuals(view).OfType<ComboBox>().Where(control => control.IsVisible).ToArray();
-        AssertEqual(4, visibleCombos.Length, "Switching to MP3 realizes all four actual native combo owners");
-        foreach (var combo in visibleCombos)
-            InspectCombo(combo, view, width);
-        AssertEqual(saved, ((ContextProxy)(object)context).SaveCount, "The fresh PCM-to-MP3 transition saves once and its native cursor queries do not save");
-        stage("fresh PCM-to-MP3 native dropdowns completed before any scope comparison/reset");
-        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+        if (workflow == CursorWorkflow.Format)
         {
+            var initialCombos = Visuals(view).OfType<ComboBox>().ToArray();
+            var initialBitrate = initialCombos.SingleOrDefault(combo => BindingOperations.GetBinding(combo, Selector.SelectedItemProperty)?.Path.Path == nameof(vm.Mp3Bitrate));
+            Console.WriteLine($"[cursor/initial/{width}/{dark}] PCM visibleCombos={initialCombos.Count(combo => combo.IsVisible)} visualCombos={initialCombos.Length}; bitrateInVisualTree={initialBitrate is not null}; bitrateLoaded={initialBitrate?.IsLoaded}; bitrateVisible={initialBitrate?.IsVisible}; scopeEnabled={ActionCursor.GetIsScope(view)}");
+            AssertEqual(3, initialCombos.Count(control => control.IsVisible), "PCM initially hides the fourth Bitrate combo");
+            vm.AudioFormat = "mp3"; SettingsLayoutSuite.Layout(view, width);
+            saved++;
+            var visibleCombos = Visuals(view).OfType<ComboBox>().Where(control => control.IsVisible).ToArray();
+            AssertEqual(4, visibleCombos.Length, "Switching to MP3 realizes all four actual native combo owners");
+            foreach (var combo in visibleCombos)
+                InspectCombo(combo, view, width);
+            AssertEqual(saved, ((ContextProxy)(object)context).SaveCount, "The fresh PCM-to-MP3 transition saves once and its native cursor queries do not save");
+            stage("fresh PCM-to-MP3 native dropdowns completed before any scope comparison/reset");
+        }
+        else if (workflow is CursorWorkflow.Search or CursorWorkflow.ById or CursorWorkflow.Favorites)
+        {
+            var mode = workflow switch
+            {
+                CursorWorkflow.Search => VoiceBrowseMode.Search,
+                CursorWorkflow.ById => VoiceBrowseMode.ById,
+                _ => VoiceBrowseMode.Favorites,
+            };
             vm.BrowseMode = mode; SettingsLayoutSuite.Layout(view, width);
             InspectAvatars(view, vm, item, width);
             foreach (var button in Visuals(view).OfType<ButtonBase>().Where(button => button.IsVisible && button.IsEnabled && button is not SettingsCard && button is not HyperlinkButton).ToArray())
@@ -102,73 +121,79 @@ internal static class ControlCursorSuite
                 AssertNative(disabled, "Initially command-disabled actions retain their native cursor");
             stage($"{mode} buttons/avatars/metadata completed");
         }
-        foreach (var (command, setBusy) in new (ICommand, Action<bool>)[]
+        else if (workflow == CursorWorkflow.General)
         {
-            (vm.RefreshCreditCommand, busy => vm.IsLoadingCredit = busy),
-            (vm.ClearCoverImageCacheCommand, busy => vm.IsClearingCoverImageCache = busy),
-            (vm.PasteApiKeyCommand, busy => vm.IsApiKeyInputLocked = busy),
-        })
-        {
-            var button = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, command));
-            setBusy(true); SettingsLayoutSuite.Layout(view, width);
-            AssertEqual(false, button.IsEnabled, "The real busy/key-lock command gate disables its action");
-            AssertNative(button, "Busy or locked actions retain native cursor");
-            setBusy(false); SettingsLayoutSuite.Layout(view, width); AssertHand(button, "Recovered command action returns Hand");
+            foreach (var (command, setBusy) in new (ICommand, Action<bool>)[]
+            {
+                (vm.RefreshCreditCommand, busy => vm.IsLoadingCredit = busy),
+                (vm.ClearCoverImageCacheCommand, busy => vm.IsClearingCoverImageCache = busy),
+                (vm.PasteApiKeyCommand, busy => vm.IsApiKeyInputLocked = busy),
+            })
+            {
+                var button = Visuals(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, command));
+                setBusy(true); SettingsLayoutSuite.Layout(view, width);
+                AssertEqual(false, button.IsEnabled, "The real busy/key-lock command gate disables its action");
+                AssertNative(button, "Busy or locked actions retain native cursor");
+                setBusy(false); SettingsLayoutSuite.Layout(view, width); AssertHand(button, "Recovered command action returns Hand");
+            }
+            foreach (var toggle in Visuals(view).OfType<ToggleSwitch>().Where(control => control.IsVisible))
+            {
+                AssertHand(toggle, "Native ToggleSwitch template is actionable");
+                toggle.SetCurrentValue(UIElement.IsEnabledProperty, false); AssertNative(toggle, "Disabled native toggle remains native"); toggle.SetCurrentValue(UIElement.IsEnabledProperty, true);
+            }
+            foreach (var slider in Visuals(view).OfType<Slider>().Where(control => control.IsVisible))
+            {
+                var before = slider.Value;
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                AssertHand(track.Thumb, "Native slider thumb is actionable");
+                AssertHand(track.DecreaseRepeatButton, "Native decrease track is actionable");
+                AssertHand(track.IncreaseRepeatButton, "Native increase track is actionable");
+                AssertEqual(before, slider.Value, "Querying the cursor cannot change a slider value");
+            }
+            foreach (var card in Visuals(view).OfType<SettingsCard>().Where(control => control.IsVisible))
+            {
+                AssertEqual(false, card.IsClickEnabled, "Product settings cards remain passive native cards");
+                AssertEqual(false, Query(card) == Cursors.Hand, "Passive native SettingsCard does not become Hand");
+                var header = Visuals(card).OfType<TextBlock>().FirstOrDefault(text => text.Text == card.Header?.ToString());
+                if (header is not null) AssertNative(header, "Passive native settings header does not become Hand");
+            }
+            stage("busy gates/native toggle/slider/passive cards completed");
+            foreach (var editor in Visuals(view).OfType<TextBox>().Where(control => control.IsVisible))
+                AssertInputUnchanged(view, editor);
+            foreach (var password in Visuals(view).OfType<PasswordBox>().Where(control => control.IsVisible))
+            {
+                var actual = Query(Hit(password)); ActionCursor.SetIsScope(view, false);
+                var native = Query(Hit(password)); ActionCursor.SetIsScope(view, true);
+                AssertEqual(native, actual, "Password input retains its native cursor");
+            }
+            foreach (var action in Visuals(view).OfType<FrameworkElement>().Where(element => element.IsVisible && ActionCursor.GetIsAction(element)))
+                AssertHand(action, "Explicit custom promo action is actionable");
+            foreach (var link in Visuals(view).OfType<HyperlinkButton>().Where(control => control.IsVisible))
+            {
+                var actual = Query(Hit(link)); ActionCursor.SetIsScope(view, false);
+                var native = Query(Hit(link)); ActionCursor.SetIsScope(view, true);
+                AssertEqual(native, actual, "Native hyperlink button cursor remains untouched");
+            }
+            var hyperlink = (Hyperlink)view.FindName("ProjectRepositoryLink");
+            var linkActual = Query(hyperlink); ActionCursor.SetIsScope(view, false);
+            var linkNative = Query(hyperlink); ActionCursor.SetIsScope(view, true);
+            AssertEqual(linkNative, linkActual, "Native hyperlink text cursor remains untouched");
+            var numeric = Visuals(view).OfType<InlineNumericEditor>().First(control => control.IsVisible);
+            SetOfflineInputBrushes((TextBox)numeric.FindName("EditorBox"));
+            var display = (Button)numeric.FindName("DisplayButton");
+            AssertHand(display, "Numeric resting display is actionable");
+            display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); SettingsLayoutSuite.Layout(view, width);
+            AssertEqual(true, numeric.IsEditing, "The native numeric input is realized in editing state");
+            AssertInputUnchanged(view, (TextBox)numeric.FindName("EditorBox"));
+            AssertNative((TextBlock)numeric.FindName("UnitText"), "Separate numeric units remain passive");
+            numeric.CommitEdit();
+            stage("inputs/links/numeric editing completed");
         }
-        foreach (var toggle in Visuals(view).OfType<ToggleSwitch>().Where(control => control.IsVisible))
+        else
         {
-            AssertHand(toggle, "Native ToggleSwitch template is actionable");
-            toggle.SetCurrentValue(UIElement.IsEnabledProperty, false); AssertNative(toggle, "Disabled native toggle remains native"); toggle.SetCurrentValue(UIElement.IsEnabledProperty, true);
+            InspectPopups(view, vm, width);
+            stage("owned adjustment/language popups completed");
         }
-        foreach (var slider in Visuals(view).OfType<Slider>().Where(control => control.IsVisible))
-        {
-            var before = slider.Value;
-            var track = (Track)slider.Template.FindName("PART_Track", slider);
-            AssertHand(track.Thumb, "Native slider thumb is actionable");
-            AssertHand(track.DecreaseRepeatButton, "Native decrease track is actionable");
-            AssertHand(track.IncreaseRepeatButton, "Native increase track is actionable");
-            AssertEqual(before, slider.Value, "Querying the cursor cannot change a slider value");
-        }
-        foreach (var card in Visuals(view).OfType<SettingsCard>().Where(control => control.IsVisible))
-        {
-            AssertEqual(false, card.IsClickEnabled, "Product settings cards remain passive native cards");
-            AssertEqual(false, Query(card) == Cursors.Hand, "Passive native SettingsCard does not become Hand");
-            var header = Visuals(card).OfType<TextBlock>().FirstOrDefault(text => text.Text == card.Header?.ToString());
-            if (header is not null) AssertNative(header, "Passive native settings header does not become Hand");
-        }
-        stage("busy gates/native toggle/slider/passive cards completed");
-        foreach (var editor in Visuals(view).OfType<TextBox>().Where(control => control.IsVisible))
-            AssertInputUnchanged(view, editor);
-        foreach (var password in Visuals(view).OfType<PasswordBox>().Where(control => control.IsVisible))
-        {
-            var actual = Query(Hit(password)); ActionCursor.SetIsScope(view, false);
-            var native = Query(Hit(password)); ActionCursor.SetIsScope(view, true);
-            AssertEqual(native, actual, "Password input retains its native cursor");
-        }
-        foreach (var action in Visuals(view).OfType<FrameworkElement>().Where(element => element.IsVisible && ActionCursor.GetIsAction(element)))
-            AssertHand(action, "Explicit custom promo action is actionable");
-        foreach (var link in Visuals(view).OfType<HyperlinkButton>().Where(control => control.IsVisible))
-        {
-            var actual = Query(Hit(link)); ActionCursor.SetIsScope(view, false);
-            var native = Query(Hit(link)); ActionCursor.SetIsScope(view, true);
-            AssertEqual(native, actual, "Native hyperlink button cursor remains untouched");
-        }
-        var hyperlink = (Hyperlink)view.FindName("ProjectRepositoryLink");
-        var linkActual = Query(hyperlink); ActionCursor.SetIsScope(view, false);
-        var linkNative = Query(hyperlink); ActionCursor.SetIsScope(view, true);
-        AssertEqual(linkNative, linkActual, "Native hyperlink text cursor remains untouched");
-        var numeric = Visuals(view).OfType<InlineNumericEditor>().First(control => control.IsVisible);
-        SetOfflineInputBrushes((TextBox)numeric.FindName("EditorBox"));
-        var display = (Button)numeric.FindName("DisplayButton");
-        AssertHand(display, "Numeric resting display is actionable");
-        display.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); SettingsLayoutSuite.Layout(view, width);
-        AssertEqual(true, numeric.IsEditing, "The native numeric input is realized in editing state");
-        AssertInputUnchanged(view, (TextBox)numeric.FindName("EditorBox"));
-        AssertNative((TextBlock)numeric.FindName("UnitText"), "Separate numeric units remain passive");
-        numeric.CommitEdit();
-        stage("inputs/links/numeric editing completed");
-        InspectPopups(view, vm, width);
-        stage("owned adjustment/language popups completed");
         AssertEqual(saved, ((ContextProxy)(object)context).SaveCount, "Cursor queries do not save settings");
         stage("plugin assertions completed; source cleanup next");
     }

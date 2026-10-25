@@ -1,0 +1,25 @@
+# Input actions, applied search intent and popup material
+
+Status: authorized implementation design; these additions and the remaining integration gate are not yet shipped.
+
+This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains blocked by the cursor fixture's finite late composite action. Preserve that failure and every successful description assertion. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
+
+## Required behavior
+
+API Key, Search and By-ID receive an internal icon-only x shown for nonempty text, including spaces. It sits after the editable text and before Paste/Adjust, with a real reserved native text viewport. Preserve existing native styling, 28-DIP embedded targets, input baselines and action ownership. Keep the toolkit's independent built-in clear adornment disabled. Use localized accessible names/tooltips without a visible label; reuse generic existing Clear text when appropriate.
+
+Clear only through the existing property/command owners. API Key retains immediate accepted-save, credential retirement, failed-save rollback and input-lock semantics. Search clears only the input draft, with no automatic request, result reset, filter reset or new cancellation policy. By-ID retains immediate input-generation/error/timer/result retirement and cancellation. Focus returns to the surviving enabled input; native input/link cursor ownership remains unchanged.
+
+Search has three lifetimes. Applied language/sort intent is an immutable session snapshot committed immediately at Apply. Successful full query/filter/sort, displayed results and pagination remain committed together only after a validated current-owner response. The open popup draft stays detached. Reopening before the response shows the applied selection; a response never overwrites an open draft. Failure/cancellation/credential retirement retain applied intent and previous successful display/paging. Normal Search captures current visible text plus applied filters; paging uses the last successful full criteria. Keep exactly one page-one request per Apply, even unchanged; Reset/close alone issue none. Rebuild resets to All plus relevance; no persistent preference is added.
+
+Both owned popup shells request the host's Mica family through the existing public toolkit/native source path. Accept successful frame/readback type2, reject Acrylic3 and retain explicit native opaque fallback. Preserve the22621 floor, precreation nonlayered choice, transparent composition, theme/corners/failure/source ownership. Native material request/readback and composed appearance are different claims. No host HWND, new Window/dependency/controller, activation spoof or foreground escalation.
+
+A conditional native-heading identity addition requires a bounded compiled-owned-Popup experiment and real background MCP discoverability benefit before retention. Use only the existing localized heading, no visible caption style, source-specific prior-text ownership/compare-before-restore and independent optional failures. If the ordinary MCP list still omits it, drop unused identity code and retain the actual capture limit.
+
+## Boundaries and verification
+
+Public plugin identity/version1.1.2/schema2/dependencies remain. Preserve existing numeric/card/preview/selection/cache/storage contracts, seven UI languages and five-language user guidance where changed. No synthesis, release tag or GitHub Release.
+
+The remaining cursor composite must be reorganized by meaningful native interaction owners while preserving every assertion, supported context, initial no-scope-reset PCM transition, exact saves, foreign return and cleanup. The approved decomposition is twenty-nine five-second actions/145 seconds, replacing nine actions/45 seconds: construction1, four width/theme contexts each with format1/card modes3/general1/overlays1, native parts2 and lifecycle2. Each workflow owns a ViewModel/view/native source and no-query-save check. Only format changes PCM to MP3 and saves once; other workflows initialize the completed MP3 precondition without saving, with general/overlays starting Favorites and overlays then switching Search. Each action remains five seconds; the existing failed same-action observation remains bounded to twenty seconds and preserves the original failure. No production change or arbitrary sleep/retry is justified by the old envelope failure.
+
+Use fake held responses, storage/clock/audio boundaries and compiled native viewport/caret/focus/style/cursor checks on the shared STA. Retain global first-use raster order, original failures, existing default deadlines and bounded same-action failure observation. Final intended sources need the complete release/clean/test gate, current distributable inspection and independent review. Actual head/main CI, squash integration, local main fast-forward, background cua-driver host acceptance and managed archival remain required separate gates.
