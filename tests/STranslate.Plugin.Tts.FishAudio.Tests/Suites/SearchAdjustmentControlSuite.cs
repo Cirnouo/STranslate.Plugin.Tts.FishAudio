@@ -75,9 +75,10 @@ internal static class SearchAdjustmentControlSuite
     }
 
     internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
-        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
-        string prefix = "search-adjustment", string details = "320/480 DIP.")
+        Func<Action, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
+        string prefix = "search-adjustment", string details = "320/480 DIP.", TimeSpan? executionTimeout = null)
     {
+        var actionTimeout = executionTimeout ?? TimeSpan.FromSeconds(5);
         var elapsed = Stopwatch.StartNew();
         var phases = new ConcurrentQueue<string>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -85,17 +86,17 @@ internal static class SearchAdjustmentControlSuite
         long enteredAt = -1;
         void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
         void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); }
-        Stage("queued with original 5s action deadline");
+        Stage(FormattableString.Invariant($"queued with {(executionTimeout is null ? "original" : "explicit")} {actionTimeout.TotalSeconds}s action deadline"));
         try
         {
-            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(() =>
+            await (dispatch ?? ((callback, timeout) => RunOnStaThreadAsync(callback, timeout)))(() =>
             {
                 Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
                 Stage("entered");
                 try { action(Stage); }
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed"); completion.TrySetResult(); }
-            });
+            }, actionTimeout);
             (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; {details}");
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
@@ -129,11 +130,12 @@ internal static class SearchAdjustmentControlSuite
         var observations = 0;
         Exception? caught = null;
         var output = new List<string>();
+        TimeSpan? explicitBudget = null;
         try
         {
             await ObserveMatrixActionAsync("queued-fixture", stage => { runs++; stage("action body"); },
-                dispatch: callback => { queued = callback; throw outer; },
-                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add);
+                dispatch: (callback, timeout) => { explicitBudget = timeout; queued = callback; throw outer; },
+                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add, executionTimeout: TimeSpan.FromSeconds(20));
         }
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(outer, caught), "Observing a queued action must preserve the original outer deadline exception");
@@ -141,13 +143,15 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, runs, "Observation must execute that queued action once, without a replacement or retry");
         AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "A pre-entry deadline must report its queue boundary");
         AssertEqual(true, output.Any(line => line.Contains("action body", StringComparison.Ordinal)), "Failure output must retain the recorded phases");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), explicitBudget, "The explicit action budget must reach the dispatch boundary");
+        AssertEqual(true, output.Any(line => line.Contains("queued with explicit 20s action deadline", StringComparison.Ordinal)), "The queued diagnostic must describe the budget passed to dispatch");
 
         var inner = new TimeoutException("Synthetic action timeout");
         runs = 0; observations = 0; caught = null; output.Clear();
         try
         {
             await ObserveMatrixActionAsync("inner-fixture", _ => { runs++; throw inner; },
-                dispatch: callback => { callback(); return Task.CompletedTask; },
+                dispatch: (callback, _) => { callback(); return Task.CompletedTask; },
                 observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
         }
         catch (Exception error) { caught = error; }
@@ -175,7 +179,7 @@ internal static class SearchAdjustmentControlSuite
         var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Task? sameCompletion = null;
         var bounded = ObserveMatrixActionAsync("observation-fixture", _ => runs++,
-            dispatch: callback => { dispatches++; queued = callback; throw outer; },
+            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
             observe: completion => { sameCompletion = completion; observations++; observing.TrySetResult(); return completion; },
             write: output.Add, observationTimeProvider: clock);
         await observing.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -196,10 +200,12 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
 
         output.Clear();
+        TimeSpan? defaultBudget = null;
         await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
-            dispatch: callback => { callback(); return Task.CompletedTask; }, write: output.Add);
+            dispatch: (callback, timeout) => { defaultBudget = timeout; callback(); return Task.CompletedTask; }, write: output.Add);
         AssertEqual(1, output.Count, "A successful action emits one compact line");
         AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(5), defaultBudget, "An omitted action budget must retain the original five-second dispatch boundary");
     }
 
     private static FrameworkElement Control(SettingsView view)
