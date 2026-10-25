@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '10.0.403'
       - name: Audit all maintained NuGet dependency graphs
         shell: pwsh
         run: |
@@ -99,7 +99,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: '10.0.403'
       - name: Build, test, and verify package
         shell: pwsh
         run: .\build.ps1 -Release -Clean -Test
