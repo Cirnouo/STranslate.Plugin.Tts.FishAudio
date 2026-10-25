@@ -101,7 +101,7 @@ internal static class ApiKeyCompatibilitySuite
             if (path == RequestPath.Tts)
             {
                 plugin.Init(context);
-                await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+                await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             }
             else if (path != RequestPath.StartupCredit)
             {
@@ -128,7 +128,7 @@ internal static class ApiKeyCompatibilitySuite
                     break;
                 case RequestPath.StartupCredit:
                     plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-                    await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+                    await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
                     break;
             }
 

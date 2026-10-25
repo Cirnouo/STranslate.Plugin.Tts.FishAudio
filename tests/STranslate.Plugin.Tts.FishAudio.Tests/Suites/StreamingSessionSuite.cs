@@ -20,17 +20,17 @@ internal static class StreamingSessionSuite
         var observations = new List<StreamingObservation>();
         using var session = new NativeStreamingTtsSession(_ => socket, () => player, clock, observations.Add);
         var operation = session.PlayAsync(Request(), source, CancellationToken.None);
-        await player.FirstBlock.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await player.FirstBlock.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(1, socket.Sent.Count(m => Event(m) == "text"), "Only the first prefix may be sent before playback starts");
         AssertEqual(false, socket.Sent.Any(m => Event(m) == "stop"), "Long input must withhold stop before playback starts");
         AssertEqual(100, source.CharactersRead, "The source tail must remain completely unread");
         source.PermittedCharacters = source.Length;
         player.AllowStart.TrySetResult();
-        await player.InputEnded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await player.InputEnded.Task.WaitAsync(RegressionExecution.Timeout);
         clock.Advance(TimeSpan.FromSeconds(121));
         AssertEqual(false, operation.IsCompleted, "Validated finish cannot complete before output drains");
         player.AllowDrain.TrySetResult();
-        await operation.WaitAsync(TimeSpan.FromSeconds(5));
+        await operation.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(1, socket.MaximumConcurrentSends, "One session must own exactly one sender");
         AssertEqual(1, socket.MaximumConcurrentReceives, "One session must own exactly one receiver");
         AssertEqual(8, observations.Count, "Telemetry must contain at most the eight static first-stage observations");
@@ -43,7 +43,7 @@ internal static class StreamingSessionSuite
         var player = new SessionPlayerDouble();
         socket.OnSend = m => { if (Event(m) == "stop") { socket.QueueAudio([1, 2]); socket.QueueFinish(); } };
         using var session = new NativeStreamingTtsSession(_ => socket, () => player);
-        await session.PlayAsync(Request(), "Hello.", CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+        await session.PlayAsync(Request(), "Hello.", CancellationToken.None).WaitAsync(RegressionExecution.Timeout);
         AssertEnumerableEqual(new[] { "start", "text", "flush", "stop" }, socket.Sent.Select(Event), "Short final text may stop immediately");
         AssertEqual(2L, player.Bytes, "The successful stream must reach the player");
     }
@@ -79,7 +79,7 @@ internal static class StreamingSessionSuite
         var player = new SessionPlayerDouble { CaptureBytes = true };
         socket.OnSend = m => { if (Event(m) == "stop") { socket.QueueAudio(bytes, 7); socket.QueueFinish(); } };
         using var session = new NativeStreamingTtsSession(_ => socket, () => player);
-        await session.PlayAsync(Request(), "short", CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+        await session.PlayAsync(Request(), "short", CancellationToken.None).WaitAsync(RegressionExecution.Timeout);
         AssertSequenceEqual(bytes, player.Captured.ToArray(), "Fragmentation and queue slicing must preserve exact audio order");
         AssertEqual(true, player.MaximumBlock <= 16 * 1024, "Each owned queue block must be at most 16KiB");
     }
@@ -103,7 +103,7 @@ internal static class StreamingSessionSuite
             settings.SelectedModel = "changed";
             settings.Mp3Bitrate = 192;
             using var session = new NativeStreamingTtsSession(_ => socket, () => new SessionPlayerDouble(), new ManualStreamingTimeProvider());
-            await session.PlayAsync(request, "hello", CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5));
+            await session.PlayAsync(request, "hello", CancellationToken.None).WaitAsync(RegressionExecution.Timeout);
             var body = socket.Sent.First().GetProperty("request");
             AssertEqual("", body.GetProperty("text").GetString(), "Start must never upload the full input");
             AssertEqual(44100, body.GetProperty("sample_rate").GetInt32(), "Native rate must stay explicitly 44.1kHz");
@@ -131,13 +131,13 @@ internal static class StreamingSessionSuite
             };
             using var session = new NativeStreamingTtsSession(_ => socket, () => player);
             var operation = session.PlayAsync(Request(), new string('a', phase is "prefix" or "queue" ? 1000 : 10), cancellation.Token);
-            if (phase == "connect") await socket.Connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            else if (phase == "send-wait") await socket.SendEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (phase == "connect") await socket.Connected.Task.WaitAsync(RegressionExecution.Timeout);
+            else if (phase == "send-wait") await socket.SendEntered.Task.WaitAsync(RegressionExecution.Timeout);
             else if (phase == "receive") await WaitUntilAsync(() => socket.Sent.Any(m => Event(m) == "stop"));
-            else if (phase == "drain") await player.InputEnded.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            else if (phase == "drain") await player.InputEnded.Task.WaitAsync(RegressionExecution.Timeout);
             else if (phase is "prefix" or "queue")
             {
-                await player.FirstBlock.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                await player.FirstBlock.Task.WaitAsync(RegressionExecution.Timeout);
                 if (phase == "queue") await WaitUntilAsync(() => player.Activity!.IsBackpressured);
             }
             if (phase is not "device" and not "send") cancellation.Cancel();
@@ -156,7 +156,7 @@ internal static class StreamingSessionSuite
         using (var session = new NativeStreamingTtsSession(_ => socket, () => new SessionPlayerDouble(), clock))
         {
             var operation = session.PlayAsync(Request(), "short", CancellationToken.None);
-            await socket.Connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await socket.Connected.Task.WaitAsync(RegressionExecution.Timeout);
             clock.Advance(TimeSpan.FromSeconds(15));
             AssertEqual(true, await CaptureFailureAsync(operation) is TimeoutException, "Connect has its own 15-second deadline");
         }
@@ -167,7 +167,7 @@ internal static class StreamingSessionSuite
         using (var session = new NativeStreamingTtsSession(_ => socket, () => player, clock))
         {
             var operation = session.PlayAsync(Request(), new string('a', 1000), CancellationToken.None);
-            await player.FirstBlock.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await player.FirstBlock.Task.WaitAsync(RegressionExecution.Timeout);
             clock.Advance(TimeSpan.FromSeconds(119));
             await Task.Yield();
             AssertEqual(false, operation.IsCompleted, "Encoded audio cannot satisfy or shorten the first-PCM deadline");
@@ -187,8 +187,8 @@ internal static class StreamingSessionSuite
         using (var session = new NativeStreamingTtsSession(_ => socket, () => player, clock))
         {
             var operation = session.PlayAsync(Request(), new string('a', 1000), CancellationToken.None);
-            await player.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await stopped.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await player.Started.Task.WaitAsync(RegressionExecution.Timeout);
+            await stopped.Task.WaitAsync(RegressionExecution.Timeout);
             clock.Advance(TimeSpan.FromSeconds(30));
             AssertEqual(true, await CaptureFailureAsync(operation) is TimeoutException, "After playback, non-backpressured idle has its own 30-second deadline");
         }
@@ -206,7 +206,7 @@ internal static class StreamingSessionSuite
         };
         using var session = new NativeStreamingTtsSession(_ => socket, () => player, clock);
         var operation = session.PlayAsync(Request(), new string('a', 1000), CancellationToken.None);
-        await player.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await player.Started.Task.WaitAsync(RegressionExecution.Timeout);
         // Hold the reader before filling the queue so its pressure write cannot
         // already have completed while the receiver still owns its first lease.
         socket.QueueAudio(new byte[1024 * 1024]);
@@ -243,7 +243,7 @@ internal static class StreamingSessionSuite
         using (var session = new NativeStreamingTtsSession(_ => socket, () => player, clock))
         {
             var operation = session.PlayAsync(Request("s2.1-pro-free"), new string('a', 1000), CancellationToken.None);
-            await player.FirstBlock.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await player.FirstBlock.Task.WaitAsync(RegressionExecution.Timeout);
             clock.Advance(TimeSpan.FromSeconds(1));
             AssertEqual(true, await CaptureFailureAsync(operation) is InvalidOperationException, "A session crossing the cutoff must abort locally");
             AssertEqual(1, socket.ConnectCount, "A cutoff failure must never retry on a paid engine");
@@ -261,7 +261,7 @@ internal static class StreamingSessionSuite
             socket.OnSend = m => { if (Event(m) == "flush") socket.QueueAudio([1, 2]); };
             using var session = new NativeStreamingTtsSession(_ => socket, () => player);
             var operation = session.PlayAsync(Request(), new string('a', 1000), CancellationToken.None);
-            if (mode != "audio") await player.FirstBlock.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (mode != "audio") await player.FirstBlock.Task.WaitAsync(RegressionExecution.Timeout);
             if (mode == "receiver") socket.QueueEvent(new() { ["event"] = "error", ["message"] = "not for logs" });
             if (mode == "dispose") session.Dispose();
             var failure = await CaptureFailureAsync(operation);
@@ -302,14 +302,14 @@ internal static class StreamingSessionSuite
     private static string Event(JsonElement message) => message.GetProperty("event").GetString()!;
     private static async Task<Exception> CaptureFailureAsync(Task operation)
     {
-        try { await operation.WaitAsync(TimeSpan.FromSeconds(5)); }
+        try { await operation.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception ex) when (ex is not TimeoutException || operation.IsCompleted) { return ex; }
         throw new InvalidOperationException("The streaming operation did not fail promptly as expected.");
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var timeout = new CancellationTokenSource(RegressionExecution.Timeout);
         while (!predicate()) await Task.Delay(1, timeout.Token);
     }
 

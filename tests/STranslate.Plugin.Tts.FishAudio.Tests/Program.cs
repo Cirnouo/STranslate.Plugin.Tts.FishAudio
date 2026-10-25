@@ -1,3 +1,10 @@
+if (args.Contains("--execution-guard-tests"))
+{
+    await RegressionExecutionSuite.RunAsync();
+    Console.WriteLine("Regression execution guard contracts passed.");
+    return;
+}
+
 if (args.Contains("--native-key-state-tests"))
 {
     await NativeKeyboardStateSuite.RunAsync();
@@ -140,6 +147,7 @@ if (args.Contains("--numeric-glyph-observation-tests"))
 if (args.Contains("--search-adjustment-diagnostic-tests"))
 {
     await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+    await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
     Console.WriteLine("Search adjustment deadline diagnostic regressions passed.");
     return;
 }
@@ -441,6 +449,7 @@ OperationActivitySuite.OperationActivityCounterPublishesPendingStateBeforeRethro
 await OperationActivitySuite.OverlappingStartupManualAndTtsOperationsUnlockAfterFinalCompletionAsync();
 OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangingReentrancy();
 await OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync();
+await RegressionExecutionSuite.RunAsync();
 await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
 await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
 await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
@@ -643,6 +652,7 @@ await VoiceLanguageTagsSuite.RunAllAsync();
 await PageEntrySuite.RunAllAsync();
 await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
+await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 await NativeKeyboardStateSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();

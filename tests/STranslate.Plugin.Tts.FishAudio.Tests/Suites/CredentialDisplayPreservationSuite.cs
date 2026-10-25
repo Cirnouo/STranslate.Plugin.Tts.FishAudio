@@ -125,7 +125,7 @@ internal static class CredentialDisplayPreservationSuite
                     pending = view.PendingFavoriteMetadataTask;
                     break;
             }
-            await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await started.Task.WaitAsync(RegressionExecution.Timeout);
             var search = view.SearchResults;
             var favorite = view.FavoriteResults.Single();
             view.ApiKey = "pending-b";
@@ -136,7 +136,7 @@ internal static class CredentialDisplayPreservationSuite
             response.SetResult(operation == "search"
                 ? "{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}]}"
                 : "{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}");
-            await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            await pending.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(true, ReferenceEquals(search, view.SearchResults) && ReferenceEquals(favorite, view.FavoriteResults.Single()), "Late responses cannot replace retained card objects");
             AssertEqual(display, JsonSerializer.Serialize(new { Search = view.SearchResults, ById = view.ByIdResults, Favorite = favorite, Selected = SelectedDisplay(view) }), "Late responses cannot publish metadata into retained displays");
             AssertEqual("Selected before edit", settings.CachedVoice?.Title, "Late metadata cannot overwrite the retained persisted selection");
@@ -251,7 +251,7 @@ internal static class CredentialDisplayPreservationSuite
             }
             finally { SettingsViewModel.UiThreadInvokerOverride = null; }
             response.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Accepted pending response\"}]}");
-            await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            await pending.WaitAsync(RegressionExecution.Timeout);
             AssertEqual("Accepted pending response", view.SearchResults.Single().Title, "Accepted pending requests remain publishable after failed key persistence");
             AssertEqual("Bearer accepted-a", AssertHeaders(http.LastGetOptions, "Pending accepted request")["Authorization"], "Failed persistence cannot change request credentials");
         }
@@ -323,10 +323,10 @@ internal static class CredentialDisplayPreservationSuite
         var context = CreateContext(settings: stored, httpService: service);
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         view = plugin.GetOrCreateSettingsViewModel();
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await started.Task.WaitAsync(RegressionExecution.Timeout);
         var saves = ((ContextProxy)(object)context).SaveCount;
         response.SetResult("{\"_id\":\"" + Id + "\",\"title\":\"Late startup A\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, editedAtBoundary, "The fixture must change credentials after response validation and before the startup save predicate");
         AssertEqual("Retained startup display", stored.CachedVoice?.Title, "The startup save predicate must reject its old token even when the key returns to A");
         AssertEqual("Retained startup display", view.CachedVoiceTitle, "Rejected startup persistence cannot publish a new selected display");

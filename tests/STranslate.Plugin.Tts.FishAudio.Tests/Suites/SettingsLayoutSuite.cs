@@ -39,7 +39,7 @@ internal static class SettingsLayoutSuite
 
     internal static async Task InlineNumericInteractionsAsync()
     {
-        // Every locale retains the same shared STA and five-second action
+        // Every locale retains the same shared STA and shared execution action
         // deadline. CI must not fit eight complete UI fixtures into one action.
         foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
             await RunOnStaThreadAsync(() => InlineNumericEditorSuite.RunForCulture(CreateThemedView, Layout, language, culture));

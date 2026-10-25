@@ -18,8 +18,6 @@ using static VoiceDescriptionSuite;
 
 internal static class ControlCursorSuite
 {
-    private static readonly TimeSpan LifecycleExecutionTimeout = TimeSpan.FromSeconds(20);
-
     internal static Task RunLateComboAsync() => SearchAdjustmentControlSuite.ObserveMatrixActionAsync(
         "pcm-to-mp3", stage => Inspect(320, false, CursorWorkflow.Format, stage), prefix: "cursor", details: "actual late-realized Bitrate combo.");
 
@@ -28,8 +26,8 @@ internal static class ControlCursorSuite
         using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
         var view = SettingsLayoutSuite.CreateThemedView(vm); SettingsLayoutSuite.Layout(view);
         InspectNativePeers(view, stage, NativePeerWorkflow.Lifecycle);
-    }, prefix: "cursor", details: FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {LifecycleExecutionTimeout.TotalSeconds}s action deadline."),
-        executionTimeout: LifecycleExecutionTimeout);
+    }, prefix: "cursor", details: FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {RegressionExecution.Timeout.TotalSeconds}s action deadline."),
+        executionTimeout: RegressionExecution.Timeout);
 
     internal static async Task RunAsync()
     {
@@ -38,7 +36,7 @@ internal static class ControlCursorSuite
             using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
             SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
             stage("compiled themed construction and layout completed");
-        }, prefix: "cursor", details: "ordinary 5s construction action.");
+        }, prefix: "cursor", details: "separate compiled construction action.");
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 320d, 640 })
         foreach (var workflow in new[] { CursorWorkflow.Format, CursorWorkflow.Search, CursorWorkflow.ById, CursorWorkflow.Favorites, CursorWorkflow.General, CursorWorkflow.Overlays })
@@ -59,8 +57,8 @@ internal static class ControlCursorSuite
                 SettingsLayoutSuite.Layout(view);
                 InspectNativePeers(view, stage, workflow);
             }, prefix: "cursor", details: workflow == NativePeerWorkflow.Lifecycle
-                ? FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {LifecycleExecutionTimeout.TotalSeconds}s action deadline.")
-                : "500 DIP native peers.", executionTimeout: workflow == NativePeerWorkflow.Lifecycle ? LifecycleExecutionTimeout : null);
+                ? FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {RegressionExecution.Timeout.TotalSeconds}s action deadline.")
+                : "500 DIP native peers.", executionTimeout: workflow == NativePeerWorkflow.Lifecycle ? RegressionExecution.Timeout : null);
     }
 
     private enum CursorWorkflow { Format, Search, ById, Favorites, General, Overlays }

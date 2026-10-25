@@ -14,10 +14,10 @@ internal static class NativeKeyboardStateSuite
         FailureContextIsBoundedAndPrivate();
         PostActionChecksOnlyOwnedBitsAndRestoresEverything();
         CleanupMetadataCannotReplacePrimaryFailure();
-        // One additional ordinary 5s action, after the existing Search first-use
+        // One additional shared-guard action, after the existing Search first-use
         // boundaries in Program. Fake transactions never initialize WPF/STA.
         await SearchAdjustmentControlSuite.ObserveMatrixActionAsync("native-peers", NativePeers,
-            prefix: "native-key-state", details: "one ordinary 5s action; Button and ToggleButton");
+            prefix: "native-key-state", details: "one shared-guard action; Button and ToggleButton");
     }
 
     internal static void TransactionsPreserveStateAndFailures()

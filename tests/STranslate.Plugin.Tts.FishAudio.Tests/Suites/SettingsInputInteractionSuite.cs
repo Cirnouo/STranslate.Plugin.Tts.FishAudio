@@ -853,10 +853,11 @@ internal static class SettingsInputInteractionSuite
         var observations = 0;
         Exception? caught = null;
         var output = new List<string>();
+        TimeSpan? executionBudget = null;
         try
         {
             await ObserveNativeToolTipActionAsync("queued-contract", stage => { runs++; stage("original action body"); return Task.CompletedTask; },
-                dispatch: callback => { dispatches++; queued = callback; throw outer; },
+                dispatch: (callback, timeout) => { executionBudget = timeout; dispatches++; queued = callback; throw outer; },
                 observe: async completion => { observations++; await queued!(); await completion; }, write: output.Add);
         }
         catch (Exception error) { caught = error; }
@@ -866,6 +867,8 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(1, runs, "The original queued action must run once without retry");
         AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "Queued failure must identify its pre-entry phase");
         AssertEqual(true, output.Any(line => line.Contains("original action body", StringComparison.Ordinal)), "Failure output must retain the action phases");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), executionBudget, "Numeric tooltip injected dispatch receives the shared execution guard");
+        AssertEqual(true, output.Any(line => line.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Numeric tooltip diagnostics describe the actual injected guard");
 
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Task? originalAction = null;
@@ -873,11 +876,11 @@ internal static class SettingsInputInteractionSuite
         try
         {
             await ObserveNativeToolTipActionAsync("entered-contract", async stage => { runs++; stage("entered action waiting"); await release.Task; stage("same action resumed"); },
-                dispatch: callback => { dispatches++; originalAction = callback(); throw outer; },
+                dispatch: (callback, _) => { dispatches++; originalAction = callback(); throw outer; },
                 observe: async completion => { observations++; AssertEqual(false, completion.IsCompleted, "Observation must see the incomplete entered action"); release.SetResult(); await completion; }, write: output.Add);
         }
         catch (Exception error) { caught = error; }
-        await originalAction!.WaitAsync(TimeSpan.FromSeconds(2));
+        await originalAction!.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, ReferenceEquals(outer, caught), "Late entered-action completion must leave the original deadline failed");
         AssertEqual(1, dispatches, "Entered observation must not dispatch again");
         AssertEqual(1, runs, "The entered action must not be replaced or retried");
@@ -891,7 +894,7 @@ internal static class SettingsInputInteractionSuite
             try
             {
                 await ObserveNativeToolTipActionAsync("inner-contract", _ => { runs++; throw inner; },
-                    dispatch: callback => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
+                    dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
             }
             catch (Exception error) { caught = error; }
             AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned failure must preserve its exact exception identity");
@@ -904,7 +907,7 @@ internal static class SettingsInputInteractionSuite
         try
         {
             await ObserveNativeToolTipActionAsync("observation-failure-contract", _ => { runs++; return Task.CompletedTask; },
-                dispatch: callback => { queued = callback; throw outer; },
+                dispatch: (callback, _) => { queued = callback; throw outer; },
                 observe: _ => { observations++; throw new IOException("Synthetic observation failure"); }, write: output.Add);
         }
         catch (Exception error) { caught = error; }
@@ -935,14 +938,14 @@ internal static class SettingsInputInteractionSuite
         Task? sameCompletion = null;
         dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
         var bounded = ObserveNativeToolTipActionAsync("observation-timeout-contract", _ => { runs++; return Task.CompletedTask; },
-            dispatch: callback => { dispatches++; queued = callback; throw outer; },
+            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
             observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return observationRelease.Task; }, write: output.Add, observationTimeProvider: clock);
-        await observing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await observing.Task.WaitAsync(RegressionExecution.Timeout);
         clock.Advance(TimeSpan.FromMilliseconds(19999));
         AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the twenty-second boundary");
         AssertEqual(false, sameCompletion!.IsCompleted, "The original action remains pending before observation expiry");
         clock.Advance(TimeSpan.FromMilliseconds(1));
-        try { await bounded.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(outer, caught), "Observation timeout must preserve the original outer exception");
         AssertEqual(1, observations, "The observation bound must not retry its observer");
@@ -952,21 +955,22 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(false, observationRelease.Task.IsCompleted, "Observation expiry must not cancel the observed task");
         AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The exact observation timeout must be reported");
         await queued!();
-        await sameCompletion.WaitAsync(TimeSpan.FromSeconds(2));
+        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
         observationRelease.SetResult();
         AssertEqual(1, runs, "Only the same original queued action may complete after observation expiry");
 
         output.Clear(); runs = 0;
         await ObserveNativeToolTipActionAsync("success-contract", stage => { runs++; stage("buffered successful phase"); return Task.CompletedTask; },
-            dispatch: callback => callback(), write: output.Add);
+            dispatch: (callback, _) => callback(), write: output.Add);
         AssertEqual(1, runs, "A successful action executes once");
         AssertEqual(1, output.Count, "Successful diagnostics must emit exactly one compact case summary");
         AssertEqual(false, output[0].Contains("buffered successful phase", StringComparison.Ordinal), "Success must not dump the detailed phase buffer");
     }
 
     private static async Task ObserveNativeToolTipActionAsync(string name, Func<Action<string>, Task> action,
-        Func<Func<Task>, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
     {
+        var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
         var phases = new System.Collections.Concurrent.ConcurrentQueue<string>();
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -974,17 +978,17 @@ internal static class SettingsInputInteractionSuite
         long enteredAt = -1;
         void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
         void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] {phase}"); }
-        Stage("queued with original 5s async action deadline");
+        Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
-            await (dispatch ?? (callback => RunOnStaThreadAsync(callback)))(async () =>
+            await (dispatch ?? ((callback, timeout) => RunOnStaThreadAsync(callback, timeout)))(async () =>
             {
                 Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
                 Stage("entered");
                 try { await action(Stage); }
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed after cleanup"); completion.TrySetResult(); }
-            });
+            }, executionTimeout);
             (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native field lifecycle.");
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))

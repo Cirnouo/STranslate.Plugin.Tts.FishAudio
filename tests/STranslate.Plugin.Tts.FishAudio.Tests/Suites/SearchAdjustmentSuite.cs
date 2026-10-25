@@ -145,7 +145,7 @@ internal static class SearchAdjustmentSuite
             else vm.Dispose();
             AssertEqual(true, captured.IsCancellationRequested, "Retiring search cancels its captured request token");
             pending.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Retired"}]}""");
-            await old.WaitAsync(TimeSpan.FromSeconds(2));
+            await old.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(retirement == "replacement" ? "ko,pt" : "en,zh", string.Join(",", vm.SearchLanguages), "Retired completion cannot replace applied criteria");
             AssertEqual("Voice", vm.SearchResults.Single().Title, "Retired completion cannot replace successful results");
             AssertEqual(1, vm.SearchPage, "Retired completion cannot replace navigation");

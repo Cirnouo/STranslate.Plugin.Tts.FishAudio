@@ -16,7 +16,7 @@ internal static class SettingsInputBindingSuite
     internal static async Task ApiKeyPasswordInputPersistsBeforeFocusLeavesAsync()
     {
         SettingsView view = null!;
-        var constructionTimeout = TimeSpan.FromSeconds(15);
+        var constructionTimeout = RegressionExecution.Timeout;
         var phase = Stopwatch.StartNew();
         var constructionFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Console.WriteLine($"[settings-input] View construction queued with {constructionTimeout.TotalSeconds:0}s execution budget.");

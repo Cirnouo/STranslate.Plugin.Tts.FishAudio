@@ -29,7 +29,7 @@ internal static class VoiceDescriptionSuite
             {
                 stage("VM cleanup begin"); vm.Dispose(); stage("VM cleanup completed");
             }
-        }, prefix: "description", details: "ordinary 5s construction action.");
+        }, prefix: "description", details: "shared-guard construction action.");
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 400d, 424, 480, 640 })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })

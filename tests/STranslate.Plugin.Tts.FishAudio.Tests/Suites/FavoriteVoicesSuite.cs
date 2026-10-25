@@ -193,7 +193,7 @@ internal static class FavoriteVoicesSuite
         http.GetResponseJson = Detail(2, "Current");
         await view.SubmitVoiceIdCommand.ExecuteAsync(null);
         release.SetResult(Detail(1, "Late"));
-        await old.WaitAsync(TimeSpan.FromSeconds(2));
+        await old.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, canceled, "Editing lookup input must cancel previous metadata work");
         AssertEqual("Current", view.ByIdResults.Single().Title, "A replaced response cannot overwrite the current card");
         view.VoiceIdInput = "invalid";
@@ -265,7 +265,7 @@ internal static class FavoriteVoicesSuite
             detail.TrySetResult(Detail(1, "Late", "https://platform.r2.fish.audio/late.mp3"));
             var late = new MemoryStream([1, 2, 3]);
             audio.TrySetResult(late);
-            await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            await pending.WaitAsync(RegressionExecution.Timeout);
             AssertEqual(0, player.PlayCallCount, "Late removed-card work cannot start playback");
             AssertEqual(0, view.FavoriteCount, "Late metadata must not restore a deleted favorite ID");
             if (!refresh) AssertEqual(false, late.CanRead, "Late audio must be disposed");

@@ -22,12 +22,12 @@ internal static class VoiceCardLayoutSuite
 {
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
-        // Cold construction remains a separately bounded phase; matrix actions keep five seconds.
+        // Cold construction remains a separately bounded phase; matrix actions use the shared execution guard.
         await RunOnStaThreadAsync(() =>
         {
             using var vm = new SettingsViewModel(CreateContext(), new Settings());
             SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm), 400);
-        }, TimeSpan.FromSeconds(15));
+        }, RegressionExecution.Timeout);
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })

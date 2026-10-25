@@ -35,7 +35,7 @@ internal static class VoiceLanguageTagsSuite
             SettingsLayoutSuite.Layout(view, 480);
             AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
                 "Selected compiled card must render its language metadata in the reusable control");
-        }, TimeSpan.FromSeconds(15));
+        }, RegressionExecution.Timeout);
         await RunOnStaThreadAsync(LabelsUseExplicitCultureAndTrustedFlags);
         await RunOnStaThreadAsync(PartitionAndDictionaryReplacement);
         await RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow);

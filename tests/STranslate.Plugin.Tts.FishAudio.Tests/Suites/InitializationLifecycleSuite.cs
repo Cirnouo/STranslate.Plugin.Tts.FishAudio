@@ -46,7 +46,7 @@ internal static class InitializationLifecycleSuite
         var newContextProxy = (ContextProxy)(object)newContext;
 
         plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         var reusedSettingsView = plugin.GetSettingUI();
 
@@ -57,7 +57,7 @@ internal static class InitializationLifecycleSuite
         AssertEqual("78.90", newViewModel.UserCredit, "The replacement ViewModel should display the second initialization balance");
 
         releaseOldCredit.SetResult("{\"credit\":\"99.99\"}");
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
         AssertEqual("78.90", newViewModel.UserCredit, "The first initialization result should not overwrite the replacement ViewModel");
 
         const string editedNewKey = "ffffffffffffffffffffffffffffffff";
@@ -82,7 +82,7 @@ internal static class InitializationLifecycleSuite
         var plugin = new Main();
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         _ = plugin.GetOrCreateSettingsViewModel();
 
         backingStore.Replace(new Settings
@@ -96,7 +96,7 @@ internal static class InitializationLifecycleSuite
         newContextProxy.SaveSettings = backingStore.Save;
 
         plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
         var finalSnapshot = backingStore.Load();
 
@@ -130,7 +130,7 @@ internal static class InitializationLifecycleSuite
             startupSettingsRevisionPublished: () =>
             {
                 revisionPublished.TrySetResult();
-                releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseRevision.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             },
             initializationGenerationDeclared: generation =>
             {
@@ -138,14 +138,14 @@ internal static class InitializationLifecycleSuite
                     return;
 
                 replacementGenerationDeclared.TrySetResult();
-                releaseReplacementGeneration.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseReplacementGeneration.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
         releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await revisionPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         var failedContext = CreateContext();
         ((ContextProxy)(object)failedContext).LoadSettings = () =>
@@ -162,16 +162,16 @@ internal static class InitializationLifecycleSuite
                 replacementFailed = true;
             }
         });
-        await replacementGenerationDeclared.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await replacementGenerationDeclared.Task.WaitAsync(RegressionExecution.Timeout);
 
         releaseRevision.SetResult();
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(1, oldContextProxy.SaveCount, "Startup settings Save should complete when it wins the transition gate before replacement Load");
         AssertEqual(FishAudioModelPolicy.S21ProModel, oldViewModel.SelectedModel, "The winning startup Save should apply its model revision to the old ViewModel");
 
         releaseReplacementGeneration.SetResult();
-        await replacementTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await replacementTask.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, replacementFailed, "The later replacement Load failure should remain observable");
     }
 
@@ -236,12 +236,12 @@ internal static class InitializationLifecycleSuite
         replacementContextProxy.OnSave = () =>
         {
             replacementCommitStarted.TrySetResult();
-            releaseReplacementCommit.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            releaseReplacementCommit.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
         };
 
         var reinitializeTask = Task.Run(() =>
             plugin.Init(replacementContext, FishAudioModelPolicy.FreeModelCutoffUtc));
-        await replacementCommitStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await replacementCommitStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
         var viewModelPublishedBeforeCommit = ReferenceEquals(
@@ -249,8 +249,8 @@ internal static class InitializationLifecycleSuite
             viewModelTask);
 
         releaseReplacementCommit.SetResult();
-        await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
-        var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await reinitializeTask.WaitAsync(RegressionExecution.Timeout);
+        var viewModel = await viewModelTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModelPublishedBeforeCommit, "Settings ViewModel publication should wait for an in-flight replacement commit");
         AssertEqual(FishAudioModelPolicy.S21ProModel, viewModel.SelectedModel, "The waiting settings ViewModel request should bind the committed replacement state");
@@ -305,7 +305,7 @@ internal static class InitializationLifecycleSuite
         var plugin = new Main();
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
         var failedLoadContext = CreateContext();
         ((ContextProxy)(object)failedLoadContext).LoadSettings = () =>
@@ -399,7 +399,7 @@ internal static class InitializationLifecycleSuite
                     return;
 
                 staleGenerationDeclared.TrySetResult();
-                releaseStaleGeneration.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseStaleGeneration.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
         plugin.Init(CreateContext(settings: new Settings { ApiKey = AppliedKey }), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
 
@@ -411,13 +411,13 @@ internal static class InitializationLifecycleSuite
         var staleContextProxy = (ContextProxy)(object)staleContext;
         var staleInitializationTask = Task.Run(() =>
             plugin.Init(staleContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1)));
-        await staleGenerationDeclared.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await staleGenerationDeclared.Task.WaitAsync(RegressionExecution.Timeout);
 
         var currentSettings = new Settings { ApiKey = DraftKey };
         var currentContext = CreateContext(settings: currentSettings);
         plugin.Init(currentContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         releaseStaleGeneration.SetResult();
-        await staleInitializationTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await staleInitializationTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(0, staleContextProxy.LoadCount, "An overtaken initialization should not call SettingsStore.Load");
         AssertEqual(0, staleContextProxy.SaveCount, "An overtaken initialization should not canonical-save stale settings");
@@ -436,16 +436,16 @@ internal static class InitializationLifecycleSuite
         oldContextProxy.SaveSettings = settings =>
         {
             oldSaveStarted.TrySetResult();
-            releaseOldSave.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            releaseOldSave.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             backingStore.Save(settings);
         };
         var plugin = new Main();
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
         var oldEditTask = Task.Run(() => oldViewModel.ApiKey = DraftKey);
-        await oldSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldSaveStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         var replacementLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var newContext = CreateContext();
@@ -463,9 +463,9 @@ internal static class InitializationLifecycleSuite
             replacementLoadStarted.Task);
 
         releaseOldSave.SetResult();
-        await oldEditTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldEditTask.WaitAsync(RegressionExecution.Timeout);
+        await reinitializeTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var newViewModel = plugin.GetOrCreateSettingsViewModel();
 
         AssertEqual(false, loadStartedBeforeOldSaveCompleted, "Replacement Load should wait for an in-flight old ViewModel save to finish");
@@ -569,7 +569,7 @@ internal static class InitializationLifecycleSuite
             var plugin = new Main();
 
             plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
             AssertEqual(true, http.LastGetUrl?.Contains("/model/fedcba9876543210fedcba9876543210", StringComparison.Ordinal), "Startup refresh should call Get Model for the selected voice");
             var headers = AssertHeaders(http.LastGetOptions, "Startup voice refresh should send Authorization headers");
@@ -591,7 +591,7 @@ internal static class InitializationLifecycleSuite
             (httpService, http) = TestHttpServiceProxy.Create();
             plugin = new Main();
             plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
             AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
             AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
@@ -623,12 +623,12 @@ internal static class InitializationLifecycleSuite
             var context = CreateContext(settings: settings, httpService: service);
             plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
             var view = plugin.GetOrCreateSettingsViewModel();
-            await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await started.Task.WaitAsync(RegressionExecution.Timeout);
             view.ApiKey = "next-startup-account";
             if (returnToOriginal) view.ApiKey = "first-startup-account";
             var saves = ((ContextProxy)(object)context).SaveCount;
             response.SetResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Late private voice\"}");
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             AssertEqual("Retained startup snapshot", runtime!.CachedVoice?.Title, "Startup cannot overwrite retained metadata captured under a replaced credential identity, including A to B to A");
             AssertEqual("Retained startup snapshot", view.CachedVoiceTitle, "Late startup metadata cannot alter the preserved selected display");
             AssertEqual(saves, ((ContextProxy)(object)context).SaveCount, "Late startup metadata cannot write storage after any accepted credential change");
@@ -679,15 +679,15 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
-        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
         SettingsViewModel.UiThreadInvokerOverride = action => queuedUiApply.TrySetResult(action);
         try
         {
             releaseResponse.SetResult($$"""
                 {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"fresh response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
                 """);
-            await startupVoiceSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            var applyStartupVoiceToUi = await queuedUiApply.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await startupVoiceSaved.Task.WaitAsync(RegressionExecution.Timeout);
+            var applyStartupVoiceToUi = await queuedUiApply.Task.WaitAsync(RegressionExecution.Timeout);
 
             var replacementCard = new VoiceSearchItem
             {
@@ -699,7 +699,7 @@ internal static class InitializationLifecycleSuite
             viewModel.SearchResults = [replacementCard];
             viewModel.SelectVoiceCommand.Execute(replacementCard);
             applyStartupVoiceToUi();
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         }
         finally
         {
@@ -756,13 +756,13 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
-        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
         viewModel.ClearVoiceCommand.Execute(null);
 
         releaseResponse.SetResult($$"""
             {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"stale response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
             """);
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var persistedSettings = backingStore.Load();
 
         AssertEqual(1, contextProxy.SaveCount, "A delayed startup response should not save after the user clears the selected voice");
@@ -817,7 +817,7 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
-        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
         var replacementCard = new VoiceSearchItem
         {
             Id = replacementVoiceId,
@@ -831,7 +831,7 @@ internal static class InitializationLifecycleSuite
         releaseResponse.SetResult($$"""
             {"_id":"{{requestedVoiceId}}","title":"Voice A (fresh)","description":"stale response","cover_image":"","samples":[{"audio":"https://audio.example/voice-a.mp3"}],"task_count":1}
             """);
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var persistedSettings = backingStore.Load();
 
         AssertEqual(1, contextProxy.SaveCount, "A delayed startup response should not save after the user selects another voice");
@@ -877,18 +877,18 @@ internal static class InitializationLifecycleSuite
             startupSettingsRevisionPublished: () =>
             {
                 revisionPublished.TrySetResult();
-                releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseRevision.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await revisionPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         viewModel.SelectedModel = FishAudioModelPolicy.S2ProModel;
         AssertEqual(1, contextProxy.SaveCount, "Selecting a paid model while startup is reserved should save the user choice once");
         releaseRevision.SetResult();
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(FishAudioModelPolicy.S2ProModel, runtimeSettings?.SelectedModel, "Post-cutoff policy publication should preserve the concurrent runtime paid-model choice");
         AssertEqual(FishAudioModelPolicy.S2ProModel, viewModel.SelectedModel, "Post-cutoff policy publication should preserve the visible paid-model choice");
@@ -947,7 +947,7 @@ internal static class InitializationLifecycleSuite
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(FishAudioModelPolicy.S21ProFreeModel, runtimeSettings?.SelectedModel, "A failed startup model save should roll back the runtime Settings model");
         AssertEqual(FishAudioModelPolicy.S21ProFreeModel, viewModel.SelectedModel, "A failed startup model save should leave the existing ViewModel model unchanged");
@@ -1009,7 +1009,7 @@ internal static class InitializationLifecycleSuite
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModel = plugin.GetOrCreateSettingsViewModel();
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Old Voice", runtimeSettings?.CachedVoice?.Title, "A failed startup voice save should roll back runtime cached metadata");
         AssertEqual("Old Voice", viewModel.CachedVoiceTitle, "A failed startup voice save should leave the existing ViewModel metadata unchanged");
@@ -1052,14 +1052,14 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
-        await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await constructionSnapshotCaptured.Task.WaitAsync(RegressionExecution.Timeout);
 
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await startupModelSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await startupModelSaved.Task.WaitAsync(RegressionExecution.Timeout);
         releaseConstruction.SetResult();
 
-        var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        var viewModel = await viewModelTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "Startup online time should normalize the current Settings model");
         AssertEqual(FishAudioModelPolicy.S21ProModel, viewModel.SelectedModel, "A ViewModel constructed across startup normalization should retry with the current model");
@@ -1096,21 +1096,21 @@ internal static class InitializationLifecycleSuite
             startupSettingsRevisionPublished: () =>
             {
                 revisionPublished.TrySetResult();
-                releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseRevision.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await revisionPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
-        await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await constructionSnapshotCaptured.Task.WaitAsync(RegressionExecution.Timeout);
         releaseRevision.SetResult();
-        await startupModelSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await startupModelSaved.Task.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         releaseConstruction.SetResult();
 
-        var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
+        var viewModel = await viewModelTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "The committed startup transaction should update host settings");
         AssertEqual(FishAudioModelPolicy.S21ProModel, viewModel.SelectedModel, "A ViewModel candidate captured after revision reservation should retry after runtime commit");
@@ -1149,14 +1149,14 @@ internal static class InitializationLifecycleSuite
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var viewModelTask = Task.Run(plugin.GetOrCreateSettingsViewModel);
-        await constructionSnapshotCaptured.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await constructionSnapshotCaptured.Task.WaitAsync(RegressionExecution.Timeout);
 
         releaseOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
-        await startupVoiceSaved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await startupVoiceSaved.Task.WaitAsync(RegressionExecution.Timeout);
         releaseConstruction.SetResult();
 
-        var viewModel = await viewModelTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        var viewModel = await viewModelTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update the current Settings cache");
         AssertEqual("Fresh Voice", viewModel.CachedVoiceTitle, "A ViewModel constructed across startup voice refresh should retry with current cached metadata");
@@ -1190,13 +1190,13 @@ internal static class InitializationLifecycleSuite
             startupSettingsRevisionPublished: () =>
             {
                 revisionPublished.TrySetResult();
-                releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseRevision.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await revisionPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         backingStore.Replace(new Settings
         {
@@ -1213,14 +1213,14 @@ internal static class InitializationLifecycleSuite
         {
             var snapshot = backingStore.Load();
             newLoadStarted.TrySetResult();
-            releaseNewLoad.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            releaseNewLoad.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             return snapshot;
         };
         newContextProxy.SaveSettings = backingStore.Save;
 
         var reinitializeTask = Task.Run(() =>
             plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1)));
-        await newLoadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await newLoadStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         releaseRevision.SetResult();
         var staleSaveCompletedBeforeLoad = ReferenceEquals(
@@ -1228,9 +1228,9 @@ internal static class InitializationLifecycleSuite
             oldSaveCompleted.Task);
         releaseNewLoad.SetResult();
 
-        await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await reinitializeTask.WaitAsync(RegressionExecution.Timeout);
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var finalSnapshot = backingStore.Load();
 
         AssertEqual(false, staleSaveCompletedBeforeLoad, "A startup settings save should wait while the replacement initialization is loading");
@@ -1264,7 +1264,7 @@ internal static class InitializationLifecycleSuite
         oldContextProxy.SaveSettings = settings =>
         {
             oldSaveStarted.TrySetResult();
-            releaseOldSave.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+            releaseOldSave.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             backingStore.Save(settings);
         };
         var plugin = new Main();
@@ -1272,7 +1272,7 @@ internal static class InitializationLifecycleSuite
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-07-23T00:00:00Z\"}");
-        await oldSaveStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldSaveStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         var newLoadStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
@@ -1300,9 +1300,9 @@ internal static class InitializationLifecycleSuite
             newLoadStarted.Task);
 
         releaseOldSave.SetResult();
-        await reinitializeTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await reinitializeTask.WaitAsync(RegressionExecution.Timeout);
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, loadStartedBeforeSaveCompleted, "A replacement load should wait for an already-authorized startup settings save");
         AssertEqual("Fresh Voice", newContextProxy.Settings.CachedVoice?.Title, "The replacement load should observe the completed startup settings save");
@@ -1331,14 +1331,14 @@ internal static class InitializationLifecycleSuite
             startupSettingsRevisionPublished: () =>
             {
                 revisionPublished.TrySetResult();
-                releaseRevision.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+                releaseRevision.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
             });
 
         plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var oldStartupTask = plugin.PendingStartupTask;
         var oldViewModel = plugin.GetOrCreateSettingsViewModel();
         releaseOldOnlineUtc.SetResult("{\"dateTime\":\"2026-12-01T00:00:00Z\"}");
-        await revisionPublished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await revisionPublished.Task.WaitAsync(RegressionExecution.Timeout);
 
         var failedContext = CreateContext();
         ((ContextProxy)(object)failedContext).LoadSettings = () =>
@@ -1354,7 +1354,7 @@ internal static class InitializationLifecycleSuite
         }
 
         releaseRevision.SetResult();
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(true, loadFailed, "The replacement Load failure should remain observable");
         AssertEqual(1, oldContextProxy.SaveCount, "A failed replacement should restore an already-revised startup settings save");
@@ -1389,12 +1389,12 @@ internal static class InitializationLifecycleSuite
         var plugin = new Main();
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await requestStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         plugin.Dispose();
 
-        await requestCanceled.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await requestCanceled.Task.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Keep", settings.CachedVoice?.Title, "Canceled startup refresh should preserve cached voice");
         AssertEqual(0, proxy.SaveCount, "Canceled startup refresh should not save settings");
@@ -1429,7 +1429,7 @@ internal static class InitializationLifecycleSuite
         };
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Keep", settings.CachedVoice?.Title, "Startup cancellation after model response should skip cached voice side effects");
         AssertEqual(0, proxy.SaveCount, "Startup cancellation after model response should not save settings");
@@ -1465,8 +1465,8 @@ internal static class InitializationLifecycleSuite
         var oldStartupTask = plugin.PendingStartupTask;
         plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         oldRelease.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Old Should Not Leak\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await oldStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Old Keep", oldSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate old settings after reinitialization");
         AssertEqual("New Keep", newSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate new settings after reinitialization");

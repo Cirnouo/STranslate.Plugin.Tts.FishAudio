@@ -27,7 +27,7 @@ internal static class SystemProxyAndSelectedFavoritesSuite
             var session = new StreamingSessionDouble();
             using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
             plugin.Init(CreateContext(settings: settings));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
             network.Set(true);
             await plugin.PlayAudioAsync("Retired routing preferences cannot block reading.");
             AssertEqual(1, session.Calls, "Obsolete direct/custom/unknown settings cannot block the formal entry point");

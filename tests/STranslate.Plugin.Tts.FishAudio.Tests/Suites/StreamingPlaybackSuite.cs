@@ -174,7 +174,7 @@ internal static class StreamingPlaybackSuite
 
     private static async Task<Exception> FailureAsync(Task task)
     {
-        try { await task.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await task.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception error) { return error; }
         throw new InvalidOperationException("Expected failure.");
     }
@@ -365,7 +365,7 @@ internal static class StreamingPlaybackSuite
         Equal("1,2,3,4", string.Join(',', read), "Odd boundaries preserve byte order");
         output.SetPlayed(4);
         clock.Advance(TimeSpan.FromMilliseconds(10));
-        await play.WaitAsync(TimeSpan.FromSeconds(2));
+        await play.WaitAsync(RegressionExecution.Timeout);
 
         var odd = new StreamingAudioInput();
         using var oddPlayer = new StreamingAudioPlayer(() => new StreamingAudioOutputDouble());
@@ -400,7 +400,7 @@ internal static class StreamingPlaybackSuite
         Equal(false, play.IsCompleted, "Empty software ring is not hardware drain");
         output.SetPlayed(10);
         clock.Advance(TimeSpan.FromMilliseconds(10));
-        await play.WaitAsync(TimeSpan.FromSeconds(2));
+        await play.WaitAsync(RegressionExecution.Timeout);
         Equal(1, output.StopCount, "Drain stops output once");
         Equal(1, output.DisposeCount, "Drain disposes output once");
     }
@@ -555,7 +555,7 @@ internal static class StreamingPlaybackSuite
             Equal(0, Volatile.Read(ref output.PlayCount), "Startup must not run before 100ms");
             clock.Advance(TimeSpan.FromMilliseconds(1));
             // PlayCount can be visible before Play returns and the player publishes startup.
-            await playbackStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await playbackStarted.Task.WaitAsync(RegressionExecution.Timeout);
             Equal(1, Volatile.Read(ref output.PlayCount), "100ms startup with blocked input plays once");
         }
         finally
@@ -568,7 +568,7 @@ internal static class StreamingPlaybackSuite
 
     private static async Task UntilAsync(Func<bool> predicate, string reason)
     {
-        var limit = DateTime.UtcNow.AddSeconds(2);
+        var limit = DateTime.UtcNow.Add(RegressionExecution.Timeout);
         while (!predicate() && DateTime.UtcNow < limit) await Task.Delay(1);
         if (!predicate()) throw new InvalidOperationException("Timed out waiting for " + reason);
     }
@@ -580,14 +580,14 @@ internal static class StreamingPlaybackSuite
     }
     private static async Task CancelledAsync(Task task)
     {
-        try { await task.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await task.WaitAsync(RegressionExecution.Timeout); }
         catch (OperationCanceledException) { return; }
         throw new InvalidOperationException("Expected cancellation.");
     }
 
     private static async Task ThrowsAsync<T>(Task task, string reason) where T : Exception
     {
-        try { await task.WaitAsync(TimeSpan.FromSeconds(2)); }
+        try { await task.WaitAsync(RegressionExecution.Timeout); }
         catch (T) { return; }
         throw new InvalidOperationException(reason);
     }

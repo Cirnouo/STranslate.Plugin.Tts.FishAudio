@@ -16,7 +16,7 @@ internal static class TtsSuite
         var session = new StreamingSessionDouble { Handler = (_, _, token) => Task.Delay(Timeout.InfiniteTimeSpan, token) };
         using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
         plugin.Init(CreateContext(settings: oldSettings, httpService: oldService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var oldVm = plugin.GetOrCreateSettingsViewModel();
         var newSettings = CreateTtsSettings(FishAudioModelPolicy.S1Model);
         newSettings.ApiKey = DraftKey;
@@ -25,18 +25,18 @@ internal static class TtsSuite
         var loadEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseLoad = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var newContext = CreateContext(settings: newSettings, httpService: newService);
-        ((ContextProxy)(object)newContext).OnLoad = () => { loadEntered.TrySetResult(); releaseLoad.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult(); };
+        ((ContextProxy)(object)newContext).OnLoad = () => { loadEntered.TrySetResult(); releaseLoad.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult(); };
         var replacement = Task.Run(() => plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1)));
-        await loadEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await loadEntered.Task.WaitAsync(RegressionExecution.Timeout);
         var playback = plugin.PlayAudioAsync("load-window snapshot");
-        await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await session.Entered.Task.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(AppliedKey, session.Request!.ApiKey, "Playback during settings load must retain the old initialization key");
         AssertEqual(FishAudioModelPolicy.S2ProModel, session.Request.Model, "Playback during settings load must retain the old model");
         AssertEqual(true, oldVm.IsApiKeyInputLocked, "Playback must lock its captured old ViewModel");
         releaseLoad.TrySetResult();
-        await replacement.WaitAsync(TimeSpan.FromSeconds(2));
+        await replacement.WaitAsync(RegressionExecution.Timeout);
         await StreamingEntrySuite.AssertCanceledAsync(playback);
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, session.CancellationObserved, "Publishing replacement initialization must cancel old output");
         AssertEqual(false, oldVm.IsApiKeyInputLocked, "Retirement must release the old key operation");
         AssertEqual(false, ReferenceEquals(oldVm, plugin.GetOrCreateSettingsViewModel()), "Replacement must publish a new ViewModel");
@@ -52,10 +52,10 @@ internal static class TtsSuite
         var session = new StreamingSessionDouble { Handler = (_, _, token) => Task.Delay(Timeout.InfiniteTimeSpan, token) };
         using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
         plugin.Init(CreateContext(settings: CreateTtsSettings("s2-pro"), httpService: oldService, logger: oldLogger), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
         var oldVm = plugin.GetOrCreateSettingsViewModel();
         var oldPlayback = plugin.PlayAudioAsync("snapshot test");
-        await session.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await session.Entered.Task.WaitAsync(RegressionExecution.Timeout);
         var newSettings = CreateTtsSettings("s2-pro"); newSettings.ApiKey = DraftKey;
         var newLogger = new TestLogger();
         var creditEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -70,7 +70,7 @@ internal static class TtsSuite
         plugin.Init(CreateContext(settings: newSettings, httpService: newService, logger: newLogger), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         var newStartup = plugin.PendingStartupTask;
         var newVm = plugin.GetOrCreateSettingsViewModel();
-        await creditEntered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await creditEntered.Task.WaitAsync(RegressionExecution.Timeout);
         await StreamingEntrySuite.AssertCanceledAsync(oldPlayback);
         AssertEqual(AppliedKey, session.Request!.ApiKey, "Retired playback must retain its captured key");
         AssertEqual(false, oldVm.IsApiKeyInputLocked, "Old cancellation must release only its own key lock");
@@ -80,7 +80,7 @@ internal static class TtsSuite
         AssertEqual(false, oldLogger.Contains(AppliedKey), "Old logs must not disclose the old key");
         AssertEqual(false, newLogger.Contains(DraftKey), "New logs must not disclose the new key");
         releaseCredit.TrySetResult("{\"credit\":\"2.00\"}");
-        await newStartup.WaitAsync(TimeSpan.FromSeconds(2));
+        await newStartup.WaitAsync(RegressionExecution.Timeout);
         await WaitUntilAsync(() => !newVm.IsApiKeyInputLocked, "new startup credit lock release");
     }
 
@@ -105,7 +105,7 @@ internal static class TtsSuite
             var snackbar = new TestSnackbar(); var session = new StreamingSessionDouble();
             using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
             plugin.Init(CreateContext(snackbar: snackbar, settings: new Settings { ApiKey = key }));
-            await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2)); network.Set(true);
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout); network.Set(true);
             await plugin.PlayAudioAsync("hello");
             AssertEqual(key.Length == 0 ? "STranslate_Plugin_Tts_FishAudio_ApiKey_Empty" : "STranslate_Plugin_Tts_FishAudio_ApiKey_InvalidFormat", snackbar.LastError, "Key preflight must retain its empty/malformed distinction");
             AssertEqual(0, session.Calls, "Invalid keys must never create a session");
@@ -118,7 +118,7 @@ internal static class TtsSuite
         var (service, http) = TestHttpServiceProxy.Create(); var session = new StreamingSessionDouble();
         using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
         plugin.Init(CreateContext(settings: CreateTtsSettings("s2-pro"), httpService: service));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2)); network.Set(true);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout); network.Set(true);
         await plugin.PlayAudioAsync("hello");
         AssertEqual(0, http.GetCallCount, "TTS must not add synchronous credit validation");
         AssertEqual(1, session.Calls, "A formatted key must start one session");
@@ -132,7 +132,7 @@ internal static class TtsSuite
         var session = new StreamingSessionDouble { Handler = (_, _, _) => throw new TimeoutException("request timed out") };
         using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
         plugin.Init(CreateContext(snackbar: snackbar, settings: CreateTtsSettings("s2-pro"), logger: logger));
-        await plugin.PendingStartupTask.WaitAsync(TimeSpan.FromSeconds(2)); network.Set(true);
+        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout); network.Set(true);
         await plugin.PlayAudioAsync("hello");
         AssertEqual("STranslate_Plugin_Tts_FishAudio_Request_Timeout", snackbar.LastError, "Streaming timeout must remain localized");
         AssertEqual(true, logger.Contains(LogLevel.Error, "TTS request failed"), "Timeout must be logged without transport details");

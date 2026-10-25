@@ -133,9 +133,9 @@ internal static class CoverImageCacheSuite
 
             var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/slow", 128, url => callbackUrl = url);
 
-            await downloadStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            await downloadCanceled.Task.WaitAsync(TimeSpan.FromSeconds(12));
-            await result.CacheTask!.WaitAsync(TimeSpan.FromSeconds(2));
+            await downloadStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            await downloadCanceled.Task.WaitAsync(RegressionExecution.Timeout);
+            await result.CacheTask!.WaitAsync(RegressionExecution.Timeout);
 
             var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{voiceId}.jpg");
             AssertEqual(false, File.Exists(cachedFile), "Timed-out cover image download should not write a cache file");
@@ -170,8 +170,8 @@ internal static class CoverImageCacheSuite
                 viewModel.CachedVoiceCoverUrl,
                 "Missing selected voice cover cache should use remote fallback immediately");
 
-            await http.GetStreamReturned.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            await oversizedStream.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await http.GetStreamReturned.Task.WaitAsync(RegressionExecution.Timeout);
+            await oversizedStream.Disposed.Task.WaitAsync(RegressionExecution.Timeout);
 
             var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{settings.VoiceId}.jpg");
             AssertEqual(1, http.GetAsStreamCallCount, "Cover image cache should download through GetAsStreamAsync");
@@ -270,13 +270,13 @@ internal static class CoverImageCacheSuite
             TimeSpan.FromSeconds(5));
 
         var commandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
-        await clearStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await clearStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(true, viewModel.IsClearingCoverImageCache, "Clear cache command should enter busy state while cleanup is running");
         AssertEqual(false, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be disabled while cleanup is running");
 
         releaseClear.SetResult();
-        await commandTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await commandTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache command should leave busy state after cleanup completes");
         AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be enabled after cleanup completes");
@@ -292,7 +292,7 @@ internal static class CoverImageCacheSuite
             () => blockedClear.Task,
             TimeSpan.FromMilliseconds(30));
 
-        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache timeout should leave busy state");
         AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache timeout should re-enable the command");
@@ -316,7 +316,7 @@ internal static class CoverImageCacheSuite
             () => ++clearCall == 1 ? firstClear.Task : secondClear.Task,
             TimeSpan.FromMilliseconds(150));
 
-        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(TimeSpan.FromSeconds(2));
+        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(RegressionExecution.Timeout);
         AssertEqual(false, viewModel.IsClearingCoverImageCache, "First clear cache timeout should restore the button");
 
         var secondCommandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
@@ -327,7 +327,7 @@ internal static class CoverImageCacheSuite
         AssertEqual(true, viewModel.IsClearingCoverImageCache, "Late first clear task should not unlock the second operation");
 
         secondClear.SetResult();
-        await secondCommandTask.WaitAsync(TimeSpan.FromSeconds(2));
+        await secondCommandTask.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(false, viewModel.IsClearingCoverImageCache, "Second clear cache operation should leave busy state after completion");
     }
 
@@ -379,7 +379,7 @@ internal static class CoverImageCacheSuite
             AssertEqual(expectedRemoteUrl, result.DisplayUrl, $"{message}: missing cache should return the remote URL fallback immediately");
             AssertNotNull(result.CacheTask, $"{message}: missing cache should start a background download");
 
-            await result.CacheTask!.WaitAsync(TimeSpan.FromSeconds(2));
+            await result.CacheTask!.WaitAsync(RegressionExecution.Timeout);
 
             var cachedFile = Path.Combine(root, CoverImageCacheService.DirectoryName, $"{voiceId}.jpg");
             AssertEqual(false, File.Exists(cachedFile), $"{message}: invalid download should not write <id>.jpg");
