@@ -1,3 +1,10 @@
+if (args.Contains("--native-key-state-tests"))
+{
+    await NativeKeyboardStateSuite.RunAsync();
+    Console.WriteLine("Native keyboard state fixture regressions passed.");
+    return;
+}
+
 if (args.Contains("--control-cursor-late-combo-tests"))
 {
     await ControlCursorSuite.RunLateComboAsync();
@@ -637,6 +644,7 @@ await PageEntrySuite.RunAllAsync();
 await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
+await NativeKeyboardStateSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceDescriptionSuite.RunAsync();
 await ControlCursorSuite.RunAsync();

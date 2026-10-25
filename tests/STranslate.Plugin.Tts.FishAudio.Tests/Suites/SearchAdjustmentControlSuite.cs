@@ -334,11 +334,18 @@ internal static class SearchAdjustmentControlSuite
         target.SetValue(focusKey, true);
         try
         {
-            foreach (var routed in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.KeyDownEvent, Keyboard.PreviewKeyUpEvent, Keyboard.KeyUpEvent })
+            if (key == Key.Space)
+                NativeKeyboardStateFixture.Run((HwndSource)PresentationSource.FromVisual(target)!, RaiseEvents);
+            else RaiseEvents();
+
+            void RaiseEvents()
             {
-                var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
-                { RoutedEvent = routed, Source = target };
-                target.RaiseEvent(args);
+                foreach (var routed in new[] { Keyboard.PreviewKeyDownEvent, Keyboard.KeyDownEvent, Keyboard.PreviewKeyUpEvent, Keyboard.KeyUpEvent })
+                {
+                    var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
+                    { RoutedEvent = routed, Source = target };
+                    target.RaiseEvent(args);
+                }
             }
         }
         finally { target.SetValue(focusKey, previous); }
