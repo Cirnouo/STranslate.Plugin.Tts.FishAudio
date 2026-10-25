@@ -46,7 +46,8 @@ internal static class SettingsInputInteractionSuite
         if (group is null or "wheel") await RunOnStaThreadAsync(SliderWheelEditsWithoutScrolling);
         if (group is null or "wheel" or "tooltip")
             foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
-                await ObserveNativeToolTipActionAsync(culture, stage => SliderWheelUsesNativeValueToolTipAsync(culture, stage));
+                foreach (var field in new[] { "Speed", "Volume", "Temperature", "TopP" })
+                    await ObserveNativeToolTipActionAsync($"{culture}/{field}", stage => SliderWheelUsesNativeValueToolTipAsync(culture, field, stage));
         if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
         if (group is null or "copy")
@@ -984,7 +985,7 @@ internal static class SettingsInputInteractionSuite
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed after cleanup"); completion.TrySetResult(); }
             });
-            (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native four-slider lifecycle.");
+            (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native field lifecycle.");
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
@@ -1009,7 +1010,7 @@ internal static class SettingsInputInteractionSuite
     private static Task BoundNativeToolTipObservation(Task observation, TimeProvider? timeProvider = null) =>
         observation.WaitAsync(TimeSpan.FromSeconds(20), timeProvider ?? TimeProvider.System);
 
-    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, Action<string> stage)
+    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, string field, Action<string> stage)
     {
         var previousCulture = CultureInfo.CurrentCulture;
         try
@@ -1033,100 +1034,100 @@ internal static class SettingsInputInteractionSuite
             stage("attached Layout end");
             try
             {
-                foreach (var slider in Logical(view).OfType<Slider>().ToArray())
+                var slider = Logical(view).OfType<Slider>().Single(item => BindingOperations.GetBinding(item, Slider.ValueProperty)?.Path.Path == field);
+                stage($"{field} native peer construction/add begin");
+                var nativePeer = new Slider();
+                var row = (Panel)slider.Parent;
+                row.Children.Add(nativePeer);
+                stage($"{field} native peer added; Layout begin");
+                Layout(view, 600);
+                stage($"{field} native peer Layout end");
+                AssertEqual(nativePeer.Template, slider.Template, "The wheel-capable slider must retain the same resolved native theme template as Slider");
+                stage($"{field} native peer remove begin");
+                row.Children.Remove(nativePeer);
+                stage($"{field} native peer removed; Layout begin");
+                Layout(view, 600);
+                stage($"{field} peer-removed Layout end; native bubble begin");
+                var track = (Track)slider.Template.FindName("PART_Track", slider);
+                var thumb = track.Thumb;
+                var initial = slider.Value;
+                var originalToolTip = new object();
+                thumb.ToolTip = originalToolTip;
+                var saves = storage.SaveCount;
+                Wheel(track.DecreaseRepeatButton, 60);
+                var toolTip = thumb.ToolTip as ToolTip;
+                AssertNotNull(toolTip, "Wheel over the actual slider must show its native current-value tooltip");
+                AssertEqual(true, toolTip!.IsOpen, "A partial notch must display the current value immediately");
+                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "The tooltip must use two decimal places in the display culture");
+                AssertEqual(thumb, toolTip.PlacementTarget, "The value bubble must remain anchored to the actual thumb");
+                AssertEqual(PlacementMode.Custom, toolTip.Placement, "Wheel must use the same native placement as dragging");
+                AssertEqual(saves, storage.SaveCount, "Showing a value bubble must not save or re-snap a partial notch");
+                Wheel(thumb, 60);
+                AssertEqual((double)((decimal)initial + .01m), slider.Value, "Updating the bubble must not apply an additional native drag step");
+                AssertEqual(saves + 1, storage.SaveCount, "Refreshing the native tooltip must not duplicate a wheel save");
+                AssertEqual(slider.Value.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An open bubble must track the current wheel value");
+                stage($"{field} wheel bubble updated; Layout begin");
+                Layout(view, 600);
+                stage($"{field} bubble Layout end; wheel-to-drag begin");
+                var wheelTemplate = toolTip.Template;
+                var wheelPlacement = toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point());
+                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                AssertEqual(toolTip, thumb.ToolTip, "Real dragging must reuse the native bubble rather than open a second one");
+                AssertEqual(wheelTemplate, toolTip.Template, "Dragging and wheel input must have exactly the same resolved appearance");
+                AssertEqual(wheelPlacement[0].Point, toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point())[0].Point, "The native wheel and drag popup anchors must agree");
+                Wheel(thumb, -120);
+                AssertEqual(initial, slider.Value, "Wheel during a real drag must adjust only once");
+                AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Wheel during dragging must refresh the current native bubble");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                AssertEqual(true, toolTip.IsOpen, "Leaving while dragging must retain native drag ownership");
+                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                AssertEqual(false, toolTip.IsOpen, "Completing a real drag must close its native bubble");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Wheel-to-drag transition must preserve the original thumb tooltip");
+                stage($"{field} wheel-to-drag leave/completion end; native drag begin");
+                var distance = .01 / (slider.Maximum - slider.Minimum) * (track.ActualWidth - thumb.ActualWidth);
+                thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
+                thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
+                AssertEqual(true, Math.Abs(slider.Value - (double)((decimal)initial + .01m)) < .000001, "Actual native thumb dragging must allow one-hundredth increments");
+                thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
+                Wheel(thumb, -120);
+                AssertEqual(true, toolTip.IsOpen, "Wheel after dragging must reopen the same native bubble");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                AssertEqual(false, toolTip.IsOpen, "Leaving the slider must close a wheel-owned bubble immediately");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Leaving must restore the original thumb tooltip");
+                stage($"{field} native drag and wheel leave end; unload begin");
+                Wheel(thumb, 120);
+                slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+                AssertEqual(false, toolTip.IsOpen, "Unloading must close an open wheel bubble");
+                AssertEqual(originalToolTip, thumb.ToolTip, "Unloading must restore the original tooltip");
+                stage($"{field} unload end; bound bubble begin");
+                slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
+                saves = storage.SaveCount;
+                Wheel(track.IncreaseRepeatButton, 120);
+                AssertEqual(slider.Maximum.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An outward bound gesture must show the current bounded value");
+                AssertEqual(saves, storage.SaveCount, "Showing a bound tooltip must not save");
+                slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
+                stage($"{field} bound bubble and leave complete");
+                if (field == "Speed")
                 {
-                    var field = BindingOperations.GetBinding(slider, Slider.ValueProperty)?.Path.Path;
-                    stage($"{field} native peer construction/add begin");
-                    var nativePeer = new Slider();
-                    var row = (Panel)slider.Parent;
-                    row.Children.Add(nativePeer);
-                    stage($"{field} native peer added; Layout begin");
-                    Layout(view, 600);
-                    stage($"{field} native peer Layout end");
-                    AssertEqual(nativePeer.Template, slider.Template, "The wheel-capable slider must retain the same resolved native theme template as Slider");
-                    stage($"{field} native peer remove begin");
-                    row.Children.Remove(nativePeer);
-                    stage($"{field} native peer removed; Layout begin");
-                    Layout(view, 600);
-                    stage($"{field} peer-removed Layout end; native bubble begin");
-                    var track = (Track)slider.Template.FindName("PART_Track", slider);
-                    var thumb = track.Thumb;
-                    var initial = slider.Value;
-                    var originalToolTip = new object();
-                    thumb.ToolTip = originalToolTip;
-                    var saves = storage.SaveCount;
-                    Wheel(track.DecreaseRepeatButton, 60);
-                    var toolTip = thumb.ToolTip as ToolTip;
-                    AssertNotNull(toolTip, "Wheel over the actual slider must show its native current-value tooltip");
-                    AssertEqual(true, toolTip!.IsOpen, "A partial notch must display the current value immediately");
-                    AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "The tooltip must use two decimal places in the display culture");
-                    AssertEqual(thumb, toolTip.PlacementTarget, "The value bubble must remain anchored to the actual thumb");
-                    AssertEqual(PlacementMode.Custom, toolTip.Placement, "Wheel must use the same native placement as dragging");
-                    AssertEqual(saves, storage.SaveCount, "Showing a value bubble must not save or re-snap a partial notch");
-                    Wheel(thumb, 60);
-                    AssertEqual((double)((decimal)initial + .01m), slider.Value, "Updating the bubble must not apply an additional native drag step");
-                    AssertEqual(saves + 1, storage.SaveCount, "Refreshing the native tooltip must not duplicate a wheel save");
-                    AssertEqual(slider.Value.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An open bubble must track the current wheel value");
-                    stage($"{field} wheel bubble updated; Layout begin");
-                    Layout(view, 600);
-                    stage($"{field} bubble Layout end; wheel-to-drag begin");
-                    var wheelTemplate = toolTip.Template;
-                    var wheelPlacement = toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point());
-                    thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
-                    AssertEqual(toolTip, thumb.ToolTip, "Real dragging must reuse the native bubble rather than open a second one");
-                    AssertEqual(wheelTemplate, toolTip.Template, "Dragging and wheel input must have exactly the same resolved appearance");
-                    AssertEqual(wheelPlacement[0].Point, toolTip.CustomPopupPlacementCallback!(new Size(50, 20), new Size(12, 12), new Point())[0].Point, "The native wheel and drag popup anchors must agree");
-                    Wheel(thumb, -120);
-                    AssertEqual(initial, slider.Value, "Wheel during a real drag must adjust only once");
-                    AssertEqual(initial.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "Wheel during dragging must refresh the current native bubble");
-                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
-                    AssertEqual(true, toolTip.IsOpen, "Leaving while dragging must retain native drag ownership");
-                    thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
-                    AssertEqual(false, toolTip.IsOpen, "Completing a real drag must close its native bubble");
-                    AssertEqual(originalToolTip, thumb.ToolTip, "Wheel-to-drag transition must preserve the original thumb tooltip");
-                    stage($"{field} wheel-to-drag leave/completion end; native drag begin");
-                    var distance = .01 / (slider.Maximum - slider.Minimum) * (track.ActualWidth - thumb.ActualWidth);
-                    thumb.RaiseEvent(new DragStartedEventArgs(0, 0) { RoutedEvent = Thumb.DragStartedEvent });
-                    thumb.RaiseEvent(new DragDeltaEventArgs(distance, 0) { RoutedEvent = Thumb.DragDeltaEvent });
-                    AssertEqual(true, Math.Abs(slider.Value - (double)((decimal)initial + .01m)) < .000001, "Actual native thumb dragging must allow one-hundredth increments");
-                    thumb.RaiseEvent(new DragCompletedEventArgs(0, 0, false) { RoutedEvent = Thumb.DragCompletedEvent });
-                    Wheel(thumb, -120);
-                    AssertEqual(true, toolTip.IsOpen, "Wheel after dragging must reopen the same native bubble");
-                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
-                    AssertEqual(false, toolTip.IsOpen, "Leaving the slider must close a wheel-owned bubble immediately");
-                    AssertEqual(originalToolTip, thumb.ToolTip, "Leaving must restore the original thumb tooltip");
-                    stage($"{field} native drag and wheel leave end; unload begin");
-                    Wheel(thumb, 120);
-                    slider.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
-                    AssertEqual(false, toolTip.IsOpen, "Unloading must close an open wheel bubble");
-                    AssertEqual(originalToolTip, thumb.ToolTip, "Unloading must restore the original tooltip");
-                    stage($"{field} unload end; bound bubble begin");
-                    slider.SetCurrentValue(Slider.ValueProperty, slider.Maximum);
-                    saves = storage.SaveCount;
-                    Wheel(track.IncreaseRepeatButton, 120);
-                    AssertEqual(slider.Maximum.ToString("N2", CultureInfo.CurrentCulture), toolTip.Content, "An outward bound gesture must show the current bounded value");
-                    AssertEqual(saves, storage.SaveCount, "Showing a bound tooltip must not save");
-                    slider.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, 0) { RoutedEvent = Mouse.MouseLeaveEvent });
-                    stage($"{field} bound bubble and leave complete");
+                    stage("idle bubble setup begin");
+                    var idleSlider = slider;
+                    var idleThumb = ((Track)idleSlider.Template.FindName("PART_Track", idleSlider)).Thumb;
+                    var idleOriginal = idleThumb.ToolTip;
+                    Wheel(idleThumb, 120);
+                    var idleToolTip = (ToolTip)idleThumb.ToolTip;
+                    AssertEqual(true, idleToolTip.IsOpen, "The idle lifecycle starts with a visible value bubble");
+                    var idle = Stopwatch.StartNew();
+                    stage("idle wait begin; original 2s loop and minimum 700ms assertion");
+                    while (idleToolTip.IsOpen && idle.Elapsed < TimeSpan.FromSeconds(2))
+                    {
+                        await Task.Delay(20);
+                        stage($"idle resume at {idle.ElapsedMilliseconds}ms; open={idleToolTip.IsOpen}");
+                    }
+                    stage($"idle wait end after {idle.ElapsedMilliseconds}ms");
+                    AssertEqual(false, idleToolTip.IsOpen, "A wheel-owned bubble must disappear after a bounded idle interval");
+                    AssertEqual(true, idle.Elapsed >= TimeSpan.FromMilliseconds(700), "The bubble must remain visible long enough to read the wheel value");
+                    AssertEqual(idleOriginal, idleThumb.ToolTip, "Idle close must restore the original tooltip");
                 }
-                stage("idle bubble setup begin");
-                var idleSlider = Logical(view).OfType<Slider>().First();
-                var idleThumb = ((Track)idleSlider.Template.FindName("PART_Track", idleSlider)).Thumb;
-                var idleOriginal = idleThumb.ToolTip;
-                Wheel(idleThumb, 120);
-                var idleToolTip = (ToolTip)idleThumb.ToolTip;
-                AssertEqual(true, idleToolTip.IsOpen, "The idle lifecycle starts with a visible value bubble");
-                var idle = Stopwatch.StartNew();
-                stage("idle wait begin; original 2s loop and minimum 700ms assertion");
-                while (idleToolTip.IsOpen && idle.Elapsed < TimeSpan.FromSeconds(2))
-                {
-                    await Task.Delay(20);
-                    stage($"idle resume at {idle.ElapsedMilliseconds}ms; open={idleToolTip.IsOpen}");
-                }
-                stage($"idle wait end after {idle.ElapsedMilliseconds}ms");
-                AssertEqual(false, idleToolTip.IsOpen, "A wheel-owned bubble must disappear after a bounded idle interval");
-                AssertEqual(true, idle.Elapsed >= TimeSpan.FromMilliseconds(700), "The bubble must remain visible long enough to read the wheel value");
-                AssertEqual(idleOriginal, idleThumb.ToolTip, "Idle close must restore the original tooltip");
             }
             finally { stage("source then viewmodel cleanup begin"); }
         }
