@@ -11,6 +11,8 @@ internal static class NativeKeyboardStateSuite
     internal static async Task RunAsync()
     {
         TransactionsPreserveStateAndFailures();
+        FailureContextIsBoundedAndPrivate();
+        PostActionChecksOnlyOwnedBitsAndRestoresEverything();
         // One additional ordinary 5s action, after the existing Search first-use
         // boundaries in Program. Fake transactions never initialize WPF/STA.
         await SearchAdjustmentControlSuite.ObserveMatrixActionAsync("native-peers", NativePeers,
@@ -78,15 +80,174 @@ internal static class NativeKeyboardStateSuite
         catch (Exception error) { return error; }
     }
 
+    private static void FailureContextIsBoundedAndPrivate()
+    {
+        var success = new FakeApi();
+        var successOutput = CaptureError(() => NativeKeyboardStateFixture.Run(success, () => { }));
+        AssertEqual("", successOutput, "Successful comparisons emit no failure context");
+        AssertEqual((4, 2, 20, 2, 4), success.Counts, "Success retains exactly the original native boundary call counts");
+
+        foreach (var phase in new[] { "before-action", "after-action", "restore" })
+        {
+            var api = new FakeApi { Failure = phase == "before-action" ? "mismatch" : phase == "restore" ? "restore-mismatch" : "" };
+            var original = (byte[])api.State.Clone();
+            var actions = 0;
+            Exception? caught = null;
+            var output = CaptureError(() => caught = Catch(() => NativeKeyboardStateFixture.Run(api, () =>
+            {
+                actions++;
+                if (phase == "after-action") { api.State[1] ^= 0x80; api.State[0x41] ^= 0x17; }
+            })));
+            AssertNotNull(caught, "Every full-table mismatch remains a failure");
+            AssertEqual(typeof(InvalidOperationException), caught!.GetType(), "Telemetry preserves the mismatch exception type");
+            AssertEqual($"Native keyboard fixture failed at {(phase == "restore" ? "restore mismatch" : "planned mismatch")}.", caught.Message,
+                "Telemetry preserves the original mismatch message");
+            var context = (string)caught.Data[NativeKeyboardStateFixture.FailureContextKey]!;
+            var changes = phase == "after-action" ? "1; controlledChanges=[0x01:0x26>0xA6(down=False>True,low=0x26>0x26)]" : "0; controlledChanges=[]";
+            AssertEqual($"phase={phase}; controlledChangedCount={changes}; spaceChanged=False; otherChangedCount=1", context,
+                "Owned failures disclose controlled differences but other bytes only their count");
+            AssertEqual($"[native-key-state] {context}{Environment.NewLine}", output, "Mismatch emits exactly one compact safe line");
+            AssertEqual(true, original.SequenceEqual(api.State), "Strict post-action rejection still restores every original byte");
+            AssertEqual(phase == "before-action" ? 0 : 1, actions, "Preparation rejects before action and never retries");
+            AssertEqual(phase == "before-action" ? (3, 2, 0, 0, 3) : phase == "after-action" ? (4, 2, 10, 1, 4) : (4, 2, 20, 2, 4), api.Counts,
+                "Failure context adds no native reads, writes or hidden retries");
+        }
+
+        var allChanged = new FakeApi();
+        var allOriginal = (byte[])allChanged.State.Clone();
+        Exception? allFailure = null;
+        var allOutput = CaptureError(() => allFailure = Catch(() => NativeKeyboardStateFixture.Run(allChanged, () =>
+        {
+            for (var key = 0; key < 256; key++) allChanged.State[key] ^= 0xFF;
+        })));
+        var allContext = (string)allFailure!.Data[NativeKeyboardStateFixture.FailureContextKey]!;
+        AssertEqual(true, allContext.Length <= NativeKeyboardStateFixture.MaximumFailureContextLength, "Worst-case context has a fixed size bound");
+        AssertEqual(true, allContext.StartsWith("phase=after-action; controlledChangedCount=10;", StringComparison.Ordinal), "All ten allowed controlled changes are counted");
+        AssertEqual(true, allContext.Contains("0x01:0x26>0xD9(down=False>True,low=0x26>0x59)", StringComparison.Ordinal), "Controlled keys expose only declared hex/down/low details");
+        AssertEqual(true, allContext.EndsWith("spaceChanged=True; otherChangedCount=245", StringComparison.Ordinal), "Space is a boolean and all other changes are one count");
+        AssertEqual(false, allContext.Contains("0x20:", StringComparison.Ordinal) || allContext.Contains("0x41:", StringComparison.Ordinal), "Space and arbitrary typed-key identities are never listed");
+        AssertEqual(false, allContext.Contains(Convert.ToHexString(allOriginal), StringComparison.Ordinal), "The raw table is not serialized");
+        AssertEqual($"[native-key-state] {allContext}{Environment.NewLine}", allOutput, "Stderr contains only the bounded safe context");
+        AssertEqual(true, allOriginal.SequenceEqual(allChanged.State), "Even all-byte post-action changes fail and restore exactly");
+        AssertEqual((4, 2, 10, 1, 4), allChanged.Counts, "Worst-case metadata reuses the existing snapshot only");
+
+        var secondaryApi = new FakeApi { MismatchRead = 3 };
+        var primary = new ApplicationException("synthetic primary remains private");
+        Exception? preserved = null;
+        var secondaryOutput = CaptureError(() => preserved = Catch(() => NativeKeyboardStateFixture.Run(secondaryApi, () => throw primary)));
+        AssertEqual(true, ReferenceEquals(primary, preserved), "Restoration metadata cannot replace original action exception identity");
+        AssertEqual(null, primary.Data[NativeKeyboardStateFixture.FailureContextKey], "Secondary restoration context is not mislabeled as the primary failure");
+        var secondary = (Exception)primary.Data[NativeKeyboardStateFixture.CleanupFailureKey]!;
+        AssertEqual(true, ((string)secondary.Data[NativeKeyboardStateFixture.FailureContextKey]!).StartsWith("phase=restore;", StringComparison.Ordinal), "Cleanup keeps its own restoration context");
+        AssertEqual(false, secondaryOutput.Contains(primary.Message, StringComparison.Ordinal), "Stderr never prints the original action's text");
+        AssertEqual((3, 2, 10, 1, 3), secondaryApi.Counts, "Double failure preserves native call counts without retry");
+
+        var previousError = Console.Error;
+        using var failingWriter = new FailingErrorWriter();
+        try
+        {
+            Console.SetError(failingWriter);
+            var caught = Catch(() => NativeKeyboardStateFixture.Run(new FakeApi { Failure = "mismatch" }, () => throw new InvalidOperationException("Action must not execute")));
+            AssertEqual("Native keyboard fixture failed at planned mismatch.", caught!.Message, "Broken stderr cannot replace the strict mismatch");
+            AssertNotNull(caught.Data[NativeKeyboardStateFixture.FailureContextKey], "Safe context survives a stderr failure");
+        }
+        finally { Console.SetError(previousError); }
+        Console.WriteLine("Native keyboard failure-context privacy and strict-boundary regressions passed.");
+    }
+
+    private static void PostActionChecksOnlyOwnedBitsAndRestoresEverything()
+    {
+        // The same unrelated key remains strict during preparation/restoration,
+        // but does not belong to the native Space postcondition.
+        var unowned = new FakeApi();
+        var original = (byte[])unowned.State.Clone();
+        var actions = 0;
+        var output = CaptureError(() => NativeKeyboardStateFixture.Run(unowned, () => { actions++; unowned.State[255] ^= 1; }));
+        AssertEqual(1, actions, "Unowned post-action changes do not retry or bypass the action");
+        AssertEqual("", output, "Unowned post-action updates do not emit drift diagnostics on success");
+        AssertEqual(true, original.SequenceEqual(unowned.State), "Every unowned byte still restores from the full snapshot");
+        AssertEqual((4, 2, 20, 2, 4), unowned.Counts, "Allowed unowned updates still execute every original native/WPF/context check exactly once");
+        foreach (var phase in new[] { "before-action", "restore" })
+        {
+            var api = new FakeApi { MismatchRead = phase == "before-action" ? 2 : 4 };
+            var saved = (byte[])api.State.Clone();
+            var calls = 0;
+            Exception? failure = null;
+            CaptureError(() => failure = Catch(() => NativeKeyboardStateFixture.Run(api, () => calls++)));
+            AssertNotNull(failure, "The identical unowned-byte difference still fails full preparation/restoration equality");
+            AssertEqual(true, ((string)failure!.Data[NativeKeyboardStateFixture.FailureContextKey]!).StartsWith($"phase={phase};", StringComparison.Ordinal), "Full checks retain their exact failure phase");
+            AssertEqual(phase == "before-action" ? 0 : 1, calls, "Preparation rejects before invoking the action");
+            AssertEqual(true, saved.SequenceEqual(api.State), "Unowned readback failure still restores every original byte");
+            AssertEqual(phase == "before-action" ? (3, 2, 0, 0, 3) : (4, 2, 20, 2, 4), api.Counts, "Full-boundary rejection adds no API calls or retries");
+        }
+
+        foreach (var key in new[] { 0x01, 0x10, 0xA0, 0xA1, 0x11, 0xA2, 0xA3, 0x12, 0xA4, 0xA5, 0x20 })
+        foreach (var changedBit in new byte[] { 0x80, 0x01 })
+        {
+            var api = new FakeApi();
+            var saved = (byte[])api.State.Clone();
+            Exception? failure = null;
+            var diagnostic = CaptureError(() => failure = Catch(() => NativeKeyboardStateFixture.Run(api, () => api.State[key] ^= changedBit)));
+            if (key != 0x20 && changedBit == 0x01)
+            {
+                AssertEqual(null, failure, "Controlled low-bit metadata does not change the configured Down postcondition");
+                AssertEqual("", diagnostic, "Allowed low-bit changes emit no failure logging");
+                AssertEqual(true, saved.SequenceEqual(api.State), "Each controlled low bit still restores with all 256 original bytes");
+                AssertEqual((4, 2, 20, 2, 4), api.Counts, "Low-bit metadata never bypasses native/WPF/context checks or adds calls");
+                continue;
+            }
+            AssertNotNull(failure, "Every controlled Down change and Space high/low change rejects the post-action snapshot");
+            AssertEqual("Native keyboard fixture failed at planned mismatch.", failure!.Message, "Owned-byte rejection retains the original message");
+            var context = (string)failure.Data[NativeKeyboardStateFixture.FailureContextKey]!;
+            AssertEqual(true, context.StartsWith("phase=after-action;", StringComparison.Ordinal), "Owned-byte rejection retains its phase");
+            AssertEqual(true, context.Contains($"spaceChanged={key == 0x20}; otherChangedCount=0", StringComparison.Ordinal), "Space is separate from controlled and unowned differences");
+            AssertEqual(true, saved.SequenceEqual(api.State), "Each controlled and Space byte restores in full after rejection");
+            AssertEqual((4, 2, 10, 1, 4), api.Counts, "Owned-bit checking uses the existing post-action read without retry");
+        }
+        foreach (var key in new[] { 0x01, 0x10, 0xA0, 0xA1, 0x11, 0xA2, 0xA3, 0x12, 0xA4, 0xA5 })
+        foreach (var phase in new[] { "before-action", "restore" })
+        {
+            var api = new FakeApi { MismatchRead = phase == "before-action" ? 2 : 4, MismatchKey = key };
+            var saved = (byte[])api.State.Clone();
+            var calls = 0;
+            Exception? failure = null;
+            CaptureError(() => failure = Catch(() => NativeKeyboardStateFixture.Run(api, () => calls++)));
+            AssertNotNull(failure, "The identical controlled low-bit mutation still fails full preparation/restoration equality");
+            AssertEqual(true, ((string)failure!.Data[NativeKeyboardStateFixture.FailureContextKey]!).StartsWith($"phase={phase};", StringComparison.Ordinal), "Full low-bit guards keep their exact phase");
+            AssertEqual(phase == "before-action" ? 0 : 1, calls, "A preparation low-bit mismatch prevents the action");
+            AssertEqual(true, saved.SequenceEqual(api.State), "Full restoration includes every controlled low-bit value");
+            AssertEqual(phase == "before-action" ? (3, 2, 0, 0, 3) : (4, 2, 20, 2, 4), api.Counts, "Full low-bit rejection adds no API call or retry");
+        }
+        Console.WriteLine("Native keyboard owned-Down-bit postcondition and full-restoration regressions passed.");
+    }
+
+    private static string CaptureError(Action action)
+    {
+        var previous = Console.Error;
+        using var writer = new StringWriter();
+        try { Console.SetError(writer); action(); return writer.ToString(); }
+        finally { Console.SetError(previous); }
+    }
+
+    private sealed class FailingErrorWriter : StringWriter
+    {
+        public override void WriteLine(string? value) => throw new IOException("Synthetic diagnostic sink failure");
+    }
+
     private sealed class FakeApi : INativeKeyboardStateApi
     {
         internal byte[] State = Enumerable.Range(0, 256).Select(index => (byte)(index * 37 + 129)).ToArray();
         internal string Failure = "";
         internal int Writes;
         internal int Reads => _reads;
+        internal int MismatchRead;
+        internal int MismatchKey = 255;
+        internal (int Reads, int Writes, int Keys, int Wpf, int Contexts) Counts => (_reads, Writes, _keys, _wpf, _contexts);
         internal readonly Exception PostconditionFailure = new InvalidOperationException("Synthetic WPF postcondition failure");
         private int _reads;
         private int _contexts;
+        private int _keys;
+        private int _wpf;
         public void VerifyContext()
         {
             _contexts++;
@@ -99,7 +260,7 @@ internal static class NativeKeyboardStateSuite
             if (Failure == "capture" && _reads == 1 || Failure == "readback" && _reads == 2 ||
                 Failure == "after-action" && _reads == 3 || Failure == "restore-read" && _reads == 4) return false;
             State.CopyTo(state, 0);
-            if (Failure == "mismatch" && _reads == 2 || Failure == "restore-mismatch" && _reads == 4) state[255] ^= 1;
+            if (Failure == "mismatch" && _reads == 2 || Failure == "restore-mismatch" && _reads == 4 || _reads == MismatchRead) state[MismatchKey] ^= 1;
             return true;
         }
         public bool Write(byte[] state)
@@ -110,9 +271,14 @@ internal static class NativeKeyboardStateSuite
             State = (byte[])state.Clone();
             return Failure != "apply" || Writes != 1;
         }
-        public short KeyState(int key) => Failure == "key" ? (short)(State[key] << 8 ^ 0x8000) : (short)(State[key] << 8);
+        public short KeyState(int key)
+        {
+            _keys++;
+            return Failure == "key" ? (short)(State[key] << 8 ^ 0x8000) : (short)(State[key] << 8);
+        }
         public void VerifyWpfState(NativeKeyboardCondition condition)
         {
+            _wpf++;
             if (Failure is "wpf" or "wpf-and-restore") throw PostconditionFailure;
         }
     }
