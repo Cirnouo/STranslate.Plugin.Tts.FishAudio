@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -38,65 +39,118 @@ internal static class PopupDirectionSuite
         fixture.AssertCompleteNatural();
         var natural = fixture.Surface.ActualHeight;
         var chrome = natural - fixture.Body.ActualHeight;
-        var firstSource = PresentationSource.FromVisual(fixture.Surface);
         Console.WriteLine($"[popup-direction/natural] client={language} actual={natural:0.###} body={fixture.Body.ActualHeight:0.###} extent={fixture.Body.ExtentHeight:0.###} viewport={fixture.Body.ViewportHeight:0.###}");
-        fixture.Close();
-        fixture.Root.Height = natural + 24 + fixture.Anchor.ActualHeight + 16 + chrome + 64;
-        fixture.Position(natural + 24);
-        fixture.Open();
-        var bounds = PopupViewport.VisibleBounds(fixture.Anchor, fixture.Root, []);
-        var scale = PopupViewport.ScreenScale(fixture.Anchor);
-        var top = fixture.Anchor.PointToScreen(new Point()).Y;
-        var bottom = fixture.Anchor.PointToScreen(new Point(0, fixture.Anchor.ActualHeight)).Y;
-        var above = (top - bounds.Top) / scale.DpiScaleY - 8;
-        var below = (bounds.Bottom - bottom) / scale.DpiScaleY - 8;
-        var popupTop = fixture.Surface.PointToScreen(new Point()).Y;
-        var popupBottom = fixture.Surface.PointToScreen(new Point(0, fixture.Surface.ActualHeight)).Y;
-        var metadata = $"natural={natural:0.###}; above={above:0.###}; below={below:0.###}; actual={fixture.Surface.ActualHeight:0.###}; popupY={popupTop:0.###}..{popupBottom:0.###}; anchorY={top:0.###}..{bottom:0.###}; visible={bounds}; anchorScale={scale.DpiScaleX},{scale.DpiScaleY}; popupDpi={VisualTreeHelper.GetDpi(fixture.Surface).DpiScaleX}; liveSource={PresentationSource.FromVisual(fixture.Surface) is HwndSource { IsDisposed: false }}; sameSource={ReferenceEquals(firstSource, PresentationSource.FromVisual(fixture.Surface))}";
-        Console.WriteLine("[popup-direction/asymmetric] " + metadata);
-        if (directory is not null)
-        {
-            Directory.CreateDirectory(directory);
-            SearchAdjustmentControlSuite.WriteProofAssembly(directory);
-            File.WriteAllText(Path.Combine(directory, "geometry.txt"), metadata + Environment.NewLine + "Opaque accent fixture; WPF layout raster, no desktop Mica/installed-host/physical-input claim.");
-            Save(fixture.Surface, Path.Combine(directory, "asymmetric.png"));
-        }
-        AssertEqual(true, above >= natural && below < natural && below > chrome + 32, "The observed intermediate geometry must fit natural content only above while preserving useful below space");
-        AssertEqual(true, popupBottom <= top - 7 * scale.DpiScaleY + 1,
-            "Complete natural content fits above, so a chrome-only cached measurement must not choose the cramped below side");
-        AssertEqual(true, Math.Abs(natural - fixture.Surface.ActualHeight) < 1, "Above must retain the complete independently observed natural shell");
-        stage("above-only complete natural content verified");
+        SyntheticSides(fixture, natural, chrome, stage);
         fixture.Close();
 
+        var (large, small, tie) = fixture.NativeCapacities(natural, chrome);
         foreach (var (name, aboveCapacity, belowCapacity, expectAbove, full) in new[]
         {
-            ("below-full-with-larger-above", natural + 32, natural + 8, false, true),
-            ("neither-above-larger", natural - 48, chrome + 64, true, false),
-            ("neither-below-larger", chrome + 64, natural - 48, false, false),
-            ("neither-equal-prefers-below", natural - 48, natural - 48, false, false)
+            ("native-above-only-full", natural + 8, fixture.OppositeCapacity(natural + 8), true, true),
+            ("native-below-full", fixture.OppositeCapacity(natural + 8), natural + 8, false, true),
+            ("native-neither-above-larger", large, small, true, false),
+            ("native-neither-below-larger", small, large, false, false),
+            ("native-neither-equal-prefers-below", tie, tie, false, false)
         })
         {
             fixture.Configure(aboveCapacity, belowCapacity);
+            var (above, below) = fixture.Capacities();
+            AssertEqual(true, full ? (expectAbove ? above >= natural && below < natural : below >= natural && above < natural)
+                : above < natural && below < natural && above > chrome + 32 && below > chrome + 32,
+                $"{name}: measured native capacities establish the declared full/useful-constrained preconditions");
+            if (name == "native-neither-equal-prefers-below")
+                AssertEqual(true, Math.Abs(above - below) * PopupViewport.ScreenScale(fixture.Anchor).DpiScaleY < .01,
+                    "The tie fixture establishes equal capacities in actual native device pixels");
             fixture.Open();
-            if (name == "neither-equal-prefers-below")
-            {
-                var visible = PopupViewport.VisibleBounds(fixture.Anchor, fixture.Root, []);
-                var nativeGap = 8 * PopupViewport.ScreenScale(fixture.Anchor).DpiScaleY;
-                var actualAbove = fixture.Anchor.PointToScreen(new Point()).Y - visible.Top - nativeGap;
-                var actualBelow = visible.Bottom - fixture.Anchor.PointToScreen(new Point(0, fixture.Anchor.ActualHeight)).Y - nativeGap;
-                AssertEqual(true, Math.Abs(actualAbove - actualBelow) < .01, "The tie fixture establishes equal capacities in actual native device pixels");
-            }
             AssertSide(fixture, expectAbove, name);
-            AssertEqual(true, Math.Abs(fixture.Surface.ActualHeight - (full ? natural : Math.Max(aboveCapacity, belowCapacity))) < 1,
-                $"{name}: use complete natural height or the larger available side");
-            if (!full) AssertEqual(true, fixture.Body.ExtentHeight > fixture.Body.ViewportHeight, $"{name}: constrained body scrolls");
+            var selected = expectAbove ? above : below;
+            AssertNear(selected, fixture.Surface.MaxHeight, $"{name}: the side capacity, rather than across-trigger fallback, sets MaxHeight");
+            AssertNear(full ? natural : selected, fixture.Surface.ActualHeight, $"{name}: use complete natural height or the larger available side");
+            if (full) fixture.AssertCompleteNatural();
+            else AssertEqual(true, fixture.Body.ExtentHeight > fixture.Body.ViewportHeight, $"{name}: constrained body scrolls");
             fixture.AssertFixedChrome();
+            if (directory is not null && name == "native-above-only-full")
+            {
+                Directory.CreateDirectory(directory);
+                SearchAdjustmentControlSuite.WriteProofAssembly(directory);
+                File.WriteAllText(Path.Combine(directory, "geometry.txt"),
+                    $"native feasible above-only: natural={natural:0.###}; chrome={chrome:0.###}; above={above:0.###}; below={below:0.###}; actual={fixture.Surface.ActualHeight:0.###}" + Environment.NewLine
+                    + "Opaque accent fixture; WPF layout raster, no desktop Mica/installed-host/physical-input claim. Original five capacity vectors are separate synthetic geometry evidence.");
+                Save(fixture.Surface, Path.Combine(directory, "asymmetric.png"));
+            }
             fixture.Close();
             stage(name);
         }
         fixture.AssertAppliedDraft();
         stage("source/owner cleanup");
     }
+
+    private static void SyntheticSides(Fixture fixture, double natural, double chrome, Action<string> stage)
+    {
+        // All original vectors use the compiled live-source zero-body/full-body
+        // measure path. Returned geometry is synthetic, never a positioned HWND.
+        var source = PresentationSource.FromVisual(fixture.Surface);
+        Exception? primary = null;
+        try
+        {
+            foreach (var (name, above, below, expectAbove, full) in new[]
+            {
+                ("above-only-full-useful-below", natural + 8, chrome + 64, true, true),
+                ("below-full-with-larger-above", natural + 32, natural + 8, false, true),
+                ("neither-above-larger", natural - 48, chrome + 64, true, false),
+                ("neither-below-larger", chrome + 64, natural - 48, false, false),
+                ("neither-equal-prefers-below", natural - 48, natural - 48, false, false)
+            })
+            {
+                var scale = PopupViewport.ScreenScale(fixture.Anchor);
+                var origin = fixture.Anchor.PointToScreen(new Point());
+                var anchorBottom = fixture.Anchor.PointToScreen(new Point(0, fixture.Anchor.ActualHeight)).Y;
+                var native = PopupViewport.VisibleBounds(fixture.Anchor, fixture.Root, []);
+                var bounds = new Rect(new Point(native.Left, origin.Y - (8 + above) * scale.DpiScaleY),
+                    new Point(native.Right, anchorBottom + (8 + below) * scale.DpiScaleY));
+                AssertEqual(true, full ? (expectAbove ? above >= natural && below < natural && below > chrome + 32
+                    : below >= natural && above > below) : above < natural && below < natural && above > chrome + 32 && below > chrome + 32,
+                    $"synthetic/{name}: original useful/full policy preconditions");
+                AssertEqual(true, fixture.Prepare(bounds), $"synthetic/{name}: live compiled chrome fits");
+                AssertEqual(true, ReferenceEquals(source, PresentationSource.FromVisual(fixture.Surface)),
+                    $"synthetic/{name}: preserve the original live compiled source");
+                var selected = expectAbove ? above : below;
+                AssertNear(selected, fixture.Surface.MaxHeight, $"synthetic/{name}: exact selected side MaxHeight");
+                AssertNear(Math.Min(fixture.MaximumBodyHeight, selected - chrome), fixture.Body.MaxHeight,
+                    $"synthetic/{name}: preserve fixed chrome outside the body budget");
+                fixture.Surface.Measure(new Size(fixture.Surface.Width, double.PositiveInfinity));
+                AssertNear(full ? natural : selected, fixture.Surface.DesiredSize.Height,
+                    $"synthetic/{name}: full natural or constrained compiled shell demand");
+                AssertNear(Math.Min(natural - chrome, selected - chrome), fixture.Body.DesiredSize.Height,
+                    $"synthetic/{name}: body demand retains complete fixed chrome");
+                var size = new Size(fixture.Surface.DesiredSize.Width * scale.DpiScaleX,
+                    fixture.Surface.DesiredSize.Height * scale.DpiScaleY);
+                var target = new Size(fixture.Anchor.ActualWidth * scale.DpiScaleX, anchorBottom - origin.Y);
+                var placements = PopupViewport.PlaceWithinBounds(fixture.Anchor, size, target, fixture.AlignRight, bounds);
+                AssertEqual(1, placements.Length, $"synthetic/{name}: one placement");
+                var top = origin + (Vector)placements[0].Point;
+                AssertEqual(true, expectAbove ? top.Y + size.Height <= origin.Y - 8 * scale.DpiScaleY + 1
+                    : top.Y >= anchorBottom + 8 * scale.DpiScaleY - 1, $"synthetic/{name}: declared side and native-unit gap");
+                AssertEqual(true, top.X >= bounds.Left - 1 && top.Y >= bounds.Top - 1
+                    && top.X + size.Width <= bounds.Right + 1 && top.Y + size.Height <= bounds.Bottom + 1,
+                    $"synthetic/{name}: containment inside the explicit synthetic rectangle");
+                stage("synthetic/" + name);
+            }
+        }
+        catch (Exception error) { primary = error; throw; }
+        finally
+        {
+            try { AssertEqual(true, fixture.Prepare(), "Restore real visible bounds before native transitions"); }
+            catch (Exception cleanup) when (primary is not null)
+            {
+                try { primary.Data["SyntheticBoundsCleanupFailure"] = cleanup.GetType().Name; }
+                catch { /* Secondary diagnostics cannot replace the primary failure. */ }
+            }
+        }
+    }
+
+    private static void AssertNear(double expected, double actual, string message) =>
+        AssertEqual(true, Math.Abs(expected - actual) < 1, $"{message}; expected={expected:0.###}, actual={actual:0.###}");
 
     private static void GeometryLifetime(bool language, Action<string> stage)
     {
@@ -106,24 +160,29 @@ internal static class PopupDirectionSuite
         fixture.AssertCompleteNatural();
         var natural = fixture.Surface.ActualHeight;
         var chrome = natural - fixture.Body.ActualHeight;
+        var (large, small, _) = fixture.NativeCapacities(natural, chrome);
         fixture.Close();
-        fixture.Configure(natural - 48, chrome + 64); fixture.Open();
+        fixture.Configure(large, small); fixture.Open();
         AssertSide(fixture, true, "constrained first source");
         var retired = PresentationSource.FromVisual(fixture.Surface);
         fixture.Close();
         AssertEqual(0d, fixture.Body.Padding.Right, "Closing releases the native scrollbar exclusion lane");
-        fixture.Configure(chrome + 64, natural + 8); fixture.Open();
+        fixture.Configure(fixture.OppositeCapacity(natural + 8), natural + 8); fixture.Open();
         AssertEqual(false, ReferenceEquals(retired, PresentationSource.FromVisual(fixture.Surface)), "Reopen owns the actual new native source");
         AssertSide(fixture, false, "reopen reverses the constrained side");
         AssertEqual(true, Math.Abs(natural - fixture.Surface.ActualHeight) < 1, "A retired constrained DesiredSize cannot shrink the next complete open");
         var live = PresentationSource.FromVisual(fixture.Surface);
         fixture.ChangeDraft();
-        fixture.Configure(natural + 24, chrome + 64);
+        var previousHeight = fixture.Root.Height;
+        fixture.Configure(natural + 24, fixture.OppositeCapacity(natural + 24));
+        AssertEqual(true, fixture.Root.Height != previousHeight, "The live reversal includes the original owner resize stimulus");
         AssertSide(fixture, true, "live owner resize and trigger movement reverse capacities");
         AssertEqual(true, ReferenceEquals(live, PresentationSource.FromVisual(fixture.Surface)), "Live geometry changes retain the current native source");
         fixture.AssertDraft();
         fixture.AssertFixedChrome();
-        fixture.Configure(chrome + 64, natural + 40);
+        previousHeight = fixture.Root.Height;
+        fixture.Configure(fixture.OppositeCapacity(natural + 40), natural + 40);
+        AssertEqual(true, fixture.Root.Height != previousHeight, "The second live reversal resizes the same owner again");
         AssertSide(fixture, false, "second live owner resize reverses capacities again");
         fixture.AssertDraft();
         stage("constrained reopen and two live geometry reversals");
@@ -140,7 +199,7 @@ internal static class PopupDirectionSuite
         AssertEqual(false, fixture.IsOpen, "A viewport shorter than complete chrome closes and retires the overlay");
         AssertEqual(0d, fixture.Body.Padding.Right, "Height refusal releases the owned scrollbar padding");
         AssertEqual(IntPtr.Zero, fixture.MaterialHandle, "Height refusal releases the exact native material source");
-        fixture.Configure(natural + 24, chrome + 64); fixture.Open();
+        fixture.Configure(natural + 24, fixture.OppositeCapacity(natural + 24)); fixture.Open();
         AssertSide(fixture, true, "restored sufficient viewport reopens");
         fixture.AssertFixedChrome();
         fixture.Close();
@@ -187,11 +246,14 @@ internal static class PopupDirectionSuite
         private readonly Popup _popup;
         private readonly HwndSource _source;
         private readonly double _sourceHeight;
+        private readonly double _sideBudget;
         internal Canvas Root { get; } = new();
         internal Border Surface { get; }
         internal ScrollViewer Body { get; }
         internal FrameworkElement Anchor { get; }
         internal bool IsOpen => _popup.IsOpen;
+        internal bool AlignRight => _control is SearchAdjustmentControl;
+        internal double MaximumBodyHeight => _control is VoiceLanguageTags ? 280 : double.PositiveInfinity;
         internal IntPtr MaterialHandle => _control is VoiceLanguageTags tags ? tags.Material.Handle : ((SearchAdjustmentControl)_control).Material.Handle;
 
         internal Fixture(bool language)
@@ -228,11 +290,50 @@ internal static class PopupDirectionSuite
             });
             _source.RootVisual = Root;
             Root.Width = 400;
-            Root.Height = (work.Height - 48 * dpi.DpiScaleY) / PopupViewport.ScreenScale(Root).DpiScaleY;
+            AssertEqual(true, GetClientRect(_source.Handle, out var client), "Read the actual fixture native client capacity");
+            Root.Height = Math.Min(680, (client.Bottom - client.Top) / PopupViewport.ScreenScale(Root).DpiScaleY);
             _sourceHeight = Root.Height;
             Layout();
+            var visible = PopupViewport.VisibleBounds(Anchor, Root, []);
+            var nativeScale = PopupViewport.ScreenScale(Anchor).DpiScaleY;
+            var anchorHeight = Anchor.PointToScreen(new Point(0, Anchor.ActualHeight)).Y - Anchor.PointToScreen(new Point()).Y;
+            _sideBudget = Math.Floor(visible.Height - anchorHeight - 16 * nativeScale) / nativeScale;
         }
 
+        internal bool Prepare(Rect? bounds = null)
+        {
+            FrameworkElement[] chrome = _control is VoiceLanguageTags
+                ? [(FrameworkElement)_control.FindName("RemainingCount")]
+                : [(FrameworkElement)_control.FindName("PopupFooter"), (FrameworkElement)_control.FindName("CloseButton")];
+            return bounds is { } explicitBounds
+                ? PopupViewport.PrepareWithinBounds(Anchor, Surface, Body, chrome, AlignRight ? 324 : 290, MaximumBodyHeight, explicitBounds)
+                : PopupViewport.Prepare(Anchor, Root, [], Surface, Body, chrome, AlignRight ? 324 : 290, MaximumBodyHeight);
+        }
+        internal (double Above, double Below) Capacities()
+        {
+            var visible = PopupViewport.VisibleBounds(Anchor, Root, []);
+            var scale = PopupViewport.ScreenScale(Anchor).DpiScaleY;
+            return ((Anchor.PointToScreen(new Point()).Y - visible.Top) / scale - 8,
+                (visible.Bottom - Anchor.PointToScreen(new Point(0, Anchor.ActualHeight)).Y) / scale - 8);
+        }
+        internal double OppositeCapacity(double full)
+        {
+            AssertEqual(true, full <= _sideBudget, "The measured native viewport fits the requested complete side");
+            // Full-side lifetime states must still resize the owner between the
+            // original +8/+24/+40 margins; consuming all remaining space would
+            // hold its height constant and remove the real SizeChanged stimulus.
+            return 0;
+        }
+        internal (double Large, double Small, double Tie) NativeCapacities(double natural, double chrome)
+        {
+            var scale = PopupViewport.ScreenScale(Anchor).DpiScaleY;
+            var small = (Math.Ceiling((chrome + 32) * scale) + 1) / scale;
+            var large = Math.Floor(Math.Min(natural - 48, _sideBudget - small) * scale) / scale;
+            var tie = Math.Floor(Math.Min(natural - 48, _sideBudget / 2) * scale) / scale;
+            AssertEqual(true, small > chrome + 32 && large > small && large < natural && tie > chrome + 32 && tie < natural,
+                "Measured native capacity supports useful constrained larger-side and tie discriminators");
+            return (large, small, tie);
+        }
         internal void Position(double top) { Canvas.SetTop(_control, top); Layout(); }
         internal void Configure(double above, double below)
         {
@@ -295,5 +396,12 @@ internal static class PopupDirectionSuite
         internal void Close() { _popup.IsOpen = false; Drain(); }
         public void Dispose() { Close(); _source.Dispose(); _viewModel.Dispose(); }
         private static void Drain() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetClientRect(IntPtr window, out NativeRect bounds);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeRect { public int Left, Top, Right, Bottom; }
     }
 }

@@ -35,6 +35,13 @@ internal static class PopupViewport
         double maximumWidth, double maximumBodyHeight = double.PositiveInfinity)
     {
         var bounds = VisibleBounds(anchor, owner, ancestors);
+        return PrepareWithinBounds(anchor, surface, body, fixedWidthChrome, maximumWidth, maximumBodyHeight, bounds);
+    }
+
+    // Bounds are the already-inset visible rectangle, in native device pixels.
+    internal static bool PrepareWithinBounds(FrameworkElement anchor, Border surface, ScrollViewer body,
+        IEnumerable<FrameworkElement> fixedWidthChrome, double maximumWidth, double maximumBodyHeight, Rect bounds)
+    {
         if (bounds.IsEmpty) return false;
         var dpi = ScreenScale(anchor);
         surface.Width = Math.Min(maximumWidth, bounds.Width / dpi.DpiScaleX);
@@ -100,6 +107,12 @@ internal static class PopupViewport
         IEnumerable<ScrollViewer> ancestors, Size popupSize, Size targetSize, bool alignRight)
     {
         var bounds = VisibleBounds(anchor, owner, ancestors);
+        return PlaceWithinBounds(anchor, popupSize, targetSize, alignRight, bounds);
+    }
+
+    internal static CustomPopupPlacement[] PlaceWithinBounds(FrameworkElement anchor, Size popupSize,
+        Size targetSize, bool alignRight, Rect bounds)
+    {
         if (bounds.IsEmpty) return [];
         var origin = anchor.PointToScreen(new Point());
         var dpi = ScreenScale(anchor);
