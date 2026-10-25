@@ -25,6 +25,21 @@ internal static class SearchAdjustmentControlSuite
 {
     internal static async Task RunAllAsync(string? group = null, string? proofDirectory = null)
     {
+        if (group is "geometry")
+        {
+            await RunGeometryAsync(proofDirectory);
+            return;
+        }
+        if (group is "intent")
+        {
+            await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
+            return;
+        }
+        if (group is "drafts")
+        {
+            await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
+            return;
+        }
         if (group is "proof")
         {
             foreach (var (locale, dark) in new[] { ("en", false), ("en", true), ("ru", true) })
@@ -61,12 +76,18 @@ internal static class SearchAdjustmentControlSuite
         if (group is "titles") return;
         foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
         await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
+        await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
         await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
         await RunOnStaThreadAsync(WindowAndScrollLifetime);
         await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
         await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
         await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
         await RunMaterialFallbackAsync();
+        await RunGeometryAsync(proofDirectory);
+    }
+
+    private static async Task RunGeometryAsync(string? proofDirectory)
+    {
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
@@ -536,22 +557,28 @@ internal static class SearchAdjustmentControlSuite
         using var ownerSource = Attach(view);
         var control = Control(view);
         Open(control);
-        var surface = Part<Border>(control, "PopupSurface");
-        var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
-        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
-            AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Acrylic compatibility path must create a nonlayered Popup before applying DWM material");
-        var material = ((SearchAdjustmentControl)control).Material;
-        Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleBlur=UNVERIFIED");
-        AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
-        Click(control, "CloseButton");
-        AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+        try
+        {
+            var surface = Part<Border>(control, "PopupSurface");
+            var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
+            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+                AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Mica compatibility path must create a nonlayered Popup before applying DWM material");
+            var material = ((SearchAdjustmentControl)control).Material;
+            Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleMaterial=UNVERIFIED");
+            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) && material.Failure is null && material.Result.FrameHResult >= 0 && material.Result.ReadbackHResult >= 0)
+                AssertEqual(2, material.Result.BackdropType, "The existing toolkit request must read back the host Mica family, never Desktop Acrylic");
+            AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
+            Click(control, "CloseButton");
+            AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+        }
+        finally { Part<Popup>(control, "AdjustmentPopup").IsOpen = false; Drain(); }
     }
 
     private static async Task RunMaterialFallbackAsync()
     {
         foreach (var supported in new[] { false, true })
-        foreach (var result in new[] { new PopupBackdropResult(0, unchecked((int)0x80004005), 3), new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 3) })
+        foreach (var result in new[] { new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(0, 0, 3), new PopupBackdropResult(0, unchecked((int)0x80004005), 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 2) })
             await RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result));
     }
 
@@ -565,22 +592,33 @@ internal static class SearchAdjustmentControlSuite
         var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
         var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
         var material = new PopupMaterial(popup, surface, api);
-        material.Begin(); popup.IsOpen = true; Drain();
-        var first = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
-        AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
-        AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
-        AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
-        AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
-        popup.IsOpen = false; Drain();
-        AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
-        var calls = api.Applied.Count;
-        surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
-        AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
-        material.Begin(); popup.IsOpen = true; Drain();
-        var second = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
-        popup.IsOpen = false; material.End(); Drain();
+        try
+        {
+            material.Begin(); popup.IsOpen = true; Drain();
+            var first = (HwndSource)PresentationSource.FromVisual(surface);
+            var accepted = supported && result == new PopupBackdropResult(0, 0, 2);
+            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+            AssertEqual(accepted, material.AttributeAccepted, "Only successful frame/readback Mica type 2 enables transparent material; Acrylic type 3 is rejected");
+            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Accepted Mica clears the shell; every fallback stays explicitly opaque");
+            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.Black; Drain();
+            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Live theme replacement preserves the accepted/opaque decision");
+            if (supported) AssertEqual((first.Handle, true), api.Chrome[^1], "Theme updates target only the live popup source with the new dark state");
+            popup.IsOpen = false; Drain();
+            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+            var calls = api.Chrome.Count;
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+            AssertEqual(calls, api.Chrome.Count, "Retired theme callbacks cannot update stale sources");
+            material.Begin(); popup.IsOpen = true; Drain();
+            var second = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+            AssertEqual(accepted, material.AttributeAccepted, "Reopen evaluates the new source independently");
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.White; Drain();
+            if (supported) AssertEqual((second.Handle, false), api.Chrome[^1], "Reopened theme changes target the new live source only");
+            AssertEqual(false, api.Chrome.Any(call => call.Handle == ownerSource.Handle), "Native theme updates never target the owner HWND");
+        }
+        finally { popup.IsOpen = false; material.End(); Drain(); }
     }
 
     private sealed class TestPopupBackdropApi : IPopupBackdropApi
@@ -589,7 +627,8 @@ internal static class SearchAdjustmentControlSuite
         internal PopupBackdropResult Result { get; init; }
         internal List<IntPtr> Applied { get; } = [];
         public PopupBackdropResult Apply(IntPtr handle, bool dark) { Applied.Add(handle); return Result; }
-        public void UpdateChrome(IntPtr handle, bool dark) { }
+        internal List<(IntPtr Handle, bool Dark)> Chrome { get; } = [];
+        public void UpdateChrome(IntPtr handle, bool dark) { Chrome.Add((handle, dark)); }
         public void Remove(IntPtr handle) { }
     }
     private static T Part<T>(FrameworkElement control, string name) where T : class => (T)control.FindName(name);
@@ -629,10 +668,16 @@ internal static class SearchAdjustmentControlSuite
         var tile = Tiles(control).Single(item => (string)item.Tag == "en");
         foreach (var key in new[] { Key.Enter, Key.Space })
         {
+            var phases = new List<string>();
+            string State() => $"checked={tile.IsChecked}; focused={tile.IsKeyboardFocused}; pressed={tile.IsPressed}; captured={tile.IsMouseCaptured}";
+            phases.Add($"{key}/before-focus: {State()}");
             tile.Focus();
+            phases.Add($"{key}/after-focus: {State()}");
             var previous = tile.IsChecked;
-            LocalKey(tile, key); Drain();
-            AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior");
+            LocalKey(tile, key, phase => phases.Add($"{key}/{phase}: {State()}")); Drain();
+            phases.Add($"{key}/after-drain: {State()}");
+            try { AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior"); }
+            catch { foreach (var phase in phases) Console.WriteLine($"[search-keyboard] {phase}"); throw; }
             AssertEqual(true, IsOpen(control), "Tile keyboard activation preserves the popup");
             AssertEqual(0, http.GetCallCount, "Tile keyboard activation cannot invoke Apply");
         }
@@ -649,7 +694,7 @@ internal static class SearchAdjustmentControlSuite
 
     // This hidden HWND cannot acquire OS keyboard focus. Exercise native class
     // handlers with an explicit focus-state fixture; physical Tab is host acceptance.
-    private static void LocalKey(FrameworkElement target, Key key)
+    private static void LocalKey(FrameworkElement target, Key key, Action<string>? observe = null)
     {
         var focusKey = (DependencyPropertyKey)typeof(UIElement).GetField("IsKeyboardFocusedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         var previous = target.IsKeyboardFocused;
@@ -667,6 +712,7 @@ internal static class SearchAdjustmentControlSuite
                     var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
                     { RoutedEvent = routed, Source = target };
                     target.RaiseEvent(args);
+                    observe?.Invoke($"{routed.Name}/handled={args.Handled}");
                 }
             }
         }
@@ -730,7 +776,7 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, http.GetCallCount, "Apply invokes exactly one request");
         AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=en&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
         Open(control);
-        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from successful selections");
+        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from applied selections");
         var surface = Part<Border>(control, "PopupSurface");
         var scroll = Part<ScrollViewer>(control, "PopupScroll");
         scroll.ScrollToVerticalOffset(50); Drain();
@@ -748,6 +794,57 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(2, http.GetCallCount, "Blur after Apply cannot issue a duplicate search");
         await vm.SearchVoicesCommand.ExecuteAsync(null);
         AssertEqual(3, http.GetCallCount, "The public Search command remains usable with applied options");
+    }
+
+    private static async Task HeldApplyReopensAppliedIntentAsync()
+    {
+        const string response = """{"total":24,"items":[{"_id":"11111111111111111111111111111111","title":"Voice"}]}""";
+        var settings = new Settings();
+        var (service, http) = TestHttpServiceProxy.Create();
+        http.GetResponseJson = response;
+        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        using var source = Attach(view);
+        var control = Control(view);
+        await vm.SearchVoicesCommand.ExecuteAsync(null);
+        await vm.NextPageCommand.ExecuteAsync(null);
+        var cards = vm.SearchResults;
+        var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var published = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.SearchResults)) published.TrySetResult();
+        };
+        http.GetAsyncHandler = (_, _, _) => held.Task;
+        try
+        {
+            Open(control); Toggle(control, "en");
+            Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+            Click(control, "ApplyButton");
+            AssertEqual(3, http.GetCallCount, "Held compiled Apply starts exactly one page-one GET");
+            AssertEqual(false, IsOpen(control), "Held Apply closes immediately");
+            Open(control);
+            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen while the response is held shows applied English");
+            AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Pending reopen keeps applied sort");
+            AssertEqual(true, vm.HasSearchAdjustments, "Pending applied intent enables the indicator");
+            AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Pending popup intent retains successful result identities");
+            AssertEqual(2, vm.SearchPage, "Pending popup intent retains successful navigation");
+            Toggle(control, "en"); Toggle(control, "de");
+            Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
+            await Task.Run(() => held.SetResult(response));
+            await published.Task.WaitAsync(RegressionExecution.Timeout);
+            Drain();
+            AssertEqual(true, IsOpen(control), "A response preserves open popup ownership");
+            AssertEnumerableEqual(new[] { "de" }, Selected(control), "English success cannot mutate the independent German draft");
+            AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Response publication cannot mutate the open sort draft");
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "Success leaves applied menu intent unchanged");
+            Click(control, "CloseButton"); Open(control);
+            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Close and reopen restore applied English after success");
+            AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Close and reopen restore applied sort");
+            AssertEqual(3, http.GetCallCount, "Draft edits, response and reopen add no GETs");
+            Click(control, "CloseButton");
+        }
+        finally { held.TrySetResult(response); vm.Dispose(); Drain(); }
     }
 
     // The per-view token prevents competing overlays, stale releases and leaked
@@ -1270,9 +1367,14 @@ internal static class SearchAdjustmentControlSuite
                 AssertEqual(true, Math.Abs(inputBounds.Right - buttonBounds.Right - 4) <= 1 / dpi, "The action has a four-DIP right inset");
                 var textView = Visuals(input).OfType<FrameworkElement>().Single(item => item.GetType().Name == "TextBoxView");
                 var viewport = textView.TransformToAncestor(view).TransformBounds(new Rect(textView.RenderSize));
+                var clear = (Button)view.FindName("SearchQueryClearButton");
+                var clearBounds = clear.TransformToAncestor(view).TransformBounds(new Rect(clear.RenderSize));
+                AssertEqual(true, clearBounds.Right <= buttonBounds.Left && clearBounds.Left >= inputBounds.Left, "Clear precedes Adjust inside the native input");
                 AssertEqual(true, viewport.Right <= buttonBounds.Left - 3, "The native text viewport reserves room for the embedded action");
+                AssertEqual(true, viewport.Right <= clearBounds.Left - 3, "The native text viewport also reserves room for clear");
                 var caret = input.GetRectFromCharacterIndex(input.Text.Length);
                 AssertEqual(true, caret.Right <= input.ActualWidth - 34, $"The final caret remains within the reserved text viewport ({locale}/{dpi}/{width}: {caret.Right}/{input.ActualWidth}, offset {input.HorizontalOffset})");
+                AssertEqual(true, caret.Right <= clear.TranslatePoint(new Point(), input).X, "The terminal native caret ends before clear");
                 stage($"width={width}: main popup begin");
                 Open(control);
                 stage($"width={width}: main popup open/drain ready");

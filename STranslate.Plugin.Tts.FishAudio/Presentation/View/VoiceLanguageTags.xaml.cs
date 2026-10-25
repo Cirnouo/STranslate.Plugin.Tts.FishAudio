@@ -49,7 +49,7 @@ public partial class VoiceLanguageTags : UserControl
     {
         InitializeComponent();
         _scrollbarLane = new PopupScrollbarLane(PopupScroll);
-        Material = new PopupMaterial(LanguagePopup, PopupSurface, backdropApi);
+        Material = new PopupMaterial(LanguagePopup, PopupSurface, backdropApi, "STranslate_Plugin_Tts_FishAudio_Languages_More");
         MoreButton.TagsOwner = this;
         SetResourceReference(UiLocaleProperty, "STranslate_Plugin_Tts_FishAudio_Languages_UiLocale");
         SetResourceReference(MoreCaptionProperty, "STranslate_Plugin_Tts_FishAudio_Languages_More");

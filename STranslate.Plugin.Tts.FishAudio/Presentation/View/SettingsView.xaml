@@ -37,6 +37,18 @@
             <Setter Property="IsHitTestVisible" Value="False" />
             <Setter Property="Focusable" Value="False" />
         </Style>
+        <Style x:Key="InputClearButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="0,0,32,0" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="ToolTip" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
+            <Setter Property="AutomationProperties.Name" Value="{DynamicResource STranslate_Plugin_Tts_FishAudio_ClearVoice}" />
+        </Style>
         <conv:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <conv:VoiceCreationDateConverter x:Key="VoiceCreationDateConverter" />
@@ -570,13 +582,18 @@
                 <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Key_24_Regular}" />
             </view:ApiKeySettingsCard.HeaderIcon>
             <Grid>
-                <PasswordBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" helpers:PasswordBoxHelper.PasswordRevealMode="Hidden"
+                <PasswordBox x:Name="ApiKeyInput" helpers:TextBoxHelper.IsDeleteButtonVisible="False" helpers:PasswordBoxHelper.PasswordRevealMode="Hidden"
                     IsEnabled="{Binding IsApiKeyInputEnabled}"
-                    MinWidth="230" Padding="10,4,40,4"
+                    MinWidth="230" Padding="10,4,68,4"
                     plugin:PasswordBoxAssistant.Attach="True"
                     plugin:PasswordBoxAssistant.Password="{Binding ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_ApiKey_Placeholder}" />
-                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28" Margin="0,0,4,0" Padding="6"
+                <Button x:Name="ApiKeyClearButton" Style="{StaticResource InputClearButtonStyle}"
+                        Visibility="{Binding ApiKey, Converter={StaticResource StringToVisibilityConverter}}"
+                        Command="{Binding ClearApiKeyCommand}" Click="InputClearButton_Click" Tag="{Binding ElementName=ApiKeyInput}">
+                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                </Button>
+                <Button x:Name="ApiKeyPasteButton" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28" Margin="0,0,4,0" Padding="6"
                         Background="Transparent" BorderThickness="0"
                         Command="{Binding PasteApiKeyCommand}"
                         ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Paste}"
@@ -1001,13 +1018,18 @@
                         <ui:FontIcon Icon="{x:Static ui:FluentSystemIcons.Search_24_Regular}" FontSize="16" />
                     </Button>
                     <Grid>
-                        <TextBox x:Name="VoiceSearchInput" helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,40,6"
+                        <TextBox x:Name="VoiceSearchInput" helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,68,6"
                             ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_SearchPlaceholder}"
                             Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}">
                             <TextBox.InputBindings>
                                 <KeyBinding Key="Enter" Command="{Binding SearchVoicesCommand}" />
                             </TextBox.InputBindings>
                         </TextBox>
+                        <Button x:Name="SearchQueryClearButton" Style="{StaticResource InputClearButtonStyle}"
+                                Visibility="{Binding SearchQuery, Converter={StaticResource StringToVisibilityConverter}}"
+                                Command="{Binding ClearSearchQueryCommand}" Click="InputClearButton_Click" Tag="{Binding ElementName=VoiceSearchInput}">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
                         <view:SearchAdjustmentControl x:Name="SearchAdjustments" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"/>
                     </Grid>
                 </DockPanel>
@@ -1094,7 +1116,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Grid>
-                        <TextBox helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,40,6" MaxLength="32"
+                        <TextBox x:Name="VoiceIdInputBox" helpers:TextBoxHelper.IsDeleteButtonVisible="False" Padding="10,5,68,6" MaxLength="32"
                                  PreviewTextInput="VoiceIdInput_PreviewTextInput" DataObject.Pasting="VoiceIdInput_Pasting"
                                  ui:ControlHelper.PlaceholderText="{DynamicResource STranslate_Plugin_Tts_FishAudio_VoiceId_Placeholder}"
                                  Text="{Binding VoiceIdInput, UpdateSourceTrigger=PropertyChanged}">
@@ -1102,7 +1124,12 @@
                                 <KeyBinding Key="Enter" Command="{Binding SubmitVoiceIdCommand}" />
                             </TextBox.InputBindings>
                         </TextBox>
-                        <Button HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28" Margin="0,0,4,0" Padding="6"
+                        <Button x:Name="VoiceIdClearButton" Style="{StaticResource InputClearButtonStyle}"
+                                Visibility="{Binding VoiceIdInput, Converter={StaticResource StringToVisibilityConverter}}"
+                                Command="{Binding ClearVoiceIdInputCommand}" Click="InputClearButton_Click" Tag="{Binding ElementName=VoiceIdInputBox}">
+                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="14" />
+                        </Button>
+                        <Button x:Name="VoiceIdPasteButton" HorizontalAlignment="Right" VerticalAlignment="Center" Width="28" Height="28" Margin="0,0,4,0" Padding="6"
                                 Background="Transparent" BorderThickness="0"
                                 Command="{Binding PasteVoiceIdCommand}"
                                 ToolTip="{DynamicResource STranslate_Plugin_Tts_FishAudio_Paste}"

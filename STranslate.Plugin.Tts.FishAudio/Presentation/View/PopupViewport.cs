@@ -35,6 +35,13 @@ internal static class PopupViewport
         double maximumWidth, double maximumBodyHeight = double.PositiveInfinity)
     {
         var bounds = VisibleBounds(anchor, owner, ancestors);
+        return PrepareWithinBounds(anchor, surface, body, fixedWidthChrome, maximumWidth, maximumBodyHeight, bounds);
+    }
+
+    // Bounds are the already-inset visible rectangle, in native device pixels.
+    internal static bool PrepareWithinBounds(FrameworkElement anchor, Border surface, ScrollViewer body,
+        IEnumerable<FrameworkElement> fixedWidthChrome, double maximumWidth, double maximumBodyHeight, Rect bounds)
+    {
         if (bounds.IsEmpty) return false;
         var dpi = ScreenScale(anchor);
         surface.Width = Math.Min(maximumWidth, bounds.Width / dpi.DpiScaleX);
@@ -65,10 +72,10 @@ internal static class PopupViewport
         // A zero measure constraint preserves visibility/keyboard focus while
         // excluding the body. Never collapse a focused, already open body.
         body.MaxHeight = 0;
-        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
+        MeasureSurface(surface, body);
         var chromeHeight = surface.DesiredSize.Height;
         body.MaxHeight = maximumBodyHeight;
-        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
+        MeasureSurface(surface, body);
         var naturalHeight = surface.DesiredSize.Height * dpi.DpiScaleY;
         var top = anchor.PointToScreen(new Point()).Y;
         var bottom = anchor.PointToScreen(new Point(0, anchor.ActualHeight)).Y;
@@ -83,10 +90,29 @@ internal static class PopupViewport
         return true;
     }
 
+    private static void MeasureSurface(Border surface, ScrollViewer body)
+    {
+        // Changing MaxHeight invalidates the body, but ancestor invalidation is
+        // deferred. Refresh its complete owning path before each same-constraint
+        // synchronous Measure so neither chrome nor natural size can be reused.
+        for (DependencyObject? current = body; current is UIElement element; current = VisualTreeHelper.GetParent(current))
+        {
+            element.InvalidateMeasure();
+            if (ReferenceEquals(current, surface)) break;
+        }
+        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
+    }
+
     internal static CustomPopupPlacement[] Place(FrameworkElement anchor, FrameworkElement? owner,
         IEnumerable<ScrollViewer> ancestors, Size popupSize, Size targetSize, bool alignRight)
     {
         var bounds = VisibleBounds(anchor, owner, ancestors);
+        return PlaceWithinBounds(anchor, popupSize, targetSize, alignRight, bounds);
+    }
+
+    internal static CustomPopupPlacement[] PlaceWithinBounds(FrameworkElement anchor, Size popupSize,
+        Size targetSize, bool alignRight, Rect bounds)
+    {
         if (bounds.IsEmpty) return [];
         var origin = anchor.PointToScreen(new Point());
         var dpi = ScreenScale(anchor);

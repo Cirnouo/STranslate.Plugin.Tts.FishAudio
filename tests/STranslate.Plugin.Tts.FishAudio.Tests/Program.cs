@@ -12,6 +12,74 @@ if (args.Contains("--native-key-state-tests"))
     return;
 }
 
+if (args.Contains("--favorite-order-tests"))
+{
+    FavoriteVoicesSuite.NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder();
+    FavoriteVoicesSuite.LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage();
+    Console.WriteLine("Newest-liked-first facade regressions passed.");
+    return;
+}
+
+if (args.Contains("--favorite-compatibility-tests"))
+{
+    FavoriteSettingsIntegrationSuite.IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched();
+    FavoriteSettingsIntegrationSuite.LegacySettingsAndFavoriteIdsRestartIndependently();
+    FavoriteVoicesSuite.FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication();
+    await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
+    await FavoriteVoicesSuite.ByIdLookupKeepsSelectedVoiceUntilApplyAsync();
+    FavoriteVoicesSuite.FavoriteMetadataMigratesBoundsAndRoundTrips();
+    FavoriteVoicesSuite.FavoritesSyncAcrossCardsPersistAndClampPages();
+    FavoriteVoicesSuite.FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases();
+    await FavoriteVoicesSuite.ByIdReplacementAndInputEditsRejectLateResultsAsync();
+    await FavoriteVoicesSuite.FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync();
+    await FavoriteVoicesSuite.UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync();
+    await FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync();
+    await FavoriteStorageCacheSuite.SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync();
+    await FavoriteStorageCacheSuite.LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync();
+    FavoriteStorageCacheSuite.MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl();
+    FavoriteStorageCacheSuite.BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata();
+    await FavoriteStorageCacheSuite.FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync();
+    await FavoriteStorageCacheSuite.PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync();
+    await FavoriteStorageCacheSuite.SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync();
+    Console.WriteLine("Favorite storage, cache, ownership and credential compatibility passed.");
+    return;
+}
+
+if (args.Contains("--popup-direction-tests"))
+{
+    await PopupDirectionSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--popup-direction-tests") + 1));
+    return;
+}
+
+if (args.Contains("--popup-heading-tests"))
+{
+    await PopupHeadingSuite.RunAsync();
+    Console.WriteLine("Popup native-heading regressions passed.");
+    return;
+}
+
+if (args.Contains("--input-clear-compatibility-tests"))
+{
+    await ApiKeySettingsCardSuite.RunAllAsync();
+    await StaTestHost.RunOnStaThreadAsync(SettingsLayoutSuite.PasteButtonsReserveInputSpace);
+    Console.WriteLine("Input clear native peer compatibility passed.");
+    return;
+}
+
+if (args.Contains("--input-clear-control-tests"))
+{
+    await InputClearControlSuite.RunAsync();
+    Console.WriteLine("Input clear compiled-control regressions passed.");
+    return;
+}
+
+if (args.Contains("--input-clear-request-tests"))
+{
+    await InputClearSuite.RunRequestsAsync();
+    Console.WriteLine("Input clear request regressions passed.");
+    return;
+}
+
 if (args.Contains("--control-cursor-late-combo-tests"))
 {
     await ControlCursorSuite.RunLateComboAsync();
@@ -71,6 +139,13 @@ if (args.Contains("--search-preview-retention-tests"))
 {
     await SearchPreviewRetentionSuite.RunAllAsync();
     Console.WriteLine("Search preview retention regressions passed.");
+    return;
+}
+
+if (args.Contains("--accepted-preview-continuity-tests"))
+{
+    await AcceptedPreviewContinuitySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--accepted-preview-continuity-tests") + 1));
+    Console.WriteLine("Accepted preview continuity regressions passed.");
     return;
 }
 
@@ -513,6 +588,8 @@ FavoriteSettingsIntegrationSuite.LegacySettingsAndFavoriteIdsRestartIndependentl
 FavoriteVoicesSuite.FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication();
 await FavoriteVoicesSuite.ByIdLookupKeepsSelectedVoiceUntilApplyAsync();
 FavoriteVoicesSuite.FavoriteMetadataMigratesBoundsAndRoundTrips();
+FavoriteVoicesSuite.NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder();
+FavoriteVoicesSuite.LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage();
 FavoriteVoicesSuite.FavoritesSyncAcrossCardsPersistAndClampPages();
 FavoriteVoicesSuite.FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases();
 await FavoriteVoicesSuite.ByIdReplacementAndInputEditsRejectLateResultsAsync();
@@ -642,6 +719,8 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
 await NumericBottomSuite.RunAsync(null);
 await NumericAlignmentLifecycleSuite.RunAsync();
+await InputClearSuite.RunRequestsAsync();
+await InputClearControlSuite.RunAsync();
 
 await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
@@ -655,10 +734,13 @@ await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetry
 await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 await NativeKeyboardStateSuite.RunAsync();
+await PopupHeadingSuite.RunAsync();
+await PopupDirectionSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceDescriptionSuite.RunAsync();
 await ControlCursorSuite.RunAsync();
 await VoiceLikeSuite.RunAllAsync();
 await AvatarPreviewSuite.RunAllAsync();
 await SearchPreviewRetentionSuite.RunAllAsync();
+await AcceptedPreviewContinuitySuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

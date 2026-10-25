@@ -186,7 +186,7 @@ internal static class VoiceLanguageSuite
         AssertEqual(true, changed, "Replacing card languages notifies bindings");
         card.SampleAudioUrl = ExpiredUrl;
         http.GetResponseJson = """{"title":"Empty","languages":null,"samples":[{"audio":"https://platform.r2.fish.audio/new.mp3"}]}""";
-        coordinator.OnSearchResultsChanged();
+        coordinator.OnVoiceCardsChanged();
         await coordinator.ToggleSearchItemPreviewAsync(card); // Stops the previous playback owner.
         await coordinator.ToggleSearchItemPreviewAsync(card);
         AssertEqual<DateTimeOffset?>(null, card.CreatedAt, "Direct preview absent date clears former date");

@@ -184,7 +184,7 @@ public partial class SettingsViewModel
         FavoritePage = page;
         FavoritePageInput = page.ToString();
         var previous = FavoriteResults.ToDictionary(item => item.Id, StringComparer.Ordinal);
-        var cards = _favoriteIds.Skip((page - 1) * FavoritePageSize).Take(FavoritePageSize).Select(id =>
+        var cards = _favoriteIds.Reverse().Skip((page - 1) * FavoritePageSize).Take(FavoritePageSize).Select(id =>
         {
             var card = previous.GetValueOrDefault(id) ?? new VoiceSearchItem { Id = id };
             card.IsFavorite = true;

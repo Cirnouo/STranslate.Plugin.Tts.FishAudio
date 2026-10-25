@@ -265,7 +265,7 @@ internal static class SettingsLayoutSuite
         AssertEqual(Visibility.Collapsed, selected.Visibility, "Random voice mode must hide the selected-card favorite action");
     }
 
-    private static void PasteButtonsReserveInputSpace()
+    internal static void PasteButtonsReserveInputSpace()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -277,6 +277,9 @@ internal static class SettingsLayoutSuite
             BindingOperations.GetBinding(box, TextBox.TextProperty)?.Path.Path == nameof(SettingsViewModel.VoiceIdInput));
         var passwordPaste = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.PasteApiKeyCommand));
         var voiceIdPaste = Descendants(view).OfType<Button>().Single(button => ReferenceEquals(button.Command, viewModel.PasteVoiceIdCommand));
+        password.Password = DraftKey;
+        voiceId.Text = new string('f', 32);
+        DrainBindings();
         foreach (var width in new[] { 400d, 600d })
         {
             Layout(view, width);
@@ -292,6 +295,9 @@ internal static class SettingsLayoutSuite
                 var viewport = VisualDescendants(textHost!).OfType<ScrollContentPresenter>().Single();
                 AssertEqual(true, viewport.TranslatePoint(new Point(viewport.ActualWidth, 0), input).X <= pasteLeft,
                     $"At {width}px typed input must not run underneath Paste");
+                var clear = (Button)view.FindName(input is PasswordBox ? "ApiKeyClearButton" : "VoiceIdClearButton");
+                AssertEqual(true, viewport.TranslatePoint(new Point(viewport.ActualWidth, 0), input).X <= clear.TranslatePoint(new Point(), input).X,
+                    $"At {width}px the real text viewport must end before clear");
             }
         }
         password.Password = DraftKey;

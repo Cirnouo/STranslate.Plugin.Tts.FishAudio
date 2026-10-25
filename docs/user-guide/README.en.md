@@ -51,7 +51,7 @@ A voice selects timbre; a model selects the synthesis engine. A voice's communit
 | Save it for later | Click Like or Unlike to save or remove a voice. Removing it does not clear the voice currently in use. A random voice has no fixed ID to save. |
 | Copy its Voice ID | Click the **card title**, not the author or description. |
 
-Open **Search adjustments** inside the search field to choose **All languages** or toggle one or more language tiles. All languages clears specific choices; clearing the last specific restores All. Selecting all ten presets still filters to those presets. Fish Audio determines how selected languages combine. Choose **Relevance first**, **Most used first**, or **Newest first**. **Apply** closes the options and immediately refreshes page one using the current search text, even if nothing changed. **Reset** only restores the option drafts to All languages + Relevance first; **Close** discards drafts. Search or Enter uses the applied options, and changing pages keeps the last successful search. Options last only for the current settings session. If a refresh fails, the previous results and options remain.
+Open **Search adjustments** inside the search field to choose **All languages** or toggle one or more language tiles. All languages clears specific choices; clearing the last specific restores All. Selecting all ten presets still filters to those presets. Fish Audio determines how selected languages combine. Choose **Relevance first**, **Most used first**, or **Newest first**. **Apply** immediately accepts the language and sort choices, closes the options and refreshes page one using the current search text, even if nothing changed. Reopening while it loads shows those applied choices. **Reset** only restores the option drafts to All languages + Relevance first; **Close** discards drafts. Search or Enter uses the applied options, and changing pages keeps the last successful search. Options last only for the current settings session. If a refresh fails, the applied choices remain, along with the previous successful results and page.
 
 Search, By ID, Likes and the selected voice use the same language labels in a separate single-line row: a flag plus a name in the interface language. Wider cards show more labels, with no fixed limit of three; click `+N` to open exactly the remaining N languages in a popup. Names stay visible; only a first label whose full name cannot fit is shortened with an ellipsis (hover for its full name). Missing language metadata hides the row. Labels come from Fish Audio voice metadata, not a fixed synthesis-language whitelist, speaker nationality or a complete account of the engine's language capabilities. Unknown language codes keep their text with a generic icon.
 
@@ -59,9 +59,11 @@ The lower-right date uses your system time zone (`yyyy-MM-dd`); hover for the co
 
 Likes are saved on this computer, survive restart and do not synchronize with your Fish Audio account. You can save up to 300; remove one before adding another at the limit. Details and previews still need a connection. A failed lookup does not remove a saved liked voice.
 
+Newly liked voices appear first. Unlike and like a voice again to return it to the front; the order survives restart. Adding a Like from a later page keeps you on that page. Return to page one to see the newest addition.
+
 In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
-Once a search sample is playing, searching again, applying search options (even unchanged) or changing search pages keeps it playing, including when a query fails or is canceled. A matching card found again shows current progress and can Stop. Playback ends with the sample, Stop, another preview, a selected-voice or Key change, or closing the plugin. Replacing the source card while its sample is still loading cancels that pending preview; replacing a By-ID card or removing the originating liked card still stops its preview.
+Once a sample is playing from any card, Apply/Clear, Like/Unlike, queries, paging, panel changes and Key edits keep it playing. A matching card that appears again shows current progress and can Stop, even if sample information is temporarily missing. Playback ends with the sample, manual Stop, another preview, a playback failure or closing the plugin. While a sample is still loading, changing selection or the Key, or removing its source card, cancels that loading operation; click Preview again when needed.
 
 ## 3. Models and costs
 
@@ -153,7 +155,7 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Symptom | Next action |
 |---|---|
 | Search fails after entering a Key | Copy a valid key from the official page without extra whitespace/newlines, or clear the key to browse public voices. Synthesis and credits still require a valid key. |
-| Changing the Key stops a lookup or preview | Old work is canceled, but displayed voices, selection and liked voices stay. Later queries use the new key. Start another lookup or preview when needed. |
+| Changing the Key stops a lookup or loading | Old queries and previews still loading are canceled; an already playing sample continues. Existing voices, selection and likes stay. Later queries use the new key; start a new lookup or preview when needed. |
 | Key editing is temporarily locked | Wait for the current speech or credit request to finish. |
 | Credits unavailable | Check the key, account permissions and host connection, then refresh. |
 | Search works, speech fails | Check [both connections](#network-and-proxy), then model availability and account permissions. |

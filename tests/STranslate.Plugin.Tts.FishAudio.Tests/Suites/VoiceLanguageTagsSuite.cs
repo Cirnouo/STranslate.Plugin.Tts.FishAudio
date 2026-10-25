@@ -100,7 +100,7 @@ internal static class VoiceLanguageTagsSuite
     private sealed class FailingPopupBackdropApi(Exception failure, Exception cleanupFailure, bool failAfterSource, bool failInChrome) : IPopupBackdropApi
     {
         public bool IsSupported => failAfterSource ? true : throw failure;
-        public PopupBackdropResult Apply(IntPtr handle, bool dark) => failInChrome ? new(0, 0, 3) : throw failure;
+        public PopupBackdropResult Apply(IntPtr handle, bool dark) => failInChrome ? new(0, 0, 2) : throw failure;
         public void UpdateChrome(IntPtr handle, bool dark) { if (failInChrome) throw failure; }
         public void Remove(IntPtr handle) { if (failAfterSource) throw cleanupFailure; }
     }
@@ -511,7 +511,7 @@ internal static class VoiceLanguageTagsSuite
             AssertEqual(290d, nativeSurface.ActualWidth, "The native popup retains its approved 290 DIP body");
             var nativePopupSource = (HwndSource)PresentationSource.FromVisual(nativeSurface);
             var material = nativeTags[1].Material;
-            Console.WriteLine($"[popup-material/languages] hwnd=0x{nativePopupSource.Handle:X}; owner=0x{source.Handle:X}; layered={nativePopupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; ownerRequestedDpi={dpi:0.##}; popupActualDpi={VisualTreeHelper.GetDpi(nativeSurface).DpiScaleX:0.##}; visibleBlur=UNVERIFIED");
+            Console.WriteLine($"[popup-material/languages] hwnd=0x{nativePopupSource.Handle:X}; owner=0x{source.Handle:X}; layered={nativePopupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; ownerRequestedDpi={dpi:0.##}; popupActualDpi={VisualTreeHelper.GetDpi(nativeSurface).DpiScaleX:0.##}; visibleMaterial=UNVERIFIED");
             var nativeViewer = (ScrollViewer)nativeTags[1].FindName("PopupScroll");
             if (nativeViewer.ScrollableHeight > 0)
                 SearchAdjustmentControlSuite.AssertScrollbarExclusion(nativeViewer,

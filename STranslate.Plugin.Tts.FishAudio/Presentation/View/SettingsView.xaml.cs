@@ -90,6 +90,18 @@ public partial class SettingsView : UserControl
             e.Handled = !Configuration.SettingsValidation.IsValidVoiceIdDraft(ReplaceSelection(input, e.Text));
     }
 
+    private void InputClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: Control input }) return;
+        // Button executes its command after Click. Restore focus after the
+        // nonempty-only action has collapsed and the binding has settled.
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, new Action(() =>
+        {
+            if (input.IsEnabled && input.IsVisible && input is not TextBox { IsReadOnly: true })
+                input.Focus();
+        }));
+    }
+
     private void VoiceIdInput_Pasting(object sender, DataObjectPastingEventArgs e)
     {
         if (sender is not TextBox input || !e.DataObject.GetDataPresent(DataFormats.UnicodeText)

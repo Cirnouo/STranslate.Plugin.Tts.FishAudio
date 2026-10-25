@@ -10,7 +10,8 @@ namespace STranslate.Plugin.Tts.FishAudio.View;
 
 internal readonly record struct PopupBackdropResult(int FrameHResult, int ReadbackHResult, int BackdropType)
 {
-    internal bool AttributeAccepted => FrameHResult >= 0 && ReadbackHResult >= 0 && BackdropType == 3;
+    private const int DwmSystemBackdropMainWindow = 2;
+    internal bool AttributeAccepted => FrameHResult >= 0 && ReadbackHResult >= 0 && BackdropType == DwmSystemBackdropMainWindow;
 }
 
 internal interface IPopupBackdropApi
@@ -28,11 +29,11 @@ internal sealed class NativePopupBackdropApi : IPopupBackdropApi
     {
         var margins = new FrameMargins { Left = -1, Right = -1, Top = -1, Bottom = -1 };
         var frameResult = DwmExtendFrameIntoClientArea(handle, ref margins);
-        BackdropHelper.Apply(handle, BackdropType.Acrylic11);
+        BackdropHelper.Apply(handle, BackdropType.Mica);
         UpdateChrome(handle, dark);
         CornerHelper.SetWindowCorners(handle, WindowCornerStyle.Round);
         // The toolkit's bool ignores the native setter HRESULT. Read the documented
-        // attribute on this HWND; this establishes acceptance, never visible blur.
+        // attribute on this HWND; this establishes acceptance, never visible material.
         var readResult = DwmGetWindowAttribute(handle, 38, out var actualType, sizeof(int));
         return new(frameResult, readResult, actualType);
     }
@@ -59,13 +60,15 @@ internal sealed class NativePopupBackdropApi : IPopupBackdropApi
 
 // One owner per popup, active only for its open lifetime. No host HWND, theme
 // singleton, private toolkit reflection or second Window participates.
-internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropApi? api = null)
+internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropApi? api = null,
+    string? headingResourceKey = null, IPopupWindowTextApi? textApi = null)
 {
     private static readonly DependencyProperty OwnerProperty = DependencyProperty.RegisterAttached(
         "Owner", typeof(PopupMaterial), typeof(PopupMaterial));
     private static readonly DependencyProperty NativeBrushProperty = DependencyProperty.RegisterAttached(
         "NativeBrush", typeof(Brush), typeof(PopupMaterial), new PropertyMetadata(null, NativeBrushChanged));
     private readonly IPopupBackdropApi _api = api ?? new NativePopupBackdropApi();
+    private readonly PopupNativeHeading? _heading = headingResourceKey is null ? null : new(surface, headingResourceKey, textApi);
     private HwndSource? _source;
     private bool _active;
     private bool _attempted;
@@ -87,6 +90,7 @@ internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropA
         popup.AllowsTransparency = !_api.IsSupported;
         surface.SetValue(OwnerProperty, this);
         surface.SetResourceReference(NativeBrushProperty, "FlyoutPresenterBackground");
+        _heading?.Begin();
         popup.Opened += Opened;
         popup.Closed += Closed;
         surface.Unloaded += Unloaded;
@@ -104,6 +108,7 @@ internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropA
         try { RetireSource(); }
         finally
         {
+            _heading?.End();
             surface.ClearValue(OwnerProperty);
             surface.ClearValue(NativeBrushProperty);
             surface.SetResourceReference(Border.BackgroundProperty, "FlyoutPresenterBackground");
@@ -132,6 +137,7 @@ internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropA
         RetireSource();
         _source = source;
         source.Disposed += SourceDisposed;
+        _heading?.Attach(source);
         if (_api.IsSupported && !source.UsesPerPixelOpacity)
         {
             _attempted = true;
@@ -151,6 +157,7 @@ internal sealed class PopupMaterial(Popup popup, Border surface, IPopupBackdropA
         var source = _source;
         _source = null;
         if (source is null) return;
+        _heading?.RetireSource();
         source.Disposed -= SourceDisposed;
         if (!source.IsDisposed && _attempted) RemoveNative(source.Handle);
         _attempted = false;

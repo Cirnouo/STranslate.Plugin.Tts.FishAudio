@@ -2,7 +2,7 @@
 
 > Execute with subagent-driven-development, one source/WPF/build owner at a time. User-selected subagents are gpt-6.1-sol; review/decision effort is xhigh.
 
-**Status:** planned implementation on the existing isolated managed worktree. The preceding UI-polish source is accepted, but its final whole-run/package condition remains blocked and is carried below.
+**Status:** source Tasks 0–6 are implemented on the existing isolated managed worktree and remain unmerged. Tasks 0–5 have scoped source review acceptance; Task 6 scoped review is pending. Final integrated release/clean/test, current package inspection, actual head/main CI and installed-host native acceptance remain pending. The preceding cursor whole-run/package condition and Task 3 Search hidden-Space keyboard failure remain mandatory final validation gates; isolated title passes do not close that failed integrated check.
 
 **Spec:** [input/search/popup design](../specs/2026-10-25-input-search-state-and-popup-design.md).
 
@@ -31,6 +31,18 @@ Reuse the existing native embedded-action pattern and nonempty converter. Add pr
 ### Task 3: Match the host popup material
 
 Use the completed primary-source research, minimal Mica2 request/readback correction and focused native/fake failure/source/theme checks. Coordinate at most one bounded native-heading/MCP discovery experiment before retaining optional semantic identity; preserve all geometry/input/activation semantics and independent cleanup. Update the current popup specification/DD048. Source readback alone does not certify visible Mica. Focused checks/atomic commit/task review.
+
+### Task 4: Keep accepted preview independent of voice management
+
+Implemented, unmerged; scoped review accepted and final integrated gates pending. Move accepted player/buffer/timer lifetime to the existing controller after successful local Play return. Apply/Clear of any voice, Like/Unlike, Search/By-ID/Favorite queries, pages, reloads, card metadata, tabs/folds and accepted API Key edits preserve local audio. Preserve exact pending origin/generation/CTS/current-selected-ID and credential cancellation; accepted bytes authorize neither a future request nor reusable caching. Removed card objects become idle and cannot execute; current matching IDs show actual progress and can Stop without sample metadata or a key. Keep explicit Stop/new preview replacement, natural end, genuine output/progress failure, reentrant successor guards and actual teardown. No formal-TTS arbitration is added. Causal fake-output RED precedes the owner change; seventeen new independent five-second STA actions plus the existing seven allow 120 seconds cumulatively, with original startup/default/observation/first-use rules unchanged. Run focused retention, preparation/download, Favorite/By-ID, avatar, credential/ABA and input-clear compatibility in Release with packaging disabled.
+
+### Task 5: Choose the popup direction from full natural content
+
+Implemented, unmerged; scoped review accepted and final integrated gates pending. Compiled RED established a 123-DIP chrome-only cached natural measurement against a 499-DIP complete Search shell: above 507.2 DIP fit, below 187.2 DIP did not, and the callback selected the constrained below shell. A separate existing responsive-language RED showed cached 275.24-DIP natural size misread as chrome, falsely refusing a 64-DIP viewport that fits 51.24-DIP localized chrome. Refresh the body-to-shell measure path before both synchronous measurements; retain the existing below/full-fit, above-only, larger-side and below-tie policy without placement state. Four new independent five-second shared-STA actions add twenty seconds cumulatively for both clients' side policy and reopen/live-geometry/fallback/refusal ownership. Preserve existing localized width/scrollbar/source/input assertions, Mica/heading ownership, first-use order and deadlines. Focused Release checks disable packaging; the carried Search hidden-Space/full/current-package/native gates remain pending.
+
+### Task 6: Show the newest liked voice first
+
+Implemented, unmerged; scoped review and final integrated gates pending. Keep the ID-only store's durable append/first-seen order and project its reverse before six-card paging. Preserve legacy file compatibility without timestamps, schema changes or storage rewrites. Unlike/re-like appends durably and therefore appears first; repeated already-satisfied Like remains idempotent. Preserve current page/clamping, selection/settings identity, shared-writer persistence and Task 4 accepted-playback continuity. Meaningful facade RED preceded the one-line projection change; focused Release checks cover legacy/new additions, exact storage bytes and no-write reload/restart, global pages, idempotence/re-like, failures/concurrent stores and accepted output shifted off-page by another Like. No shared-STA action or budget was added.
 
 ### Like presentation verification ownership
 

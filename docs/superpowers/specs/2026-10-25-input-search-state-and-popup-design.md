@@ -1,8 +1,8 @@
 # Input actions, applied search intent and popup material
 
-Status: authorized implementation design; these additions and the remaining integration gate are not yet shipped.
+Status: source Tasks 0–6 are implemented and unmerged. Tasks 0–5 have scoped source review acceptance; Task 6 scoped review and final integrated full check/current package/native appearance/actual head-main CI remain pending. The Task 3 Search hidden-Space keyboard failure remains an open mandatory final Search/full-run gate despite isolated title passes. These additions are not shipped.
 
-This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains blocked by the cursor fixture's finite late composite action. Preserve that failure and every successful description assertion. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
+This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains open. Preserve the cursor fixture's finite late composite failure, every successful description assertion and the later unexplained Search keyboard failure until final intended-source validation closes their integration boundaries. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
 
 ## Required behavior
 
@@ -15,6 +15,18 @@ Search has three lifetimes. Applied language/sort intent is an immutable session
 Both owned popup shells request the host's Mica family through the existing public toolkit/native source path. Accept successful frame/readback type2, reject Acrylic3 and retain explicit native opaque fallback. Preserve the22621 floor, precreation nonlayered choice, transparent composition, theme/corners/failure/source ownership. Native material request/readback and composed appearance are different claims. No host HWND, new Window/dependency/controller, activation spoof or foreground escalation.
 
 A conditional native-heading identity addition requires a bounded compiled-owned-Popup experiment and real background MCP discoverability benefit before retention. Use only the existing localized heading, no visible caption style, source-specific prior-text ownership/compare-before-restore and independent optional failures. If the ordinary MCP list still omits it, drop unused identity code and retain the actual capture limit.
+
+## Accepted preview continuity — Task 4 implemented, unmerged
+
+Successful local Play return transfers accepted player/buffer/timer lifetime to the existing controller. Every voice-management, browsing and ordinary settings action, including accepted API Key edit/clear, leaves that output running. Exact pending originating-reference/generation/CTS/selected-ID/credential authority still retires on the relevant edits/removal, including local Open/Play; old work cannot publish, save, re-add bookmarks or restart output. Accepted local bytes do not authorize future requests, cache reuse or cross-key metadata publication. Current matching cards retain actual progress and Stop authority without sample/key metadata; removed objects become idle and cannot execute. Natural end, genuine output/progress failure, manual Stop, new preview intent and real owner teardown remain terminal. Reentrant collection/settings/key publication and cancellation callbacks cannot retire a successor or install a stale timer. Formal TTS retains its current independent lifetime.
+
+## Fresh popup direction — Task 5 implemented, unmerged
+
+Compiled current-source RED established both stale measure-cache transitions: chrome-only size reused as natural height chose a cramped below shell despite complete content fitting above; natural size reused as chrome during responsive language resize falsely refused usable fixed chrome. Refresh the complete body-to-shell measure path before each synchronous measurement. Choose above when full content fits only there, the greater usable height when neither side fits, and retain below when full content fits there or side capacities tie. Four independent five-second shared-STA actions (twenty seconds cumulative) cover both compiled clients' measured side policy, constrained reopen, live geometry reversal, across-trigger fallback and height refusal. Existing localized fixed chrome, viewport/work-area geometry, source identity, Mica/heading, input and scrollbar ownership remain active. Scoped review is accepted; final integrated/full/current-package/native gates remain pending; the earlier Search hidden-Space failure remains open.
+
+## Newest liked voice first — Task 6 implemented, unmerged
+
+Show newest liked first by reversing the existing durable append/first-seen ID sequence before pagination. Keep the file format/order compatibility, limits, shared storage gates and idempotent intent. Do not add timestamps, rewrite legacy files or force page one. Unlike/re-like moves the voice first through the ordinary durable append and projection. Keep selection, clamping and accepted preview independent. A meaningful Like-command facade RED preceded the projection fix. Focused Release regressions cover exact ID-only storage bytes, no-write idempotence/reload/restart, global page boundaries and retained page/clamp behavior, plus accepted playback shifted off-page by another Like. Existing storage, credential, cancellation and cache ownership checks remain active. No shared-STA action or deadline changed. Task 6 scoped review and all final integrated/full/current-package/native/CI gates remain pending.
 
 ## Boundaries and verification
 

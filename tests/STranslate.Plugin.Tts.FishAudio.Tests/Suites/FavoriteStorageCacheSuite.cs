@@ -100,6 +100,7 @@ internal static class FavoriteStorageCacheSuite
         var oldPage = view.PendingFavoriteMetadataTask;
         AssertEqual(6, http.GetCallCount, "Only the six visible cache misses should issue public detail requests");
         var removed = view.FavoriteResults[0];
+        AssertEqual(Id(7), removed.Id, "The initial loading page starts with the newest durable addition");
         AssertEqual(true, removed.IsLoadingMetadata && !removed.HasMetadata && removed.IsFavorite, "A miss must be a loading, removable ID placeholder");
         view.SelectVoiceCommand.Execute(removed);
         AssertEqual(Id(99), settings.VoiceId, "A metadata placeholder cannot Apply a selection");
@@ -107,21 +108,23 @@ internal static class FavoriteStorageCacheSuite
         var newPage = view.PendingFavoriteMetadataTask;
         AssertEqual(true, tokens.Take(6).All(token => token.IsCancellationRequested), "Changing pages must cancel the previous page's requests");
         AssertEqual(7, http.GetCallCount, "The new page should fetch only its single visible cache miss");
+        AssertEqual(Id(1), view.FavoriteResults.Single().Id, "The held final-page request belongs to the oldest addition");
         view.ToggleFavoriteCommand.Execute(view.FavoriteResults[0]);
         var afterRemoval = view.PendingFavoriteMetadataTask;
         AssertEqual(1, view.FavoritePage, "Removing the only final-page placeholder must immediately clamp");
-        pending.SetResult(Detail(7, "Late detail"));
+        pending.SetResult(Detail(1, "Late detail"));
         await Task.WhenAll(oldPage, newPage, afterRemoval).WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(false, cache.TryGet(Id(7), out _), "Removed originating-card results may not publish metadata into the shared cache");
+        AssertEnumerableEqual(new[] { 7, 6, 5, 4, 3, 2 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Metadata completions fill the established newest-first slots without reordering IDs");
+        AssertEqual(false, cache.TryGet(Id(1), out _), "Removed originating-card results may not publish metadata into the shared cache");
         using var store = new FavoriteVoiceStore(directory);
-        AssertEqual(false, store.Read().Contains(Id(7)), "Late metadata cannot restore a removed bookmark");
+        AssertEqual(false, store.Read().Contains(Id(1)), "Late metadata cannot restore a removed bookmark");
         http.GetAsyncHandler = null;
         http.GetException = new HttpRequestException("Synthetic unavailable voice", null, System.Net.HttpStatusCode.NotFound);
         view.SwitchToSearchCommand.Execute(null);
         view.SwitchToFavoritesCommand.Execute(null);
         await view.PendingFavoriteMetadataTask;
         AssertEqual(6, view.FavoriteCount, "A metadata failure must not delete favorite IDs");
-        // The prior successful current-page responses populated entries 1..6. Use a cold cache below.
+        // The prior successful current-page responses populated entries 2..7. Use a cold cache below.
         using var cold = new SettingsViewModel(CreateContext(httpService: service, pluginSettingsDirectoryPath: directory), new Settings());
         cold.SwitchToFavoritesCommand.Execute(null);
         await cold.PendingFavoriteMetadataTask;

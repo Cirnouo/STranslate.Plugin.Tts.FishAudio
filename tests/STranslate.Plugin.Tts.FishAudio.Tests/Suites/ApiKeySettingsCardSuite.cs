@@ -27,7 +27,9 @@ internal static class ApiKeySettingsCardSuite
             await RunOnStaThreadAsync(() => WidthMatrix(draft));
         }
         Console.WriteLine("[api-key-layout] controlled smaller password metrics.");
-        await RunOnStaThreadAsync(() => WidthMatrix(Drafts[1], 12, requireWrappedSaturation: true));
+        // The second action lane adds 28 DIP of native desired width. Keep
+        // this deliberate smaller-metrics case below the native wrap transition.
+        await RunOnStaThreadAsync(() => WidthMatrix(Drafts[1], 10, requireWrappedSaturation: true));
         Console.WriteLine("[api-key-layout] controlled larger password metrics.");
         await RunOnStaThreadAsync(() => WidthMatrix(Drafts[2], 16));
         foreach (var locale in UiLocales.All)
@@ -204,12 +206,13 @@ internal static class ApiKeySettingsCardSuite
 
         private static Grid NativeInput(PasswordBox source)
         {
-            var password = new PasswordBox { MinWidth = 230, Padding = new Thickness(10, 4, 40, 4) };
+            var password = new PasswordBox { MinWidth = 230, Padding = new Thickness(10, 4, 68, 4) };
             password.SetValue(ControlHelper.PlaceholderTextProperty, source.GetValue(ControlHelper.PlaceholderTextProperty));
             password.SetValue(TextBoxHelper.IsDeleteButtonVisibleProperty, false);
             password.SetValue(PasswordBoxHelper.PasswordRevealModeProperty, source.GetValue(PasswordBoxHelper.PasswordRevealModeProperty));
             var paste = new Button
             {
+                Name = "NativePaste",
                 HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
                 Width = 28, Height = 28, Margin = new Thickness(0, 0, 4, 0), Padding = new Thickness(6),
                 Background = Brushes.Transparent, BorderThickness = new Thickness(0),
@@ -217,6 +220,14 @@ internal static class ApiKeySettingsCardSuite
             };
             var content = new Grid();
             content.Children.Add(password);
+            content.Children.Add(new Button
+            {
+                HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center,
+                Width = 28, Height = 28, Margin = new Thickness(0, 0, 32, 0), Padding = new Thickness(6),
+                Background = Brushes.Transparent, BorderThickness = new Thickness(0),
+                Visibility = source.Password.Length == 0 ? Visibility.Collapsed : Visibility.Visible,
+                Content = new TextBlock { Text = "\uE711", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 },
+            });
             content.Children.Add(paste);
             return content;
         }
@@ -279,11 +290,17 @@ internal static class ApiKeySettingsCardSuite
             }
             AssertEqual(true, Left(Password, Card) >= 0 && Right(Password, Card) <= Card.ActualWidth + .1,
                 $"{context}: input must stay inside card (right {Right(Password, Card):F2}, card {Card.ActualWidth:F2})");
-            var paste = Logical((DependencyObject)Card.Content).OfType<Button>().Single();
+            var paste = Logical((DependencyObject)Card.Content).OfType<Button>().Single(button => ReferenceEquals(button.Command, _vm.PasteApiKeyCommand));
             AssertEqual(true, Left(paste, Password) >= 0 && Right(paste, Password) <= Password.ActualWidth + .1, $"{context}: Paste must stay inside input");
             var host = (FrameworkElement)Password.Template.FindName("PART_ContentHost", Password);
             var viewport = Visuals(host).OfType<ScrollContentPresenter>().Single();
             AssertEqual(true, Right(viewport, Password) <= Left(paste, Password) + .1, $"{context}: real viewport must end before Paste");
+            var clear = Logical((DependencyObject)Card.Content).OfType<Button>().Single(button => ReferenceEquals(button.Command, _vm.ClearApiKeyCommand));
+            if (clear.Visibility == Visibility.Visible)
+            {
+                AssertEqual(true, Left(clear, Password) >= 0 && Right(clear, Password) <= Left(paste, Password) + .1, $"{context}: clear precedes Paste inside input");
+                AssertEqual(true, Right(viewport, Password) <= Left(clear, Password) + .1, $"{context}: real viewport must end before clear");
+            }
             AssertEqual(_draft, Password.Password, $"{context}: layout must preserve the entire password draft");
             AssertEqual(_draft, _vm.ApiKey, $"{context}: immediate binding must retain the entire draft");
         }
