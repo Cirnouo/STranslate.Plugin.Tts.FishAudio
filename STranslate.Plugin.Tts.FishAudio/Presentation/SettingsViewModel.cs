@@ -39,10 +39,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     // ── API ──
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ClearApiKeyCommand))]
     public partial string ApiKey { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PasteApiKeyCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ClearApiKeyCommand))]
     [NotifyPropertyChangedFor(nameof(IsApiKeyInputEnabled))]
     public partial bool IsApiKeyInputLocked { get; set; }
 
@@ -166,6 +168,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     // ── 声音搜索 ──
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ClearSearchQueryCommand))]
     public partial string SearchQuery { get; set; }
 
     public IReadOnlyList<string> SearchLanguages { get; private set; } = Array.AsReadOnly(Array.Empty<string>());
@@ -239,6 +242,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     // ── 通过 ID 选择 ──
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ClearVoiceIdInputCommand))]
     public partial string VoiceIdInput { get; set; }
 
     [ObservableProperty]
@@ -431,6 +435,28 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     }
 
     // ── API Key ──
+
+    private bool CanClearApiKey => !_isDisposed && !IsApiKeyInputLocked && !string.IsNullOrEmpty(ApiKey);
+    private bool CanClearSearchQuery => !_isDisposed && !string.IsNullOrEmpty(SearchQuery);
+    private bool CanClearVoiceIdInput => !_isDisposed && !string.IsNullOrEmpty(VoiceIdInput);
+
+    [RelayCommand(CanExecute = nameof(CanClearApiKey))]
+    private void ClearApiKey()
+    {
+        if (CanClearApiKey) ApiKey = string.Empty;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanClearSearchQuery))]
+    private void ClearSearchQuery()
+    {
+        if (CanClearSearchQuery) SearchQuery = string.Empty;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanClearVoiceIdInput))]
+    private void ClearVoiceIdInput()
+    {
+        if (CanClearVoiceIdInput) VoiceIdInput = string.Empty;
+    }
 
     private bool CanPasteApiKey => !IsApiKeyInputLocked;
 

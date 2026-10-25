@@ -1332,9 +1332,14 @@ internal static class SearchAdjustmentControlSuite
                 AssertEqual(true, Math.Abs(inputBounds.Right - buttonBounds.Right - 4) <= 1 / dpi, "The action has a four-DIP right inset");
                 var textView = Visuals(input).OfType<FrameworkElement>().Single(item => item.GetType().Name == "TextBoxView");
                 var viewport = textView.TransformToAncestor(view).TransformBounds(new Rect(textView.RenderSize));
+                var clear = (Button)view.FindName("SearchQueryClearButton");
+                var clearBounds = clear.TransformToAncestor(view).TransformBounds(new Rect(clear.RenderSize));
+                AssertEqual(true, clearBounds.Right <= buttonBounds.Left && clearBounds.Left >= inputBounds.Left, "Clear precedes Adjust inside the native input");
                 AssertEqual(true, viewport.Right <= buttonBounds.Left - 3, "The native text viewport reserves room for the embedded action");
+                AssertEqual(true, viewport.Right <= clearBounds.Left - 3, "The native text viewport also reserves room for clear");
                 var caret = input.GetRectFromCharacterIndex(input.Text.Length);
                 AssertEqual(true, caret.Right <= input.ActualWidth - 34, $"The final caret remains within the reserved text viewport ({locale}/{dpi}/{width}: {caret.Right}/{input.ActualWidth}, offset {input.HorizontalOffset})");
+                AssertEqual(true, caret.Right <= clear.TranslatePoint(new Point(), input).X, "The terminal native caret ends before clear");
                 stage($"width={width}: main popup begin");
                 Open(control);
                 stage($"width={width}: main popup open/drain ready");

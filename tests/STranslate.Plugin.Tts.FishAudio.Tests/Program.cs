@@ -12,6 +12,28 @@ if (args.Contains("--native-key-state-tests"))
     return;
 }
 
+if (args.Contains("--input-clear-compatibility-tests"))
+{
+    await ApiKeySettingsCardSuite.RunAllAsync();
+    await StaTestHost.RunOnStaThreadAsync(SettingsLayoutSuite.PasteButtonsReserveInputSpace);
+    Console.WriteLine("Input clear native peer compatibility passed.");
+    return;
+}
+
+if (args.Contains("--input-clear-control-tests"))
+{
+    await InputClearControlSuite.RunAsync();
+    Console.WriteLine("Input clear compiled-control regressions passed.");
+    return;
+}
+
+if (args.Contains("--input-clear-request-tests"))
+{
+    await InputClearSuite.RunRequestsAsync();
+    Console.WriteLine("Input clear request regressions passed.");
+    return;
+}
+
 if (args.Contains("--control-cursor-late-combo-tests"))
 {
     await ControlCursorSuite.RunLateComboAsync();
@@ -642,6 +664,8 @@ await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
 await SettingsLayoutSuite.CompactNumericGeometryAsync();
 await NumericBottomSuite.RunAsync(null);
 await NumericAlignmentLifecycleSuite.RunAsync();
+await InputClearSuite.RunRequestsAsync();
+await InputClearControlSuite.RunAsync();
 
 await SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SettingsInputInteractionSuite.RunAllAsync();
