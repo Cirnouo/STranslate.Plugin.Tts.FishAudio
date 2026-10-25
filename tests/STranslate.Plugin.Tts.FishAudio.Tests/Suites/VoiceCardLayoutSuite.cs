@@ -214,7 +214,8 @@ internal static class VoiceCardLayoutSuite
         var name = (TextBlock)title.Content;
         AssertEqual(14d, name.FontSize, "All four card titles use the approved 14-DIP host font");
         AssertEqual(FontWeights.Medium, name.FontWeight, "Title retains medium emphasis");
-        AssertEqual(12d, author.FontSize, "The inline author is smaller than the title");
+        AssertEqual(11d, author.FontSize, "The inline author is 11-DIP secondary text");
+        AssertEqual(author.FontSize, separator.FontSize, "The middle dot uses the same secondary size as the author");
         AssertEqual(FontWeights.Normal, author.FontWeight, "The inline author retains normal weight");
         AssertEqual(new Thickness(6, 0, 6, 0), separator.Margin, "The middle dot has six-DIP side gaps");
         AssertEqual(true, group.ActualWidth > 0 && double.IsFinite(group.ActualWidth), "The text group receives a finite viewport after reserving actions");

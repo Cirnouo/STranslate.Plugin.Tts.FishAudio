@@ -1,3 +1,19 @@
+if (args.Contains("--release-documentation-tests"))
+{
+    RepositoryContractSuite.Release112MetadataIsComplete();
+    RepositoryContractSuite.Release111MetadataIsComplete();
+    RepositoryContractSuite.Release110MetadataIsComplete();
+    Console.WriteLine("Published release documentation contracts passed.");
+    return;
+}
+
+if (args.Contains("--voice-description-tests"))
+{
+    await VoiceDescriptionSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-description-tests") + 1));
+    Console.WriteLine("Voice description tests passed.");
+    return;
+}
+
 if (args.Contains("--popup-proof-tests"))
 {
     var directory = args.ElementAtOrDefault(Array.IndexOf(args, "--popup-proof-tests") + 1)
@@ -601,6 +617,7 @@ await SearchAdjustmentSuite.RunRequestsAsync();
 await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
+await VoiceDescriptionSuite.RunAsync();
 await VoiceLikeSuite.RunAllAsync();
 await AvatarPreviewSuite.RunAllAsync();
 await SearchPreviewRetentionSuite.RunAllAsync();
