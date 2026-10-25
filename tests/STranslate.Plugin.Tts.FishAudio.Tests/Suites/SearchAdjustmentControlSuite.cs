@@ -25,6 +25,16 @@ internal static class SearchAdjustmentControlSuite
 {
     internal static async Task RunAllAsync(string? group = null, string? proofDirectory = null)
     {
+        if (group is "intent")
+        {
+            await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
+            return;
+        }
+        if (group is "drafts")
+        {
+            await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
+            return;
+        }
         if (group is "proof")
         {
             foreach (var (locale, dark) in new[] { ("en", false), ("en", true), ("ru", true) })
@@ -61,6 +71,7 @@ internal static class SearchAdjustmentControlSuite
         if (group is "titles") return;
         foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
         await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
+        await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
         await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
         await RunOnStaThreadAsync(WindowAndScrollLifetime);
         await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
@@ -730,7 +741,7 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, http.GetCallCount, "Apply invokes exactly one request");
         AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=en&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
         Open(control);
-        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from successful selections");
+        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from applied selections");
         var surface = Part<Border>(control, "PopupSurface");
         var scroll = Part<ScrollViewer>(control, "PopupScroll");
         scroll.ScrollToVerticalOffset(50); Drain();
@@ -748,6 +759,57 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(2, http.GetCallCount, "Blur after Apply cannot issue a duplicate search");
         await vm.SearchVoicesCommand.ExecuteAsync(null);
         AssertEqual(3, http.GetCallCount, "The public Search command remains usable with applied options");
+    }
+
+    private static async Task HeldApplyReopensAppliedIntentAsync()
+    {
+        const string response = """{"total":24,"items":[{"_id":"11111111111111111111111111111111","title":"Voice"}]}""";
+        var settings = new Settings();
+        var (service, http) = TestHttpServiceProxy.Create();
+        http.GetResponseJson = response;
+        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+        var view = SettingsLayoutSuite.CreateThemedView(vm);
+        using var source = Attach(view);
+        var control = Control(view);
+        await vm.SearchVoicesCommand.ExecuteAsync(null);
+        await vm.NextPageCommand.ExecuteAsync(null);
+        var cards = vm.SearchResults;
+        var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var published = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        vm.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(vm.SearchResults)) published.TrySetResult();
+        };
+        http.GetAsyncHandler = (_, _, _) => held.Task;
+        try
+        {
+            Open(control); Toggle(control, "en");
+            Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+            Click(control, "ApplyButton");
+            AssertEqual(3, http.GetCallCount, "Held compiled Apply starts exactly one page-one GET");
+            AssertEqual(false, IsOpen(control), "Held Apply closes immediately");
+            Open(control);
+            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen while the response is held shows applied English");
+            AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Pending reopen keeps applied sort");
+            AssertEqual(true, vm.HasSearchAdjustments, "Pending applied intent enables the indicator");
+            AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Pending popup intent retains successful result identities");
+            AssertEqual(2, vm.SearchPage, "Pending popup intent retains successful navigation");
+            Toggle(control, "en"); Toggle(control, "de");
+            Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
+            await Task.Run(() => held.SetResult(response));
+            await published.Task.WaitAsync(RegressionExecution.Timeout);
+            Drain();
+            AssertEqual(true, IsOpen(control), "A response preserves open popup ownership");
+            AssertEnumerableEqual(new[] { "de" }, Selected(control), "English success cannot mutate the independent German draft");
+            AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Response publication cannot mutate the open sort draft");
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "Success leaves applied menu intent unchanged");
+            Click(control, "CloseButton"); Open(control);
+            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Close and reopen restore applied English after success");
+            AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Close and reopen restore applied sort");
+            AssertEqual(3, http.GetCallCount, "Draft edits, response and reopen add no GETs");
+            Click(control, "CloseButton");
+        }
+        finally { held.TrySetResult(response); vm.Dispose(); Drain(); }
     }
 
     // The per-view token prevents competing overlays, stale releases and leaked

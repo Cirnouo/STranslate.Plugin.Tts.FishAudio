@@ -175,10 +175,10 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) =>
         _voiceDiscoveryCoordinator.ApplySearchOptionsAsync(languages, sort);
 
-    private void ApplySearchOptions(VoiceSearchCriteria criteria)
+    private void ApplySearchOptions(VoiceSearchOptions options)
     {
-        SearchLanguages = criteria.Languages;
-        SearchSort = criteria.SortParameter;
+        SearchLanguages = options.Languages;
+        SearchSort = options.SortParameter;
         OnPropertyChanged(nameof(SearchLanguages));
         OnPropertyChanged(nameof(SearchSort));
         OnPropertyChanged(nameof(HasSearchAdjustments));

@@ -43,7 +43,8 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
     private long _voiceIdErrorVersion;
     private VoiceSearchPagination _pagination = VoiceSearchPagination.Initial;
     private VoiceSearchCriteria _committedSearchCriteria = new("");
-    private readonly Action<VoiceSearchCriteria> _setAppliedSearchOptions;
+    private VoiceSearchOptions _appliedSearchOptions = new();
+    private readonly Action<VoiceSearchOptions> _setAppliedSearchOptions;
     private int _highestVisitedPage = 1;
 
     internal VoiceDiscoveryCoordinator(
@@ -67,7 +68,7 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         Action<VoiceSearchItem?>? setByIdResult = null,
         VoiceMetadataCache? metadataCache = null, Func<string>? getApiKey = null,
         TimeProvider? timeProvider = null, Action<Action>? runOnUiThread = null,
-        Action<VoiceSearchCriteria>? setAppliedSearchOptions = null)
+        Action<VoiceSearchOptions>? setAppliedSearchOptions = null)
     {
         _context = context;
         _getApiKey = getApiKey ?? (() => "");
@@ -94,10 +95,19 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
         _isFacadeDisposed = isFacadeDisposed;
     }
 
-    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, _committedSearchCriteria.WithQuery(_getSearchQuery()), resetOnEmptyResponse: true);
+    internal Task SearchVoicesAsync() => ExecuteSearchAsync(1, new VoiceSearchCriteria(_getSearchQuery(), _appliedSearchOptions), resetOnEmptyResponse: true);
 
-    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort) => ExecuteSearchAsync(1,
-        new VoiceSearchCriteria(_getSearchQuery(), languages, VoiceSearchCriteria.ParseSort(sort)), resetOnEmptyResponse: true);
+    internal Task ApplySearchOptionsAsync(IEnumerable<string>? languages, string sort)
+    {
+        if (_isDisposed || _isFacadeDisposed()) return Task.CompletedTask;
+        // The owning UI action accepts a fully validated, detached menu snapshot
+        // before the request starts. Responses never own this session intent.
+        var options = new VoiceSearchOptions(languages, VoiceSearchCriteria.ParseSort(sort));
+        var criteria = new VoiceSearchCriteria(_getSearchQuery(), options);
+        _appliedSearchOptions = options;
+        _setAppliedSearchOptions(options);
+        return ExecuteSearchAsync(1, criteria, resetOnEmptyResponse: true);
+    }
 
     internal int PageInputMaximum => _pagination.InputMaximum(_highestVisitedPage);
 
@@ -327,7 +337,6 @@ internal sealed class VoiceDiscoveryCoordinator : IDisposable
                 _setPageInput(requestedPage.ToString());
                 _setHasSearched(true);
                 _setSearchResults(results);
-                _setAppliedSearchOptions(criteria);
                 _syncPreviewStateToResults();
 
                 // Covers/cache notifications are enrichment, after the complete

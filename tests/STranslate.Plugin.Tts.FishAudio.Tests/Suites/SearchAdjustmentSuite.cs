@@ -10,6 +10,8 @@ internal static class SearchAdjustmentSuite
 
     internal static async Task RunRequestsAsync()
     {
+        await PendingIntentIsIndependentOfSuccessfulCriteriaAsync();
+        await PendingReplacementsCannotRollBackIntentAsync();
         await MultipleLanguagesAreOneDetachedRequestAsync();
         await RequestsCaptureLanguageAndExplicitSortAsync();
         await AppliedCriteriaSurviveFailureAndDraftEditsAsync();
@@ -17,6 +19,100 @@ internal static class SearchAdjustmentSuite
         await QueuedPublicationRechecksItsOwnerAsync();
         await MalformedApplyRetainsSuccessfulSnapshotAsync();
         await CoverFailureCannotSplitSuccessfulSnapshotAsync();
+    }
+
+    private static async Task PendingIntentIsIndependentOfSuccessfulCriteriaAsync()
+    {
+        var settings = new Settings();
+        var (service, http) = TestHttpServiceProxy.Create();
+        http.GetResponseJson = Response;
+        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings) { SearchQuery = "first" };
+        await vm.SearchVoicesCommand.ExecuteAsync(null);
+        await vm.NextPageCommand.ExecuteAsync(null);
+        var cards = vm.SearchResults;
+        var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        CancellationToken token = default;
+        http.GetAsyncHandler = (_, _, ct) => { token = ct; return held.Task; };
+        var pending = Apply(vm, ["en"], "created_at");
+        try
+        {
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "Held Apply publishes menu language before its response");
+            AssertEqual("created_at", vm.SearchSort, "Held Apply publishes menu sort before its response");
+            AssertEqual(true, vm.HasSearchAdjustments, "The indicator represents pending applied intent");
+            AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Pending intent cannot replace successful result objects");
+            AssertEqual(2, vm.SearchPage, "Pending intent cannot replace the successful page");
+            http.GetAsyncHandler = null;
+            await vm.NextPageCommand.ExecuteAsync(null);
+            AssertEqual(true, token.IsCancellationRequested, "Paging replaces held search work");
+            AssertEqual("https://api.fish.audio/model?page_size=6&page_number=3&sort_by=score&title=first", http.LastGetUrl, "Paging still owns the full last-successful criteria");
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "A successful old-criteria page never resets applied menu intent");
+            foreach (var query in new[] { "edited", "" })
+            {
+                vm.SearchQuery = query;
+                await vm.SearchVoicesCommand.ExecuteAsync(null);
+                AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=created_at" + (query.Length == 0 ? "" : "&title=" + query) + "&language=en", http.LastGetUrl, "Explicit Search combines current visible query with latest menu intent");
+            }
+        }
+        finally { held.TrySetResult(Response); await pending.WaitAsync(RegressionExecution.Timeout); }
+    }
+
+    private static async Task PendingReplacementsCannotRollBackIntentAsync()
+    {
+        foreach (var outcome in new[] { "success", "failure", "credentials" })
+        {
+            var settings = new Settings { ApiKey = "accepted-key" };
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = Response;
+            using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            await vm.SearchVoicesCommand.ExecuteAsync(null);
+            await vm.NextPageCommand.ExecuteAsync(null);
+            var cards = vm.SearchResults;
+            var a = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var b = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            CancellationToken aToken = default, bToken = default;
+            http.GetAsyncHandler = (_, _, ct) => { aToken = ct; return a.Task; };
+            var first = Apply(vm, ["en"], "created_at");
+            http.GetAsyncHandler = (_, _, ct) => { bToken = ct; return b.Task; };
+            var second = Apply(vm, ["de"], "task_count");
+            try
+            {
+                AssertEqual(true, aToken.IsCancellationRequested, "New Apply cancels the previous request");
+                AssertEqual("de", string.Join(",", vm.SearchLanguages), "The newest Apply owns intent before either response");
+                a.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Obsolete"}]}""");
+                await first.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual("de", string.Join(",", vm.SearchLanguages), "Obsolete success cannot roll back pending intent");
+                AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Obsolete success cannot publish over pending replacement");
+                AssertEqual(2, vm.SearchPage, "Obsolete success cannot publish navigation");
+                AssertEqual(true, vm.IsSearching, "Obsolete cleanup cannot retire the newer busy owner");
+                if (outcome == "credentials")
+                {
+                    vm.ApiKey = "replacement-key";
+                    vm.ApiKey = "accepted-key";
+                    AssertEqual(true, bToken.IsCancellationRequested, "Accepted A to B to A retires the pending operation");
+                    b.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Retired"}]}""");
+                }
+                else if (outcome == "failure") b.SetException(new TimeoutException());
+                else b.SetResult("""{"total":24,"items":[{"_id":"33333333333333333333333333333333","title":"Current"}]}""");
+                await second.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual("de", string.Join(",", vm.SearchLanguages), "Replacement completion or retirement retains newest menu intent");
+                AssertEqual("task_count", vm.SearchSort, "Replacement completion or retirement retains newest sort");
+                AssertEqual(false, vm.IsSearching, "Current completion or credential retirement ends busy state");
+                AssertEqual(outcome == "success" ? "Current" : "Voice", vm.SearchResults.Single().Title, "Only a current successful response can publish results");
+                AssertEqual(outcome == "success" ? 1 : 2, vm.SearchPage, "Failure and credential retirement preserve successful navigation");
+                if (outcome == "credentials")
+                {
+                    http.GetAsyncHandler = null;
+                    await vm.SearchVoicesCommand.ExecuteAsync(null);
+                    AssertEqual("Bearer accepted-key", http.LastGetOptions!.Headers!["Authorization"], "A round trip's next request uses the currently accepted key");
+                    AssertEqual(true, http.LastGetUrl!.EndsWith("&language=de", StringComparison.Ordinal), "Credential round trip retains applied intent");
+                }
+            }
+            finally
+            {
+                a.TrySetResult(Response); b.TrySetResult(Response);
+                await Task.WhenAll(first, second).WaitAsync(RegressionExecution.Timeout);
+            }
+        }
     }
 
     // A scalar boundary, duplicate-key overwrite, input aliasing or all-ten => All
@@ -52,7 +148,7 @@ internal static class SearchAdjustmentSuite
         AssertEqual(true, http.LastGetUrl!.Contains("page_number=2", StringComparison.Ordinal) && http.LastGetUrl.EndsWith("&language=en&language=zh", StringComparison.Ordinal), "Paging owns the complete captured set");
         vm.SearchQuery = "new";
         await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(true, http.LastGetUrl!.Contains("title=new", StringComparison.Ordinal) && http.LastGetUrl.EndsWith("&language=en&language=zh", StringComparison.Ordinal), "WithQuery preserves the immutable language set");
+        AssertEqual(true, http.LastGetUrl!.Contains("title=new", StringComparison.Ordinal) && http.LastGetUrl.EndsWith("&language=en&language=zh", StringComparison.Ordinal), "Search preserves the immutable applied language set");
         var allTen = new[] { "pt", "ru", "ar", "ko", "es", "fr", "ja", "de", "zh", "en" };
         await Apply(vm, allTen, "score");
         AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=score&title=new&language=en&language=zh&language=de&language=ja&language=fr&language=es&language=ko&language=ar&language=ru&language=pt", http.LastGetUrl, "All ten is a filtered preset set, not All languages");
@@ -62,7 +158,14 @@ internal static class SearchAdjustmentSuite
             try { await Apply(vm, new[] { "en", invalid }, "score"); throw new InvalidOperationException("Unsupported language was accepted"); }
             catch (ArgumentOutOfRangeException) { }
             AssertEqual(before, http.GetCallCount, "An unsupported language fails before requesting or publishing");
+            AssertEnumerableEqual(allTen.Reverse(), vm.SearchLanguages, "Invalid languages cannot partially change applied intent");
+            AssertEqual("score", vm.SearchSort, "Invalid languages cannot partially change applied sort");
         }
+        var beforeInvalidSort = http.GetCallCount;
+        try { await Apply(vm, ["de"], "invalid"); throw new InvalidOperationException("Unsupported sort was accepted"); }
+        catch (ArgumentOutOfRangeException) { }
+        AssertEqual(beforeInvalidSort, http.GetCallCount, "An unsupported sort cannot issue a GET");
+        AssertEnumerableEqual(allTen.Reverse(), vm.SearchLanguages, "Invalid sort cannot partially publish a new language set");
         await Apply(vm, Array.Empty<string>(), "score");
         AssertEqual(false, http.LastGetUrl!.Contains("&language=", StringComparison.Ordinal), "An empty set omits language entirely");
     }
@@ -93,8 +196,8 @@ internal static class SearchAdjustmentSuite
         AssertEqual(0, ((ContextProxy)(object)context).SaveCount, "Session search options never persist settings");
     }
 
-    // Paging must use all successful criteria; failed replacements cannot partially
-    // publish options/page/results, and Search must use visible text with applied options.
+    // Paging owns successful criteria/results; menu intent survives a failed request
+    // and explicit Search composes it with the current visible query.
     private static async Task AppliedCriteriaSurviveFailureAndDraftEditsAsync()
     {
         var settings = new Settings();
@@ -109,13 +212,13 @@ internal static class SearchAdjustmentSuite
         await Apply(vm, ["de"], "created_at");
         AssertEqual(2, vm.SearchPage, "Failed Apply retains the successful page");
         AssertEqual(true, ReferenceEquals(card, vm.SearchResults.Single()), "Failed Apply retains result identities");
-        AssertEqual("zh,ja", string.Join(",", vm.SearchLanguages), "Failed Apply retains the successful language");
-        AssertEqual("task_count", vm.SearchSort, "Failed Apply retains the successful sort");
+        AssertEqual("de", string.Join(",", vm.SearchLanguages), "Failed Apply retains the latest applied language");
+        AssertEqual("created_at", vm.SearchSort, "Failed Apply retains the latest applied sort");
         http.GetException = null;
         await vm.NextPageCommand.ExecuteAsync(null);
         AssertEqual("https://api.fish.audio/model?page_size=6&page_number=3&sort_by=task_count&title=first&language=zh&language=ja", http.LastGetUrl, "Paging keeps the complete committed snapshot");
         await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=edited&language=zh&language=ja", http.LastGetUrl, "Search captures visible text and applied options");
+        AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=created_at&title=edited&language=de", http.LastGetUrl, "Search captures visible text and applied options");
         await Apply(vm, null, "score");
         AssertEqual("score", vm.SearchSort, "Successful Reset/Apply commits relevance");
         AssertEqual(0, vm.SearchLanguages.Count, "All clears specific languages");
@@ -146,15 +249,23 @@ internal static class SearchAdjustmentSuite
             AssertEqual(true, captured.IsCancellationRequested, "Retiring search cancels its captured request token");
             pending.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Retired"}]}""");
             await old.WaitAsync(RegressionExecution.Timeout);
-            AssertEqual(retirement == "replacement" ? "ko,pt" : "en,zh", string.Join(",", vm.SearchLanguages), "Retired completion cannot replace applied criteria");
+            AssertEqual(retirement == "replacement" ? "ko,pt" : "de", string.Join(",", vm.SearchLanguages), "Retired completion cannot replace applied criteria");
             AssertEqual("Voice", vm.SearchResults.Single().Title, "Retired completion cannot replace successful results");
             AssertEqual(1, vm.SearchPage, "Retired completion cannot replace navigation");
+            if (retirement == "dispose")
+            {
+                var before = http.GetCallCount;
+                await Apply(vm, ["fr"], "score");
+                AssertEqual(before, http.GetCallCount, "Disposed Apply cannot issue a request");
+                AssertEqual("de", string.Join(",", vm.SearchLanguages), "Disposed Apply cannot accept new intent");
+                AssertEqual("created_at", vm.SearchSort, "Disposed Apply cannot accept a new sort");
+            }
             if (retirement == "credentials")
             {
                 http.GetAsyncHandler = null;
                 await vm.SearchVoicesCommand.ExecuteAsync(null);
                 AssertEqual("Bearer replacement-key", http.LastGetOptions!.Headers!["Authorization"], "The next explicit search captures the newly accepted credential");
-                AssertEqual(true, http.LastGetUrl!.EndsWith("&language=en&language=zh", StringComparison.Ordinal), "Credential retirement retains successful options");
+                AssertEqual(true, http.LastGetUrl!.EndsWith("&language=de", StringComparison.Ordinal), "Credential retirement retains latest applied options");
             }
         }
     }
@@ -182,13 +293,13 @@ internal static class SearchAdjustmentSuite
             }
             finally { SettingsViewModel.UiThreadInvokerOverride = previous; }
             AssertEqual(true, queued.Count > 0, "Search response publication must cross the owning UI boundary");
-            AssertEqual("en,zh", string.Join(",", vm.SearchLanguages), "Queued response does not publish options before its UI unit runs");
+            AssertEqual("de", string.Join(",", vm.SearchLanguages), "Applied intent is immediate even while successful publication is queued");
             if (retirement == "replacement") await Apply(vm, ["pt", "ko"], "score");
             else if (retirement == "credentials") vm.ApiKey = "replacement-key";
             else vm.Dispose();
             var cards = vm.SearchResults;
             foreach (var action in queued) action();
-            AssertEqual(retirement == "replacement" ? "ko,pt" : "en,zh", string.Join(",", vm.SearchLanguages), "The queued unit rechecks current ownership before publishing criteria");
+            AssertEqual(retirement == "replacement" ? "ko,pt" : "de", string.Join(",", vm.SearchLanguages), "The queued unit rechecks current ownership before publishing criteria");
             AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Retired queued publication cannot replace results");
             AssertEqual(false, vm.IsSearching, "A queued retired operation cannot reclaim busy state");
         }
@@ -210,8 +321,8 @@ internal static class SearchAdjustmentSuite
             AssertEqual(before + 1, http.GetCallCount, "Malformed search responses are not retried");
             AssertEqual(2, vm.SearchPage, "Invalid provider data cannot publish a new page before mapping completes");
             AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Invalid provider data retains the successful result list");
-            AssertEqual("ja", string.Join(",", vm.SearchLanguages), "Invalid provider data retains the successful language");
-            AssertEqual("task_count", vm.SearchSort, "Invalid provider data retains the successful sort");
+            AssertEqual("de", string.Join(",", vm.SearchLanguages), "Invalid provider data retains the latest applied language");
+            AssertEqual("created_at", vm.SearchSort, "Invalid provider data retains the latest applied sort");
         }
     }
 
