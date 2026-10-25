@@ -46,7 +46,7 @@ internal static class InputClearSuite
                 AssertEqual(true, ReferenceEquals(identity, settings.CredentialIdentity), "Rejected leased clear cannot advance credential identity");
                 AssertEqual(false, token.IsCancellationRequested, "Rejected leased clear cannot retire pending accepted work");
             }
-            finally { held.TrySetResult(Response); await pending.WaitAsync(TimeSpan.FromSeconds(2)); }
+            finally { held.TrySetResult(Response); await pending.WaitAsync(RegressionExecution.Timeout); }
         }
     }
 
@@ -93,7 +93,7 @@ internal static class InputClearSuite
                     AssertEqual(1, saves, "An effective accepted clear saves exactly once");
                 }
             }
-            finally { held.TrySetResult(Response); await pending.WaitAsync(TimeSpan.FromSeconds(2)); }
+            finally { held.TrySetResult(Response); await pending.WaitAsync(RegressionExecution.Timeout); }
         }
     }
 
@@ -130,7 +130,7 @@ internal static class InputClearSuite
             await vm.SearchVoicesCommand.ExecuteAsync(null);
             AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=created_at&language=en", http.LastGetUrl, "Explicit Search uses empty visible query and current applied options");
         }
-        finally { held.TrySetResult(Response); await pending.WaitAsync(TimeSpan.FromSeconds(2)); }
+        finally { held.TrySetResult(Response); await pending.WaitAsync(RegressionExecution.Timeout); }
     }
 
     private static async Task ByIdClearRetiresItsInputOwnerAsync()
@@ -171,7 +171,7 @@ internal static class InputClearSuite
             AssertEqual(false, vm.IsSubmittingVoiceId, "By-ID clear retires submitting state");
             AssertEqual(0, vm.ByIdResults.Count, "By-ID clear retires the independent result");
             if (lateFailure) held.SetException(new TimeoutException()); else held.SetResult(http.GetResponseJson);
-            await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            await pending.WaitAsync(RegressionExecution.Timeout);
             clock.Advance(TimeSpan.FromSeconds(5));
             AssertEqual(0, vm.ByIdResults.Count, "Cancellation-ignoring success cannot resurrect a result");
             AssertEqual<string?>(null, vm.VoiceIdError, "Cancellation-ignoring failure and old expiry cannot restore an error");

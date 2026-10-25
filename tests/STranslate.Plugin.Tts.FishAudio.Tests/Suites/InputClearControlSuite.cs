@@ -21,7 +21,7 @@ using static TestAssertions;
 internal static class InputClearControlSuite
 {
     // 1 construction + 28 locale/theme/width contexts + 3 field behavior +
-    // 2 explicitly forced password compatibility states = 34 ordinary 5s actions.
+    // 2 explicitly forced password compatibility states = 34 shared-guard actions.
     internal static async Task RunAsync()
     {
         await Action("construction", stage => { _ = new SettingsView(); stage("compiled construction complete"); });
@@ -36,7 +36,7 @@ internal static class InputClearControlSuite
     }
 
     private static Task Action(string name, Action<Action<string>> body) =>
-        SearchAdjustmentControlSuite.ObserveMatrixActionAsync(name, body, prefix: "input-clear", details: "ordinary 5s action; owned native source");
+        SearchAdjustmentControlSuite.ObserveMatrixActionAsync(name, body, prefix: "input-clear", details: "shared-guard action; owned native source");
 
     private static void Geometry(string locale, bool dark, bool narrow, Action<string> stage)
     {

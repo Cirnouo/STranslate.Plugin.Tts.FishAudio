@@ -17,8 +17,8 @@ internal static class PopupDirectionSuite
 {
     internal static async Task RunAsync(string? directory = null)
     {
-        // Four semantic owners, each retaining the ordinary five-second action
-        // deadline: 20 seconds cumulative, with no new startup/observation budget.
+        // Four semantic owners, each retaining the shared execution action
+        // deadline: 80 seconds cumulative, with no new startup/observation budget.
         foreach (var language in new[] { false, true })
         {
             var client = language ? "language" : "search";
