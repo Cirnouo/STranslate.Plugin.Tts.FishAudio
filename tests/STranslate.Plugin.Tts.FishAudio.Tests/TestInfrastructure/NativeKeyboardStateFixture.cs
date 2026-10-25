@@ -60,10 +60,11 @@ internal static class NativeKeyboardStateFixture
         {
             if (cleanup is not null)
             {
-                primary.SourceException.Data[CleanupFailureKey] = cleanup.SourceException;
+                try { primary.SourceException.Data[CleanupFailureKey] = cleanup.SourceException; }
+                catch { /* Extensible exception metadata cannot replace the primary. */ }
                 // Diagnostics must never replace the original preparation/action failure.
                 try { Console.Error.WriteLine($"[native-key-state] secondary cleanup failure ({cleanup.SourceException.GetType().Name})"); }
-                catch { /* The secondary exception remains attached to the primary. */ }
+                catch { /* Secondary diagnostics are best effort. */ }
             }
             primary.Throw();
         }
@@ -93,7 +94,6 @@ internal static class NativeKeyboardStateFixture
         {
             // The fixture configures only Down bits on these keys. Low/toggle
             // metadata and unrelated keys still belong to the full restoration.
-            matches = actual[0x20] == expected[0x20];
             foreach (var key in ControlledKeys) matches &= (actual[key] & 0x80) == (expected[key] & 0x80);
         }
         else matches = actual.SequenceEqual(expected);
