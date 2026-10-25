@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
-**Status:** Task1 implementation and independent task review are complete. Task2 is implemented with focused offline verification; its independent task review and the final branch/host gates remain pending. Native Display-mode support quantization remains an explicitly recorded Task1 limitation.
+**Status:** Task1 and Task2 implementation/scoped reviews are complete. The whole-branch review found no separate production defect; its remaining finding is the failed integrated description-action envelope. The reserved test-only fix uses independently owned selected/active-mode pairs and its focused verification passed. The committed-fix full/package evidence and the one scoped final fix review remain the branch gates. Native Display-mode support quantization remains an explicitly recorded Task1 limitation.
 
 **Goal:** Correct installed-host numeric-unit bottoms, secondary headers, selected-description gaps and clickable cursors.
 
@@ -51,11 +51,13 @@
 - [x] Shrink both shared header author/dot to11DIP and implement the demonstrated description allocation correction. Keep portrait/header/other metadata constraints unchanged.
 - [x] Add native delayed full-description tooltips in all four locations; preserve full original line breaks despite card clipping and verify nonempty/blank/metadata-update cases without inventing a new tooltip timing preference.
 - [x] Add meaningful QueryCursor regressions on actual compiled enabled/disabled controls, native nonclickable SettingsCard, plain metadata, inputs/hyperlinks, avatar actions, slider/toggle/dropdown/scrollbar parts and a host peer outside scope. Implement scoped behavior preserving all native templates/styles and lifecycle ownership.
-- [x] Run affected card/cursor/overlay/numeric checks, update current specifications and commit atomically with report/self-review. Independent Task2 review remains the next gate. The cursor group uses nine separate five-second actions (45 seconds allowed), separating native parts/template and independently hosted lifecycle cases while retaining all assertions. Earlier aggregate and finite native-peer deadline failures remain recorded with their limits.
+- [x] Run affected card/cursor/overlay/numeric checks, update current specifications and commit atomically with report/self-review. Independent Task2 review and its scoped fix review are accepted. The cursor group uses nine separate five-second actions (45 seconds allowed), separating native parts/template and independently hosted lifecycle cases while retaining all assertions. Earlier aggregate and finite native-peer deadline failures remain recorded with their limits.
 
 ### Final branch gate and delivery
 
-- [ ] Freeze final intended tree, run ./build.ps1 -Release -Clean -Test once, inspect its actual package/manifest/dependencies/7 locales/flags, obtain one broad final review and preserve all evidence.
+The reserved description-fixture fix separates selected/active Search/By-ID/Favorites source owners: twenty-four matrix actions plus one construction action, each retaining five seconds, allow 125 seconds instead of the earlier nine-action/45-second composition. All 192 observations, 144 native tooltip opens and complete runtime sequences remain. The original integrated timeout and the later finite fresh diagnostic retain their distinct evidence boundaries; no production or original-readiness change is inferred from them. The cursor group remains nine five-second actions/45 seconds.
+
+- [ ] Freeze the committed description-fixture fix, run ./build.ps1 -Release -Clean -Test once at that HEAD, inspect its actual package/manifest/dependencies/7 locales/flags and preserve all evidence. The broad final review is complete; its same reviewer performs one scoped fix review after the remaining gate evidence.
 - [ ] Use authorized push/PR association/actual required head CI/squash/main CI; no tag/Release. Update local main --ff-only after actual main success. Keep the four historical PR attachments.
 - [ ] Exact-window background cua-driver native acceptance with a fresh private manifest-only package if needed. Never relabel failed/unavailable capture or unsupported physical input as success.
 - [ ] Continue separately researched popup Mica work and final managed-worktree archive; preserve all ignored evidence before archival and retain PR associations.
