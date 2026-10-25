@@ -16,7 +16,9 @@ internal static class PageEntrySuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
-        if (group is null or "fields") await RunOnStaThreadAsync(CompiledFieldsConstrainWholeDraftsAsync);
+        if (group is null or "fields")
+            foreach (var (name, source) in new[] { ("PageInputBox", nameof(SettingsViewModel.PageInput)), ("FavoritePageInputBox", nameof(SettingsViewModel.FavoritePageInput)) })
+                await RunOnStaThreadAsync(() => CompiledFieldsConstrainWholeDraftsAsync(name, source));
         if (group is null or "search") await RunOnStaThreadAsync(SearchMaximumAndCommitTransitionsAsync);
         if (group is null or "favorites") await RunOnStaThreadAsync(FavoriteCommitsPreservePendingOwnerAsync);
         var extreme = new VoiceSearchPagination(int.MaxValue, null, false, null, true, false);
@@ -65,7 +67,7 @@ internal static class PageEntrySuite
         if (command.CanExecute(null)) command.Execute(null);
     }
 
-    private static async Task CompiledFieldsConstrainWholeDraftsAsync()
+    private static async Task CompiledFieldsConstrainWholeDraftsAsync(string name, string source)
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(Path.Combine(directory, "favorite-voices.json"), JsonSerializer.Serialize(Enumerable.Range(1, 72).Select(Id)));
@@ -79,48 +81,45 @@ internal static class PageEntrySuite
         Drain();
         var calls = http.GetCallCount;
         var saves = storage.SaveCount;
-        foreach (var (name, source) in new[] { ("PageInputBox", nameof(vm.PageInput)), ("FavoritePageInputBox", nameof(vm.FavoritePageInput)) })
+        var input = Field(view, name);
+        AssertEqual(40d, input.Width, "Native page field geometry stays 40 DIP");
+        foreach (var invalid in new[] { "a", "+", "-", ".", " ", "１", "١", "1a", "1\n2", "2\0" })
         {
-            var input = Field(view, name);
-            AssertEqual(40d, input.Width, "Native page field geometry stays 40 DIP");
-            foreach (var invalid in new[] { "a", "+", "-", ".", " ", "１", "١", "1a", "1\n2", "2\0" })
-            {
-                Draft(input, "1"); input.SelectAll();
-                AssertEqual(false, Type(input, invalid), "Reject non-ASCII/mixed composition wholesale");
-                AssertEqual("1", input.Text, "Rejected composition leaves the draft intact");
-                AssertEqual(false, Paste(input, new DataObject(DataFormats.UnicodeText, invalid)), "Reject malformed paste wholesale");
-                AssertEqual("1", input.Text, "Rejected paste leaves the draft intact");
-            }
-            AssertEqual(false, Paste(input, new DataObject(DataFormats.Bitmap, new byte[] { 1 }), DataFormats.Bitmap), "Missing Unicode text is rejected");
-            AssertEqual(BindingMode.TwoWay, BindingOperations.GetBinding(input, TextBox.TextProperty)!.Mode, "Page draft binding must explicitly publish both ways");
-            Draft(input, "1"); input.CaretIndex = 1;
-            AssertEqual(true, Type(input, "3"), "Digits remain editable");
-            AssertEqual("12", input.Text, "13 clamps to 12 before blur");
-            AssertEqual("12", source == nameof(vm.PageInput) ? vm.PageInput : vm.FavoritePageInput, "Immediate clamp reaches the draft source");
-            Draft(input, "10"); input.Select(1, 1);
-            AssertEqual(true, Type(input, "1"), "Selection replacement is accepted as a whole draft");
-            AssertEqual("11", input.Text, "Selection replacement keeps the unselected prefix");
-            input.SelectAll();
-            AssertEqual(true, Paste(input, new DataObject(DataFormats.UnicodeText, new string('9', 4000))), "Oversized digit paste is valid lexical input");
-            AssertEqual("12", input.Text, "Huge digit strings clamp without overflow");
-            input.SelectAll(); Paste(input, new DataObject(DataFormats.UnicodeText, "0002"));
-            AssertEqual("0002", input.Text, "Leading zeros survive editing");
-            foreach (var temporary in new[] { "", "0", "000" })
-            {
-                Draft(input, temporary);
-                AssertEqual(temporary, input.Text, "Empty and zero remain editable until commit");
-                Blur(input); Drain();
-                AssertEqual("1", input.Text, "Empty/zero commit restores the applied page");
-            }
-            Draft(input, "1");
-            var space = new KeyEventArgs(Keyboard.PrimaryDevice, new TestInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
-            input.RaiseEvent(space);
-            AssertEqual(true, space.Handled, "Space is blocked before native editing");
-            // Programmatic invalid drafts remain the domain command's responsibility.
-            Draft(input, "a1"); input.Select(1, 1);
-            AssertEqual(false, Type(input, "2"), "Validate the whole selection replacement, including existing text");
-            Draft(input, "1");
+            Draft(input, "1"); input.SelectAll();
+            AssertEqual(false, Type(input, invalid), "Reject non-ASCII/mixed composition wholesale");
+            AssertEqual("1", input.Text, "Rejected composition leaves the draft intact");
+            AssertEqual(false, Paste(input, new DataObject(DataFormats.UnicodeText, invalid)), "Reject malformed paste wholesale");
+            AssertEqual("1", input.Text, "Rejected paste leaves the draft intact");
         }
+        AssertEqual(false, Paste(input, new DataObject(DataFormats.Bitmap, new byte[] { 1 }), DataFormats.Bitmap), "Missing Unicode text is rejected");
+        AssertEqual(BindingMode.TwoWay, BindingOperations.GetBinding(input, TextBox.TextProperty)!.Mode, "Page draft binding must explicitly publish both ways");
+        Draft(input, "1"); input.CaretIndex = 1;
+        AssertEqual(true, Type(input, "3"), "Digits remain editable");
+        AssertEqual("12", input.Text, "13 clamps to 12 before blur");
+        AssertEqual("12", source == nameof(vm.PageInput) ? vm.PageInput : vm.FavoritePageInput, "Immediate clamp reaches the draft source");
+        Draft(input, "10"); input.Select(1, 1);
+        AssertEqual(true, Type(input, "1"), "Selection replacement is accepted as a whole draft");
+        AssertEqual("11", input.Text, "Selection replacement keeps the unselected prefix");
+        input.SelectAll();
+        AssertEqual(true, Paste(input, new DataObject(DataFormats.UnicodeText, new string('9', 4000))), "Oversized digit paste is valid lexical input");
+        AssertEqual("12", input.Text, "Huge digit strings clamp without overflow");
+        input.SelectAll(); Paste(input, new DataObject(DataFormats.UnicodeText, "0002"));
+        AssertEqual("0002", input.Text, "Leading zeros survive editing");
+        foreach (var temporary in new[] { "", "0", "000" })
+        {
+            Draft(input, temporary);
+            AssertEqual(temporary, input.Text, "Empty and zero remain editable until commit");
+            Blur(input); Drain();
+            AssertEqual("1", input.Text, "Empty/zero commit restores the applied page");
+        }
+        Draft(input, "1");
+        var space = new KeyEventArgs(Keyboard.PrimaryDevice, new TestInputSource(), 0, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+        input.RaiseEvent(space);
+        AssertEqual(true, space.Handled, "Space is blocked before native editing");
+        // Programmatic invalid drafts remain the domain command's responsibility.
+        Draft(input, "a1"); input.Select(1, 1);
+        AssertEqual(false, Type(input, "2"), "Validate the whole selection replacement, including existing text");
+        Draft(input, "1");
         AssertEqual(calls, http.GetCallCount, "Editing and invalid restoration never navigate");
         AssertEqual(saves, storage.SaveCount, "Page entry never persists settings");
     }
