@@ -55,7 +55,7 @@
             </Grid>
         </Button>
         <Popup x:Name="AdjustmentPopup" PlacementTarget="{Binding ElementName=AdjustmentButton}" Placement="Custom" StaysOpen="True" AllowsTransparency="True">
-            <Border x:Name="PopupSurface" Width="324" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
+            <Border x:Name="PopupSurface" view:ActionCursor.IsScope="True" Width="324" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
                     BorderBrush="{DynamicResource FlyoutBorderThemeBrush}" Background="{DynamicResource FlyoutPresenterBackground}"
                     TextElement.FontFamily="{DynamicResource ContentControlThemeFontFamily}"
                     TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}" KeyboardNavigation.TabNavigation="Cycle" PreviewKeyDown="Popup_PreviewKeyDown">

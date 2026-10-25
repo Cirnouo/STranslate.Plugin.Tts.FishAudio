@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
-**Status:** Task1 implemented on this branch with offline verification and an explicit native Display-mode support-quantization limitation; Task2 and final branch/host gates remain planned.
+**Status:** Task1 implementation and independent task review are complete. Task2 is implemented with focused offline verification; its independent task review and the final branch/host gates remain pending. Native Display-mode support quantization remains an explicitly recorded Task1 limitation.
 
 **Goal:** Correct installed-host numeric-unit bottoms, secondary headers, selected-description gaps and clickable cursors.
 
@@ -39,7 +39,7 @@
 - [x] Add an independently measured actual-native contour/raster regression for number/unit visible bottoms and observe a causal RED before product edits. Include dot/comma, signed value, empty/partial draft, runtime context and fixed ±3 physical-pixel sensitivity. Define acceptance before GREEN.
 - [x] Implement the smallest measured unit translation while retaining native text and the complete existing horizontal/font/paint coverage. Require exact actual native outline equality in all contexts; retain strict default Ideal physical-support acceptance and characterize native Display grid-fit support separately. Replace only the superseded common-baseline vertical oracle; retain historical native-baseline characterization with an accurate label.
 - [x] Run affected numeric/geometry/interaction tests on the existing runner and inspect compiled native-number/unit images in light/dark and actual WPF DPI. Preserve all failures and exact evidence boundaries.
-- [ ] Update owning current spec/ADR, commit atomically, report exact checks and self-review. Root obtains independent spec+quality task review before Task2.
+- [x] Update owning current spec/ADR, commit atomically, report exact checks and self-review. Independent spec+quality task review accepted Task1 and its scoped follow-up before Task2.
 
 ### Task2: Secondary headers, selected gap and actionable cursor
 
@@ -47,11 +47,11 @@
 
 **Interfaces:** Consumes Task1 native typography unchanged. Produces 11-DIP shared author/dot, bounded selected-description layout without spare space, and plugin-only cursor affordances retaining existing click/keyboard/wheel semantics.
 
-- [ ] Reproduce identical actual three-line Japanese metadata (line lengths12/28/49) in selected and list cards; inspect DesiredSize/ActualHeight and clipped visible lines. Add a gap regression plus one-line/long/blank/runtime cases, keeping existing line caps.
-- [ ] Shrink both shared header author/dot to11DIP and implement the demonstrated description allocation correction. Keep portrait/header/other metadata constraints unchanged.
-- [ ] Add native delayed full-description tooltips in all four locations; preserve full original line breaks despite card clipping and verify nonempty/blank/metadata-update cases without inventing a new tooltip timing preference.
-- [ ] Add meaningful QueryCursor regressions on actual compiled enabled/disabled controls, native nonclickable SettingsCard, plain metadata, inputs/hyperlinks, avatar actions, slider/toggle/dropdown/scrollbar parts and a host peer outside scope. Implement scoped behavior preserving all native templates/styles and lifecycle ownership.
-- [ ] Run affected card/cursor/overlay/numeric checks, update current specifications and commit atomically with report/self-review. Root obtains task review.
+- [x] Reproduce identical actual three-line Japanese metadata (line lengths12/28/49) in selected and list cards; inspect DesiredSize/ActualHeight and clipped visible lines. Add a gap regression plus one-line/long/blank/runtime cases, keeping existing line caps.
+- [x] Shrink both shared header author/dot to11DIP and implement the demonstrated description allocation correction. Keep portrait/header/other metadata constraints unchanged.
+- [x] Add native delayed full-description tooltips in all four locations; preserve full original line breaks despite card clipping and verify nonempty/blank/metadata-update cases without inventing a new tooltip timing preference.
+- [x] Add meaningful QueryCursor regressions on actual compiled enabled/disabled controls, native nonclickable SettingsCard, plain metadata, inputs/hyperlinks, avatar actions, slider/toggle/dropdown/scrollbar parts and a host peer outside scope. Implement scoped behavior preserving all native templates/styles and lifecycle ownership.
+- [x] Run affected card/cursor/overlay/numeric checks, update current specifications and commit atomically with report/self-review. Independent Task2 review remains the next gate. The cursor group uses nine separate five-second actions (45 seconds allowed), separating native parts/template and independently hosted lifecycle cases while retaining all assertions. Earlier aggregate and finite native-peer deadline failures remain recorded with their limits.
 
 ### Final branch gate and delivery
 

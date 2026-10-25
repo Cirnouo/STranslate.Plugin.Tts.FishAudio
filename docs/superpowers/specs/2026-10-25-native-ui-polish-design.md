@@ -1,6 +1,6 @@
 # Native UI typography and affordance corrections
 
-Status: approved implementation design. Task1 is implemented on this branch; card typography, description spacing/tooltips and cursor work remain planned Task2 until its own implementation and verification. This is not a released-feature record.
+Status: approved implementation design. Task1 is implemented and independently reviewed on this branch. Task2 card typography, description spacing/tooltips and cursor work are implemented with focused offline verification; independent Task2 review and final branch/host gates remain pending. This is not a released-feature record.
 
 ## Intent and authority
 

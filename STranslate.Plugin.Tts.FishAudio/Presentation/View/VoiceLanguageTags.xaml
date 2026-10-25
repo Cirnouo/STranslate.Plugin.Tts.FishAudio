@@ -33,7 +33,7 @@
     </UserControl.Resources>
     <Grid>
         <StackPanel x:Name="InlinePanel" Orientation="Horizontal" Height="20.5" Margin="0,7,0,5" ClipToBounds="True">
-            <view:LanguageMoreButton x:Name="MoreButton" MinWidth="30" Height="20.5" FontSize="11" Padding="4,1" Cursor="Hand"
+            <view:LanguageMoreButton x:Name="MoreButton" MinWidth="30" Height="20.5" FontSize="11" Padding="4,1"
                     Background="Transparent" BorderThickness="0" MinHeight="0" Click="More_Click"
                     Foreground="{DynamicResource TextFillColorSecondaryBrush}">
                 <Button.Template>
@@ -54,7 +54,7 @@
         </StackPanel>
         <Popup x:Name="LanguagePopup" PlacementTarget="{Binding ElementName=MoreButton}" Placement="Custom"
                StaysOpen="True" AllowsTransparency="True" Focusable="False">
-            <Border x:Name="PopupSurface" Width="290" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
+            <Border x:Name="PopupSurface" view:ActionCursor.IsScope="True" Width="290" Padding="12" CornerRadius="{DynamicResource OverlayCornerRadius}" BorderThickness="{DynamicResource FlyoutBorderThemeThickness}"
                     BorderBrush="{DynamicResource FlyoutBorderThemeBrush}"
                     Background="{DynamicResource FlyoutPresenterBackground}"
                     TextElement.FontFamily="{DynamicResource ContentControlThemeFontFamily}"

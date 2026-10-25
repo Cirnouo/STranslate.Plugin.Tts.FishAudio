@@ -74,8 +74,9 @@ internal static class SearchAdjustmentControlSuite
                 stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory));
     }
 
-    private static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
-        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+    internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
+        Func<Action, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
+        string prefix = "search-adjustment", string details = "320/480 DIP.")
     {
         var elapsed = Stopwatch.StartNew();
         var phases = new ConcurrentQueue<string>();
@@ -83,7 +84,7 @@ internal static class SearchAdjustmentControlSuite
         Exception? actionFailure = null;
         long enteredAt = -1;
         void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
-        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[search-adjustment/{name}] {phase}"); }
+        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); }
         Stage("queued with original 5s action deadline");
         try
         {
@@ -95,7 +96,7 @@ internal static class SearchAdjustmentControlSuite
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed"); completion.TrySetResult(); }
             });
-            (write ?? Console.WriteLine)($"[search-adjustment/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; 320/480 DIP.");
+            (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; {details}");
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {

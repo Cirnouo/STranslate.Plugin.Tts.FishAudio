@@ -1278,7 +1278,6 @@ internal static class SettingsInputInteractionSuite
                 AssertEnumerableEqual(new[] { selectedId, cardId }.Order(), titles.Select(button => (string)button.CommandParameter).Order(), "All four title locations must pass their canonical voice ID");
                 foreach (var title in titles)
                 {
-                    AssertEqual(Cursors.Hand, title.Cursor, "A copyable voice title must advertise its click action");
                     AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_CopyVoiceId"), AutomationProperties.GetName(title), "Title copy actions retain the localized action name");
                     var text = (TextBlock)title.Content;
                     var tooltip = (ToolTip)title.ToolTip;
@@ -1301,6 +1300,9 @@ internal static class SettingsInputInteractionSuite
                     // visual hit can otherwise select their retained layout geometry.
                     var titleHit = view.InputHitTest(title.TranslatePoint(new Point(title.ActualWidth / 2, title.ActualHeight / 2), view)) as DependencyObject;
                     AssertEqual(true, titleHit is not null && IsInside(titleHit, title), $"The visible title's input-hit belongs to its dedicated copy button ({language}/{width}/{mode})");
+                    var cursor = new QueryCursorEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.QueryCursorEvent, Cursor = Cursors.Arrow };
+                    ((UIElement)titleHit!).RaiseEvent(cursor);
+                    AssertEqual(Cursors.Hand, cursor.Cursor, "The actual title hit resolves the copy-action cursor through its scoped native route");
                     var before = writes.Count;
                     typeof(Button).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(title, null);
                     AssertEqual(before + 1, writes.Count, "A title click must write exactly one clipboard value");

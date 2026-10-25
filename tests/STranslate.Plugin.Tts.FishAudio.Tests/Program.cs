@@ -1,9 +1,30 @@
+if (args.Contains("--control-cursor-late-combo-tests"))
+{
+    await ControlCursorSuite.RunLateComboAsync();
+    Console.WriteLine("Late-realized native Bitrate combo cursor tests passed.");
+    return;
+}
+
 if (args.Contains("--release-documentation-tests"))
 {
     RepositoryContractSuite.Release112MetadataIsComplete();
     RepositoryContractSuite.Release111MetadataIsComplete();
     RepositoryContractSuite.Release110MetadataIsComplete();
     Console.WriteLine("Published release documentation contracts passed.");
+    return;
+}
+
+if (args.Contains("--control-cursor-lifecycle-tests"))
+{
+    await ControlCursorSuite.RunLifecycleAsync();
+    Console.WriteLine("Control cursor local-reload and foreign-removal tests passed.");
+    return;
+}
+
+if (args.Contains("--control-cursor-tests"))
+{
+    await ControlCursorSuite.RunAsync();
+    Console.WriteLine("Control cursor tests passed.");
     return;
 }
 
@@ -618,6 +639,7 @@ await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetry
 await SearchAdjustmentControlSuite.RunAllAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceDescriptionSuite.RunAsync();
+await ControlCursorSuite.RunAsync();
 await VoiceLikeSuite.RunAllAsync();
 await AvatarPreviewSuite.RunAllAsync();
 await SearchPreviewRetentionSuite.RunAllAsync();
