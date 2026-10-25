@@ -211,7 +211,7 @@ internal static class SearchAdjustmentControlSuite
 
     private static async Task ObserveViewportActionAsync(Func<Action<string>, Task> action,
         Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null,
-        Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+        Action<string>? write = null, TimeProvider? observationTimeProvider = null, Func<Action, Task>? scheduleReport = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -230,19 +230,50 @@ internal static class SearchAdjustmentControlSuite
             catch { /* Phase reporting cannot replace the action outcome. */ }
         }
         void Write(string text) { try { (write ?? Console.WriteLine)(text); } catch { /* Preserve the primary outcome. */ } }
-        async Task EmitAsync(bool failed)
+        async Task ReportAsync(bool failed, bool observeCompletion)
         {
+            var retired = 0;
+            // One guard covers scheduling, original completion observation and output together.
+            // A blocked external writer cannot be interrupted; retire later writes and return
+            // the original outcome without granting output a second diagnostic allowance.
+            var diagnostic = Task.Run(async () =>
+            {
+                try
+                {
+                    if (observeCompletion)
+                    {
+                        try
+                        {
+                            await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                            var eventual = Volatile.Read(ref actionFailure);
+                            Stage(eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
+                        }
+                        catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
+                    }
+                    if (Volatile.Read(ref retired) != 0) return;
+                    await (scheduleReport ?? (report => Task.Run(report)))(() =>
+                    {
+                        if (failed)
+                        {
+                            foreach (var phase in phases)
+                            {
+                                if (Volatile.Read(ref retired) != 0) break;
+                                Write($"[search-viewport] {phase}");
+                            }
+                        }
+                        else if (Volatile.Read(ref retired) == 0)
+                            Write(FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain."));
+                    }).ConfigureAwait(false);
+                }
+                catch { /* Best-effort diagnostics cannot replace the original outcome. */ }
+            });
             try
             {
-                await Task.Run(() =>
-                {
-                    if (failed)
-                        foreach (var phase in phases) Write($"[search-viewport] {phase}");
-                    else
-                        Write(FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain."));
-                }).ConfigureAwait(false);
+                if (failed) await BoundMatrixObservation(diagnostic, observationTimeProvider).ConfigureAwait(false);
+                else await RegressionExecution.WaitAsync(diagnostic, timeProvider: observationTimeProvider).ConfigureAwait(false);
             }
-            catch { /* Observation and reporting must preserve the primary exception. */ }
+            catch { /* Deadline or output failure leaves the original outcome intact. */ }
+            finally { Interlocked.Exchange(ref retired, 1); }
         }
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         Func<Task> callback = async () =>
@@ -260,24 +291,17 @@ internal static class SearchAdjustmentControlSuite
         try
         {
             await (dispatch ?? ((body, timeout) => RunOnStaThreadAsync(body, timeout)))(callback, executionTimeout).ConfigureAwait(false);
-            await EmitAsync(false).ConfigureAwait(false);
+            await ReportAsync(false, observeCompletion: false).ConfigureAwait(false);
         }
         catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
             Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
-            try
-            {
-                await BoundMatrixObservation(Task.Run(() => (observe ?? (pending => pending))(completion.Task)), observationTimeProvider).ConfigureAwait(false);
-                var eventual = Volatile.Read(ref actionFailure);
-                Stage(eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
-            }
-            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
-            await EmitAsync(true).ConfigureAwait(false);
+            await ReportAsync(true, observeCompletion: true).ConfigureAwait(false);
             throw;
         }
         catch
         {
-            await EmitAsync(true).ConfigureAwait(false);
+            await ReportAsync(true, observeCompletion: false).ConfigureAwait(false);
             throw;
         }
     }
@@ -352,6 +376,7 @@ internal static class SearchAdjustmentControlSuite
         catch (Exception error) { caught = error; }
         AssertEqual(true, ReferenceEquals(outer, caught), "A secondary observation fault cannot replace the primary deadline");
         AssertEqual(1, observations, "A secondary failure does not retry observation");
+        AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "A finite observation fault is reported while diagnostic time remains");
         await queued!();
 
         var clock = new ObservationRegistrationClock();
@@ -375,26 +400,125 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, observations, "Observation expires after its single bounded attempt");
         AssertEqual(0, runs, "Expiry does not run queued replacement work");
         AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry cannot cancel or complete the original action");
-        AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The actual observation primitive reports exact expiry");
+        AssertEqual(1, clock.TimerCount, "Observation and best-effort output share exactly one diagnostic deadline");
         await queued!();
         await sameCompletion.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(1, runs, "Only the original action completes after expiry");
+
+        await ViewportReportingSharesOneBoundedAllowanceAsync();
+    }
+
+    private static async Task ViewportReportingSharesOneBoundedAllowanceAsync()
+    {
+        foreach (var scenario in new[] { "owned-writer", "outer-partial-observation", "successful-summary" })
+        {
+            var clock = new ObservationRegistrationClock();
+            var primary = new IOException("Synthetic held-reporter action fault");
+            var outer = new TimeoutException("Synthetic held-reporter outer deadline");
+            var actionRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reporterEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reportCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reporterRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var writerRelease = new ManualResetEventSlim();
+            Task actionTask = Task.CompletedTask;
+            Task reportTask = Task.CompletedTask;
+            var runs = 0;
+            var writes = 0;
+            Exception? caught = null;
+            var pending = ObserveViewportActionAsync(async _ =>
+            {
+                runs++;
+                if (scenario == "owned-writer") { await Task.Yield(); throw primary; }
+                if (scenario == "outer-partial-observation") await actionRelease.Task;
+            }, dispatch: (callback, _) =>
+            {
+                actionTask = callback();
+                if (scenario == "outer-partial-observation") throw outer;
+                return actionTask;
+            }, observe: completion => { observing.SetResult(); return completion; },
+                write: _ =>
+                {
+                    Interlocked.Increment(ref writes);
+                    if (scenario == "owned-writer") { reporterEntered.SetResult(); writerRelease.Wait(); }
+                }, observationTimeProvider: clock, scheduleReport: report =>
+                {
+                    reportTask = scenario == "owned-writer" ? Task.Run(report) : Task.Run(async () =>
+                    {
+                        reporterEntered.SetResult();
+                        await reporterRelease.Task;
+                        report();
+                    });
+                    reportCreated.SetResult();
+                    return reportTask;
+                });
+            try
+            {
+                await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
+                if (scenario == "outer-partial-observation")
+                {
+                    await observing.Task.WaitAsync(RegressionExecution.Timeout);
+                    clock.Advance(TimeSpan.FromSeconds(7));
+                    actionRelease.SetResult();
+                }
+                await reporterEntered.Task.WaitAsync(RegressionExecution.Timeout);
+                await reportCreated.Task.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(1, clock.ActiveTimers, "Reporting retains the original active guard after observation/scheduling");
+                AssertEqual(1, clock.TimerCount, "Reporting cannot renew the diagnostic allowance after partial observation");
+                clock.Advance(TimeSpan.FromMilliseconds(scenario == "outer-partial-observation" ? 12999 : 19999));
+                AssertEqual(false, pending.IsCompleted, "Held reporting remains incomplete at total 19999ms");
+                clock.Advance(TimeSpan.FromMilliseconds(1));
+                try { await pending.WaitAsync(RegressionExecution.Timeout); }
+                catch (Exception error) { caught = error; }
+                AssertEqual(true, scenario == "successful-summary" ? caught is null : ReferenceEquals(scenario == "owned-writer" ? primary : outer, caught),
+                    "At total 20000ms auxiliary reporting preserves the exact original success or failure");
+                AssertEqual(1, runs, "Held reporting never retries or replaces the original action");
+                AssertEqual(false, reportTask.IsCompleted, "The outcome returns while the external writer or reporter is still held");
+                AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Held scheduling cannot emit a success or failure before release");
+            }
+            finally
+            {
+                actionRelease.TrySetResult();
+                reporterRelease.TrySetResult();
+                writerRelease.Set();
+                try { await actionTask.WaitAsync(RegressionExecution.Timeout); } catch (IOException error) when (ReferenceEquals(error, primary)) { }
+                await reportTask.WaitAsync(RegressionExecution.Timeout);
+                try { await pending.WaitAsync(RegressionExecution.Timeout); }
+                catch (Exception error) when (ReferenceEquals(error, primary) || ReferenceEquals(error, outer)) { }
+            }
+            AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Retirement suppresses later buffered output after the allowance expires");
+        }
     }
 
     private sealed class ObservationRegistrationClock : TimeProvider
     {
         private readonly ManualStreamingTimeProvider _clock = new();
         internal TaskCompletionSource TimerCreated { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal int TimerCount;
+        internal int ActiveTimers;
         public override long TimestampFrequency => _clock.TimestampFrequency;
         public override long GetTimestamp() => _clock.GetTimestamp();
         public override DateTimeOffset GetUtcNow() => _clock.GetUtcNow();
         public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             var timer = _clock.CreateTimer(callback, state, dueTime, period);
+            Interlocked.Increment(ref TimerCount);
+            Interlocked.Increment(ref ActiveTimers);
             TimerCreated.TrySetResult();
-            return timer;
+            return new TrackedTimer(this, timer);
         }
         internal void Advance(TimeSpan elapsed) => _clock.Advance(elapsed);
+        private sealed class TrackedTimer(ObservationRegistrationClock owner, ITimer timer) : ITimer
+        {
+            private int _disposed;
+            public bool Change(TimeSpan dueTime, TimeSpan period) => timer.Change(dueTime, period);
+            public void Dispose()
+            {
+                if (Interlocked.Exchange(ref _disposed, 1) == 0)
+                { timer.Dispose(); Interlocked.Decrement(ref owner.ActiveTimers); }
+            }
+            public ValueTask DisposeAsync() { Dispose(); return ValueTask.CompletedTask; }
+        }
     }
 
     private static FrameworkElement Control(SettingsView view)
