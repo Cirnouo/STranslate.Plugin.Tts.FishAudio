@@ -849,7 +849,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
             case nameof(SearchResults):
             case nameof(ByIdResults):
             case nameof(FavoriteResults):
-                _previewRefreshCoordinator.OnSearchResultsChanged(retainAcceptedSearchPlayback: e.PropertyName == nameof(SearchResults));
+                _previewRefreshCoordinator.OnVoiceCardsChanged();
                 SyncFavoriteState();
                 SyncPreviewStateToResults();
                 return;
@@ -891,17 +891,11 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
                 SubscribeToVoiceMetadataUpdates();
                 _voiceDiscoveryCoordinator.InvalidateCredentials();
                 _previewRefreshCoordinator.CancelDisplayPreviewOperation();
-                _previewPlayback.Stop();
                 CancelFavoritePageLoad();
                 return;
             case nameof(VoiceId):
                 SyncFavoriteState();
                 _previewRefreshCoordinator.CancelDisplayPreviewOperation();
-                if (_previewPlayback.PreviewingVoiceId is not null
-                    && !string.Equals(_previewPlayback.PreviewingVoiceId, VoiceId, StringComparison.Ordinal))
-                {
-                    _previewPlayback.Stop();
-                }
                 updateSettings = settings => settings.VoiceId = VoiceId;
                 break;
             case nameof(SelectedModel): updateSettings = settings => settings.SelectedModel = SelectedModel; break;

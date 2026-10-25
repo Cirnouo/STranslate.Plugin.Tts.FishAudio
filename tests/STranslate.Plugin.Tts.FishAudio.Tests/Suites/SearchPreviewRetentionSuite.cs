@@ -22,7 +22,7 @@ internal static class SearchPreviewRetentionSuite
         await StaTestHost.RunOnStaThreadAsync(AcceptanceReentrancyKeepsTheCorrectOwnerAsync);
         await StaTestHost.RunOnStaThreadAsync(AcceptedPublicationCannotRetireItsSuccessorAsync);
         await StaTestHost.RunOnStaThreadAsync(ExplicitReplacementAndRetirementAsync);
-        await StaTestHost.RunOnStaThreadAsync(OtherOriginRemovalStillStopsAsync);
+        await StaTestHost.RunOnStaThreadAsync(OtherOriginRemovalRetainsAcceptedAudioAsync);
     }
 
     // Stopping on successful discovery publication, or restarting to project state,
@@ -205,7 +205,12 @@ internal static class SearchPreviewRetentionSuite
             var buffer = scenario.Player.LastOpenedStream!;
             scenario.View.SearchResults = [];
             AssertRetained(scenario, buffer);
-            if (retirement == "credentials") scenario.View.ApiKey = "replacement-key";
+            if (retirement == "credentials")
+            {
+                scenario.View.ApiKey = "replacement-key";
+                AssertRetained(scenario, buffer);
+                scenario.View.Dispose();
+            }
             else if (retirement == "dispose") scenario.View.Dispose();
             else
             {
@@ -256,13 +261,13 @@ internal static class SearchPreviewRetentionSuite
             };
             await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
             if (successor is not null) await successor;
-            AssertEqual(retirement == "replacement" ? OtherId : null, scenario.View.PreviewingVoiceId,
+            AssertEqual(retirement == "replacement" ? OtherId : retirement == "credentials" ? Id : null, scenario.View.PreviewingVoiceId,
                 "An obsolete acceptance continuation cannot Stop its accepted successor");
-            AssertEqual(1, scenario.Player.DisposeCallCount, "Reentrant retirement releases only the retired player");
-            AssertEqual(false, scenario.Player.LastOpenedStream!.CanRead, "Reentrant retirement releases the retired buffer");
+            AssertEqual(retirement == "credentials" ? 0 : 1, scenario.Player.DisposeCallCount, "Only playback retirement releases the old player");
+            AssertEqual(retirement == "credentials", scenario.Player.LastOpenedStream!.CanRead, "Credential edits preserve accepted local bytes");
             var controller = Playback(scenario.View);
             var timer = typeof(PreviewPlaybackController).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(controller);
-            AssertEqual(retirement == "replacement", timer is not null, "A retired acceptance callback cannot install a timer");
+            AssertEqual(retirement is "replacement" or "credentials", timer is not null, "Only the current accepted owner can install a timer");
             if (retirement == "replacement")
             {
                 scenario.Player.RaiseEnded();
@@ -275,7 +280,7 @@ internal static class SearchPreviewRetentionSuite
         }
     }
 
-    private static async Task OtherOriginRemovalStillStopsAsync()
+    private static async Task OtherOriginRemovalRetainsAcceptedAudioAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var favorite in new[] { false, true })
@@ -296,9 +301,12 @@ internal static class SearchPreviewRetentionSuite
             AssertEqual(Id, vm.PreviewingVoiceId, "The actual nonsearch originating card starts playback");
             if (favorite) vm.ToggleFavoriteCommand.Execute(origin);
             else vm.VoiceIdInput = OtherId;
-            AssertEqual(null, vm.PreviewingVoiceId, "Explicit Favorite/By-ID removal retains its accepted playback stop contract");
-            AssertEqual(1, player.DisposeCallCount, "Nonsearch removal releases the player despite a surviving same-ID search card");
-            AssertEqual(false, player.LastOpenedStream!.CanRead, "Nonsearch removal releases accepted bytes");
+            AssertEqual(Id, vm.PreviewingVoiceId, "Favorite/By-ID removal preserves accepted playback");
+            AssertEqual(0, player.StopCallCount, "Nonsearch removal leaves accepted output running");
+            AssertEqual(0, player.DisposeCallCount, "Nonsearch removal retains the player with a surviving same-ID search card");
+            AssertEqual(true, player.LastOpenedStream!.CanRead, "Nonsearch removal retains accepted bytes");
+            AssertEqual(false, origin.IsPreviewActive, "Removed nonsearch objects release their active state");
+            AssertEqual(true, vm.SearchResults.Single().IsBeingPreviewed, "Surviving matching cards show active playback");
             AssertEqual(1, http.GetAsStreamCallCount, "Nonsearch removal never downloads replacement audio");
         }
     }

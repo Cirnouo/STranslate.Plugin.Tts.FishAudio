@@ -45,7 +45,9 @@ public sealed class TestPreviewAudioPlayer : IPreviewAudioPlayer
     public event EventHandler? Ended;
     public event Action<Exception?>? Failed;
 
-    public TimeSpan? Duration { get; set; }
+    private TimeSpan? _duration;
+    public bool ThrowOnDuration { get; set; }
+    public TimeSpan? Duration { get => ThrowOnDuration ? throw new IOException("Fake progress failure") : _duration; set => _duration = value; }
     public TimeSpan Position { get; set; }
     public double Volume { get; set; }
     public Stream? LastOpenedStream { get; private set; }

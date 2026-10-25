@@ -61,7 +61,7 @@ Likes are saved on this computer, survive restart and do not synchronize with yo
 
 In Search and Likes, use `‹` / `›` to change pages. The page field accepts digits only and immediately clamps values above the current accessible maximum. Enter a different page and leave the field to navigate, or press Enter; an unchanged page does not reload. Search totals may be approximate (`≈`), unknown (`?`) or limited (`≤`), so some pages may be unavailable. Search with a more specific name if you cannot go further. The count-row arrow hides/shows the list without losing your place; finish page edits before collapsing.
 
-Once a search sample is playing, searching again, applying search options (even unchanged) or changing search pages keeps it playing, including when a query fails or is canceled. A matching card found again shows current progress and can Stop. Playback ends with the sample, Stop, another preview, a selected-voice or Key change, or closing the plugin. Replacing the source card while its sample is still loading cancels that pending preview; replacing a By-ID card or removing the originating liked card still stops its preview.
+Once a sample is playing from any card, Apply/Clear, Like/Unlike, queries, paging, panel changes and Key edits keep it playing. A matching card that appears again shows current progress and can Stop, even if sample information is temporarily missing. Playback ends with the sample, manual Stop, another preview, a playback failure or closing the plugin. While a sample is still loading, changing selection or the Key, or removing its source card, cancels that loading operation; click Preview again when needed.
 
 ## 3. Models and costs
 
@@ -153,7 +153,7 @@ There is no separate proxy switch or address field in the plugin. If Fish Audio 
 | Symptom | Next action |
 |---|---|
 | Search fails after entering a Key | Copy a valid key from the official page without extra whitespace/newlines, or clear the key to browse public voices. Synthesis and credits still require a valid key. |
-| Changing the Key stops a lookup or preview | Old work is canceled, but displayed voices, selection and liked voices stay. Later queries use the new key. Start another lookup or preview when needed. |
+| Changing the Key stops a lookup or loading | Old queries and previews still loading are canceled; an already playing sample continues. Existing voices, selection and likes stay. Later queries use the new key; start a new lookup or preview when needed. |
 | Key editing is temporarily locked | Wait for the current speech or credit request to finish. |
 | Credits unavailable | Check the key, account permissions and host connection, then refresh. |
 | Search works, speech fails | Check [both connections](#network-and-proxy), then model availability and account permissions. |

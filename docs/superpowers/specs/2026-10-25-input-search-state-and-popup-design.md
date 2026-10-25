@@ -1,8 +1,8 @@
 # Input actions, applied search intent and popup material
 
-Status: source Tasks 0–3 are implemented and unmerged. Tasks 0–2 have scoped review acceptance; Task 3 scoped review and the final integrated full check, current package, native appearance and actual head/main CI gates remain pending. These additions are not shipped.
+Status: source Tasks 0–4 are implemented and unmerged. Tasks 0–3 have scoped source review acceptance; Task 4 scoped review, planned Tasks 5–6 and final integrated full check/current package/native appearance/actual head-main CI remain pending. The Task 3 Search hidden-Space keyboard failure remains an open mandatory final Search/full-run gate despite isolated title passes. These additions are not shipped.
 
-This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains blocked by the cursor fixture's finite late composite action. Preserve that failure and every successful description assertion. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
+This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains open. Preserve the cursor fixture's finite late composite failure, every successful description assertion and the later unexplained Search keyboard failure until final intended-source validation closes their integration boundaries. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
 
 ## Required behavior
 
@@ -15,6 +15,18 @@ Search has three lifetimes. Applied language/sort intent is an immutable session
 Both owned popup shells request the host's Mica family through the existing public toolkit/native source path. Accept successful frame/readback type2, reject Acrylic3 and retain explicit native opaque fallback. Preserve the22621 floor, precreation nonlayered choice, transparent composition, theme/corners/failure/source ownership. Native material request/readback and composed appearance are different claims. No host HWND, new Window/dependency/controller, activation spoof or foreground escalation.
 
 A conditional native-heading identity addition requires a bounded compiled-owned-Popup experiment and real background MCP discoverability benefit before retention. Use only the existing localized heading, no visible caption style, source-specific prior-text ownership/compare-before-restore and independent optional failures. If the ordinary MCP list still omits it, drop unused identity code and retain the actual capture limit.
+
+## Accepted preview continuity — Task 4 implemented, unmerged
+
+Successful local Play return transfers accepted player/buffer/timer lifetime to the existing controller. Every voice-management, browsing and ordinary settings action, including accepted API Key edit/clear, leaves that output running. Exact pending originating-reference/generation/CTS/selected-ID/credential authority still retires on the relevant edits/removal, including local Open/Play; old work cannot publish, save, re-add bookmarks or restart output. Accepted local bytes do not authorize future requests, cache reuse or cross-key metadata publication. Current matching cards retain actual progress and Stop authority without sample/key metadata; removed objects become idle and cannot execute. Natural end, genuine output/progress failure, manual Stop, new preview intent and real owner teardown remain terminal. Reentrant collection/settings/key publication and cancellation callbacks cannot retire a successor or install a stale timer. Formal TTS retains its current independent lifetime.
+
+## Pending popup direction — Task 5
+
+The next geometry change must first establish the reported failure from full natural content measurement, usable viewport/work-area bounds, DPI and direction candidates. Choose above when full content fits only there, the greater usable height when neither side fits, and the existing below preference when both fit. Preserve both popup shells, anchors, RTL, native input, source lifetime and all old geometry assertions. This is a requirement awaiting implementation and verification.
+
+## Pending liked-voice presentation order — Task 6
+
+Show newest liked first by reversing the existing durable append/first-seen ID sequence before pagination. Keep the file format/order compatibility, limits, shared storage gates and idempotent intent. Do not add timestamps, rewrite legacy files or force page one. Unlike/re-like should move the voice first through the ordinary durable append and projection. Keep selection, clamping and accepted preview independent. This is a requirement awaiting implementation and verification.
 
 ## Boundaries and verification
 

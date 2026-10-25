@@ -103,6 +103,13 @@ if (args.Contains("--search-preview-retention-tests"))
     return;
 }
 
+if (args.Contains("--accepted-preview-continuity-tests"))
+{
+    await AcceptedPreviewContinuitySuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--accepted-preview-continuity-tests") + 1));
+    Console.WriteLine("Accepted preview continuity regressions passed.");
+    return;
+}
+
 if (args.Contains("--preview-ownership-compatibility-tests"))
 {
     await PreviewSuite.PreviewPublishesPreparationBeforeFirstAwaitAsync();
@@ -693,4 +700,5 @@ await ControlCursorSuite.RunAsync();
 await VoiceLikeSuite.RunAllAsync();
 await AvatarPreviewSuite.RunAllAsync();
 await SearchPreviewRetentionSuite.RunAllAsync();
+await AcceptedPreviewContinuitySuite.RunAllAsync();
 Console.WriteLine("Fish Audio plugin regression tests passed.");

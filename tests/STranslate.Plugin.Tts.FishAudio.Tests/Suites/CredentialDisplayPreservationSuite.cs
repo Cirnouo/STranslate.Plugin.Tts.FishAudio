@@ -384,6 +384,9 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual(1, player.PlayCallCount, "Explicit preview may start through the preserved entry");
         AssertEqual(true, http.LastGetStreamOptions?.Headers is null || !http.LastGetStreamOptions.Headers.ContainsKey("Authorization"), "Retained resource downloads must remain unauthenticated");
         view.ApiKey = "preview-bx";
+        AssertEqual(Id, view.PreviewingVoiceId, "A later accepted key edit preserves already accepted local playback");
+        await view.ToggleSearchItemPreviewCommand.ExecuteAsync(card);
+        AssertEqual<string?>(null, view.PreviewingVoiceId, "Explicit same-ID command still Stops accepted playback");
         http.GetResponseJson = "{\"_id\":\"" + Id + "\",\"title\":\"Fresh B\",\"samples\":[{\"audio\":\"https://platform.r2.fish.audio/fresh.mp3\"}]}";
         await view.ToggleSearchItemPreviewCommand.ExecuteAsync(card);
         AssertEqual("Bearer preview-bx", AssertHeaders(http.LastGetOptions, "Explicit expired preview refresh")["Authorization"], "Later preview detail requests use the newly accepted key");

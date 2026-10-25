@@ -2,7 +2,7 @@
 
 > Execute with subagent-driven-development, one source/WPF/build owner at a time. User-selected subagents are gpt-6.1-sol; review/decision effort is xhigh.
 
-**Status:** source Tasks 0–3 are implemented on the existing isolated managed worktree and remain unmerged. Tasks 0–2 have scoped review acceptance; Task 3 scoped review is pending. Final integrated release/clean/test, current package inspection, actual head/main CI and installed-host native acceptance remain pending. The preceding cursor whole-run/package condition is carried into that final gate.
+**Status:** source Tasks 0–4 are implemented on the existing isolated managed worktree and remain unmerged. Tasks 0–3 have scoped source review acceptance; Task 4 scoped review is pending. Tasks 5–6 below remain planned. Final integrated release/clean/test, current package inspection, actual head/main CI and installed-host native acceptance remain pending. The preceding cursor whole-run/package condition and Task 3 Search hidden-Space keyboard failure remain mandatory final validation gates; isolated title passes do not close that failed integrated check.
 
 **Spec:** [input/search/popup design](../specs/2026-10-25-input-search-state-and-popup-design.md).
 
@@ -35,6 +35,18 @@ Use the completed primary-source research, minimal Mica2 request/readback correc
 ### Like presentation verification ownership
 
 Retain the reviewed complete Like cycle within each selected/browse owner, but dispatch the three independently repeatable rendered modes separately before the next full gate. Seven locales × two themes × two widths × Search/By-ID/Favorites gives 84 ordinary five-second matrix actions plus three unchanged helpers: 87/435, replacing 31/155 (56 additional fresh fixtures and 280 seconds of allowance). Each fresh equivalent VM/view/store preserves original ID/object aliases, initial `[other, id]` bytes, contour/no-migration checks and the entire Unlike → Like/geometry/focus/hit/accent/labels/selection/popularity/file-order sequence. Keep final store-reopen and active/inactive tab assertions after Favorites, yielding six/six/eight explicit layout rounds per Search/By-ID/Favorites owner. Preserve mode order, the same-view seven-live-dictionary helper, first-use/default/startup/cleanup and all Avatar/retention/accepted fake owners. This prevents independent rendered workflows from sharing one envelope prospectively; no Like timeout or speculative performance cause is asserted. Use the existing focused Like selector once on final Release sources; no new runner registration, observer, warmup or default increase.
+
+### Task 4: Keep accepted preview independent of voice management
+
+Implemented, unmerged; scoped review pending. Move accepted player/buffer/timer lifetime to the existing controller after successful local Play return. Apply/Clear of any voice, Like/Unlike, Search/By-ID/Favorite queries, pages, reloads, card metadata, tabs/folds and accepted API Key edits preserve local audio. Preserve exact pending origin/generation/CTS/current-selected-ID and credential cancellation; accepted bytes authorize neither a future request nor reusable caching. Removed card objects become idle and cannot execute; current matching IDs show actual progress and can Stop without sample metadata or a key. Keep explicit Stop/new preview replacement, natural end, genuine output/progress failure, reentrant successor guards and actual teardown. No formal-TTS arbitration is added. Causal fake-output RED precedes the owner change; seventeen new independent five-second STA actions plus the existing seven allow 120 seconds cumulatively, with original startup/default/observation/first-use rules unchanged. Run focused retention, preparation/download, Favorite/By-ID, avatar, credential/ABA and input-clear compatibility in Release with packaging disabled.
+
+### Task 5: Choose the popup direction from full natural content
+
+Planned, not implemented. Reproduce the reported cramped-below popup while usable space exists above. Capture full natural measurement, viewport/work-area intersection, DPI and candidate choice before changing geometry. Prefer a direction that fits full content; when only above fits, choose above; if neither fits, use the greater usable height; if both fit, retain normal below preference. Preserve anchor, RTL, narrow/window-move/DPI/work-area behavior, bounds, scrolling, overlay input and both popup owners. Do not infer the cause from a screenshot or redesign Mica.
+
+### Task 6: Show the newest liked voice first
+
+Planned, not implemented. Keep the ID-only store's durable append/first-seen order and project its reverse before six-card paging. Preserve legacy file compatibility without timestamps, schema changes or storage rewrites. Unlike/re-like appends durably and therefore appears first; repeated already-satisfied Like remains idempotent. Preserve current page/clamping, selection/settings identity, shared-writer persistence and Task 4 accepted-playback continuity. Prove legacy/new additions, restart/reload, page boundaries, failures and concurrent stores through meaningful facade/storage regressions before implementation.
 
 ## Final integration and delivery
 
