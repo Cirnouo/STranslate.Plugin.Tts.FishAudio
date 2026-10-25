@@ -25,7 +25,7 @@ internal static class ControlCursorSuite
     {
         using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
         var view = SettingsLayoutSuite.CreateThemedView(vm); SettingsLayoutSuite.Layout(view);
-        InspectNativePeers(view, stage, lifecycle: true);
+        InspectNativePeers(view, stage, NativePeerWorkflow.Lifecycle);
     }, prefix: "cursor", details: "500 DIP native peers.");
 
     internal static async Task RunAsync()
@@ -41,20 +41,25 @@ internal static class ControlCursorSuite
         foreach (var workflow in new[] { CursorWorkflow.Format, CursorWorkflow.Search, CursorWorkflow.ById, CursorWorkflow.Favorites, CursorWorkflow.General, CursorWorkflow.Overlays })
             await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{workflow}/{width}/{dark}",
                 stage => Inspect(width, dark, workflow, stage), prefix: "cursor", details: "independently owned plugin native interaction workflow.");
-        foreach (var lifecycle in new[] { false, true })
-        foreach (var dark in new[] { false, true })
-            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{(lifecycle ? "lifecycle" : "parts-template")}/{dark}", stage =>
+        foreach (var (dark, workflow) in new[]
+        {
+            (false, NativePeerWorkflow.Parts), (false, NativePeerWorkflow.Template),
+            (true, NativePeerWorkflow.Parts), (true, NativePeerWorkflow.Template),
+            (false, NativePeerWorkflow.Lifecycle), (true, NativePeerWorkflow.Lifecycle),
+        })
+            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{workflow.ToString().ToLowerInvariant()}/{dark}", stage =>
             {
                 using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
                 var view = SettingsLayoutSuite.CreateThemedView(vm);
                 view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
                 ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
                 SettingsLayoutSuite.Layout(view);
-                InspectNativePeers(view, stage, lifecycle);
+                InspectNativePeers(view, stage, workflow);
             }, prefix: "cursor", details: "500 DIP native peers.");
     }
 
     private enum CursorWorkflow { Format, Search, ById, Favorites, General, Overlays }
+    private enum NativePeerWorkflow { Parts, Template, Lifecycle }
 
     private static void Inspect(double width, bool dark, CursorWorkflow workflow, Action<string> stage)
     {
@@ -285,7 +290,7 @@ internal static class ControlCursorSuite
         AvatarPreviewSuite.SetHover(bar, false);
     }
 
-    private static void InspectNativePeers(SettingsView themedView, Action<string> stage, bool lifecycle)
+    private static void InspectNativePeers(SettingsView themedView, Action<string> stage, NativePeerWorkflow workflow)
     {
         stage("peer source construction begin");
         var panel = new StackPanel();
@@ -308,7 +313,7 @@ internal static class ControlCursorSuite
         stage("peer source construction/layout completed");
         var editor = (TextBox)combo.Template.FindName("PART_EditableTextBox", combo);
         SetOfflineInputBrushes(editor);
-        if (!lifecycle)
+        if (workflow == NativePeerWorkflow.Parts)
         {
             AssertEqual(false, Query(passive) == Cursors.Hand, "IsClickEnabled=false native SettingsCard remains passive");
             AssertHand(active, "IsClickEnabled=true native SettingsCard is actionable");
@@ -322,13 +327,23 @@ internal static class ControlCursorSuite
             foreach (var bar in Visuals(popup.Child).OfType<ScrollBar>().Where(control => control.IsVisible)) InspectScrollBar(bar);
             combo.IsDropDownOpen = false;
             foreach (var bar in Visuals(scroll).OfType<ScrollBar>().Where(control => control.IsVisible)) InspectScrollBar(bar);
+            stage("native card/input/dropdown/scrollbar assertions completed; peer source cleanup next");
+            return;
+        }
+        if (workflow == NativePeerWorkflow.Template)
+        {
+            // Replace only after this source has realized and exercised its original native dropdown.
+            combo.IsDropDownOpen = true; SettingsLayoutSuite.Layout(root, 500);
+            var item = (ComboBoxItem)combo.ItemContainerGenerator.ContainerFromIndex(0);
+            AssertHand(item, "Editable combo generates actionable native items");
+            combo.IsDropDownOpen = false;
             var template = combo.Template;
-            stage("native card/input/dropdown/scrollbar completed; template begin");
+            stage("initial native dropdown realized/opened/closed; template begin");
             combo.Template = null; SettingsLayoutSuite.Layout(root, 500); combo.Template = template; SettingsLayoutSuite.Layout(root, 500);
             combo.IsDropDownOpen = true; SettingsLayoutSuite.Layout(root, 500);
             AssertHand((ComboBoxItem)combo.ItemContainerGenerator.ContainerFromIndex(0), "Template replacement reattaches the current native dropdown");
             combo.IsDropDownOpen = false;
-            stage("parts/template assertions completed; peer source cleanup next");
+            stage("template assertions completed; peer source cleanup next");
             return;
         }
         stage("localreload begin");
