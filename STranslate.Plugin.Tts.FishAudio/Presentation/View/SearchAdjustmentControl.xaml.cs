@@ -33,7 +33,7 @@ public partial class SearchAdjustmentControl : UserControl
     {
         InitializeComponent();
         _scrollbarLane = new PopupScrollbarLane(PopupScroll);
-        Material = new PopupMaterial(AdjustmentPopup, PopupSurface);
+        Material = new PopupMaterial(AdjustmentPopup, PopupSurface, headingResourceKey: "STranslate_Plugin_Tts_FishAudio_Search_Adjustments");
         SetResourceReference(UiLocaleProperty, "STranslate_Plugin_Tts_FishAudio_Languages_UiLocale");
         SetResourceReference(AllCaptionProperty, "STranslate_Plugin_Tts_FishAudio_Search_AllLanguages");
         AdjustmentPopup.CustomPopupPlacementCallback = PlacePopup;

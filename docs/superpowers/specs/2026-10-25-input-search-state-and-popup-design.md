@@ -1,6 +1,6 @@
 # Input actions, applied search intent and popup material
 
-Status: authorized implementation design; these additions and the remaining integration gate are not yet shipped.
+Status: source Tasks 0–3 are implemented and unmerged. Tasks 0–2 have scoped review acceptance; Task 3 scoped review and the final integrated full check, current package, native appearance and actual head/main CI gates remain pending. These additions are not shipped.
 
 This follows the native UI polish work. Its production changes have scoped review acceptance, but the full branch gate remains blocked by the cursor fixture's finite late composite action. Preserve that failure and every successful description assertion. This design adds the user's three input clear actions and pending-search menu correction, and retains the separately requested Mica correction.
 

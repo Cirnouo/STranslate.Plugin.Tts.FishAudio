@@ -547,22 +547,28 @@ internal static class SearchAdjustmentControlSuite
         using var ownerSource = Attach(view);
         var control = Control(view);
         Open(control);
-        var surface = Part<Border>(control, "PopupSurface");
-        var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
-        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
-            AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Acrylic compatibility path must create a nonlayered Popup before applying DWM material");
-        var material = ((SearchAdjustmentControl)control).Material;
-        Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleBlur=UNVERIFIED");
-        AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
-        Click(control, "CloseButton");
-        AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+        try
+        {
+            var surface = Part<Border>(control, "PopupSurface");
+            var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
+            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+                AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Mica compatibility path must create a nonlayered Popup before applying DWM material");
+            var material = ((SearchAdjustmentControl)control).Material;
+            Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleMaterial=UNVERIFIED");
+            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) && material.Failure is null && material.Result.FrameHResult >= 0 && material.Result.ReadbackHResult >= 0)
+                AssertEqual(2, material.Result.BackdropType, "The existing toolkit request must read back the host Mica family, never Desktop Acrylic");
+            AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
+            Click(control, "CloseButton");
+            AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+        }
+        finally { Part<Popup>(control, "AdjustmentPopup").IsOpen = false; Drain(); }
     }
 
     private static async Task RunMaterialFallbackAsync()
     {
         foreach (var supported in new[] { false, true })
-        foreach (var result in new[] { new PopupBackdropResult(0, unchecked((int)0x80004005), 3), new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 3) })
+        foreach (var result in new[] { new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(0, 0, 3), new PopupBackdropResult(0, unchecked((int)0x80004005), 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 2) })
             await RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result));
     }
 
@@ -576,22 +582,33 @@ internal static class SearchAdjustmentControlSuite
         var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
         var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
         var material = new PopupMaterial(popup, surface, api);
-        material.Begin(); popup.IsOpen = true; Drain();
-        var first = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
-        AssertEqual(false, material.AttributeAccepted, "Failed HRESULT or a different returned material selects explicit opaque fallback");
-        AssertEqual(true, surface.Background is SolidColorBrush { Color.A: 255 }, "Fallback resolves the host's opaque native flyout brush");
-        AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
-        AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
-        popup.IsOpen = false; Drain();
-        AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
-        var calls = api.Applied.Count;
-        surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
-        AssertEqual(calls, api.Applied.Count, "Retired theme callbacks cannot apply to stale sources");
-        material.Begin(); popup.IsOpen = true; Drain();
-        var second = (HwndSource)PresentationSource.FromVisual(surface);
-        AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
-        popup.IsOpen = false; material.End(); Drain();
+        try
+        {
+            material.Begin(); popup.IsOpen = true; Drain();
+            var first = (HwndSource)PresentationSource.FromVisual(surface);
+            var accepted = supported && result == new PopupBackdropResult(0, 0, 2);
+            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+            AssertEqual(accepted, material.AttributeAccepted, "Only successful frame/readback Mica type 2 enables transparent material; Acrylic type 3 is rejected");
+            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Accepted Mica clears the shell; every fallback stays explicitly opaque");
+            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.Black; Drain();
+            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Live theme replacement preserves the accepted/opaque decision");
+            if (supported) AssertEqual((first.Handle, true), api.Chrome[^1], "Theme updates target only the live popup source with the new dark state");
+            popup.IsOpen = false; Drain();
+            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+            var calls = api.Chrome.Count;
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+            AssertEqual(calls, api.Chrome.Count, "Retired theme callbacks cannot update stale sources");
+            material.Begin(); popup.IsOpen = true; Drain();
+            var second = (HwndSource)PresentationSource.FromVisual(surface);
+            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+            AssertEqual(accepted, material.AttributeAccepted, "Reopen evaluates the new source independently");
+            surface.Resources["FlyoutPresenterBackground"] = Brushes.White; Drain();
+            if (supported) AssertEqual((second.Handle, false), api.Chrome[^1], "Reopened theme changes target the new live source only");
+            AssertEqual(false, api.Chrome.Any(call => call.Handle == ownerSource.Handle), "Native theme updates never target the owner HWND");
+        }
+        finally { popup.IsOpen = false; material.End(); Drain(); }
     }
 
     private sealed class TestPopupBackdropApi : IPopupBackdropApi
@@ -600,7 +617,8 @@ internal static class SearchAdjustmentControlSuite
         internal PopupBackdropResult Result { get; init; }
         internal List<IntPtr> Applied { get; } = [];
         public PopupBackdropResult Apply(IntPtr handle, bool dark) { Applied.Add(handle); return Result; }
-        public void UpdateChrome(IntPtr handle, bool dark) { }
+        internal List<(IntPtr Handle, bool Dark)> Chrome { get; } = [];
+        public void UpdateChrome(IntPtr handle, bool dark) { Chrome.Add((handle, dark)); }
         public void Remove(IntPtr handle) { }
     }
     private static T Part<T>(FrameworkElement control, string name) where T : class => (T)control.FindName(name);
@@ -640,10 +658,16 @@ internal static class SearchAdjustmentControlSuite
         var tile = Tiles(control).Single(item => (string)item.Tag == "en");
         foreach (var key in new[] { Key.Enter, Key.Space })
         {
+            var phases = new List<string>();
+            string State() => $"checked={tile.IsChecked}; focused={tile.IsKeyboardFocused}; pressed={tile.IsPressed}; captured={tile.IsMouseCaptured}";
+            phases.Add($"{key}/before-focus: {State()}");
             tile.Focus();
+            phases.Add($"{key}/after-focus: {State()}");
             var previous = tile.IsChecked;
-            LocalKey(tile, key); Drain();
-            AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior");
+            LocalKey(tile, key, phase => phases.Add($"{key}/{phase}: {State()}")); Drain();
+            phases.Add($"{key}/after-drain: {State()}");
+            try { AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior"); }
+            catch { foreach (var phase in phases) Console.WriteLine($"[search-keyboard] {phase}"); throw; }
             AssertEqual(true, IsOpen(control), "Tile keyboard activation preserves the popup");
             AssertEqual(0, http.GetCallCount, "Tile keyboard activation cannot invoke Apply");
         }
@@ -660,7 +684,7 @@ internal static class SearchAdjustmentControlSuite
 
     // This hidden HWND cannot acquire OS keyboard focus. Exercise native class
     // handlers with an explicit focus-state fixture; physical Tab is host acceptance.
-    private static void LocalKey(FrameworkElement target, Key key)
+    private static void LocalKey(FrameworkElement target, Key key, Action<string>? observe = null)
     {
         var focusKey = (DependencyPropertyKey)typeof(UIElement).GetField("IsKeyboardFocusedPropertyKey", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
         var previous = target.IsKeyboardFocused;
@@ -678,6 +702,7 @@ internal static class SearchAdjustmentControlSuite
                     var args = new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(target)!, Environment.TickCount, key)
                     { RoutedEvent = routed, Source = target };
                     target.RaiseEvent(args);
+                    observe?.Invoke($"{routed.Name}/handled={args.Handled}");
                 }
             }
         }

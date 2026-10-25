@@ -12,6 +12,13 @@ if (args.Contains("--native-key-state-tests"))
     return;
 }
 
+if (args.Contains("--popup-heading-tests"))
+{
+    await PopupHeadingSuite.RunAsync();
+    Console.WriteLine("Popup native-heading regressions passed.");
+    return;
+}
+
 if (args.Contains("--input-clear-compatibility-tests"))
 {
     await ApiKeySettingsCardSuite.RunAllAsync();
@@ -679,6 +686,7 @@ await SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetry
 await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync();
 await SearchAdjustmentControlSuite.RunAllAsync();
 await NativeKeyboardStateSuite.RunAsync();
+await PopupHeadingSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceDescriptionSuite.RunAsync();
 await ControlCursorSuite.RunAsync();

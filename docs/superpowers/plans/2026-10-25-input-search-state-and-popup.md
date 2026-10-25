@@ -2,7 +2,7 @@
 
 > Execute with subagent-driven-development, one source/WPF/build owner at a time. User-selected subagents are gpt-6.1-sol; review/decision effort is xhigh.
 
-**Status:** planned implementation on the existing isolated managed worktree. The preceding UI-polish source is accepted, but its final whole-run/package condition remains blocked and is carried below.
+**Status:** source Tasks 0–3 are implemented on the existing isolated managed worktree and remain unmerged. Tasks 0–2 have scoped review acceptance; Task 3 scoped review is pending. Final integrated release/clean/test, current package inspection, actual head/main CI and installed-host native acceptance remain pending. The preceding cursor whole-run/package condition is carried into that final gate.
 
 **Spec:** [input/search/popup design](../specs/2026-10-25-input-search-state-and-popup-design.md).
 
