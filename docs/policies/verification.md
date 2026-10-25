@@ -2,6 +2,16 @@
 
 Choose verification that exercises the changed contract. The repository uses an executable regression runner, not a test-discovery framework: new regression scenarios must be invoked by its Program entry point. Keep normal tests deterministic and offline; do not make a credential or provider availability a prerequisite for CI.
 
+## Incremental verification and failure recovery
+
+After a failure, diagnose and fix the failing contract, then rerun only checks that can be affected by the final change. Before execution, record the changed code or fixture, its callers and shared dependencies, the selected runner entries, prior results that remain applicable, and coverage that has not run. Include adjacent compatibility and lifecycle checks when the dependency trace requires them. Changes to shared dispatch, theme, layout, storage, cancellation or test infrastructure can affect several suites; justify that scope from the dependency, rather than selecting either one assertion or the entire runner by habit.
+
+Preserve successful results for unchanged contracts and dependencies, together with their source/tree identity, configuration, invocation and raw outcome. Reassess applicability after each edit. A documentation-only correction does not invalidate unrelated native matrices. Build changed code and run the selected entries from the resulting fresh outputs; a build needed for compilation or packaging does not itself require executing the whole runner. Reuse existing selectors where possible. A new focused selector must call the original scenario with its assertions, ownership, cleanup and deadlines intact and must not remove it from normal registration.
+
+Keep a failed whole command recorded as failed. A passing focused rerun establishes only its stated scope; it neither converts that earlier command into a pass nor covers scenarios that never ran. Track affected reruns, reusable prior coverage and outstanding coverage separately. Preserve evidence before cleanup, and inspect a distributable built from the final intended sources independently of whether regressions were selected or combined.
+
+Do not automatically restart the full local test command after an individual failure, a focused fix or a bookkeeping change. Use one bounded investigation of the unresolved failure and expand verification only for a concrete dependency or remaining coverage risk. When scoped local recovery is requested, keep local reruns scoped and explain any need for a broader run before executing it. Existing mandatory CI checks remain governed by repository governance; report their actual scope separately and do not silently weaken or bypass them. A final report must distinguish a full passing CI run from the collection of scoped local results.
+
 ## Test ownership and budget preflight
 
 Before designing or modifying a test, trace its entire dispatched callback through called helpers, nested callbacks and loops. Enumerate construction, binding/layout, input, transitions, assertions and cleanup; the shared regression execution deadline covers that complete callback, not each operation or the top-level helper name. Count every repeated case and native action before choosing its grouping and budget.
