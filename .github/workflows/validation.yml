@@ -88,7 +88,7 @@ jobs:
       package-artifact: ${{ steps.package-artifact.outputs.name }}
     needs: [supply-chain-security, commit-messages]
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout exact validation commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
