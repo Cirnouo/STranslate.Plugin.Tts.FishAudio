@@ -429,7 +429,7 @@ internal static class SettingsInputInteractionSuite
             vm.VoiceIdInput = "0123456789abcdef";
             vm.BrowseMode = VoiceBrowseMode.Search;
             Layout(view, width);
-            AssertEqual(new Thickness(10, 5, 40, 6), search.Padding, "Search retains native text insets and reserves its embedded adjustment action");
+            AssertEqual(new Thickness(10, 5, 68, 6), search.Padding, "Search retains native text insets and reserves its embedded Clear and Adjust actions");
             AssertEqual(VerticalAlignment.Top, search.VerticalContentAlignment, "Search vertical placement must remain unchanged");
             AssertEqual(14d, search.FontSize, "Search must keep native text metrics");
             var searchCaret = search.GetRectFromCharacterIndex(0);
@@ -440,7 +440,7 @@ internal static class SettingsInputInteractionSuite
             Layout(view, width);
             AssertEqual(search.Padding.Top, byId.Padding.Top, "Only By ID must adopt the existing Search top padding");
             AssertEqual(search.Padding.Bottom, byId.Padding.Bottom, "Only By ID must adopt the existing Search bottom padding");
-            AssertEqual(40d, byId.Padding.Right, "By ID must retain its reserved Paste region");
+            AssertEqual(68d, byId.Padding.Right, "By ID must reserve its embedded Clear and Paste actions");
             AssertEqual(search.FontFamily, byId.FontFamily, "Both query inputs must use the existing native font");
             AssertEqual(search.FontSize, byId.FontSize, "Both query inputs must use the existing native font size");
             var idCaret = byId.GetRectFromCharacterIndex(0);
