@@ -65,10 +65,10 @@ internal static class PopupViewport
         // A zero measure constraint preserves visibility/keyboard focus while
         // excluding the body. Never collapse a focused, already open body.
         body.MaxHeight = 0;
-        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
+        MeasureSurface(surface, body);
         var chromeHeight = surface.DesiredSize.Height;
         body.MaxHeight = maximumBodyHeight;
-        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
+        MeasureSurface(surface, body);
         var naturalHeight = surface.DesiredSize.Height * dpi.DpiScaleY;
         var top = anchor.PointToScreen(new Point()).Y;
         var bottom = anchor.PointToScreen(new Point(0, anchor.ActualHeight)).Y;
@@ -81,6 +81,19 @@ internal static class PopupViewport
         surface.MaxHeight = Math.Min(bounds.Height, available) / dpi.DpiScaleY;
         body.MaxHeight = Math.Min(maximumBodyHeight, surface.MaxHeight - chromeHeight);
         return true;
+    }
+
+    private static void MeasureSurface(Border surface, ScrollViewer body)
+    {
+        // Changing MaxHeight invalidates the body, but ancestor invalidation is
+        // deferred. Refresh its complete owning path before each same-constraint
+        // synchronous Measure so neither chrome nor natural size can be reused.
+        for (DependencyObject? current = body; current is UIElement element; current = VisualTreeHelper.GetParent(current))
+        {
+            element.InvalidateMeasure();
+            if (ReferenceEquals(current, surface)) break;
+        }
+        surface.Measure(new Size(surface.Width, double.PositiveInfinity));
     }
 
     internal static CustomPopupPlacement[] Place(FrameworkElement anchor, FrameworkElement? owner,

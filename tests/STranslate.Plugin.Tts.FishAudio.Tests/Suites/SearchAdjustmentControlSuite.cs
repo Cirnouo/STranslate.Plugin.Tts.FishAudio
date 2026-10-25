@@ -25,6 +25,11 @@ internal static class SearchAdjustmentControlSuite
 {
     internal static async Task RunAllAsync(string? group = null, string? proofDirectory = null)
     {
+        if (group is "geometry")
+        {
+            await RunGeometryAsync(proofDirectory);
+            return;
+        }
         if (group is "intent")
         {
             await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
@@ -78,6 +83,11 @@ internal static class SearchAdjustmentControlSuite
         await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
         await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
         await RunMaterialFallbackAsync();
+        await RunGeometryAsync(proofDirectory);
+    }
+
+    private static async Task RunGeometryAsync(string? proofDirectory)
+    {
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })

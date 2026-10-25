@@ -12,6 +12,12 @@ if (args.Contains("--native-key-state-tests"))
     return;
 }
 
+if (args.Contains("--popup-direction-tests"))
+{
+    await PopupDirectionSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--popup-direction-tests") + 1));
+    return;
+}
+
 if (args.Contains("--popup-heading-tests"))
 {
     await PopupHeadingSuite.RunAsync();
@@ -694,6 +700,7 @@ await SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAnd
 await SearchAdjustmentControlSuite.RunAllAsync();
 await NativeKeyboardStateSuite.RunAsync();
 await PopupHeadingSuite.RunAsync();
+await PopupDirectionSuite.RunAsync();
 await VoiceCardLayoutSuite.RunAllAsync();
 await VoiceDescriptionSuite.RunAsync();
 await ControlCursorSuite.RunAsync();
