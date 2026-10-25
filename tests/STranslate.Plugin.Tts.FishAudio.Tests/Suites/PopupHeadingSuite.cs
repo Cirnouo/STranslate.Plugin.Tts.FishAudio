@@ -20,7 +20,8 @@ internal static class PopupHeadingSuite
         LeaseOwnershipAndFailures();
         await RunOnStaThreadAsync(CompiledSearchHeading);
         await RunOnStaThreadAsync(CompiledLanguageHeading);
-        await RunOnStaThreadAsync(HeadingFailureDoesNotAffectMaterialOrInput);
+        foreach (var stage in new[] { "read", "write", "update" })
+            await RunOnStaThreadAsync(() => HeadingFailureDoesNotAffectMaterialOrInput(stage));
         await RunOnStaThreadAsync(SourceReplacementAndDestroyedRetirement);
     }
 
@@ -121,34 +122,31 @@ internal static class PopupHeadingSuite
         AssertEqual(true, ReferenceEquals(cleanupFailure, lease.CleanupFailure), "The independent cleanup failure retains its own identity");
     }
 
-    private static void HeadingFailureDoesNotAffectMaterialOrInput()
+    private static void HeadingFailureDoesNotAffectMaterialOrInput(string stage)
     {
-        foreach (var stage in new[] { "read", "write", "update" })
+        var surface = new Border { Width = 140, Height = 100 };
+        surface.Resources["Heading"] = "Existing heading";
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.White;
+        var input = new Button { Content = "Input" }; surface.Child = input;
+        using var owner = Attach(new Border());
+        var popup = new Popup { Child = surface, PlacementTarget = owner.RootVisual as UIElement, StaysOpen = true };
+        var api = new FakeTextApi();
+        var failure = new IOException("Optional heading failure");
+        if (stage == "read") api.ReadFailure = failure;
+        if (stage == "write") api.WriteFailure = failure;
+        var material = new PopupMaterial(popup, surface, new AcceptedBackdropApi(), "Heading", api);
+        var clicks = 0; input.Click += (_, _) => clicks++;
+        try
         {
-            var surface = new Border { Width = 140, Height = 100 };
-            surface.Resources["Heading"] = "Existing heading";
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.White;
-            var input = new Button { Content = "Input" }; surface.Child = input;
-            using var owner = Attach(new Border());
-            var popup = new Popup { Child = surface, PlacementTarget = owner.RootVisual as UIElement, StaysOpen = true };
-            var api = new FakeTextApi();
-            var failure = new IOException("Optional heading failure");
-            if (stage == "read") api.ReadFailure = failure;
-            if (stage == "write") api.WriteFailure = failure;
-            var material = new PopupMaterial(popup, surface, new AcceptedBackdropApi(), "Heading", api);
-            var clicks = 0; input.Click += (_, _) => clicks++;
-            try
-            {
-                material.Begin(); popup.IsOpen = true; Drain();
-                if (stage == "update") { api.WriteFailure = failure; surface.Resources["Heading"] = "Localized heading"; Drain(); }
-                AssertEqual(true, material.AttributeAccepted, "Optional heading failures cannot remove accepted material");
-                AssertEqual<Exception?>(null, material.Failure, "Optional heading failures do not replace the material failure owner");
-                input.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                AssertEqual(1, clicks, "Heading failure leaves popup input usable");
-                AssertEqual(true, popup.IsOpen, "Heading failure cannot close the popup");
-            }
-            finally { popup.IsOpen = false; material.End(); Drain(); }
+            material.Begin(); popup.IsOpen = true; Drain();
+            if (stage == "update") { api.WriteFailure = failure; surface.Resources["Heading"] = "Localized heading"; Drain(); }
+            AssertEqual(true, material.AttributeAccepted, "Optional heading failures cannot remove accepted material");
+            AssertEqual<Exception?>(null, material.Failure, "Optional heading failures do not replace the material failure owner");
+            input.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            AssertEqual(1, clicks, "Heading failure leaves popup input usable");
+            AssertEqual(true, popup.IsOpen, "Heading failure cannot close the popup");
         }
+        finally { popup.IsOpen = false; material.End(); Drain(); }
     }
 
     private static void SourceReplacementAndDestroyedRetirement()
