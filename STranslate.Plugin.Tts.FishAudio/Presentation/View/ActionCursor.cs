@@ -124,7 +124,7 @@ public static class ActionCursor
             Unhook(combo);
             if (!_owner.IsLoaded) return;
             // Native ancestors can reload content without reloading this scope. Only a weak
-            // one-shot Loaded notification remains, bounded to the combos found on scope load.
+            // Loaded notification remains until local return or scope retirement.
             _pendingReloads.Add(new ReloadNotification(this, combo));
         }
 
@@ -144,12 +144,21 @@ public static class ActionCursor
             private void Loaded(object sender, RoutedEventArgs args)
             {
                 if (_disposed) return;
-                Dispose();
-                if (!_scope.TryGetTarget(out var scope)) return;
-                scope._pendingReloads.Remove(this);
-                if (!scope._owner.IsLoaded || !ReferenceEquals(scope._owner.GetValue(ScopeStateProperty), scope)) return;
+                if (!_scope.TryGetTarget(out var scope)) { Dispose(); return; }
+                if (!scope._owner.IsLoaded || !ReferenceEquals(scope._owner.GetValue(ScopeStateProperty), scope))
+                {
+                    Dispose();
+                    scope._pendingReloads.Remove(this);
+                    return;
+                }
                 for (DependencyObject? current = (ComboBox)sender; current is not null; current = Parent(current))
-                    if (ReferenceEquals(current, scope._owner)) { scope.Hook((ComboBox)sender); break; }
+                    if (ReferenceEquals(current, scope._owner))
+                    {
+                        Dispose();
+                        scope._pendingReloads.Remove(this);
+                        scope.Hook((ComboBox)sender);
+                        break;
+                    }
             }
 
             public void Dispose()

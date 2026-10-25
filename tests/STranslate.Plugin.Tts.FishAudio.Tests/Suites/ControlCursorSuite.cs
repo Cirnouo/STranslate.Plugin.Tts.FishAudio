@@ -71,6 +71,18 @@ internal static class ControlCursorSuite
         SettingsLayoutSuite.Layout(view, width);
         stage("plugin source construction/layout completed");
         var saved = ((ContextProxy)(object)context).SaveCount;
+        var initialCombos = Visuals(view).OfType<ComboBox>().ToArray();
+        var initialBitrate = initialCombos.SingleOrDefault(combo => BindingOperations.GetBinding(combo, Selector.SelectedItemProperty)?.Path.Path == nameof(vm.Mp3Bitrate));
+        Console.WriteLine($"[cursor/initial/{width}/{dark}] PCM visibleCombos={initialCombos.Count(combo => combo.IsVisible)} visualCombos={initialCombos.Length}; bitrateInVisualTree={initialBitrate is not null}; bitrateLoaded={initialBitrate?.IsLoaded}; bitrateVisible={initialBitrate?.IsVisible}; scopeEnabled={ActionCursor.GetIsScope(view)}");
+        AssertEqual(3, initialCombos.Count(control => control.IsVisible), "PCM initially hides the fourth Bitrate combo");
+        vm.AudioFormat = "mp3"; SettingsLayoutSuite.Layout(view, width);
+        saved++;
+        var visibleCombos = Visuals(view).OfType<ComboBox>().Where(control => control.IsVisible).ToArray();
+        AssertEqual(4, visibleCombos.Length, "Switching to MP3 realizes all four actual native combo owners");
+        foreach (var combo in visibleCombos)
+            InspectCombo(combo, view, width);
+        AssertEqual(saved, ((ContextProxy)(object)context).SaveCount, "The fresh PCM-to-MP3 transition saves once and its native cursor queries do not save");
+        stage("fresh PCM-to-MP3 native dropdowns completed before any scope comparison/reset");
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
             vm.BrowseMode = mode; SettingsLayoutSuite.Layout(view, width);
@@ -155,14 +167,6 @@ internal static class ControlCursorSuite
         AssertNative((TextBlock)numeric.FindName("UnitText"), "Separate numeric units remain passive");
         numeric.CommitEdit();
         stage("inputs/links/numeric editing completed");
-        AssertEqual(3, Visuals(view).OfType<ComboBox>().Count(control => control.IsVisible), "PCM initially hides the fourth Bitrate combo");
-        vm.AudioFormat = "mp3"; SettingsLayoutSuite.Layout(view, width);
-        saved++;
-        var visibleCombos = Visuals(view).OfType<ComboBox>().Where(control => control.IsVisible).ToArray();
-        AssertEqual(4, visibleCombos.Length, "Switching to MP3 realizes all four actual native combo owners");
-        foreach (var combo in visibleCombos)
-            InspectCombo(combo, view, width);
-        stage("native dropdowns completed");
         InspectPopups(view, vm, width);
         stage("owned adjustment/language popups completed");
         AssertEqual(saved, ((ContextProxy)(object)context).SaveCount, "Cursor queries do not save settings");
@@ -322,6 +326,10 @@ internal static class ControlCursorSuite
         stage("foreign reparent completed; scope removal begin");
         combo.IsDropDownOpen = false;
         root.Children.Remove(combo); panel.Children.Insert(2, combo); SettingsLayoutSuite.Layout(root, 500);
+        combo.IsDropDownOpen = true; SettingsLayoutSuite.Layout(root, 500);
+        AssertHand((ComboBoxItem)combo.ItemContainerGenerator.ContainerFromIndex(0), "Returning an existing combo from a foreign host to its original still-loaded scope restores popup Hand without resetting the scope");
+        combo.IsDropDownOpen = false;
+        stage("foreign-to-original return completed without scope reset");
         ActionCursor.SetIsScope(scope, false); ActionCursor.SetIsScope(scope, true);
         combo.IsDropDownOpen = true; SettingsLayoutSuite.Layout(root, 500);
         ActionCursor.SetIsScope(scope, false);
