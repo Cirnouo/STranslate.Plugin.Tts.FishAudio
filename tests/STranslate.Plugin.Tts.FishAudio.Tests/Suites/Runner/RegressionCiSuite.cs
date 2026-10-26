@@ -7,6 +7,7 @@ internal static class RegressionCiSuite
 {
     internal static async Task RunAsync()
     {
+        EvidenceSnapshotsIgnoreTemporaryReplacementFiles();
         CachedJobViewsRetainTheirActualExecutionOwners();
         UnauthenticatedCachedViewsCannotBorrowOldSuccess();
         AttemptFencesMustDescribeTheCompleteHistory();
@@ -21,6 +22,22 @@ internal static class RegressionCiSuite
         ParentAndChildEvidenceCannotDisagree();
         JobAndArtifactOwnersMustBeUnambiguous();
         await CliRejectsUnknownArgumentsWithoutPrintingPrivateValuesAsync();
+    }
+
+    private static void EvidenceSnapshotsIgnoreTemporaryReplacementFiles()
+    {
+        using var fixture = new CiFixture();
+        fixture.AddAll();
+        // Replacement staging files are not committed evidence. A held file
+        // makes the former enumerate-everything race deterministic offline.
+        using var temporary = new FileStream(Path.Combine(fixture.DirectoryPath, "REPORT.JSON~RF00000000.TMP.tmp"),
+            FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+        var before = fixture.Bytes();
+        Require(before.Count > 0 && before.Keys.All(path => path.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) &&
+            before.ContainsKey(fixture.JobsPath), "Snapshots retain committed JSON evidence rather than temporary replacement files.");
+        fixture.Unchanged(before);
+        using var committed = new FileStream(fixture.JobsPath, FileMode.Open, FileAccess.Read, FileShare.None);
+        Reject(() => fixture.Bytes(), "An unreadable committed evidence file still fails; snapshotting must not swallow arbitrary I/O errors.");
     }
 
     private static void CachedJobViewsRetainTheirActualExecutionOwners()
@@ -473,7 +490,9 @@ internal static class RegressionCiSuite
             foreach (var path in Directory.GetFiles(Path.Combine(directory, "report.json.generations"), "*.json", SearchOption.AllDirectories).Append(Path.Combine(directory, "report.json"))) Change(path, change);
         }
         internal IReadOnlyList<RegressionCiVerifiedPartition> Verify(IReadOnlyList<RegressionCase>? registry = null) => RegressionCiVerifier.Verify(Expected, registry ?? Registry, DirectoryPath, JobsPath);
-        internal Dictionary<string, byte[]> Bytes() => Directory.GetFiles(DirectoryPath, "*", SearchOption.AllDirectories).ToDictionary(path => path, File.ReadAllBytes, StringComparer.OrdinalIgnoreCase);
+        // Temporary replacement files can disappear after enumeration. Only
+        // committed JSON records belong to the verifier's byte-preservation contract.
+        internal Dictionary<string, byte[]> Bytes() => Directory.GetFiles(DirectoryPath, "*.json", SearchOption.AllDirectories).ToDictionary(path => path, File.ReadAllBytes, StringComparer.OrdinalIgnoreCase);
         internal void Unchanged(Dictionary<string, byte[]> original) => Require(original.All(item => File.ReadAllBytes(item.Key).SequenceEqual(item.Value)), "Verification cannot rewrite any failed or successful evidence bytes.");
         public void Dispose() => Directory.Delete(DirectoryPath, recursive: true);
     }
