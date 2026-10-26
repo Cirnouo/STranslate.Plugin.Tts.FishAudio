@@ -8,7 +8,7 @@ The final `./build.ps1 -Release -Clean -Test` passed with zero warnings/errors, 
 
 An earlier full Release attempt failed because a legacy test required a ContentPresenter inside the icon surface. Independent review also found that the first broad raster classifier counted the opaque card background. Neither result is treated as passed final coverage. The corrected test resolves the actual glyph/surface and retains hover/focus/pager checks; raster isolation paints the actual drawing onto transparency at its root position and DPI. A fixed-crop test detects an intentional three-physical-pixel displacement, whereas the broken classifier detected zero.
 
-The corrected [raster suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/VoiceCardInkSuite.cs) covers 100/125/150/200% output scales, Ideal/Display text formatting and the four card locations/states. It keeps exact native contours and continuous centers, relative physical-pixel comparisons with half-pixel quantization, and the strict known 125% Display Cross/star failure. Controlled white ink isolates alignment from color/contrast. These fixtures do not establish every physical theme/device combination.
+The corrected [raster suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/Cards/VoiceCardInkSuite.cs) covers 100/125/150/200% output scales, Ideal/Display text formatting and the four card locations/states. It keeps exact native contours and continuous centers, relative physical-pixel comparisons with half-pixel quantization, and the strict known 125% Display Cross/star failure. Controlled white ink isolates alignment from color/contrast. These fixtures do not establish every physical theme/device combination.
 
 ## Installed-host observations
 
