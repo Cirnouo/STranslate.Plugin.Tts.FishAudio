@@ -267,6 +267,8 @@ internal sealed class RegressionProcessHost : IDisposable
         }
     }
 
+    internal Task ProgressCompletion => _progress?.Completion ?? Task.CompletedTask;
+
     public void Dispose() => _progress?.Dispose();
 
     private static RegressionChildManifest MergeManifest(RegressionChildRequest request, RegressionCaseResult[] targets, bool requireFinal,
@@ -467,9 +469,11 @@ internal sealed class RegressionProcessHost : IDisposable
     {
         private readonly Channel<string> _messages = Channel.CreateBounded<string>(new BoundedChannelOptions(64) { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true });
         private int _retired;
+        private readonly Task _completion;
+        internal Task Completion => _completion;
         internal ProgressReporter(TextWriter writer)
         {
-            _ = Task.Run(async () =>
+            _completion = Task.Run(async () =>
             {
                 await foreach (var message in _messages.Reader.ReadAllAsync())
                 {

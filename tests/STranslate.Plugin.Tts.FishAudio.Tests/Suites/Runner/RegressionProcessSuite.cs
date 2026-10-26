@@ -25,6 +25,7 @@ internal static class RegressionProcessSuite
         await FakeTransportRejectsUnconfirmedPassesAsync();
         await ExitCannotSkipCompletionFramesQueuedByTheFinalDrainAsync();
         await PipeCleanupCannotReplaceADurableCaseFailureAsync();
+        await ProgressCleanupJoinsAnUnstartedConsumerAfterFailureAsync();
         await BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync();
         await ListingNeverStartsAProcessAsync();
         await RealChildrenDrainBothPipesAndRequireFinalEvidenceAsync();
@@ -477,33 +478,35 @@ internal static class RegressionProcessSuite
 
     private static async Task ConcurrentImmutableSnapshotsNeverCompeteWithTheWriterAsync()
     {
-        using var fixture = new ProcessFixture();
-        var request = Request(["runner.probe/concurrent-snapshots"]);
-        request.ManifestPath = fixture.Path + ".child.json";
+        ProcessFixture fixture = null!;
+        RegressionChildRequest request = null!;
         var published = 1;
         var stopped = 0;
-        RegressionProcessProtocol.Write(RegressionProcessProtocol.SnapshotPath(request, 1), PassedManifest(request));
-        var read = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var reader = Task.Run(() =>
+        await RegressionFixtureOwner.RunReaderAsync(observed =>
         {
-            while (Volatile.Read(ref stopped) == 0)
+            fixture = new ProcessFixture();
+            request = Request(["runner.probe/concurrent-snapshots"]);
+            request.ManifestPath = fixture.Path + ".child.json";
+            RegressionProcessProtocol.Write(RegressionProcessProtocol.SnapshotPath(request, 1), PassedManifest(request));
+            return Task.Run(() =>
             {
-                var snapshot = RegressionProcessProtocol.Read<RegressionChildManifest>(RegressionProcessProtocol.SnapshotPath(request, Volatile.Read(ref published)));
-                RegressionProcessProtocol.ValidateManifest(snapshot, request);
-                read.TrySetResult();
-            }
-        });
-        try
+                while (Volatile.Read(ref stopped) == 0)
+                {
+                    var snapshot = RegressionProcessProtocol.Read<RegressionChildManifest>(RegressionProcessProtocol.SnapshotPath(request, Volatile.Read(ref published)));
+                    RegressionProcessProtocol.ValidateManifest(snapshot, request);
+                    observed();
+                }
+            });
+        }, () =>
         {
-            await read.Task.WaitAsync(TimeSpan.FromSeconds(5));
             for (var index = 2; index <= 64; index++)
             {
                 RegressionProcessProtocol.Write(RegressionProcessProtocol.SnapshotPath(request, index), PassedManifest(request));
                 Volatile.Write(ref published, index);
             }
-        }
-        finally { Volatile.Write(ref stopped, 1); await reader.WaitAsync(TimeSpan.FromSeconds(5)); }
-        AssertEqual(64, published, "Concurrent completion snapshots remain readable without sharing races or write retries");
+        }, () => Volatile.Write(ref stopped, 1),
+            () => AssertEqual(64, published, "Concurrent completion snapshots remain readable without sharing races or write retries"),
+            () => { fixture?.Dispose(); return Task.CompletedTask; });
     }
 
     private static async Task ListingNeverStartsAProcessAsync()
@@ -708,30 +711,81 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static async Task BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync()
+    private static async Task ProgressCleanupJoinsAnUnstartedConsumerAfterFailureAsync()
     {
-        using var fixture = new ProcessFixture();
-        using var writer = new BlockingWriter();
-        RegressionCase[] cases = [new("runner.probe/progress-first", "core", () => Task.CompletedTask), new("runner.probe/progress-second", "core", () => Task.CompletedTask)];
-        var report = fixture.Report(cases);
-        using var host = new RegressionProcessHost(info =>
-        {
-            var request = RegressionProcessProtocol.Read<RegressionChildRequest>(info.ArgumentList[^1]);
-            var manifest = PassedManifest(request);
-            RegressionProcessProtocol.Write(request.ManifestPath, manifest);
-            return FakeChild.ForManifest(request, manifest);
-        }, progressOutput: writer);
+        var primary = new IOException("private-before-progress-publication");
+        BlockingWriter? writer = null;
+        RegressionProcessHost? host = null;
+        var disposed = false;
+        Exception? actual = null;
         try
         {
-            await host.ExecuteAsync(cases, report, fixture.Path).WaitAsync(TimeSpan.FromSeconds(5));
-            await writer.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            AssertEqual(true, report.Cases.All(item => item.Outcome == "passed"), "A blocked parent output writer cannot block pipe drains, exit validation or supervision");
-            host.Dispose();
-            writer.Release.TrySetResult();
-            await writer.Exited.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            AssertEqual(1, writer.Calls, "Retirement discards queued progress after a previously blocked write returns");
+            await RegressionFixtureOwner.RunAsync(() =>
+            {
+                writer = new BlockingWriter();
+                host = new RegressionProcessHost(progressOutput: writer);
+                throw primary;
+            }, () => { host?.Dispose(); return Task.CompletedTask; },
+                () => { writer?.Release.TrySetResult(); return Task.CompletedTask; },
+                () => host?.ProgressCompletion ?? Task.CompletedTask,
+                () =>
+                {
+                    AssertEqual(true, host!.ProgressCompletion.IsCompleted, "The same consumer is joined before writer disposal");
+                    return Task.CompletedTask;
+                }, () =>
+                {
+                    writer!.Dispose();
+                    disposed = true;
+                    return Task.CompletedTask;
+                });
         }
-        finally { host.Dispose(); writer.Release.TrySetResult(); }
+        catch (Exception error) { actual = error; }
+        AssertEqual(true, ReferenceEquals(primary, actual), "An early failure retains its identity while the unstarted progress consumer is retired and joined");
+        AssertEqual(true, disposed, "Writer cleanup still runs after the consumer drains");
+        AssertEqual(false, writer!.Entered.Task.IsCompleted, "An unstarted callback does not manufacture an entry signal");
+        AssertEqual(false, writer!.Exited.Task.IsCompleted, "Cleanup does not wait for an exit signal from a callback that never started");
+    }
+
+    private static async Task BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync()
+    {
+        ProcessFixture? fixture = null;
+        BlockingWriter? writer = null;
+        RegressionProcessHost? host = null;
+        var hostRetired = false;
+        await RegressionFixtureOwner.RunAsync(async () =>
+        {
+            fixture = new ProcessFixture();
+            writer = new BlockingWriter();
+            RegressionCase[] cases = [new("runner.probe/progress-first", "core", () => Task.CompletedTask), new("runner.probe/progress-second", "core", () => Task.CompletedTask)];
+            var report = fixture.Report(cases);
+            host = new RegressionProcessHost(info =>
+            {
+                var request = RegressionProcessProtocol.Read<RegressionChildRequest>(info.ArgumentList[^1]);
+                var manifest = PassedManifest(request);
+                RegressionProcessProtocol.Write(request.ManifestPath, manifest);
+                return FakeChild.ForManifest(request, manifest);
+            }, progressOutput: writer);
+            await host.ExecuteAsync(cases, report, fixture.Path);
+            await writer.Entered.Task;
+            AssertEqual(false, writer.Release.Task.IsCompleted, "Supervision completes while the same output write remains held");
+            AssertEqual(true, report.Cases.All(item => item.Outcome == "passed"), "A blocked parent output writer cannot block pipe drains, exit validation or supervision");
+            RetireHost();
+            writer.Release.TrySetResult();
+            await writer.Exited.Task;
+            await host.ProgressCompletion;
+            AssertEqual(1, writer.Calls, "Retirement discards queued progress after a previously blocked write returns");
+        }, () => { RetireHost(); return Task.CompletedTask; },
+            () => { writer?.Release.TrySetResult(); return Task.CompletedTask; },
+            () => host?.ProgressCompletion ?? Task.CompletedTask,
+            () => { writer?.Dispose(); return Task.CompletedTask; },
+            () => { fixture?.Dispose(); return Task.CompletedTask; });
+
+        void RetireHost()
+        {
+            if (host is null || hostRetired) return;
+            hostRetired = true;
+            host.Dispose();
+        }
     }
 
     private static async Task RealChildrenDrainBothPipesAndRequireFinalEvidenceAsync()
