@@ -1,9 +1,12 @@
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        await RunStageAsync("source-checkout-process-budget", GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync);
+        await RunStageAsync("source-checkout-cleanup", SourceCheckoutOwnerPreservesFailuresAndOneRootAsync);
         await RunStageAsync("native-owner-aliases", NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync);
         await RunStageAsync("streaming-owner-aliases", StreamingOwnerAliasesPreserveSelectionAndReplayAsync);
         await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
@@ -423,23 +426,118 @@ internal static class RunnerContractSuite
         Require(provider.Ids.Contains("numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads"), "Provider changes include direct PostTts numeric compatibility.");
     }
 
+    private static async Task GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync()
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo("pwsh")
+            {
+                UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true
+            }
+        };
+        foreach (var argument in new[] { "-NoProfile", "-NonInteractive", "-Command",
+            "[Console]::Out.WriteLine('stdout-before'); [Console]::Error.WriteLine('stderr-before'); [void][Console]::ReadLine(); [Console]::Out.WriteLine('stdout-after'); [Console]::Error.WriteLine('stderr-after')" })
+            process.StartInfo.ArgumentList.Add(argument);
+        var started = false;
+        var stdout = Task.FromResult("");
+        var stderr = Task.FromResult("");
+        var cancellation = new CancellationTokenSource();
+        Task release = Task.CompletedTask;
+        await RunSourceCheckoutOwnerAsync(async () =>
+        {
+            started = process.Start();
+            Require(started, "The controlled local fixture starts exactly one process.");
+            stdout = process.StandardOutput.ReadToEndAsync();
+            stderr = process.StandardError.ReadToEndAsync();
+            release = ReleaseAsync();
+            await WaitForGitProcessAsync(process, stdout, stderr);
+            await release;
+            Require(stdout.Result.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).SequenceEqual(["stdout-before", "stdout-after"]) &&
+                stderr.Result.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).SequenceEqual(["stderr-before", "stderr-after"]),
+                "The same process exits after six seconds and both complete output streams are observed without retry.");
+        }, async () =>
+        {
+            cancellation.Cancel();
+            try { await release; }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        }, () => CleanupGitProcessAsync(process, started, stdout, stderr),
+            () => { process.Dispose(); return Task.CompletedTask; },
+            () => { cancellation.Dispose(); return Task.CompletedTask; });
+
+        async Task ReleaseAsync()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(6), cancellation.Token);
+            await process.StandardInput.WriteLineAsync("continue");
+        }
+    }
+
+    private static async Task SourceCheckoutOwnerPreservesFailuresAndOneRootAsync()
+    {
+        foreach (var hasPrimary in new[] { true, false })
+        {
+            var primary = new RunnerOwnedException("private-owned-source-failure");
+            var cleanupFailure = new IOException("private-cleanup-failure");
+            var failingCleanupCalls = 0;
+            var followingCleanupCalls = 0;
+            var completedAfterCleanup = false;
+            var telemetry = new List<RegressionActionEvent>();
+            using var owner = RegressionActionScope.BeginCase("runner.probe/source-owner", action =>
+            {
+                telemetry.Add(action);
+                if (action.Kind == "completed") completedAfterCleanup = failingCleanupCalls == 1 && followingCleanupCalls == 1;
+            });
+            Exception? actual = null;
+            try
+            {
+                await RunSourceCheckoutOwnerAsync(async () =>
+                {
+                    Require(RegressionActionScope.QueueRoot() is null, "The source sequence already owns its queued root.");
+                    await Task.Yield();
+                    await RunSourceCheckoutOwnerAsync(() =>
+                    {
+                        Require(RegressionActionScope.QueueRoot() is null, "Nested Git work inherits the same root after an await.");
+                        if (hasPrimary) throw primary;
+                        return Task.CompletedTask;
+                    });
+                }, () =>
+                {
+                    failingCleanupCalls++;
+                    Require(RegressionActionScope.QueueRoot() is null, "Cleanup retains the original root rather than renewing its deadline.");
+                    throw cleanupFailure;
+                }, () => { followingCleanupCalls++; return Task.CompletedTask; });
+            }
+            catch (Exception error) { actual = error; }
+            Require(ReferenceEquals(actual, hasPrimary ? primary : cleanupFailure),
+                "Cleanup preserves the original exception instance and cleanup-only failure remains a failure.");
+            Require(failingCleanupCalls == 1 && followingCleanupCalls == 1 && completedAfterCleanup,
+                "Every cleanup runs exactly once before the owner publishes completion, including after cleanup failure.");
+            Require(telemetry.Select(action => action.Kind).SequenceEqual(["queued", "entered", "completed"]) &&
+                telemetry.All(action => action.Ordinal == 1 && action.QueuedTimestamp == telemetry[0].QueuedTimestamp),
+                "The complete async/nested source sequence has one queued timestamp and one root without renewal.");
+            if (hasPrimary)
+                Require((string?)primary.Data["RunnerFixtureCleanupExceptionType"] == typeof(IOException).FullName,
+                    "Secondary cleanup diagnostics retain only the safe exception type.");
+        }
+    }
+
     private static async Task SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync()
     {
-        using var fixture = new RunnerFixture();
-        Directory.CreateDirectory(fixture.DirectoryPath);
-        await RunGitAsync(fixture.DirectoryPath, "init", "--quiet");
-        var readme = Path.Combine(fixture.DirectoryPath, "README.md");
-        await File.WriteAllTextAsync(readme, "# Foreign fixture\n");
-        await RunGitAsync(fixture.DirectoryPath, "add", "README.md");
-        await RunGitAsync(fixture.DirectoryPath, "-c", "user.name=Runner fixture", "-c", "user.email=runner@example.invalid", "commit", "--quiet", "-m", "fixture");
-        await File.AppendAllTextAsync(readme, "Documentation-only foreign change.\n");
-        var expected = await RegressionSource.CaptureAsync();
-        Require(expected.Identity.Available, "The runner fixture is bound to its source checkout.");
-        var registry = Registry([]);
-        var expectedScope = RegressionImpact.Select(registry, await expected.ChangedPathsAsync("HEAD"));
+        var fixture = new RunnerFixture();
         var originalDirectory = Environment.CurrentDirectory;
-        try
+        await RunSourceCheckoutOwnerAsync(async () =>
         {
+            Directory.CreateDirectory(fixture.DirectoryPath);
+            await RunGitAsync(fixture.DirectoryPath, "init", "--quiet");
+            var readme = Path.Combine(fixture.DirectoryPath, "README.md");
+            await File.WriteAllTextAsync(readme, "# Foreign fixture\n");
+            await RunGitAsync(fixture.DirectoryPath, "add", "README.md");
+            await RunGitAsync(fixture.DirectoryPath, "-c", "user.name=Runner fixture", "-c", "user.email=runner@example.invalid", "commit", "--quiet", "-m", "fixture");
+            await File.AppendAllTextAsync(readme, "Documentation-only foreign change.\n");
+            var expected = await RegressionSource.CaptureAsync();
+            Require(expected.Identity.Available, "The runner fixture is bound to its source checkout.");
+            var registry = Registry([]);
+            var expectedScope = RegressionImpact.Select(registry, await expected.ChangedPathsAsync("HEAD"));
             Environment.CurrentDirectory = fixture.DirectoryPath;
             var actual = await RegressionSource.CaptureAsync();
             Require(string.Equals(expected.Root, actual.Root, StringComparison.OrdinalIgnoreCase) && expected.Identity.Commit == actual.Identity.Commit,
@@ -447,23 +545,69 @@ internal static class RunnerContractSuite
             var actualScope = RegressionImpact.Select(registry, await actual.ChangedPathsAsync("HEAD"));
             Require(actualScope.Ids.SetEquals(expectedScope.Ids) && actualScope.ConservativeFallback == expectedScope.ConservativeFallback,
                 "Affected selection follows the executable's checkout rather than foreign documentation changes.");
+        }, () => { Environment.CurrentDirectory = originalDirectory; return Task.CompletedTask; },
+            () => { fixture.Dispose(); return Task.CompletedTask; });
+    }
+
+    private static async Task RunSourceCheckoutOwnerAsync(Func<Task> work, params Func<Task>[] cleanup)
+    {
+        var root = RegressionActionScope.QueueRoot();
+        using var entered = root?.Enter();
+        Exception? failure = null;
+        try
+        {
+            try { await work(); }
+            catch (Exception error) { failure = error; }
+            foreach (var release in cleanup)
+            {
+                try { await release(); }
+                catch (Exception error)
+                {
+                    if (failure is null) failure = error;
+                    else
+                    {
+                        try { failure.Data["RunnerFixtureCleanupExceptionType"] ??= error.GetType().FullName; }
+                        catch { /* Safe secondary diagnostics cannot replace the original failure. */ }
+                    }
+                }
+            }
+            if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
         }
-        finally { Environment.CurrentDirectory = originalDirectory; }
+        finally { root?.Complete(); }
     }
 
     private static async Task RunGitAsync(string directory, params string[] arguments)
     {
-        using var process = new Process
+        var process = new Process
         {
             StartInfo = new ProcessStartInfo("git") { WorkingDirectory = directory, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true }
         };
-        foreach (var argument in arguments) process.StartInfo.ArgumentList.Add(argument);
-        Require(process.Start(), "A local Git fixture starts.");
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
-        await Task.WhenAll(stdout, stderr);
+        var started = false;
+        Task stdout = Task.CompletedTask;
+        Task stderr = Task.CompletedTask;
+        await RunSourceCheckoutOwnerAsync(async () =>
+        {
+            foreach (var argument in arguments) process.StartInfo.ArgumentList.Add(argument);
+            started = process.Start();
+            Require(started, "A local Git fixture starts.");
+            stdout = process.StandardOutput.ReadToEndAsync();
+            stderr = process.StandardError.ReadToEndAsync();
+            await WaitForGitProcessAsync(process, stdout, stderr);
+        }, () => CleanupGitProcessAsync(process, started, stdout, stderr),
+            () => { process.Dispose(); return Task.CompletedTask; });
+    }
+
+    private static async Task WaitForGitProcessAsync(Process process, Task stdout, Task stderr)
+    {
+        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr);
         Require(process.ExitCode == 0, "A local Git fixture operation succeeds.");
+    }
+
+    private static async Task CleanupGitProcessAsync(Process process, bool started, Task stdout, Task stderr)
+    {
+        if (!started) return;
+        if (!process.HasExited) process.Kill(entireProcessTree: true);
+        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(RegressionExecution.DiagnosticTimeout);
     }
 
     private static RegressionCase[] Registry(List<string> calls) =>
