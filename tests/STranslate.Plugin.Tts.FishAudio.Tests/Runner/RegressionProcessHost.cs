@@ -60,8 +60,7 @@ internal sealed class RegressionProcessHost : IDisposable
             Cases = [new() { Id = id, Partition = "core" }]
         };
         var path = Path.Combine(source.Root ?? Environment.CurrentDirectory, ".scratch", "test-runs", report.RunId + ".json");
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        report.Write(path);
+        report.Create(path);
         var request = CreateRequest(report, "core", [id], path);
         request.LegacyArguments = args;
         await (host ?? new RegressionProcessHost()).ExecutePartitionAsync(request, report, path);

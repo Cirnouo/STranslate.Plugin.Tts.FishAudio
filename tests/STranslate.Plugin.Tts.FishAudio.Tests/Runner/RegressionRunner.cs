@@ -79,10 +79,7 @@ internal static class RegressionRunner
                 Cases = selected.Select(item => new RegressionCaseResult { Id = item.Id, Partition = item.Partition }).ToList()
             };
             var runClock = Stopwatch.StartNew();
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            // Reserve ownership atomically before the first incremental replacement.
-            using (new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None)) { }
-            report.Write(path);
+            report.Create(path);
             SafeWriteLine($"Running {selected.Length} case(s); report {report.RunId}.");
             var passed = 0;
             if (execute is not null)

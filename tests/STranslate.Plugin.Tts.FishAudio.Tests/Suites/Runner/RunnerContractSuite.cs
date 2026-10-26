@@ -5,6 +5,7 @@ internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
         await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
         await RunStageAsync("invalid-selection", InvalidAndEmptySelectionsCannotExecuteAsync);
         await RunStageAsync("metadata-list", ListingNeverExecutesAsync);
