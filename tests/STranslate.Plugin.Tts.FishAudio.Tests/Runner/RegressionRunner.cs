@@ -2,7 +2,8 @@ using System.Diagnostics;
 
 internal static class RegressionRunner
 {
-    internal static async Task<int> RunAsync(string[] args, IReadOnlyList<RegressionCase> cases)
+    internal static async Task<int> RunAsync(string[] args, IReadOnlyList<RegressionCase> cases,
+        Func<IReadOnlyList<RegressionCase>, RegressionReport, string, Task>? execute = null)
     {
         try
         {
@@ -84,6 +85,12 @@ internal static class RegressionRunner
             report.Write(path);
             SafeWriteLine($"Running {selected.Length} case(s); report {report.RunId}.");
             var passed = 0;
+            if (execute is not null)
+            {
+                await execute(selected, report, path);
+                passed = report.Cases.Count(item => item.Outcome == "passed");
+            }
+            else
             for (var index = 0; index < selected.Length; index++)
             {
                 var item = selected[index];

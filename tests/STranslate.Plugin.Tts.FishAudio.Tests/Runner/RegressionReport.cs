@@ -63,7 +63,8 @@ internal sealed class RegressionReport
                 JsonSerializer.Serialize(output, this, JsonOptions);
                 output.Flush(flushToDisk: true);
             }
-            File.Move(temporary, path, overwrite: true);
+            if (File.Exists(path)) File.Replace(temporary, path, destinationBackupFileName: null);
+            else File.Move(temporary, path);
         }
         finally
         {
@@ -80,4 +81,14 @@ internal sealed class RegressionCaseResult
     public string Outcome { get; set; } = "not-run";
     public long ElapsedMilliseconds { get; set; }
     public string? ExceptionType { get; set; }
+    public string? FailureStage { get; set; }
+    public string? InfrastructureCode { get; set; }
+    public string? ChildRequestId { get; set; }
+    public int? ChildExitCode { get; set; }
+    public string? ChildInfrastructureExceptionType { get; set; }
+    public string? SecondaryExceptionType { get; set; }
+    public string? SecondaryFailureStage { get; set; }
+    public int SlowActionWarnings { get; set; }
+    public int ActionOrdinal { get; set; }
+    public long? QueueToEntryMilliseconds { get; set; }
 }

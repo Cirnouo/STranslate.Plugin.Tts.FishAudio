@@ -305,6 +305,7 @@ internal static class RegressionCatalog
         Add("preview.accepted-continuity/run-all", "native-cards", () => AcceptedPreviewContinuitySuite.RunAllAsync());
         Add("runner.contracts/selection", "core", RunnerContractSuite.RunAsync);
         Add("runner.contracts/catalog", "core", RegressionCatalogSuite.RunAsync);
+        Add("runner.process/run-all", "core", RegressionProcessSuite.RunAsync);
         return cases;
 
         void Add(string id, string partition, Func<Task> run) => cases.Add(new RegressionCase(id, partition, run));

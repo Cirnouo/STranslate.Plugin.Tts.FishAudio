@@ -1,7 +1,13 @@
+// Keep the physical pipe writer independent of suites that temporarily redirect
+// global Console.Out/Error while checking the in-process runner contract.
+var physicalProtocolOutput = Console.Out;
+using var processHost = new RegressionProcessHost(progressOutput: physicalProtocolOutput);
 try
 {
-    return await LegacyRegressionSelectors.TryRunAsync(args)
-        ?? await RegressionRunner.RunAsync(args, RegressionCatalog.Create());
+    if (RegressionChildHost.IsChildInvocation(args))
+        return await RegressionChildHost.RunAsync(args, physicalProtocolOutput);
+    return await RegressionProcessHost.TryRunLegacyAsync(args, processHost)
+        ?? await RegressionRunner.RunAsync(args, RegressionCatalog.Create(), processHost.ExecuteAsync);
 }
 catch (Exception error)
 {
