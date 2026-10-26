@@ -1,10 +1,12 @@
-using System.Text.Json;
 using System.Diagnostics;
 
 internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        await RunStageAsync("streaming-owner-aliases", StreamingOwnerAliasesPreserveSelectionAndReplayAsync);
+        await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
+        await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
         await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
         await RunStageAsync("invalid-selection", InvalidAndEmptySelectionsCannotExecuteAsync);
         await RunStageAsync("metadata-list", ListingNeverExecutesAsync);
@@ -44,11 +46,121 @@ internal static class RunnerContractSuite
         var exit = await fixture.RunAsync(["--group", "settings", "--case", "cards.layout/basic", "--group", "settings.storage", "--partition", "core"], cases);
         Require(exit == 0, "A valid union succeeds.");
         Require(calls.SequenceEqual(["settings.storage/read", "settings.storage/write"]), "Union selection is deduplicated, retains catalog order and applies partition constraints.");
-        using var report = JsonDocument.Parse(File.ReadAllBytes(fixture.ReportPath));
-        Require(report.RootElement.GetProperty("complete").GetBoolean(), "A completed selection is durable.");
-        Require(report.RootElement.GetProperty("cases").GetArrayLength() == 2, "Only selected cases enter the report.");
+        var report = RegressionReport.Read(fixture.ReportPath);
+        Require(report.Complete, "A completed selection is durable.");
+        Require(report.Cases.Count == 2, "Only selected cases enter the report.");
+        File.Delete(fixture.ReportPath);
         calls.Clear();
         Require(await fixture.RunAsync([], cases) == 0 && calls.Count == 3, "No arguments retain the complete default run.");
+    }
+
+    private static async Task StreamingOwnerAliasesPreserveSelectionAndReplayAsync()
+    {
+        using var fixture = new RunnerFixture();
+        var telemetry = new List<RegressionActionEvent>();
+        using (RegressionActionScope.BeginCase("runner.probe/metadata", telemetry.Add))
+        {
+            var registry = RegressionCatalog.Create();
+            var selected = RegressionSelection.Parse(["--list", "--case", "playback.streaming/run-all"]).ExplicitIds(registry);
+            Require(selected.Count == 22 && !registry.Any(item => item.Id == "playback.streaming/run-all"), "Default registration contains exactly the independent streaming leaves, with the old aggregate reserved as an alias.");
+            Require(telemetry.Count == 0, "Creating and selecting streaming descriptors never runs action telemetry or fixtures.");
+        }
+        var calls = new List<string>();
+        RegressionCase[] cases =
+        [
+            new("playback.streaming/first", "core", () => { calls.Add("first"); return Task.CompletedTask; }),
+            new("playback.streaming/second", "core", () => { calls.Add("second"); return Task.CompletedTask; }),
+            new("playback.streaming.extra/not-owned", "native-settings", () => { calls.Add("sibling"); return Task.CompletedTask; }),
+            new("runner.sample/other", "native-settings", () => { calls.Add("other"); return Task.CompletedTask; })
+        ];
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all", "--case", cases[1].Id, "--group", "playback.streaming/run-all", "--partition", "core"], cases) == 0,
+            "The former aggregate remains an exact case/group alias.");
+        Require(calls.SequenceEqual(["first", "second"]), "Aliases union in catalog order without duplicate execution.");
+        foreach (var arguments in new string[][]
+        {
+            ["--case", "playback.streaming/run"], ["--group", "playback.streaming/run-all.extra"],
+            ["--case", "playback.streaming/run-all", "--partition", "native-settings"]
+        })
+        {
+            calls.Clear();
+            Require(await fixture.RunAsync(arguments, cases) != 0 && calls.Count == 0, "Unknown or empty aliases cannot execute a partial match.");
+        }
+        calls.Clear();
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all"], [cases[2]]) != 0 && calls.Count == 0,
+            "A known alias with no registered leaves fails.");
+        foreach (var outcome in new[] { "failed", "not-run", "passed" })
+        {
+            var source = await RegressionSource.CaptureAsync();
+            source.RecordDirtyScope(cases);
+            var previous = new RegressionReport
+            {
+                Source = source.Identity,
+                Cases = [new() { Id = "playback.streaming/run-all", Partition = "core", Outcome = outcome,
+                    ExceptionType = outcome == "failed" ? typeof(IOException).FullName : null }]
+            };
+            var input = Path.Combine(fixture.DirectoryPath, "old-aggregate-" + outcome + ".json");
+            previous.Create(input);
+            var originalBytes = File.ReadAllBytes(input);
+            calls.Clear();
+            var replay = Path.Combine(fixture.DirectoryPath, "replay-" + outcome + ".json");
+            var exit = await fixture.RunAsync(["--rerun-failed", input, "--results", replay], cases);
+            Require(outcome == "passed" ? exit != 0 && calls.Count == 0 : exit == 0 && calls.SequenceEqual(["first", "second"]),
+                "Incomplete old aggregates expand to leaves; old passed aggregates cannot synthesize leaf coverage.");
+            Require(File.ReadAllBytes(input).SequenceEqual(originalBytes), "Alias replay preserves the original report bytes.");
+        }
+        calls.Clear();
+        RegressionCase[] exactRegistry =
+        [
+            new("playback.streaming/run-all", "core", () => { calls.Add("exact"); return Task.CompletedTask; }),
+            cases[0]
+        ];
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all", "--group", "playback.streaming/run-all"], exactRegistry) == 0 && calls.SequenceEqual(["exact"]),
+            "An explicitly registered current case takes precedence over its former aggregate alias for case/group selection.");
+        var exactSource = await RegressionSource.CaptureAsync();
+        exactSource.RecordDirtyScope(exactRegistry);
+        var exactPrevious = new RegressionReport
+        {
+            Source = exactSource.Identity,
+            Cases = [new() { Id = "playback.streaming/run-all", Partition = "core", Outcome = "failed", ExceptionType = typeof(IOException).FullName }]
+        };
+        var exactInput = Path.Combine(fixture.DirectoryPath, "current-exact.json");
+        exactPrevious.Create(exactInput);
+        calls.Clear();
+        Require(await fixture.RunAsync(["--rerun-failed", exactInput, "--results", Path.Combine(fixture.DirectoryPath, "current-exact-replay.json")], exactRegistry) == 0 && calls.SequenceEqual(["exact"]),
+            "Failed-report replay also preserves an explicitly registered current exact case instead of expanding its alias.");
+    }
+
+    private static async Task FinalFailureSummaryIncludesEveryFailedOwnerAsync()
+    {
+        using var fixture = new RunnerFixture();
+        var calls = new List<string>();
+        var cases = Registry(calls);
+        var output = Console.Out;
+        var error = Console.Error;
+        using var capture = new StringWriter();
+        try
+        {
+            Console.SetOut(capture);
+            Console.SetError(capture);
+            var exit = await RegressionRunner.RunAsync(["--results", fixture.ReportPath], cases, (_, report, _) =>
+            {
+                report.Cases[0].Outcome = "timed-out";
+                report.Cases[0].ExceptionType = typeof(RegressionExecutionTimeoutException).FullName;
+                report.Cases[0].FailureStage = "action";
+                report.Cases[0].ActionOrdinal = 1;
+                report.Cases[1].Outcome = "failed";
+                report.Cases[1].ExceptionType = typeof(IOException).FullName;
+                report.Cases[1].FailureStage = "case";
+                return Task.CompletedTask;
+            });
+            Require(exit == 1 && calls.Count == 0, "A final child outcome fails without invoking parent delegates.");
+            var text = capture.ToString();
+            Require(text.Contains($"FAIL {cases[0].Id}: {typeof(RegressionExecutionTimeoutException).FullName}; stage=action; action=1.", StringComparison.Ordinal), "Hard failures remain visible without a child completion line.");
+            Require(text.Contains($"FAIL {cases[1].Id}: {typeof(IOException).FullName}; stage=case; action=0.", StringComparison.Ordinal), "Every failed child owner appears in the final safe summary.");
+            Require(text.Contains("1 failed; 1 timed out; 1 not run", StringComparison.Ordinal), "Final counts account explicitly for all non-passing owners.");
+            Require(!text.Contains(fixture.DirectoryPath, StringComparison.OrdinalIgnoreCase), "Final diagnostics contain no private paths.");
+        }
+        finally { Console.SetOut(output); Console.SetError(error); }
     }
 
     private static async Task InvalidAndEmptySelectionsCannotExecuteAsync()
@@ -90,27 +202,26 @@ internal static class RunnerContractSuite
         };
         Require(await fixture.RunAsync([], failure) == 1, "A case failure fails the command.");
         Require(calls.SequenceEqual(["pass", "fail"]), "Sequential failure stops before the remaining case.");
-        var originalBytes = File.ReadAllBytes(fixture.ReportPath);
-        using (var report = JsonDocument.Parse(originalBytes))
-        {
-            var root = report.RootElement;
-            Require(root.GetProperty("schemaVersion").GetInt32() == 1, "Reports carry a version.");
-            Require(!root.GetProperty("complete").GetBoolean(), "A failed selection remains incomplete.");
-            var outcomes = root.GetProperty("cases").EnumerateArray().ToArray();
-            Require(outcomes.Select(item => item.GetProperty("outcome").GetString()).SequenceEqual(["passed", "failed", "not-run"]), "Reports enumerate passed, failed and not-run cases.");
-            Require(outcomes[1].GetProperty("exceptionType").GetString() == typeof(RunnerOwnedException).FullName, "The original exception type remains distinguishable.");
-            Require(root.GetProperty("source").GetProperty("fingerprint").GetString()?.Length == 64, "A source fingerprint accompanies raw outcomes.");
-            Require(root.GetProperty("configuration").GetString() is "Debug" or "Release", "The build configuration accompanies outcomes.");
-            Require(root.GetProperty("sdk").GetString()?.Length > 0, "The SDK identity accompanies outcomes.");
-        }
+        var report = RegressionReport.Read(fixture.ReportPath);
+        var originalGenerationPath = RegressionReport.GenerationPath(fixture.ReportPath, report.RunId, report.Generation);
+        var originalBytes = File.ReadAllBytes(originalGenerationPath);
+        var originalProjection = File.Exists(fixture.ReportPath) ? File.ReadAllBytes(fixture.ReportPath) : null;
+        Require(report.SchemaVersion == 1, "Reports carry a version.");
+        Require(!report.Complete, "A failed selection remains incomplete.");
+        Require(report.Cases.Select(item => item.Outcome).SequenceEqual(["passed", "failed", "not-run"]), "Reports enumerate passed, failed and not-run cases.");
+        Require(report.Cases[1].ExceptionType == typeof(RunnerOwnedException).FullName, "The original exception type remains distinguishable.");
+        Require(report.Source.Fingerprint.Length == 64, "A source fingerprint accompanies raw outcomes.");
+        Require(report.Configuration is "Debug" or "Release", "The build configuration accompanies outcomes.");
+        Require(report.Sdk.Length > 0, "The SDK identity accompanies outcomes.");
         var json = System.Text.Encoding.UTF8.GetString(originalBytes);
         Require(!json.Contains("private-user-text-and-key", StringComparison.Ordinal) && !json.Contains(fixture.DirectoryPath, StringComparison.OrdinalIgnoreCase), "Reports omit exception messages and machine paths.");
         var replayPath = Path.Combine(fixture.DirectoryPath, "replay.json");
         calls.Clear();
         var replay = failure.Select(item => item with { Run = () => { calls.Add(item.Id); return Task.CompletedTask; } }).ToArray();
         Require(await fixture.RunAsync(["--rerun-failed", fixture.ReportPath, "--results", replayPath], replay) == 0, "A failed selection can be replayed to a separate report.");
-        Require(calls.SequenceEqual(["runner.sample/fail", "runner.sample/not-run"]), "Replay includes failed and not-run work without replaying unchanged successes.");
-        Require(File.ReadAllBytes(fixture.ReportPath).SequenceEqual(originalBytes), "Passing recovery cannot rewrite the original failed report.");
+        Require(calls.SequenceEqual(report.Source.Available ? ["runner.sample/fail", "runner.sample/not-run"] : ["runner.sample/pass", "runner.sample/fail", "runner.sample/not-run"]), "Replay includes failed and not-run work and expands conservatively when projection identity is unavailable.");
+        Require(File.ReadAllBytes(originalGenerationPath).SequenceEqual(originalBytes), "Passing recovery cannot rewrite the original failed generation.");
+        Require(originalProjection is null ? !File.Exists(fixture.ReportPath) : File.ReadAllBytes(fixture.ReportPath).SequenceEqual(originalProjection), "Passing recovery cannot rewrite or recreate the original projection.");
         calls.Clear();
         Require(await fixture.RunAsync(["--rerun-failed", fixture.ReportPath, "--results", fixture.ReportPath], replay) != 0 && calls.Count == 0, "Replay refuses to overwrite its input evidence.");
         Require(await fixture.RunAsync(["--results", replayPath], replay) != 0 && calls.Count == 0, "A new invocation cannot overwrite previous result evidence.");
@@ -130,16 +241,18 @@ internal static class RunnerContractSuite
         [
             new("runner.incremental/first", "core", () =>
             {
-                using var report = JsonDocument.Parse(File.ReadAllBytes(fixture.ReportPath));
-                var outcomes = report.RootElement.GetProperty("cases").EnumerateArray().Select(item => item.GetProperty("outcome").GetString()).ToArray();
+                File.Delete(fixture.ReportPath);
+                var report = RegressionReport.Read(fixture.ReportPath);
+                var outcomes = report.Cases.Select(item => item.Outcome).ToArray();
                 Require(outcomes.SequenceEqual(["running", "not-run"]), "The current action and outstanding coverage are flushed before execution.");
+                Require(!report.Source.Available, "A missing projection retains durable outcomes while requiring conservative source recovery.");
                 return Task.FromException(new TimeoutException("private-deadline-details"));
             }),
             new("runner.incremental/remaining", "core", () => { remainingCalled = true; return Task.CompletedTask; })
         ];
         Require(await fixture.RunAsync([], registry) == 1 && !remainingCalled, "A timeout retains fail-fast behavior.");
-        using var final = JsonDocument.Parse(File.ReadAllBytes(fixture.ReportPath));
-        Require(final.RootElement.GetProperty("cases")[0].GetProperty("outcome").GetString() == "timed-out", "Timeouts retain their distinct raw outcome.");
+        var final = RegressionReport.Read(fixture.ReportPath);
+        Require(final.Cases[0].Outcome == "timed-out", "Timeouts retain their distinct raw outcome.");
         var recovered = new List<string>();
         var replay = registry.Select(item => item with { Run = () => { recovered.Add(item.Id); return Task.CompletedTask; } }).ToArray();
         Require(await fixture.RunAsync(["--rerun-failed", fixture.ReportPath, "--results", Path.Combine(fixture.DirectoryPath, "timeout-replay.json")], replay) == 0 && recovered.Count == 2, "Timeout recovery includes the original timed-out and not-run IDs.");
@@ -317,7 +430,9 @@ internal static class RunnerContractSuite
             Console.SetError(capture);
             try
             {
-                if (!args.Contains("--results", StringComparer.Ordinal) && File.Exists(ReportPath)) ReportPath = Path.Combine(DirectoryPath, Guid.NewGuid().ToString("N") + ".json");
+                if (!args.Contains("--results", StringComparer.Ordinal) &&
+                    (File.Exists(ReportPath) || Directory.Exists(RegressionReport.GenerationsRoot(ReportPath))))
+                    ReportPath = Path.Combine(DirectoryPath, Guid.NewGuid().ToString("N") + ".json");
                 var actual = args.Contains("--results", StringComparer.Ordinal) ? args : [.. args, "--results", ReportPath];
                 return await RegressionRunner.RunAsync(actual, cases);
             }

@@ -89,3 +89,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-063 | [Guard publication at the tag, host-version and draft-asset boundaries](current/DD-063.md) | Current |
 | DD-064 | [Map main governance to actual Fish Audio validation contexts](current/DD-064.md) | Current |
 | DD-065 | [Select explicit regression contracts and retain complete CI coverage](current/DD-065.md) | Current |
+| DD-066 | [Supervise regression partitions outside the native STA](current/DD-066.md) | Current |

@@ -74,13 +74,21 @@ internal sealed class RegressionSelection
 
     internal HashSet<string> ExplicitIds(IReadOnlyList<RegressionCase> registry)
     {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in Groups)
-            if (!registry.Any(item => MatchesGroup(item.Id, group))) throw new RegressionSelectionException("unknown-group");
+        {
+            if (RegressionCaseAliases.Contains(group)) ids.UnionWith(RegressionCaseAliases.Resolve(group, registry));
+            else
+            {
+                var matches = registry.Where(item => MatchesGroup(item.Id, group)).Select(item => item.Id).ToArray();
+                if (matches.Length == 0) throw new RegressionSelectionException("unknown-group");
+                ids.UnionWith(matches);
+            }
+        }
         foreach (var id in Cases)
-            if (!registry.Any(item => item.Id == id)) throw new RegressionSelectionException("unknown-case");
+            ids.UnionWith(RegressionCaseAliases.Resolve(id, registry));
         foreach (var partition in Partitions)
             if (!registry.Any(item => item.Partition == partition)) throw new RegressionSelectionException("unknown-partition");
-        return registry.Where(item => Cases.Contains(item.Id, StringComparer.Ordinal) || Groups.Any(group => MatchesGroup(item.Id, group)))
-            .Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
+        return ids;
     }
 }

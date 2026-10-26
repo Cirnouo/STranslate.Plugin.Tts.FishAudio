@@ -29,7 +29,7 @@ internal static class RegressionExecutionSuite
         AssertEqual(0, calls, "Invalid guards never execute their action");
         await RegressionExecution.WaitAsync(Task.CompletedTask, TimeSpan.FromTicks(1));
         AssertEqual(42, await RegressionExecution.WaitAsync(Task.FromResult(42), TimeSpan.FromTicks(1)), "A positive explicit API guard accepts completed generic work");
-        AssertEqual(TimeSpan.FromSeconds(20), RegressionExecution.Timeout, "The shared regression execution and startup guard is twenty seconds");
+        AssertEqual(TimeSpan.FromSeconds(120), RegressionExecution.Timeout, "The shared regression execution and startup guard is two minutes");
 
         foreach (var generic in new[] { false, true })
         {
@@ -38,14 +38,14 @@ internal static class RegressionExecutionSuite
             Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock) : RegressionExecution.WaitAsync((Task)work.Task, clock);
             clock.Advance(TimeSpan.FromSeconds(5));
             AssertEqual(false, guarded.IsCompleted, "The actual execution primitive cannot expire at the historical five-second guard");
-            clock.Advance(TimeSpan.FromMilliseconds(14999));
-            AssertEqual(false, guarded.IsCompleted, "The actual execution primitive remains incomplete at 19999ms");
+            clock.Advance(TimeSpan.FromMilliseconds(114999));
+            AssertEqual(false, guarded.IsCompleted, "The actual execution primitive remains incomplete at 119999ms");
             clock.Advance(TimeSpan.FromMilliseconds(1));
-            AssertEqual(true, guarded.IsCompleted, "The actual execution primitive expires at exactly 20000ms");
+            AssertEqual(true, guarded.IsCompleted, "The actual execution primitive expires at exactly 120000ms");
             Exception? deadline = null;
             try { await guarded; }
             catch (Exception error) { deadline = error; }
-            AssertEqual(true, deadline is TimeoutException, "The actual generic and nongeneric guards report their execution deadline");
+            AssertEqual(true, deadline is RegressionExecutionTimeoutException, "The actual generic and nongeneric guards distinguish their hard deadline");
             AssertEqual(false, work.Task.IsCompleted, "Execution expiry cannot cancel, replace or complete the original work");
             work.SetResult(42);
             AssertEqual(42, await work.Task, "The same original work may complete once after its guard expires");
@@ -54,6 +54,36 @@ internal static class RegressionExecutionSuite
             catch (Exception error) { late = error; }
             AssertEqual(true, ReferenceEquals(deadline, late), "Late original completion must retain the same failed guard and exception");
         }
+
+        foreach (var generic in new[] { false, true })
+        {
+            var clock = new ManualStreamingTimeProvider();
+            var work = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var notices = 0;
+            Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock, () => notices++) : RegressionExecution.WaitAsync((Task)work.Task, clock, () => notices++);
+            clock.Advance(TimeSpan.FromMilliseconds(19999));
+            AssertEqual(0, notices, "A slow-run notice cannot fire before twenty seconds");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            AssertEqual(1, notices, "A slow-run notice fires once at twenty seconds");
+            AssertEqual(false, guarded.IsCompleted, "A warning keeps waiting for the same original task");
+            clock.Advance(TimeSpan.FromSeconds(1));
+            work.SetResult(42);
+            await guarded;
+            AssertEqual(42, await work.Task, "A slow finite action can pass after the warning");
+            clock.Advance(TimeSpan.FromMinutes(3));
+            AssertEqual(1, notices, "Completion retires warning and hard-deadline timers without a retry");
+        }
+
+        var warningClock = new ManualStreamingTimeProvider();
+        var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var throwingWarning = RegressionExecution.WaitAsync(held.Task, warningClock, () => throw new IOException("Synthetic notice fault"));
+        warningClock.Advance(TimeSpan.FromSeconds(20));
+        AssertEqual(false, throwingWarning.IsCompleted, "A notice failure cannot fail or restart work");
+        warningClock.Advance(TimeSpan.FromSeconds(100));
+        try { await throwingWarning; throw new InvalidOperationException("Hard deadline did not expire"); }
+        catch (RegressionExecutionTimeoutException) { }
+        AssertEqual(false, held.Task.IsCompleted, "A warning cannot renew the original hard deadline or cancel work");
+        held.SetResult();
 
         await RegressionExecution.WaitAsync(Task.CompletedTask);
         AssertEqual(42, await RegressionExecution.WaitAsync(Task.FromResult(42)), "Immediate generic completion keeps its value");

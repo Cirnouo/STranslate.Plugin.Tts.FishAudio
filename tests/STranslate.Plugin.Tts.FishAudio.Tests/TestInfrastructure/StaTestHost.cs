@@ -11,13 +11,20 @@ internal static class StaTestHost
     {
         RegressionExecution.ValidateTimeout(executionTimeout);
 
-        var dispatcher = await RegressionExecution.WaitAsync(SharedDispatcher.Value);
+        var dispatcher = await GetDispatcherAsync();
+        var root = RegressionActionScope.QueueRoot();
+        void Run()
+        {
+            using var entered = root?.Enter();
+            try { action(); }
+            finally { root?.Complete(); }
+        }
         if (dispatcher.CheckAccess())
         {
-            action();
+            Run();
             return;
         }
-        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(action).Task, executionTimeout);
+        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(Run).Task, executionTimeout);
     }
 
     internal static Task RunOnStaThreadAsync(Func<Task> action) =>
@@ -27,13 +34,29 @@ internal static class StaTestHost
     {
         RegressionExecution.ValidateTimeout(executionTimeout);
 
-        var dispatcher = await RegressionExecution.WaitAsync(SharedDispatcher.Value);
+        var dispatcher = await GetDispatcherAsync();
+        var root = RegressionActionScope.QueueRoot();
+        async Task RunAsync()
+        {
+            using var entered = root?.Enter();
+            try { await action(); }
+            finally { root?.Complete(); }
+        }
         if (dispatcher.CheckAccess())
         {
-            await action();
+            await RunAsync();
             return;
         }
-        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(action).Task.Unwrap(), executionTimeout);
+        await RegressionExecution.WaitAsync(dispatcher.InvokeAsync(RunAsync).Task.Unwrap(), executionTimeout);
+    }
+
+    private static async Task<Dispatcher> GetDispatcherAsync()
+    {
+        var starting = !SharedDispatcher.IsValueCreated;
+        if (starting) RegressionActionScope.DispatcherStarting();
+        var dispatcher = await RegressionExecution.WaitAsync(SharedDispatcher.Value);
+        if (starting) RegressionActionScope.DispatcherReady();
+        return dispatcher;
     }
 
     private static Task<Dispatcher> StartDispatcher()

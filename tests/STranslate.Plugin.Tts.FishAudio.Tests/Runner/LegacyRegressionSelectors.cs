@@ -62,6 +62,8 @@ internal static class LegacyRegressionSelectors
         ["--settings-input-tests"] = ["tabs", "baseline", "wheel", "tooltip", "precision", "favorites", "copy", "fold-focus", "zero", "hover", "point"],
     };
 
+    internal static bool ContainsSelector(string[] args) => args.Any(Selectors.ContainsKey);
+
     internal static bool AreArgumentsValid(string[] args)
     {
         if (args.Length == 0 || !Selectors.TryGetValue(args[0], out var allowsValue)
