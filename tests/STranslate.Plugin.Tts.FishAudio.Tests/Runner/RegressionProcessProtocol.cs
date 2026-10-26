@@ -12,6 +12,7 @@ internal sealed class RegressionChildRequest
     [JsonRequired] public RegressionSourceIdentity Source { get; set; } = new();
     [JsonRequired] public string Configuration { get; set; } = "";
     [JsonRequired] public string Sdk { get; set; } = "";
+    public RegressionCiIdentity? Ci { get; set; }
     [JsonRequired] public string ManifestPath { get; set; } = "";
     public string[]? LegacyArguments { get; set; }
     // Only fixed offline subprocess probes are admitted, never arbitrary code/arguments.
@@ -27,6 +28,7 @@ internal sealed class RegressionChildManifest
     [JsonRequired] public RegressionSourceIdentity Source { get; set; } = new();
     [JsonRequired] public string Configuration { get; set; } = "";
     [JsonRequired] public string Sdk { get; set; } = "";
+    public RegressionCiIdentity? Ci { get; set; }
     [JsonRequired] public bool Final { get; set; }
     [JsonRequired] public bool Complete { get; set; }
     [JsonRequired] public List<RegressionCaseResult> Cases { get; set; } = [];
@@ -34,7 +36,7 @@ internal sealed class RegressionChildManifest
     internal static RegressionChildManifest Create(RegressionChildRequest request) => new()
     {
         RequestId = request.RequestId, RunId = request.RunId, Partition = request.Partition,
-        Source = request.Source, Configuration = request.Configuration, Sdk = request.Sdk,
+        Source = request.Source, Configuration = request.Configuration, Sdk = request.Sdk, Ci = request.Ci,
         Cases = request.CaseIds.Select(id => new RegressionCaseResult { Id = id, Partition = request.Partition }).ToList()
     };
 }
@@ -103,6 +105,7 @@ internal static class RegressionProcessProtocol
 
     internal static void ValidateRequest(RegressionChildRequest request)
     {
+        request.Ci?.Validate(request.Partition);
         if (request.Version != 1 || !Guid.TryParseExact(request.RequestId, "N", out _) ||
             !Guid.TryParseExact(request.RunId, "N", out _) || !Partitions.Contains(request.Partition, StringComparer.Ordinal) ||
             request.CaseIds is not { Length: > 0 } || request.CaseIds.Any(id => !RegressionSelection.IsSafeId(id)) ||
@@ -125,7 +128,7 @@ internal static class RegressionProcessProtocol
     {
         if (manifest.Version != 1 || manifest.RequestId != request.RequestId || manifest.RunId != request.RunId ||
             manifest.Partition != request.Partition || !SameSource(manifest.Source, request.Source) ||
-            manifest.Configuration != request.Configuration || manifest.Sdk != request.Sdk || manifest.Cases is null ||
+            manifest.Configuration != request.Configuration || manifest.Sdk != request.Sdk || !RegressionCiIdentity.Same(manifest.Ci, request.Ci) || manifest.Cases is null ||
             !manifest.Cases.Select(item => item?.Id).SequenceEqual(request.CaseIds, StringComparer.Ordinal) ||
             manifest.Cases.Any(item => item is null || item.Partition != request.Partition || item.ElapsedMilliseconds < 0 ||
                 item.Outcome is not ("passed" or "failed" or "timed-out" or "running" or "not-run") ||
