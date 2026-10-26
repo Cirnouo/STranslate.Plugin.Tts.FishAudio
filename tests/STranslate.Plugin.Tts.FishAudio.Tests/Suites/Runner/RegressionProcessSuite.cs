@@ -1,12 +1,16 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
+using STranslate.Plugin.Tts.FishAudio.Playback;
+using STranslate.Plugin.Tts.FishAudio.Streaming;
 using static TestAssertions;
 
 internal static class RegressionProcessSuite
 {
     internal static async Task RunAsync()
     {
+        await PlaybackTimeoutAssertionsCannotAcceptTheirOwnGuardAsync();
+        await PlaybackStallClockRequiresTheOutstandingDataBaselineAsync();
         await PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync();
         WarningAndHardDeadlineUseTheOriginalQueuedClock();
         SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline();
@@ -56,6 +60,48 @@ internal static class RegressionProcessSuite
         clock.Advance(TimeSpan.FromSeconds(1));
         Observe(watchdog, request, clock, "completed", request.CaseIds[0], 1, queued);
         AssertEqual("action", watchdog.FailureStage, "A finite late callback and its cleanup remain failed");
+    }
+
+    private static async Task PlaybackTimeoutAssertionsCannotAcceptTheirOwnGuardAsync()
+    {
+        foreach (var lateFault in new[] { false, true })
+        {
+            var original = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var clock = new ManualStreamingTimeProvider();
+            var held = new HeldContinuationContext();
+            var previous = SynchronizationContext.Current;
+            Task assertion;
+            try
+            {
+                SynchronizationContext.SetSynchronizationContext(held);
+                assertion = StreamingPlaybackSuite.ThrowsAsync<TimeoutException>(original.Task, "Expected a product timeout", clock);
+            }
+            finally { SynchronizationContext.SetSynchronizationContext(previous); }
+            try
+            {
+                clock.Advance(RegressionExecution.Timeout);
+                await held.Posted.Task.WaitAsync(RegressionExecution.Timeout);
+                if (lateFault) original.SetException(new TimeoutException("private-late-source-timeout"));
+                held.Resume();
+                Exception? failure = null;
+                try { await assertion; }
+                catch (Exception error) { failure = error; }
+                AssertEqual(true, failure is RegressionExecutionTimeoutException, "An assertion's wait guard cannot satisfy its expected product TimeoutException, including a source fault after the guard");
+                AssertEqual(lateFault, original.Task.IsCompleted, "The assertion guard cannot complete or cancel its original source");
+            }
+            finally
+            {
+                original.TrySetCanceled();
+                try { await original.Task; } catch { /* Observe the same controlled source. */ }
+            }
+        }
+        var owned = new TimeoutException("private-owned-timeout");
+        await StreamingPlaybackSuite.ThrowsAsync<TimeoutException>(Task.FromException(owned), "The actual owned source timeout remains accepted");
+        var different = new IOException("private-owned-io");
+        Exception? propagated = null;
+        try { await StreamingPlaybackSuite.ThrowsAsync<TimeoutException>(Task.FromException(different), "A different failure cannot satisfy timeout"); }
+        catch (Exception error) { propagated = error; }
+        AssertEqual(true, ReferenceEquals(different, propagated), "A different owned error keeps its original exception identity");
     }
 
     private static async Task PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync()
@@ -109,6 +155,68 @@ internal static class RegressionProcessSuite
         try { await StreamingPlaybackSuite.RunOwnedAsync(() => Task.FromException(original)); }
         catch (Exception error) { failure = error; }
         AssertEqual(true, ReferenceEquals(original, failure), "Completion publication failure cannot replace the original pure-owner exception instance");
+    }
+
+    private static async Task PlaybackStallClockRequiresTheOutstandingDataBaselineAsync()
+    {
+        foreach (var oldReadiness in new[] { true, false })
+        {
+            var clock = new ManualStreamingTimeProvider();
+            var firstQuery = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var input = new StreamingAudioInput();
+            var output = new StreamingAudioOutputDouble
+            {
+                BeforeFirstPlayedQuery = () =>
+                {
+                    firstQuery.TrySetResult();
+                    release.Task.GetAwaiter().GetResult();
+                }
+            };
+            var decoder = new StreamingCleanupDecoderDouble();
+            using var cancel = new CancellationTokenSource();
+            using var player = new StreamingAudioPlayer(() => output, _ => decoder);
+            var play = player.PlayAsync(input.Chunks, "pcm", () => { }, new StreamingActivity(clock), cancel.Token);
+            try
+            {
+                input.Send(new byte[22050]);
+                await firstQuery.Task.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(1, Volatile.Read(ref output.PlayCount), "PlayCount is already published while the first outstanding-data query is still held");
+                output.Read(22050);
+                if (oldReadiness) clock.Advance(TimeSpan.FromSeconds(10));
+                release.TrySetResult();
+                await AsyncTestWait.WaitUntilAsync(() => output.PlayedQueryCount >= 2, "the first outstanding-data baseline before the next pump query");
+                if (oldReadiness)
+                {
+                    AssertEqual(false, play.IsCompleted, "Advancing ten seconds before the first query only initializes a late baseline and cannot prove a product timeout");
+                    var guardClock = new ManualStreamingTimeProvider();
+                    var assertion = StreamingPlaybackSuite.ThrowsAsync<TimeoutException>(play, "Expected a product stall timeout", guardClock);
+                    guardClock.Advance(RegressionExecution.Timeout);
+                    Exception? rejected = null;
+                    try { await assertion; }
+                    catch (Exception error) { rejected = error; }
+                    AssertEqual(true, rejected is RegressionExecutionTimeoutException, "A helper deadline cannot turn the controlled late-baseline race into a passing product assertion");
+                    AssertEqual(false, play.IsCompleted, "The rejected guard leaves the same original player pending until owned cleanup");
+                }
+                else
+                {
+                    clock.Advance(TimeSpan.FromSeconds(10));
+                    await StreamingPlaybackSuite.ThrowsAsync<TimeoutException>(play, "The original player owns its ten-second stall timeout");
+                    AssertEqual(true, play.IsFaulted, "The causal second-query boundary produces the actual source failure at the unchanged ten-second stimulus");
+                }
+            }
+            finally
+            {
+                release.TrySetResult();
+                cancel.Cancel();
+                try { await play.WaitAsync(RegressionExecution.Timeout); }
+                catch (OperationCanceledException) { }
+                catch (TimeoutException) { }
+            }
+            AssertEqual(1, output.StopCount, "Both controlled prefixes stop the same original output once");
+            AssertEqual(1, output.DisposeCount, "Both controlled prefixes dispose the same original output once");
+            AssertEqual(1, decoder.DisposeCount, "Both controlled prefixes dispose the same original decoder once");
+        }
     }
 
     private static void SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline()
@@ -795,6 +903,20 @@ internal static class RegressionProcessSuite
             observe(value!);
             base.WriteLine(value);
         }
+    }
+
+    private sealed class HeldContinuationContext : SynchronizationContext
+    {
+        private SendOrPostCallback? _callback;
+        private object? _state;
+        internal TaskCompletionSource Posted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+            _callback = callback;
+            _state = state;
+            Posted.TrySetResult();
+        }
+        internal void Resume() => Interlocked.Exchange(ref _callback, null)!(_state);
     }
 
     private sealed class FailingReader : TextReader

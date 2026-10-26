@@ -17,6 +17,7 @@ internal sealed class StreamingAudioOutputDouble : IStreamingAudioOutput
     private Exception? _error;
     private IWaveProvider? _provider;
     private long _played;
+    private int _playedQueries;
     internal int PlayCount;
     internal int InitCount;
     internal int StopCount;
@@ -27,6 +28,8 @@ internal sealed class StreamingAudioOutputDouble : IStreamingAudioOutput
     internal Exception? StopFailure;
     internal Exception? DisposeFailure;
     internal Action? OnPlay;
+    internal Action? BeforeFirstPlayedQuery;
+    internal int PlayedQueryCount => Volatile.Read(ref _playedQueries);
     internal readonly List<byte> DeviceBytes = [];
     internal int BufferedBytes => (_provider as StreamingPcmBuffer)?.BufferedBytes ?? 0;
     public CancellationToken FailureToken => _failure.Token;
@@ -43,7 +46,11 @@ internal sealed class StreamingAudioOutputDouble : IStreamingAudioOutput
         OnPlay?.Invoke();
         Interlocked.Increment(ref PlayCount);
     }
-    public long GetPlayedBytes() => Interlocked.Read(ref _played);
+    public long GetPlayedBytes()
+    {
+        if (Interlocked.Increment(ref _playedQueries) == 1) BeforeFirstPlayedQuery?.Invoke();
+        return Interlocked.Read(ref _played);
+    }
     public void ThrowIfFailed() { if (_error is { } error) throw error; }
     public void Stop()
     {

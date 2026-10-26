@@ -528,6 +528,7 @@ internal static class StreamingPlaybackSuite
         input.Send(new byte[22050]);
         await UntilAsync(() => output.PlayCount == 1, "stall test startup");
         output.Read(22050); // Queued real data is entirely inside driver's read-ahead.
+        await UntilAsync(() => output.PlayedQueryCount >= 2, "the first outstanding-data baseline was recorded before advancing its clock");
         clock.Advance(TimeSpan.FromSeconds(10));
         await ThrowsAsync<TimeoutException>(play, "Driver read-ahead with no played position progress must time out");
 
@@ -605,10 +606,22 @@ internal static class StreamingPlaybackSuite
         throw new InvalidOperationException("Expected cancellation.");
     }
 
-    private static async Task ThrowsAsync<T>(Task task, string reason) where T : Exception
+    internal static async Task ThrowsAsync<T>(Task task, string reason, TimeProvider? guardClock = null) where T : Exception
     {
-        try { await task.WaitAsync(RegressionExecution.Timeout); }
-        catch (T) { return; }
+        try { await RegressionExecution.WaitAsync(task, guardClock); }
+        catch (T error)
+        {
+            // A wait guard can have the same type as the expected product fault.
+            // Only the already-faulted original task owns an acceptable exception.
+            if (task.IsFaulted)
+            {
+                Exception? original = null;
+                try { await task; }
+                catch (Exception sourceError) { original = sourceError; }
+                if (ReferenceEquals(error, original)) return;
+            }
+            throw;
+        }
         throw new InvalidOperationException(reason);
     }
 }
