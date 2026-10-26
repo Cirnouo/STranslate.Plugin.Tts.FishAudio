@@ -15,27 +15,41 @@ internal static class VoiceDescriptionSuite
 {
     internal static async Task RunAsync(string? directory = null)
     {
-        await SearchAdjustmentControlSuite.ObserveMatrixActionAsync("construction", stage =>
+        foreach (var testCase in CreateCases(directory))
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? directory = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
         {
-            stage("VM construction begin");
-            var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
-            try
+            ("cards.description/construction", () => SearchAdjustmentControlSuite.ObserveMatrixActionAsync("construction", stage =>
             {
-                stage("compiled view/native layout begin");
-                SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
-                stage("compiled view/native layout completed");
-            }
-            finally
-            {
-                stage("VM cleanup begin"); vm.Dispose(); stage("VM cleanup completed");
-            }
-        }, prefix: "description", details: "shared-guard construction action.");
+                stage("VM construction begin");
+                var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
+                try
+                {
+                    stage("compiled view/native layout begin");
+                    SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
+                    stage("compiled view/native layout completed");
+                }
+                finally
+                {
+                    stage("VM cleanup begin"); vm.Dispose(); stage("VM cleanup completed");
+                }
+            }, prefix: "description", details: "shared-guard construction action.")),
+        };
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 400d, 424, 480, 640 })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"{mode}/{width}/{(dark ? "dark" : "light")}",
+        {
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            var id = FormattableString.Invariant($"cards.description/{(dark ? "dark" : "light")}/dpi-1-25/width-{width:0}/{browse}");
+            cases.Add((id, () => SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"{mode}/{width}/{(dark ? "dark" : "light")}",
                 stage => Inspect(width, dark, mode, directory, stage), prefix: "description",
-                details: "selected/active-mode pair; full runtime sequence at actual 125% root DPI.");
+                details: "selected/active-mode pair; full runtime sequence at actual 125% root DPI.")));
+        }
+        return cases;
     }
 
     private static void Inspect(double width, bool dark, VoiceBrowseMode mode, string? directory, Action<string> stage)

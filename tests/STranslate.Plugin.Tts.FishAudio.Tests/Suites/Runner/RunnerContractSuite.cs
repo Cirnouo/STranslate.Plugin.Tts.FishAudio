@@ -4,6 +4,7 @@ internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        await RunStageAsync("native-owner-aliases", NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync);
         await RunStageAsync("streaming-owner-aliases", StreamingOwnerAliasesPreserveSelectionAndReplayAsync);
         await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
         await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
@@ -52,6 +53,72 @@ internal static class RunnerContractSuite
         File.Delete(fixture.ReportPath);
         calls.Clear();
         Require(await fixture.RunAsync([], cases) == 0 && calls.Count == 3, "No arguments retain the complete default run.");
+    }
+
+    private static async Task NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync()
+    {
+        using var fixture = new RunnerFixture();
+        var calls = new List<string>();
+        RegressionCase[] cases =
+        [
+            Fake("cards.like/shared-card-template-is-compiled", "native-cards"),
+            Fake("cards.like/presentation/first", "native-cards"),
+            Fake("popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry", "core"),
+            Fake("cards.like/presentation/second", "native-cards"),
+            Fake("popup.search-adjustment/native/first", "native-popups"),
+            Fake("popup.search-adjustment/native/second", "native-popups"),
+            Fake("preview.accepted-continuity/owner", "native-cards")
+        ];
+        Require(await fixture.RunAsync(["--case", "cards.like/run-all", "--case", cases[3].Id,
+            "--group", "popup.search-adjustment/run-all"], cases) == 0,
+            "Former native aggregates remain exact case/group aliases.");
+        Require(calls.SequenceEqual(cases.Where((_, index) => index is 1 or 3 or 4 or 5).Select(item => item.Id)),
+            "Native alias union preserves catalog order and excludes the earlier template and core diagnostic siblings.");
+        foreach (var args in new string[][]
+        {
+            ["--case", "cards.like/run-all", "--partition", "core"],
+            ["--group", "popup.search-adjustment/run-all.extra"],
+            ["--case", "cards.like/removed"]
+        })
+        {
+            calls.Clear();
+            Require(await fixture.RunAsync(args, cases) != 0 && calls.Count == 0,
+                "Empty partition constraints and unknown native aliases fail before executing delegates.");
+        }
+        calls.Clear();
+        Require(await fixture.RunAsync(["--case", "cards.like/run-all"], [cases[0]]) != 0 && calls.Count == 0,
+            "A known native alias with no matching owned leaves fails.");
+
+        var source = await RegressionSource.CaptureAsync();
+        source.RecordDirtyScope(cases);
+        var previous = new RegressionReport
+        {
+            Source = source.Identity,
+            Cases =
+            [
+                new() { Id = "cards.like/run-all", Partition = "native-cards", Outcome = "passed" },
+                new() { Id = "popup.search-adjustment/run-all", Partition = "native-popups", Outcome = "failed", ExceptionType = typeof(IOException).FullName },
+                new() { Id = "preview.accepted-continuity/run-all", Partition = "native-cards", Outcome = "not-run" }
+            ]
+        };
+        var input = Path.Combine(fixture.DirectoryPath, "native-previous.json");
+        previous.Create(input);
+        previous.Write(input);
+        var originalFiles = new[] { input }.Concat(Directory.EnumerateFiles(RegressionReport.GenerationsRoot(input), "*.json", SearchOption.AllDirectories))
+            .ToDictionary(path => path, File.ReadAllBytes, StringComparer.OrdinalIgnoreCase);
+        var replayPath = Path.Combine(fixture.DirectoryPath, "native-replay.json");
+        calls.Clear();
+        Require(await fixture.RunAsync(["--rerun-failed", input, "--results", replayPath], cases) == 0,
+            "Old failed and unexecuted native aggregates can recover into current owner leaves.");
+        Require(calls.SequenceEqual(cases.Skip(4).Select(item => item.Id)),
+            "Recovery expands only failed/not-run aliases and does not infer leaf passes from the prior passed aggregate.");
+        var replay = RegressionReport.Read(replayPath);
+        Require(replay.PreviousRunId == previous.RunId && replay.Cases.All(item => item.Outcome == "passed") && replay.Cases.Count == 3,
+            "The new report owns exactly the current recovered scope and retains the prior run identity.");
+        Require(originalFiles.All(item => File.ReadAllBytes(item.Key).SequenceEqual(item.Value)),
+            "Native recovery leaves the original failed report and every immutable generation unchanged.");
+
+        RegressionCase Fake(string id, string partition) => new(id, partition, () => { calls.Add(id); return Task.CompletedTask; });
     }
 
     private static async Task StreamingOwnerAliasesPreserveSelectionAndReplayAsync()

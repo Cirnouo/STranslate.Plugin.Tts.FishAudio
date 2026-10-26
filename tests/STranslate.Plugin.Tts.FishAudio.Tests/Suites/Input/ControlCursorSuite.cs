@@ -31,34 +31,49 @@ internal static class ControlCursorSuite
 
     internal static async Task RunAsync()
     {
-        await SearchAdjustmentControlSuite.ObserveMatrixActionAsync("construction", stage =>
+        foreach (var testCase in CreateCases())
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
         {
-            using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
-            SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
-            stage("compiled themed construction and layout completed");
-        }, prefix: "cursor", details: "separate compiled construction action.");
+            ("input.cursor/construction", () => SearchAdjustmentControlSuite.ObserveMatrixActionAsync("construction", stage =>
+            {
+                using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
+                SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
+                stage("compiled themed construction and layout completed");
+            }, prefix: "cursor", details: "separate compiled construction action.")),
+        };
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 320d, 640 })
         foreach (var workflow in new[] { CursorWorkflow.Format, CursorWorkflow.Search, CursorWorkflow.ById, CursorWorkflow.Favorites, CursorWorkflow.General, CursorWorkflow.Overlays })
-            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{workflow}/{width}/{dark}",
-                stage => Inspect(width, dark, workflow, stage), prefix: "cursor", details: "independently owned plugin native interaction workflow.");
+        {
+            var flow = workflow == CursorWorkflow.ById ? "by-id" : workflow.ToString().ToLowerInvariant();
+            var id = FormattableString.Invariant($"input.cursor/plugin/{(dark ? "dark" : "light")}/width-{width:0}/{flow}");
+            cases.Add((id, () => SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{workflow}/{width}/{dark}",
+                stage => Inspect(width, dark, workflow, stage), prefix: "cursor", details: "independently owned plugin native interaction workflow.")));
+        }
         foreach (var (dark, workflow) in new[]
         {
             (false, NativePeerWorkflow.Parts), (false, NativePeerWorkflow.Template),
             (true, NativePeerWorkflow.Parts), (true, NativePeerWorkflow.Template),
             (false, NativePeerWorkflow.Lifecycle), (true, NativePeerWorkflow.Lifecycle),
         })
-            await SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{workflow.ToString().ToLowerInvariant()}/{dark}", stage =>
-            {
-                using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
-                var view = SettingsLayoutSuite.CreateThemedView(vm);
-                view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
-                ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-                SettingsLayoutSuite.Layout(view);
-                InspectNativePeers(view, stage, workflow);
-            }, prefix: "cursor", details: workflow == NativePeerWorkflow.Lifecycle
-                ? FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {RegressionExecution.Timeout.TotalSeconds}s action deadline.")
-                : "500 DIP native peers.", executionTimeout: workflow == NativePeerWorkflow.Lifecycle ? RegressionExecution.Timeout : null);
+            cases.Add(($"input.cursor/native/{(dark ? "dark" : "light")}/{workflow.ToString().ToLowerInvariant()}",
+                () => SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{workflow.ToString().ToLowerInvariant()}/{dark}", stage =>
+                {
+                    using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
+                    var view = SettingsLayoutSuite.CreateThemedView(vm);
+                    view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+                    ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+                    SettingsLayoutSuite.Layout(view);
+                    InspectNativePeers(view, stage, workflow);
+                }, prefix: "cursor", details: workflow == NativePeerWorkflow.Lifecycle
+                    ? FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {RegressionExecution.Timeout.TotalSeconds}s action deadline.")
+                    : "500 DIP native peers.", executionTimeout: workflow == NativePeerWorkflow.Lifecycle ? RegressionExecution.Timeout : null)));
+        return cases;
     }
 
     private enum CursorWorkflow { Format, Search, ById, Favorites, General, Overlays }

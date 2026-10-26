@@ -23,18 +23,35 @@ internal static class SettingsLayoutSuite
 {
     internal static async Task LikePresentationAsync()
     {
-        await RunOnStaThreadAsync(FavoriteVoicesTabMatchesPeerTabs);
-        await RunOnStaThreadAsync(SelectedVoiceHeartSharesFavoriteState);
+        foreach (var testCase in CreateLikePresentationCases())
+            await testCase.Run();
     }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateLikePresentationCases() =>
+    [
+        ("cards.like/presentation/tab-presentation-and-live-locales", () => RunOnStaThreadAsync(FavoriteVoicesTabMatchesPeerTabs)),
+        ("cards.like/presentation/selected-heart-shared-state", () => RunOnStaThreadAsync(SelectedVoiceHeartSharesFavoriteState)),
+    ];
 
     internal static async Task CompactNumericGeometryAsync()
     {
-        // Explicit root-DPI propagation warms shared WPF theme metrics. Keep
-        // this group after VoiceCardInkSuite's first-use characterization.
+        foreach (var testCase in CreateCompactNumericCases())
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCompactNumericCases()
+    {
+        // Actual root-DPI work remains deferred until after the ink first-use boundary.
+        var cases = new List<(string Id, Func<Task> Run)>();
         foreach (var (language, culture) in InlineNumericEditorSuite.Cultures)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
-            await RunOnStaThreadAsync(() => InlineNumericEditorSuite.CompactGeometryForCulture(language, culture, dark, dpi));
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            var id = $"numeric.geometry/compact/{language}/culture-{culture.ToLowerInvariant()}/{(dark ? "dark" : "light")}/dpi-{scale}";
+            cases.Add((id, () => RunOnStaThreadAsync(() => InlineNumericEditorSuite.CompactGeometryForCulture(language, culture, dark, dpi))));
+        }
+        return cases;
     }
 
     internal static async Task InlineNumericInteractionsAsync()

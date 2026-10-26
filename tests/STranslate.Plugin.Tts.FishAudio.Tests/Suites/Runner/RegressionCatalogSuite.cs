@@ -22,6 +22,37 @@ internal static class RegressionCatalogSuite
         AssertEqual(true, expected.SequenceEqual(cards.Select(item => item.Id), StringComparer.Ordinal), "The card context coverage and native first-use order remain complete");
         AssertEqual(true, cards.All(item => item.Partition == "native-cards"), "Each card context retains native-card ownership");
 
+        foreach (var (oldId, count, partition) in new[]
+        {
+            ("cards.like/run-all", 87, "native-cards"),
+            ("cards.avatar/run-all", 36, "native-cards"),
+            ("cards.description/run", 25, "native-cards"),
+            ("input.cursor/run", 31, "native-input"),
+            ("input.settings/run-all", 142, "native-input"),
+            ("numeric.geometry/compact-numeric-geometry", 48, "native-settings"),
+            ("numeric.bottom/run", 12, "native-settings"),
+            ("cards.ink/run", 25, "native-settings"),
+            ("popup.search-adjustment/run-all", 60, "native-popups"),
+            ("popup.language-tags/run-all", 84, "native-popups"),
+            ("preview.search-retention/run-all", 7, "native-cards"),
+            ("preview.accepted-continuity/run-all", 17, "native-cards")
+        })
+        {
+            AssertEqual(false, cases.Any(item => item.Id == oldId), "A former native aggregate is an alias rather than duplicate default work");
+            var owners = RegressionCaseAliases.Resolve(oldId, cases);
+            AssertEqual(count, owners.Length, "The native aggregate alias retains every original independently dispatched owner");
+            AssertEqual(true, owners.All(id => cases.Single(item => item.Id == id).Partition == partition),
+                "Native leaves retain their existing process partition");
+        }
+        AssertEqual(false, RegressionCaseAliases.Resolve("cards.like/run-all", cases).Contains("cards.like/shared-card-template-is-compiled", StringComparer.Ordinal),
+            "Like traversal excludes the earlier standalone template invocation");
+        AssertEqual(true, RegressionCaseAliases.Resolve("popup.search-adjustment/run-all", cases)
+            .All(id => id.StartsWith("popup.search-adjustment/native/", StringComparison.Ordinal)),
+            "Search native traversal excludes separate core observer contracts");
+        var searchLast = RegressionCaseAliases.Resolve("popup.search-adjustment/run-all", cases)[^1];
+        AssertEqual(true, cases.ToList().FindIndex(item => item.Id == searchLast) < cases.ToList().FindIndex(item => item.Id == "popup.keyboard-state/run"),
+            "The complete Search owner sequence remains before native keyboard first use");
+
         var anchors = new[]
         {
             "cards.ink/run",
@@ -35,9 +66,10 @@ internal static class RegressionCatalogSuite
         var previous = -1;
         foreach (var id in anchors)
         {
-            var index = cases.ToList().FindIndex(item => item.Id == id);
-            AssertEqual(true, index > previous, "Ink and numeric native first-use anchors retain their original dispatch order");
-            previous = index;
+            var owned = RegressionCaseAliases.Resolve(id, cases);
+            var indices = owned.Select(owner => cases.ToList().FindIndex(item => item.Id == owner)).ToArray();
+            AssertEqual(true, indices.Min() > previous, "Ink and numeric native first-use anchors retain their original dispatch order");
+            previous = indices.Max();
         }
         AssertEqual(true, cases.Single(item => item.Id == "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry").Partition == "core", "Injected dispatcher diagnostics stay offline core work");
         AssertEqual(true, cases.Single(item => item.Id == "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread").Partition == "native-settings", "Real command listeners retain native-settings ownership");

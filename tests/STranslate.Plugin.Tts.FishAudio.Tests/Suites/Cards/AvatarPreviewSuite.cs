@@ -30,32 +30,48 @@ internal static class AvatarPreviewSuite
 
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
+        foreach (var testCase in CreateCases(proofDirectory))
+            await testCase.Run();
+        Console.WriteLine("Avatar preview compiled hover/nonfocusable and fake network/audio lifecycle tests passed (four locations, two themes, 100/125/150%, 320/640 DIP).");
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
         foreach (var width in new[] { 320d, 640d })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
-            var elapsed = Stopwatch.StartNew();
-            var name = $"{mode}/{(dark ? "Dark" : "Light")}/{dpi * 100}%/{width}";
-            Console.WriteLine(FormattableString.Invariant($"[avatar-preview/{name}] queued with {RegressionExecution.Timeout.TotalSeconds}s action deadline."));
-            var lastLayoutSubstage = "not entered";
-            try
-            {
-                await RunOnStaThreadAsync(async () =>
-                {
-                    Console.WriteLine($"[avatar-preview/{name}] entered after {elapsed.ElapsedMilliseconds}ms.");
-                    var passed = false;
-                    try { await CheckLifecycleAsync(mode, dark, dpi, width, proofDirectory, phase => Volatile.Write(ref lastLayoutSubstage, phase)); passed = true; }
-                    finally { Console.WriteLine($"[avatar-preview/{name}] completed after {elapsed.ElapsedMilliseconds}ms; passed={passed}."); }
-                });
-            }
-            catch (Exception error)
-            {
-                Console.WriteLine($"[avatar-preview/{name}] failed ({error.GetType().Name}) after {elapsed.ElapsedMilliseconds}ms; last-layout-substage={Volatile.Read(ref lastLayoutSubstage)}.");
-                throw;
-            }
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            var id = FormattableString.Invariant($"cards.avatar/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width:0}/{browse}");
+            cases.Add((id, () => RunContextAsync(mode, dark, dpi, width, proofDirectory)));
         }
-        Console.WriteLine("Avatar preview compiled hover/nonfocusable and fake network/audio lifecycle tests passed (four locations, two themes, 100/125/150%, 320/640 DIP).");
+        return cases;
+    }
+
+    private static async Task RunContextAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory)
+    {
+        var elapsed = Stopwatch.StartNew();
+        var name = $"{mode}/{(dark ? "Dark" : "Light")}/{dpi * 100}%/{width}";
+        Console.WriteLine(FormattableString.Invariant($"[avatar-preview/{name}] queued with {RegressionExecution.Timeout.TotalSeconds}s action deadline."));
+        var lastLayoutSubstage = "not entered";
+        try
+        {
+            await RunOnStaThreadAsync(async () =>
+            {
+                Console.WriteLine($"[avatar-preview/{name}] entered after {elapsed.ElapsedMilliseconds}ms.");
+                var passed = false;
+                try { await CheckLifecycleAsync(mode, dark, dpi, width, proofDirectory, phase => Volatile.Write(ref lastLayoutSubstage, phase)); passed = true; }
+                finally { Console.WriteLine($"[avatar-preview/{name}] completed after {elapsed.ElapsedMilliseconds}ms; passed={passed}."); }
+            });
+        }
+        catch (Exception error)
+        {
+            Console.WriteLine($"[avatar-preview/{name}] failed ({error.GetType().Name}) after {elapsed.ElapsedMilliseconds}ms; last-layout-substage={Volatile.Read(ref lastLayoutSubstage)}.");
+            throw;
+        }
     }
 
     private static async Task CheckLifecycleAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory, Action<string> layoutSubstage)
