@@ -209,26 +209,65 @@ internal static class RegressionCiInfrastructureSuite
         foreach ($path in $original.Keys) { Require ([Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) -ceq $original[$path]) 'collector-original-bytes-unchanged' }
 
         $fixtureJobs = @(foreach ($id in 1..101) { [pscustomobject]@{ id = $id; run_id = 431; run_attempt = 2; name = "Regression (core) $id"; status = 'completed'; conclusion = 'success'; head_sha = ('c' * 40); raw = 'retained' } })
+        $fixtureAttempts = @(
+            [pscustomobject]@{ id = 431; run_attempt = 1; run_started_at = '2026-01-01T00:00:00Z'; status = 'completed' },
+            [pscustomobject]@{ id = 431; run_attempt = 2; run_started_at = '2026-01-01T01:00:00Z'; status = 'in_progress' }
+        )
+        $fetchAttempts = { param($number) $fixtureAttempts[$number - 1] }
         $script:pages = 0
-        $snapshot = Get-RegressionJobSnapshot 'owner/repository' 431 {
+        $script:attemptCalls = @()
+        $snapshot = Get-RegressionJobSnapshot 'owner/repository' 431 2 {
             param($page)
             $script:pages++
             if ($page -eq 1) { [pscustomobject]@{ total_count = 101; jobs = @($fixtureJobs[0..99]) } }
             elseif ($page -eq 2) { [pscustomobject]@{ total_count = 101; jobs = @($fixtureJobs[100]) } }
             else { throw 'unexpected-page' }
+        } {
+            param($number)
+            $script:attemptCalls += $number
+            & $fetchAttempts $number
         }
+        Require (($script:attemptCalls -join ',') -ceq '1,2' -and $snapshot.attempts.Count -eq 2 -and $snapshot.attempts[0].runAttempt -eq 1 -and $snapshot.attempts[1].runAttempt -eq 2 -and $snapshot.attempts[1].runStartedAt -ceq '2026-01-01T01:00:00Z') 'jobs-authenticated-attempt-fences'
         Require ($script:pages -eq 2 -and $snapshot.repository -ceq 'owner/repository' -and $snapshot.runId -eq 431 -and $snapshot.filter -ceq 'all' -and $snapshot.totalCount -eq 101 -and $snapshot.jobs.Count -eq 101 -and $snapshot.jobs[100].raw -ceq 'retained') 'jobs-complete-raw-two-page-snapshot'
         foreach ($fault in @('truncated', 'duplicate', 'changed-total', 'unavailable', 'foreign-run')) {
             Reject {
-                Get-RegressionJobSnapshot 'owner/repository' 431 {
+                Get-RegressionJobSnapshot 'owner/repository' 431 2 {
                     param($page)
                     if ($fault -eq 'unavailable') { throw 'fake-api-unavailable' }
                     if ($page -eq 1) { return [pscustomobject]@{ total_count = 101; jobs = @($fixtureJobs[0..99]) } }
                     $tail = if ($fault -eq 'truncated') { @() } elseif ($fault -eq 'duplicate') { @($fixtureJobs[99]) } elseif ($fault -eq 'foreign-run') { @([pscustomobject]@{ id = 101; run_id = 999 }) } else { @($fixtureJobs[100]) }
                     [pscustomobject]@{ total_count = $(if ($fault -eq 'changed-total') { 102 } else { 101 }); jobs = $tail }
-                }
+                } $fetchAttempts
             } "jobs-reject-$fault"
         }
+        foreach ($fault in @('foreign-run', 'wrong-attempt', 'missing', 'unavailable', 'missing-start', 'invalid-start', 'non-utc', 'equal-start', 'reversed-start', 'local-kind')) {
+            Reject {
+                Get-RegressionJobSnapshot 'owner/repository' 431 2 {
+                    [pscustomobject]@{ total_count = 1; jobs = @($fixtureJobs[0]) }
+                } {
+                    param($number)
+                    if ($fault -eq 'unavailable') { throw 'fake-attempt-api-unavailable' }
+                    if ($fault -eq 'missing' -and $number -eq 2) { return $null }
+                    $record = [pscustomobject]@{ id = 431; run_attempt = $number; run_started_at = $fixtureAttempts[$number - 1].run_started_at }
+                    if ($fault -eq 'foreign-run') { $record.id = 999 }
+                    if ($fault -eq 'wrong-attempt' -and $number -eq 2) { $record.run_attempt = 1 }
+                    if ($fault -eq 'missing-start') { $record.run_started_at = $null }
+                    if ($fault -eq 'invalid-start') { $record.run_started_at = '2026-02-30T00:00:00Z' }
+                    if ($fault -eq 'non-utc') { $record.run_started_at = '2026-01-01T01:00:00+01:00' }
+                    if ($fault -eq 'equal-start') { $record.run_started_at = $fixtureAttempts[0].run_started_at }
+                    if ($fault -eq 'reversed-start') { $record.run_started_at = $fixtureAttempts[2 - $number].run_started_at }
+                    if ($fault -eq 'local-kind') { $record.run_started_at = [DateTime]::SpecifyKind([DateTime]::Parse('2026-01-01T00:00:00'), [DateTimeKind]::Unspecified) }
+                    $record
+                }
+            } "jobs-reject-attempt-$fault"
+        }
+        $typedDates = Get-RegressionJobSnapshot 'owner/repository' 431 2 {
+            [pscustomobject]@{ total_count = 1; jobs = @($fixtureJobs[0]) }
+        } {
+            param($number)
+            [pscustomobject]@{ id = 431; run_attempt = $number; run_started_at = [DateTime]::SpecifyKind([DateTime]::Parse('2026-01-01T00:00:00').AddHours($number), [DateTimeKind]::Utc) }
+        }
+        Require ($typedDates.attempts.Count -eq 2 -and $typedDates.attempts[1].runStartedAt -ceq '2026-01-01T02:00:00.0000000Z') 'jobs-rest-materialized-utc-date'
         Write-Output 'ci-helper-contracts-passed'
         """;
 }

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 internal sealed record RegressionCiExpectedContext(string Repository, long WorkflowRunId, int CurrentAttempt,
     RegressionSourceIdentity Source, string Configuration, string Sdk);
@@ -93,6 +94,9 @@ internal static class RegressionCiVerifier
     }
 
     private sealed record Job(string Status, string? Conclusion);
+    private sealed record JobView(string Partition, int Attempt, Job Job, JsonElement Record);
+    private sealed record Execution(DateTimeOffset Started, DateTimeOffset Completed, string Stamp);
+    private sealed record StepExecution(string Name, string Status, string? Conclusion, long Number, long? Started, long? Completed);
 
     private static Dictionary<(string Partition, int Attempt), Job> ReadJobs(RegressionCiExpectedContext expected, string path)
     {
@@ -103,8 +107,10 @@ internal static class RegressionCiVerifier
             Text(root, "filter") == "all", "foreign-ci-job-snapshot");
         var items = Property(root, "jobs");
         Require(items.ValueKind == JsonValueKind.Array && Number(root, "totalCount") == items.GetArrayLength(), "incomplete-ci-job-snapshot");
+        var fences = ReadAttemptFences(root, expected.CurrentAttempt);
         var ids = new HashSet<long>();
-        var result = new Dictionary<(string, int), Job>();
+        var advertisedOwners = new HashSet<(string, int)>();
+        var views = new List<JobView>();
         foreach (var item in items.EnumerateArray())
         {
             var id = Number(item, "id");
@@ -113,9 +119,7 @@ internal static class RegressionCiVerifier
                 attemptNumber > 0 && attemptNumber <= expected.CurrentAttempt, "invalid-ci-job-owner");
             var name = Text(item, "name");
             var status = Text(item, "status");
-            var conclusionValue = Property(item, "conclusion");
-            Require(conclusionValue.ValueKind is JsonValueKind.String or JsonValueKind.Null, "invalid-ci-job-conclusion");
-            var conclusion = conclusionValue.ValueKind == JsonValueKind.Null ? null : conclusionValue.GetString();
+            var conclusion = NullableText(item, "conclusion");
             const string marker = "Regression (";
             var start = name.LastIndexOf(marker, StringComparison.Ordinal);
             if (start < 0) continue;
@@ -123,9 +127,113 @@ internal static class RegressionCiVerifier
                 name.IndexOf(marker, StringComparison.Ordinal) == start, "ambiguous-ci-job-name");
             var partition = name[(start + marker.Length)..^1];
             Require(RegressionProcessProtocol.Partitions.Contains(partition, StringComparer.Ordinal), "unknown-ci-job-partition");
-            Require(result.TryAdd((partition, (int)attemptNumber), new(status, conclusion)), "duplicate-ci-partition-job");
+            Require(advertisedOwners.Add((partition, (int)attemptNumber)), "duplicate-ci-partition-job");
+            views.Add(new(partition, (int)attemptNumber, new(status, conclusion), item));
+        }
+
+        var result = new Dictionary<(string, int), Job>();
+        var executions = new Dictionary<(string Partition, int Attempt), Execution>();
+        foreach (var view in views.OrderBy(item => item.Attempt))
+        {
+            // An unsuccessful advertised attempt always remains an owner. Missing
+            // timing cannot disguise a newer failure as a cached successful job.
+            if (view.Job.Status != "completed" || view.Job.Conclusion != "success")
+            {
+                result.Add((view.Partition, view.Attempt), view.Job);
+                continue;
+            }
+            var execution = ReadExecution(view);
+            if (execution.Started >= fences[view.Attempt - 1])
+            {
+                result.Add((view.Partition, view.Attempt), view.Job);
+                executions.Add((view.Partition, view.Attempt), execution);
+                continue;
+            }
+
+            // GitHub can advertise a cached sibling under a new ID/attempt. Only
+            // its complete execution stamp can resolve an earlier actual owner;
+            // IDs, creation times and runner-group metadata are not that stamp.
+            Require(execution.Completed < fences[view.Attempt - 1], "overlapping-cached-ci-job");
+            var owners = executions.Where(item => item.Key.Partition == view.Partition && item.Key.Attempt < view.Attempt &&
+                item.Value.Stamp == execution.Stamp).ToArray();
+            Require(owners.Length == 1, "unmatched-or-ambiguous-cached-ci-job");
         }
         return result;
+    }
+
+    private static DateTimeOffset[] ReadAttemptFences(JsonElement root, int currentAttempt)
+    {
+        var items = Property(root, "attempts");
+        Require(items.ValueKind == JsonValueKind.Array && items.GetArrayLength() == currentAttempt, "incomplete-ci-attempt-fences");
+        var result = new DateTimeOffset[currentAttempt];
+        var index = 0;
+        foreach (var item in items.EnumerateArray())
+        {
+            Require(Number(item, "runAttempt") == index + 1, "invalid-ci-attempt-fence-owner");
+            result[index] = UtcTime(Property(item, "runStartedAt"));
+            Require(index == 0 || result[index] > result[index - 1], "unordered-ci-attempt-fences");
+            index++;
+        }
+        return result;
+    }
+
+    private static Execution ReadExecution(JobView view)
+    {
+        var item = view.Record;
+        var sha = Text(item, "head_sha");
+        Require(sha.Length is 40 or 64 && sha.All(character => char.IsAsciiHexDigit(character)), "invalid-ci-execution-sha");
+        var started = UtcTime(Property(item, "started_at"));
+        var completed = UtcTime(Property(item, "completed_at"));
+        Require(completed >= started, "invalid-ci-execution-time");
+        var runnerId = Number(item, "runner_id");
+        var runnerName = Text(item, "runner_name");
+        Require(runnerId > 0 && !string.IsNullOrWhiteSpace(runnerName), "invalid-ci-execution-runner");
+        var stepItems = Property(item, "steps");
+        Require(stepItems.ValueKind == JsonValueKind.Array && stepItems.GetArrayLength() > 0, "missing-ci-execution-steps");
+        var steps = new List<StepExecution>();
+        var previousNumber = 0L;
+        foreach (var step in stepItems.EnumerateArray())
+        {
+            var name = Text(step, "name");
+            var status = Text(step, "status");
+            var conclusion = NullableText(step, "conclusion");
+            var number = Number(step, "number");
+            Require(number > previousNumber && !string.IsNullOrWhiteSpace(name), "invalid-ci-execution-step");
+            var stepStartedValue = Property(step, "started_at");
+            var stepCompletedValue = Property(step, "completed_at");
+            DateTimeOffset? stepStarted = stepStartedValue.ValueKind == JsonValueKind.Null ? null : UtcTime(stepStartedValue);
+            DateTimeOffset? stepCompleted = stepCompletedValue.ValueKind == JsonValueKind.Null ? null : UtcTime(stepCompletedValue);
+            Require((stepStarted is null && stepCompleted is null && conclusion == "skipped") ||
+                (stepStarted is not null && stepCompleted is not null && stepStarted >= started &&
+                    stepCompleted >= stepStarted && stepCompleted <= completed), "invalid-ci-execution-step-time");
+            steps.Add(new(name, status, conclusion, number, stepStarted?.UtcTicks, stepCompleted?.UtcTicks));
+            previousNumber = number;
+        }
+        var stamp = JsonSerializer.Serialize(new
+        {
+            view.Partition, Name = Text(item, "name"), HeadSha = sha.ToLowerInvariant(), view.Job.Status, view.Job.Conclusion,
+            Started = started.UtcTicks, Completed = completed.UtcTicks, RunnerId = runnerId, RunnerName = runnerName, Steps = steps
+        });
+        return new(started, completed, stamp);
+    }
+
+    private static DateTimeOffset UtcTime(JsonElement value)
+    {
+        Require(value.ValueKind == JsonValueKind.String, "invalid-ci-execution-time");
+        var text = value.GetString()!;
+        var valid = DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var result);
+        Require(valid && result.Offset == TimeSpan.Zero && Regex.IsMatch(text,
+            @"\A[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,7})?(?:Z|\+00:00)\z", RegexOptions.CultureInvariant),
+            "invalid-ci-execution-time");
+        return result;
+    }
+
+    private static string? NullableText(JsonElement root, string name)
+    {
+        var value = Property(root, name);
+        Require(value.ValueKind == JsonValueKind.Null ||
+            (value.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(value.GetString())), "invalid-ci-json-text");
+        return value.ValueKind == JsonValueKind.Null ? null : value.GetString();
     }
 
     private static Dictionary<(string Partition, int Attempt), string> IndexBundles(RegressionCiExpectedContext expected, string directory)

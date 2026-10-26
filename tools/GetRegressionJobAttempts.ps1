@@ -3,8 +3,9 @@ param([string]$OutputPath)
 $ErrorActionPreference = 'Stop'
 
 function Get-RegressionJobSnapshot {
-    param([string]$Repository, [long]$RunId, [scriptblock]$FetchPage)
-    if ($Repository -cnotmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' -or $RunId -le 0 -or $null -eq $FetchPage) {
+    param([string]$Repository, [long]$RunId, [int]$CurrentAttempt, [scriptblock]$FetchPage, [scriptblock]$FetchAttempt)
+    if ($Repository -cnotmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$' -or $RunId -le 0 -or $CurrentAttempt -le 0 -or
+        $null -eq $FetchPage -or $null -eq $FetchAttempt) {
         throw 'ci-jobs-invalid-context'
     }
     $all = [Collections.Generic.List[object]]::new()
@@ -34,7 +35,37 @@ function Get-RegressionJobSnapshot {
         if ($all.Count -eq $expected -or $jobs.Count -lt 100) { break }
     }
     if ($all.Count -ne $expected) { throw 'ci-jobs-pagination-mismatch' }
-    [pscustomobject]@{ repository = $Repository; runId = $RunId; filter = 'all'; totalCount = $expected; jobs = @($all.ToArray()) }
+    $attempts = [Collections.Generic.List[object]]::new()
+    $previousStart = [DateTimeOffset]::MinValue
+    foreach ($number in 1..$CurrentAttempt) {
+        $record = & $FetchAttempt $number
+        $recordRun = 0L
+        $recordAttempt = 0
+        if ($null -eq $record -or -not [long]::TryParse([string]$record.id, [ref]$recordRun) -or $recordRun -ne $RunId -or
+            -not [int]::TryParse([string]$record.run_attempt, [ref]$recordAttempt) -or $recordAttempt -ne $number) {
+            throw 'ci-jobs-invalid-attempt-owner'
+        }
+        # REST JSON dates may already be materialized by PowerShell. Only an
+        # explicit UTC kind/offset can retain the attempt's time boundary.
+        $rawStart = $record.run_started_at
+        if ($rawStart -is [DateTime]) {
+            if ($rawStart.Kind -ne [DateTimeKind]::Utc) { throw 'ci-jobs-invalid-attempt-start' }
+            $startText = $rawStart.ToString('O', [Globalization.CultureInfo]::InvariantCulture)
+        } elseif ($rawStart -is [DateTimeOffset]) {
+            if ($rawStart.Offset -ne [TimeSpan]::Zero) { throw 'ci-jobs-invalid-attempt-start' }
+            $startText = $rawStart.ToString('O', [Globalization.CultureInfo]::InvariantCulture)
+        } elseif ($rawStart -is [string]) { $startText = $rawStart }
+        else { throw 'ci-jobs-invalid-attempt-start' }
+        $started = [DateTimeOffset]::MinValue
+        if ($startText -cnotmatch '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,7})?(?:Z|\+00:00)\z' -or
+            -not [DateTimeOffset]::TryParse($startText, [Globalization.CultureInfo]::InvariantCulture, [Globalization.DateTimeStyles]::RoundtripKind, [ref]$started) -or
+            $started.Offset -ne [TimeSpan]::Zero -or $started -le $previousStart) {
+            throw 'ci-jobs-invalid-attempt-start'
+        }
+        $attempts.Add([pscustomobject]@{ runAttempt = $number; runStartedAt = $startText })
+        $previousStart = $started
+    }
+    [pscustomobject]@{ repository = $Repository; runId = $RunId; filter = 'all'; totalCount = $expected; jobs = @($all.ToArray()); attempts = @($attempts.ToArray()) }
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
@@ -44,9 +75,18 @@ if ($MyInvocation.InvocationName -ne '.') {
     $repository = $env:GITHUB_REPOSITORY
     $runId = 0L
     if (-not [long]::TryParse($env:GITHUB_RUN_ID, [ref]$runId)) { throw 'ci-jobs-invalid-run' }
-    $snapshot = Get-RegressionJobSnapshot $repository $runId {
+    $currentAttempt = 0
+    if (-not [int]::TryParse($env:GITHUB_RUN_ATTEMPT, [Globalization.NumberStyles]::None, [Globalization.CultureInfo]::InvariantCulture, [ref]$currentAttempt) -or $currentAttempt -le 0) {
+        throw 'ci-jobs-invalid-attempt'
+    }
+    $snapshot = Get-RegressionJobSnapshot $repository $runId $currentAttempt {
         param($page)
         Invoke-RestMethod -Uri "https://api.github.com/repos/$repository/actions/runs/$runId/jobs?filter=all&per_page=100&page=$page" `
+            -Headers @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' } `
+            -TimeoutSec 30 -MaximumRedirection 0
+    } {
+        param($number)
+        Invoke-RestMethod -Uri "https://api.github.com/repos/$repository/actions/runs/$runId/attempts/$number" `
             -Headers @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = 'application/vnd.github+json'; 'X-GitHub-Api-Version' = '2022-11-28' } `
             -TimeoutSec 30 -MaximumRedirection 0
     }

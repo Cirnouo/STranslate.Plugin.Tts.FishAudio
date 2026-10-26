@@ -7,6 +7,9 @@ internal static class RegressionCiSuite
 {
     internal static async Task RunAsync()
     {
+        CachedJobViewsRetainTheirActualExecutionOwners();
+        UnauthenticatedCachedViewsCannotBorrowOldSuccess();
+        AttemptFencesMustDescribeTheCompleteHistory();
         AmbiguousNewAttemptCannotBorrowAnEarlierPass();
         LatestMissingAttemptCannotBorrowAnOlderPass();
         CompactReportsRetainExactCoverageWithoutExecutingDelegates();
@@ -18,6 +21,86 @@ internal static class RegressionCiSuite
         ParentAndChildEvidenceCannotDisagree();
         JobAndArtifactOwnersMustBeUnambiguous();
         await CliRejectsUnknownArgumentsWithoutPrintingPrivateValuesAsync();
+    }
+
+    private static void CachedJobViewsRetainTheirActualExecutionOwners()
+    {
+        using var fixture = new CiFixture();
+        fixture.AddAll();
+        fixture.AddJob("core", 2);
+        fixture.AddBundle("core", 2);
+        foreach (var partition in new[] { "native-settings", "native-input", "native-popups", "native-cards" })
+            fixture.AddCachedView(partition, 1, 2);
+        fixture.WriteJobs();
+        var before = fixture.Bytes();
+        Require(fixture.Verify().Select(item => item.Attempt).SequenceEqual(new[] { 2, 1, 1, 1, 1 }),
+            "New job IDs and advertised attempts can wrap the same old successful execution without producing new sibling artifacts.");
+        fixture.Unchanged(before);
+        foreach (var partition in new[] { "core", "native-settings", "native-input", "native-popups", "native-cards" })
+            fixture.AddCachedView(partition, 2, 3);
+        fixture.WriteJobs();
+        var gateOnly = fixture.Bytes();
+        Require(fixture.Verify().Select(item => item.Attempt).SequenceEqual(new[] { 2, 1, 1, 1, 1 }),
+            "Gate-only attempt three can retain multiple API views of each authenticated actual execution.");
+        fixture.Unchanged(gateOnly);
+        fixture.AddBundle("native-settings", 3);
+        Reject(() => fixture.Verify(), "An artifact advertised as a new attempt cannot borrow an old actual job owner.");
+    }
+
+    private static void UnauthenticatedCachedViewsCannotBorrowOldSuccess()
+    {
+        foreach (var mutation in new[] { "runner", "runner-name", "head", "name", "step", "missing-steps", "missing-start", "non-utc", "reversed", "overlap", "equal-fence", "failed", "cancelled", "skipped", "in-progress", "missing-prior" })
+        {
+            using var fixture = new CiFixture();
+            fixture.AddAll();
+            fixture.AddCachedView("native-popups", 1, 2);
+            var cached = fixture.Jobs[^1]!;
+            switch (mutation)
+            {
+                case "runner": cached["runner_id"] = 99999; break;
+                case "runner-name": cached["runner_name"] = "another-runner"; break;
+                case "head": cached["head_sha"] = new string('d', 40); break;
+                case "name": cached["name"] = "Another workflow / Regression (native-popups)"; break;
+                case "step": cached["steps"]![0]!["name"] = "Changed execution"; break;
+                case "missing-steps": cached.AsObject().Remove("steps"); break;
+                case "missing-start": cached["started_at"] = null; break;
+                case "non-utc": cached["started_at"] = "2026-01-01T08:01:00+08:00"; break;
+                case "reversed": cached["completed_at"] = "2026-01-01T00:00:00Z"; break;
+                case "overlap": cached["completed_at"] = "2026-01-01T01:01:00Z"; break;
+                case "equal-fence": cached["completed_at"] = "2026-01-01T01:00:00Z"; break;
+                case "failed": cached["conclusion"] = "failure"; break;
+                case "cancelled": cached["conclusion"] = "cancelled"; break;
+                case "skipped": cached["conclusion"] = "skipped"; break;
+                case "in-progress": cached["status"] = "in_progress"; cached["conclusion"] = null; break;
+                case "missing-prior": fixture.Jobs.RemoveAt(3); break;
+            }
+            fixture.WriteJobs();
+            var before = fixture.Bytes();
+            Reject(() => fixture.Verify(), "Only the exact complete successful prior execution may authenticate a cached API view: " + mutation);
+            fixture.Unchanged(before);
+        }
+    }
+
+    private static void AttemptFencesMustDescribeTheCompleteHistory()
+    {
+        foreach (var mutation in new[] { "missing", "duplicate", "invalid", "non-utc", "non-increasing" })
+        {
+            using var fixture = new CiFixture();
+            fixture.AddAll();
+            Change(fixture.JobsPath, root =>
+            {
+                var attempts = root["attempts"]!.AsArray();
+                switch (mutation)
+                {
+                    case "missing": attempts.RemoveAt(0); break;
+                    case "duplicate": attempts[1]!["runAttempt"] = 1; break;
+                    case "invalid": attempts[1]!["runStartedAt"] = "invalid"; break;
+                    case "non-utc": attempts[1]!["runStartedAt"] = "2026-01-01T09:00:00+08:00"; break;
+                    case "non-increasing": attempts[1]!["runStartedAt"] = attempts[0]!["runStartedAt"]!.GetValue<string>(); break;
+                }
+            });
+            Reject(() => fixture.Verify(), "Attempt history must authenticate every strictly increasing UTC boundary: " + mutation);
+        }
     }
 
     private static void AmbiguousNewAttemptCannotBorrowAnEarlierPass()
@@ -305,15 +388,40 @@ internal static class RegressionCiSuite
             foreach (var partition in Partitions) { AddJob(partition, 1); AddBundle(partition, 1); }
             WriteJobs();
         }
-        internal void AddJob(string partition, int attempt) => Jobs.Add(new JsonObject
+        internal void AddJob(string partition, int attempt)
         {
-            ["id"] = 1000 + Jobs.Count, ["run_id"] = 431, ["run_attempt"] = attempt,
-            ["name"] = "Verify release / Regression (" + partition + ")", ["status"] = "completed", ["conclusion"] = "success",
-            ["head_sha"] = new string('c', 40), ["steps"] = new JsonArray()
-        });
+            var start = AttemptStart(attempt).AddMinutes(1);
+            Jobs.Add(new JsonObject
+            {
+                ["id"] = 1000 + Jobs.Count, ["run_id"] = 431, ["run_attempt"] = attempt,
+                ["name"] = "Verify release / Regression (" + partition + ")", ["status"] = "completed", ["conclusion"] = "success",
+                ["head_sha"] = new string('c', 40), ["runner_id"] = 5000 + Jobs.Count, ["runner_name"] = "offline-runner",
+                ["runner_group_id"] = 0, ["created_at"] = start.AddSeconds(-1).ToString("O"),
+                ["started_at"] = start.ToString("O"), ["completed_at"] = start.AddMinutes(1).ToString("O"),
+                ["steps"] = new JsonArray(new JsonObject
+                {
+                    ["name"] = "Run complete regression partition", ["number"] = 1, ["status"] = "completed", ["conclusion"] = "success",
+                    ["started_at"] = start.AddSeconds(1).ToString("O"), ["completed_at"] = start.AddSeconds(59).ToString("O")
+                })
+            });
+        }
+        internal void AddCachedView(string partition, int sourceAttempt, int advertisedAttempt)
+        {
+            var source = Jobs.Single(item => item!["name"]!.GetValue<string>().EndsWith("Regression (" + partition + ")", StringComparison.Ordinal) &&
+                item["run_attempt"]!.GetValue<int>() == sourceAttempt)!;
+            var cached = source.DeepClone();
+            cached["id"] = 1000 + Jobs.Count;
+            cached["run_attempt"] = advertisedAttempt;
+            cached["created_at"] = AttemptStart(advertisedAttempt).AddSeconds(1).ToString("O");
+            cached["runner_group_id"] = null;
+            Jobs.Add(cached);
+        }
+        private static DateTimeOffset AttemptStart(int attempt) => new(2026, 1, 1, attempt - 1, 0, 0, TimeSpan.Zero);
         internal void WriteJobs() => File.WriteAllText(JobsPath, new JsonObject
         {
-            ["repository"] = Expected.Repository, ["runId"] = Expected.WorkflowRunId, ["filter"] = "all", ["totalCount"] = Jobs.Count, ["jobs"] = Jobs.DeepClone()
+            ["repository"] = Expected.Repository, ["runId"] = Expected.WorkflowRunId, ["filter"] = "all", ["totalCount"] = Jobs.Count, ["jobs"] = Jobs.DeepClone(),
+            ["attempts"] = new JsonArray(Enumerable.Range(1, Expected.CurrentAttempt).Select(attempt => (JsonNode)new JsonObject
+                { ["runAttempt"] = attempt, ["runStartedAt"] = AttemptStart(attempt).ToString("O") }).ToArray())
         }.ToJsonString());
         internal string Bundle(string partition, int attempt) => Path.Combine(DirectoryPath, $"regression-report-{Expected.Source.Commit}-431-{attempt}-{partition}");
         internal void AddBundle(string partition, int attempt, string runtime = "10.0.13")
