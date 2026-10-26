@@ -27,35 +27,62 @@ internal static class VoiceLanguageTagsSuite
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
         if (proofDirectory is not null) SearchAdjustmentControlSuite.WriteProofAssembly(proofDirectory);
-        await RunOnStaThreadAsync(() =>
+        foreach (var testCase in CreateCases(proofDirectory))
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
         {
-            var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja" } } };
-            using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-            var view = SettingsLayoutSuite.CreateThemedView(vm);
-            SettingsLayoutSuite.Layout(view, 480);
-            AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
-                "Selected compiled card must render its language metadata in the reusable control");
-        }, RegressionExecution.Timeout);
-        await RunOnStaThreadAsync(LabelsUseExplicitCultureAndTrustedFlags);
-        await RunOnStaThreadAsync(PartitionAndDictionaryReplacement);
-        await RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow);
-        await RunOnStaThreadAsync(ResponsivePrefixFitsOneRowWithoutACap);
-        await RunOnStaThreadAsync(FitThresholdsAndLongLabels);
-        await RunOnStaThreadAsync(InheritedFontMetricsRefreshTheSameInstance);
-        await RunLifetimeAsync();
+            ("popup.language-tags/compiled-selected-card", () => RunOnStaThreadAsync(() =>
+            {
+                var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja" } } };
+                using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+                var view = SettingsLayoutSuite.CreateThemedView(vm);
+                SettingsLayoutSuite.Layout(view, 480);
+                AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
+                    "Selected compiled card must render its language metadata in the reusable control");
+            }, RegressionExecution.Timeout)),
+            ("popup.language-tags/labels-explicit-culture-trusted-flags", () => RunOnStaThreadAsync(LabelsUseExplicitCultureAndTrustedFlags)),
+            ("popup.language-tags/partition-dictionary-replacement", () => RunOnStaThreadAsync(PartitionAndDictionaryReplacement)),
+            ("popup.language-tags/overflow-keeps-language-row", () => RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow)),
+            ("popup.language-tags/responsive-prefix", () => RunOnStaThreadAsync(ResponsivePrefixFitsOneRowWithoutACap)),
+            ("popup.language-tags/fit-thresholds-long-labels", () => RunOnStaThreadAsync(FitThresholdsAndLongLabels)),
+            ("popup.language-tags/inherited-font-metrics", () => RunOnStaThreadAsync(InheritedFontMetricsRefreshTheSameInstance)),
+        };
+        cases.AddRange(CreateLifetimeCases());
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
         foreach (var width in new[] { 320d, 400, 480, 640 })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-            await RunOnStaThreadAsync(() => RenderCompiledCards(width, dpi, dark, mode, proofDirectory));
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            var id = FormattableString.Invariant($"popup.language-tags/cards/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width:0}/{browse}");
+            cases.Add((id, () => RunOnStaThreadAsync(() => RenderCompiledCards(width, dpi, dark, mode, proofDirectory))));
+        }
+        return cases;
     }
 
     internal static async Task RunLifetimeAsync()
     {
-        foreach (var (failAfterSource, failInChrome) in new[] { (true, false), (true, true), (false, false) })
-            await RunOnStaThreadAsync(() => PopupInitializationFailureRetiresOwnership(failAfterSource, failInChrome));
-        await RunOnStaThreadAsync(PopupOwnsInputAndLifetime);
-        await RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup);
+        foreach (var testCase in CreateLifetimeCases())
+            await testCase.Run();
+    }
+
+    private static IReadOnlyList<(string Id, Func<Task> Run)> CreateLifetimeCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
+        foreach (var (name, failAfterSource, failInChrome) in new[]
+        {
+            ("after-source", true, false), ("chrome", true, true), ("before-source", false, false),
+        })
+            cases.Add(($"popup.language-tags/lifecycle/initialization-{name}",
+                () => RunOnStaThreadAsync(() => PopupInitializationFailureRetiresOwnership(failAfterSource, failInChrome))));
+        cases.Add(("popup.language-tags/lifecycle/popup-input", () => RunOnStaThreadAsync(PopupOwnsInputAndLifetime)));
+        cases.Add(("popup.language-tags/lifecycle/window-owner", () => RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup)));
+        return cases;
     }
 
     private static void PopupInitializationFailureRetiresOwnership(bool failAfterSource, bool failInChrome)

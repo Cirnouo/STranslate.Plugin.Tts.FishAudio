@@ -72,27 +72,57 @@ internal static class SearchAdjustmentControlSuite
             await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
             return;
         }
-        await RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync);
-        if (group is "titles") return;
-        foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
-        await RunOnStaThreadAsync(DraftsApplyAndTileInputAsync);
-        await RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync);
-        await RunOnStaThreadAsync(OverlayOwnershipAndLifetime);
-        await RunOnStaThreadAsync(WindowAndScrollLifetime);
-        await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
-        await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
-        await RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource);
-        await RunMaterialFallbackAsync();
-        await RunGeometryAsync(proofDirectory);
+        if (group is "titles")
+        {
+            await RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync);
+            return;
+        }
+        foreach (var testCase in CreateCases(proofDirectory))
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
+        {
+            ("popup.search-adjustment/native/captions-keyboard-apply", () => RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync)),
+        };
+        foreach (var dark in new[] { false, true })
+            cases.Add(($"popup.search-adjustment/native/radio/{(dark ? "dark" : "light")}", () => RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark))));
+        cases.AddRange(new (string Id, Func<Task> Run)[]
+        {
+            ("popup.search-adjustment/native/drafts-apply-tile-input", () => RunOnStaThreadAsync(DraftsApplyAndTileInputAsync)),
+            ("popup.search-adjustment/native/held-apply-reopens-intent", () => RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync)),
+            ("popup.search-adjustment/native/overlay-ownership", () => RunOnStaThreadAsync(OverlayOwnershipAndLifetime)),
+            ("popup.search-adjustment/native/window-scroll-lifetime", () => RunOnStaThreadAsync(WindowAndScrollLifetime)),
+            ("popup.search-adjustment/native/short-viewport", () => RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory))),
+            ("popup.search-adjustment/native/viewport-lifecycle", () => ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses)),
+            ("popup.search-adjustment/native/material-own-source", () => RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource)),
+        });
+        cases.AddRange(CreateMaterialFallbackCases());
+        cases.AddRange(CreateGeometryCases(proofDirectory));
+        return cases;
     }
 
     private static async Task RunGeometryAsync(string? proofDirectory)
     {
+        foreach (var testCase in CreateGeometryCases(proofDirectory))
+            await testCase.Run();
+    }
+
+    private static IReadOnlyList<(string Id, Func<Task> Run)> CreateGeometryCases(string? proofDirectory)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
-            await ObserveMatrixActionAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
-                stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory));
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            cases.Add(($"popup.search-adjustment/native/geometry/{locale}/{(dark ? "dark" : "light")}/dpi-{scale}",
+                () => ObserveMatrixActionAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
+                    stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory))));
+        }
+        return cases;
     }
 
     internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
@@ -587,9 +617,24 @@ internal static class SearchAdjustmentControlSuite
 
     private static async Task RunMaterialFallbackAsync()
     {
+        foreach (var testCase in CreateMaterialFallbackCases())
+            await testCase.Run();
+    }
+
+    private static IReadOnlyList<(string Id, Func<Task> Run)> CreateMaterialFallbackCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
         foreach (var supported in new[] { false, true })
-        foreach (var result in new[] { new PopupBackdropResult(0, 0, 2), new PopupBackdropResult(0, 0, 3), new PopupBackdropResult(0, unchecked((int)0x80004005), 2), new PopupBackdropResult(unchecked((int)0x80004005), 0, 2) })
-            await RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result));
+        foreach (var (name, result) in new[]
+        {
+            ("mica", new PopupBackdropResult(0, 0, 2)),
+            ("acrylic", new PopupBackdropResult(0, 0, 3)),
+            ("readback-failure", new PopupBackdropResult(0, unchecked((int)0x80004005), 2)),
+            ("frame-failure", new PopupBackdropResult(unchecked((int)0x80004005), 0, 2)),
+        })
+            cases.Add(($"popup.search-adjustment/native/material-fallback/{(supported ? "supported" : "unsupported")}/{name}",
+                () => RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result))));
+        return cases;
     }
 
     private static void PopupMaterialFallbackAndSourceLifetimes(bool supported, PopupBackdropResult result)

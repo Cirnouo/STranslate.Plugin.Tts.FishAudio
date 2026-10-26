@@ -29,11 +29,34 @@ internal static class NumericBottomSuite
             }));
         }
         var failures = new List<string>();
+        foreach (var (culture, dark, dpi) in Contexts())
+            await StaTestHost.RunOnStaThreadAsync(() => Measure(culture, dark, dpi, directory, failures));
+        AssertEqual("", string.Join("\n", failures), "Visible numeric and unit bottoms must align");
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
+        foreach (var (culture, dark, dpi) in Contexts())
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            cases.Add(($"numeric.bottom/{culture.ToLowerInvariant()}/{(dark ? "dark" : "light")}/dpi-{scale}",
+                () => StaTestHost.RunOnStaThreadAsync(() =>
+                {
+                    var failures = new List<string>();
+                    Measure(culture, dark, dpi, null, failures);
+                    AssertEqual("", string.Join("\n", failures), "Visible numeric and unit bottoms must align");
+                })));
+        }
+        return cases;
+    }
+
+    private static IEnumerable<(string Culture, bool Dark, double Dpi)> Contexts()
+    {
         foreach (var culture in new[] { "en-US", "de-DE" })
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
-            await StaTestHost.RunOnStaThreadAsync(() => Measure(culture, dark, dpi, directory, failures));
-        AssertEqual("", string.Join("\n", failures), "Visible numeric and unit bottoms must align");
+            yield return (culture, dark, dpi);
     }
 
     private static void Measure(string culture, bool dark, double dpi, string? directory, List<string> failures)

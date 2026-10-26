@@ -274,39 +274,45 @@ internal static class RegressionCatalog
         Add("settings.api-key-card/run-all", "native-settings", () => ApiKeySettingsCardSuite.RunAllAsync());
         Add("settings.layout/compiled-view-audio-network-and-fold-interactions", "native-settings", () => SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync());
         Add("settings.alignment/run-all", "native-settings", () => SettingsControlAlignmentSuite.RunAllAsync());
-        Add("cards.ink/run", "native-settings", () => VoiceCardInkSuite.RunAsync());
+        AddCases(VoiceCardInkSuite.CreateCases(), "native-settings");
         Add("numeric.glyph/equivalent-native-run-grouping", "native-settings", () => NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync());
-        Add("numeric.geometry/compact-numeric-geometry", "native-settings", () => SettingsLayoutSuite.CompactNumericGeometryAsync());
-        Add("numeric.bottom/run", "native-settings", () => NumericBottomSuite.RunAsync(null));
+        AddCases(SettingsLayoutSuite.CreateCompactNumericCases(), "native-settings");
+        AddCases(NumericBottomSuite.CreateCases(), "native-settings");
         Add("numeric.lifecycle/run", "native-settings", () => NumericAlignmentLifecycleSuite.RunAsync());
         Add("input.clear/run-requests", "core", () => InputClearSuite.RunRequestsAsync());
         Add("input.clear/run", "native-settings", () => InputClearControlSuite.RunAsync());
         Add("input.settings/native-tool-tip-diagnostics-preserve-failures-without-retry", "core", () => SettingsInputInteractionSuite.NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync());
-        Add("input.settings/run-all", "native-input", () => SettingsInputInteractionSuite.RunAllAsync());
+        AddCases(SettingsInputInteractionSuite.CreateCases(), "native-input");
         Add("repository.link/run-all", "native-input", () => ProjectRepositoryLinkSuite.RunAllAsync());
         Add("voice.language/run-all", "core", () => VoiceLanguageSuite.RunAllAsync());
         Add("cards.creation-date/run-all", "core", () => VoiceCreationDateSuite.RunAllAsync());
-        Add("popup.language-tags/run-all", "native-popups", () => VoiceLanguageTagsSuite.RunAllAsync());
+        AddCases(VoiceLanguageTagsSuite.CreateCases(), "native-popups");
         Add("input.page-entry/run-all", "native-input", () => PageEntrySuite.RunAllAsync());
         Add("voice.search-adjustment/run-requests", "core", () => SearchAdjustmentSuite.RunRequestsAsync());
         Add("popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry", "core", () => SearchAdjustmentControlSuite.MatrixDiagnosticsPreserveFailuresWithoutRetryAsync());
         Add("popup.search-adjustment/viewport-diagnostics-preserve-async-completion-and-failures", "core", () => SearchAdjustmentControlSuite.ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync());
-        Add("popup.search-adjustment/run-all", "native-popups", () => SearchAdjustmentControlSuite.RunAllAsync());
+        AddCases(SearchAdjustmentControlSuite.CreateCases(), "native-popups");
         Add("popup.keyboard-state/run", "native-popups", () => NativeKeyboardStateSuite.RunAsync());
         Add("popup.heading/run", "native-popups", () => PopupHeadingSuite.RunAsync());
         Add("popup.direction/run", "native-popups", () => PopupDirectionSuite.RunAsync());
         foreach (var testCase in VoiceCardLayoutSuite.CreateCases())
             cases.Add(new RegressionCase(testCase.Id, "native-cards", testCase.Run));
-        Add("cards.description/run", "native-cards", () => VoiceDescriptionSuite.RunAsync());
-        Add("input.cursor/run", "native-input", () => ControlCursorSuite.RunAsync());
-        Add("cards.like/run-all", "native-cards", () => VoiceLikeSuite.RunAllAsync());
-        Add("cards.avatar/run-all", "native-cards", () => AvatarPreviewSuite.RunAllAsync());
-        Add("preview.search-retention/run-all", "native-cards", () => SearchPreviewRetentionSuite.RunAllAsync());
-        Add("preview.accepted-continuity/run-all", "native-cards", () => AcceptedPreviewContinuitySuite.RunAllAsync());
+        AddCases(VoiceDescriptionSuite.CreateCases(), "native-cards");
+        AddCases(ControlCursorSuite.CreateCases(), "native-input");
+        AddCases(VoiceLikeSuite.CreateCases(), "native-cards");
+        AddCases(AvatarPreviewSuite.CreateCases(), "native-cards");
+        AddCases(SearchPreviewRetentionSuite.CreateCases(), "native-cards");
+        AddCases(AcceptedPreviewContinuitySuite.CreateCases(), "native-cards");
         Add("runner.contracts/selection", "core", RunnerContractSuite.RunAsync);
         Add("runner.contracts/catalog", "core", RegressionCatalogSuite.RunAsync);
         Add("runner.process/run-all", "core", RegressionProcessSuite.RunAsync);
         return cases;
+
+        void AddCases(IReadOnlyList<(string Id, Func<Task> Run)> descriptors, string partition)
+        {
+            foreach (var testCase in descriptors)
+                Add(testCase.Id, partition, testCase.Run);
+        }
 
         void Add(string id, string partition, Func<Task> run) => cases.Add(new RegressionCase(id, partition, run));
 

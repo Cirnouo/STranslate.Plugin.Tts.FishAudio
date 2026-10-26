@@ -16,14 +16,20 @@ internal static class SearchPreviewRetentionSuite
 
     internal static async Task RunAllAsync()
     {
-        await StaTestHost.RunOnStaThreadAsync(DiscoveryKeepsAcceptedAudioAsync);
-        await StaTestHost.RunOnStaThreadAsync(PendingOriginStillRetiresAsync);
-        await StaTestHost.RunOnStaThreadAsync(DisplayedPendingOriginMayStillAcceptAsync);
-        await StaTestHost.RunOnStaThreadAsync(AcceptanceReentrancyKeepsTheCorrectOwnerAsync);
-        await StaTestHost.RunOnStaThreadAsync(AcceptedPublicationCannotRetireItsSuccessorAsync);
-        await StaTestHost.RunOnStaThreadAsync(ExplicitReplacementAndRetirementAsync);
-        await StaTestHost.RunOnStaThreadAsync(OtherOriginRemovalRetainsAcceptedAudioAsync);
+        foreach (var testCase in CreateCases())
+            await testCase.Run();
     }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases() =>
+    [
+        ("preview.search-retention/discovery-keeps-accepted-audio", () => StaTestHost.RunOnStaThreadAsync(DiscoveryKeepsAcceptedAudioAsync)),
+        ("preview.search-retention/pending-origin-retires", () => StaTestHost.RunOnStaThreadAsync(PendingOriginStillRetiresAsync)),
+        ("preview.search-retention/displayed-pending-origin-may-accept", () => StaTestHost.RunOnStaThreadAsync(DisplayedPendingOriginMayStillAcceptAsync)),
+        ("preview.search-retention/acceptance-reentrancy-correct-owner", () => StaTestHost.RunOnStaThreadAsync(AcceptanceReentrancyKeepsTheCorrectOwnerAsync)),
+        ("preview.search-retention/accepted-publication-cannot-retire-successor", () => StaTestHost.RunOnStaThreadAsync(AcceptedPublicationCannotRetireItsSuccessorAsync)),
+        ("preview.search-retention/explicit-replacement-retirement", () => StaTestHost.RunOnStaThreadAsync(ExplicitReplacementAndRetirementAsync)),
+        ("preview.search-retention/other-origin-removal-retains-audio", () => StaTestHost.RunOnStaThreadAsync(OtherOriginRemovalRetainsAcceptedAudioAsync)),
+    ];
 
     // Stopping on successful discovery publication, or restarting to project state,
     // would lose the same accepted player/buffer or issue another sample GET.

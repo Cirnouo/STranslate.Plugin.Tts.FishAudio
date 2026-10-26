@@ -26,33 +26,44 @@ internal static class SettingsInputInteractionSuite
 {
     internal static async Task RunAllAsync(string? group = null)
     {
+        var cases = CreateCases(group);
+        if (group is "precision") SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity();
+        foreach (var testCase in cases)
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? group = null)
+    {
         if (group is not (null or "tabs" or "baseline" or "wheel" or "tooltip" or "precision" or "favorites" or "copy" or "fold-focus" or "zero" or "hover" or "point")) throw new ArgumentException("Unknown settings input test group", nameof(group));
+        var cases = new List<(string Id, Func<Task> Run)>();
         if (group is null or "point")
             foreach (var field in new[] {
                 ("Speed", .5, 2d, 1.67), ("Volume", -10d, 10d, -3.21),
                 ("Temperature", 0d, 1d, .83), ("TopP", .05, 1d, .82),
             })
-                await RunOnStaThreadAsync(() => SliderTrackClickMovesToPoint(field));
+                cases.Add(($"input.settings/native/track-point/{field.Item1.ToLowerInvariant()}", () => RunOnStaThreadAsync(() => SliderTrackClickMovesToPoint(field))));
         if (group is null or "zero")
             foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
-                await RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture));
+                cases.Add(($"input.settings/native/volume-zero/{culture.ToLowerInvariant()}", () => RunOnStaThreadAsync(() => VolumeZeroIsCanonicalAcrossInputRoutes(culture))));
         if (group is null or "fold-focus")
             foreach (var dark in new[] { false, true })
-                foreach (var name in new[] { "VoiceSearchResultsToggle", "FavoriteVoicesToggle" })
-                    await RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark, name));
-        if (group is "precision") SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity();
+            foreach (var name in new[] { "VoiceSearchResultsToggle", "FavoriteVoicesToggle" })
+                cases.Add(($"input.settings/native/fold-focus/{(dark ? "dark" : "light")}/{(name == "VoiceSearchResultsToggle" ? "search-results" : "favorites")}",
+                    () => RunOnStaThreadAsync(() => FoldControlsSeparateFocusFromPointerState(dark, name))));
         if (group is null or "tabs")
             foreach (var language in UiLocales.All)
-                foreach (var dark in new[] { false, true })
-                    await RunOnStaThreadAsync(() => SelectedTabsKeepAccentThroughNativeStates(language, dark));
-        if (group is null or "baseline") await RunOnStaThreadAsync(ByIdUsesUnchangedSearchTextGeometry);
+            foreach (var dark in new[] { false, true })
+                cases.Add(($"input.settings/native/tabs/{language}/{(dark ? "dark" : "light")}", () => RunOnStaThreadAsync(() => SelectedTabsKeepAccentThroughNativeStates(language, dark))));
+        if (group is null or "baseline")
+            cases.Add(("input.settings/native/by-id-text-geometry", () => RunOnStaThreadAsync(ByIdUsesUnchangedSearchTextGeometry)));
         if (group is null or "wheel" or "hover")
             foreach (var property in new[] { "Speed", "Volume", "Temperature", "TopP" })
-                await RunOnStaThreadAsync(() => NumericWheelRequiresContinuousHover(property));
-        if (group is null or "wheel" or "hover") await RunOnStaThreadAsync(NumericHoverRearmsWhenPointerRemainsOverTarget);
+                cases.Add(($"input.settings/native/continuous-hover/{property.ToLowerInvariant()}", () => RunOnStaThreadAsync(() => NumericWheelRequiresContinuousHover(property))));
+        if (group is null or "wheel" or "hover")
+            cases.Add(("input.settings/native/hover-rearms-over-target", () => RunOnStaThreadAsync(NumericHoverRearmsWhenPointerRemainsOverTarget)));
         if (group is null or "wheel")
             foreach (var property in new[] { "Speed", "Volume", "Temperature", "TopP" })
-                await RunOnStaThreadAsync(() => RestingNumericWheelEditsWithoutScrolling(property));
+                cases.Add(($"input.settings/native/resting-wheel/{property.ToLowerInvariant()}", () => RunOnStaThreadAsync(() => RestingNumericWheelEditsWithoutScrolling(property))));
         if (group is null or "wheel")
             foreach (var field in new[]
             {
@@ -61,18 +72,26 @@ internal static class SettingsInputInteractionSuite
                 ("Temperature", .7, .71, .69, 0d, 1d, .99, .01, .01),
                 ("TopP", .7, .71, .69, .05, 1d, .99, .06, .01),
             })
-                await RunOnStaThreadAsync(() => SliderWheelEditsWithoutScrolling(field));
+                cases.Add(($"input.settings/native/slider-wheel/{field.Item1.ToLowerInvariant()}", () => RunOnStaThreadAsync(() => SliderWheelEditsWithoutScrolling(field))));
         if (group is null or "wheel" or "tooltip")
             foreach (var culture in new[] { "en-US", "de-DE", "ru-RU", "tr-TR" })
-                foreach (var field in new[] { "Speed", "Volume", "Temperature", "TopP" })
-                    await ObserveNativeToolTipActionAsync($"{culture}/{field}", stage => SliderWheelUsesNativeValueToolTipAsync(culture, field, stage));
-        if (group is null or "wheel" or "tooltip") await RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync);
-        if (group is null or "favorites") await RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults);
+            foreach (var field in new[] { "Speed", "Volume", "Temperature", "TopP" })
+                cases.Add(($"input.settings/native/native-tooltip/{culture.ToLowerInvariant()}/{field.ToLowerInvariant()}",
+                    () => ObserveNativeToolTipActionAsync($"{culture}/{field}", stage => SliderWheelUsesNativeValueToolTipAsync(culture, field, stage))));
+        if (group is null or "wheel" or "tooltip")
+            cases.Add(("input.settings/native/tooltip-drag-template-ownership", () => RunOnStaThreadAsync(SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync)));
+        if (group is null or "favorites")
+            cases.Add(("input.settings/native/empty-favorites", () => RunOnStaThreadAsync(EmptyFavoritesStayVisibleOutsideCollapsedResults)));
         if (group is null or "copy")
             foreach (var language in UiLocales.All)
-                foreach (var width in new[] { 320d, 400d, 480d, 640d })
-                    foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-                        await RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language, width, mode));
+            foreach (var width in new[] { 320d, 400d, 480d, 640d })
+            foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            {
+                var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+                var id = FormattableString.Invariant($"input.settings/native/copy/{language}/width-{width:0}/{browse}");
+                cases.Add((id, () => RunOnStaThreadAsync(() => VoiceTitlesExposeCopyOnlyActions(language, width, mode))));
+            }
+        return cases;
     }
 
     // Disabling native move-to-point on any compiled slider must leave its

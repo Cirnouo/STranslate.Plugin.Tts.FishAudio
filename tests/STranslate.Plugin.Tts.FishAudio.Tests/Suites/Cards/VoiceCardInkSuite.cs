@@ -17,13 +17,28 @@ internal static class VoiceCardInkSuite
 {
     internal static async Task RunAsync(string? proofDirectory = null)
     {
-        // Run the captured fractional-DPI failure first, before WPF caches any other root DPI.
-        await RunOnStaThreadAsync(() => CheckRenderedCards(1.25, TextFormattingMode.Display, VoiceBrowseMode.Search, true, proofDirectory));
+        foreach (var testCase in CreateCases(proofDirectory))
+            await testCase.Run();
+        Console.WriteLine("Native voice-card outline and physical-raster tests passed at 100/125/150/200% DPI, Ideal/Display.");
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
+    {
+        // Keep the captured fractional-DPI owner before every other root-DPI context.
+        var cases = new List<(string Id, Func<Task> Run)>
+        {
+            ("cards.ink/captured-display125-search", () => RunOnStaThreadAsync(() => CheckRenderedCards(1.25, TextFormattingMode.Display, VoiceBrowseMode.Search, true, proofDirectory))),
+        };
         foreach (var dpi in new[] { 1d, 1.25, 1.5, 2d })
         foreach (var format in new[] { TextFormattingMode.Ideal, TextFormattingMode.Display })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-            await RunOnStaThreadAsync(() => CheckRenderedCards(dpi, format, mode, false, proofDirectory));
-        Console.WriteLine("Native voice-card outline and physical-raster tests passed at 100/125/150/200% DPI, Ideal/Display.");
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", 1.5 => "1-5", _ => "2" };
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            cases.Add(($"cards.ink/dpi-{scale}/{format.ToString().ToLowerInvariant()}/{browse}",
+                () => RunOnStaThreadAsync(() => CheckRenderedCards(dpi, format, mode, false, proofDirectory))));
+        }
+        return cases;
     }
 
     private static void CheckRenderedCards(double dpi, TextFormattingMode format, VoiceBrowseMode mode, bool capturedRegression, string? proofDirectory)

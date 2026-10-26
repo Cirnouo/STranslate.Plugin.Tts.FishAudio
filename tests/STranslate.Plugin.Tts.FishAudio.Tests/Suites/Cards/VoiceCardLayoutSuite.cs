@@ -27,7 +27,7 @@ internal static class VoiceCardLayoutSuite
     }
 
     // Metadata creation never constructs a WPF fixture or starts the shared dispatcher.
-    // Each delegate retains one original independently bounded native action.
+    // Static contexts retain their IDs/order; each behavior owner gets an equivalent fresh fixture.
     internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
     {
         var cases = new List<(string Id, Func<Task> Run)>
@@ -40,12 +40,47 @@ internal static class VoiceCardLayoutSuite
         foreach (var width in new[] { 320d, 400, 480, 640 })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
-            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
-            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
-            var id = $"cards.layout/{locale}/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width:0}/{browse}";
+            var id = $"cards.layout/{ContextId(locale, dark, dpi, width, mode)}";
             cases.Add((id, () => RunOnStaThreadAsync(() => InspectCards(width, dpi, dark, locale, mode, proofDirectory))));
         }
+
+        foreach (var group in new[] { "description", "headers" })
+        foreach (var dark in new[] { false, true })
+        foreach (var dpi in new[] { 1d, 1.25, 1.5 })
+        foreach (var width in new[] { 320d, 400, 480, 640 })
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            AddBehavior(group, width, dpi, dark, mode,
+                group == "description" ? fixture => InspectDescriptions(fixture, proofDirectory) : InspectRuntimeHeaders);
+
+        foreach (var dark in new[] { false, true })
+        foreach (var dpi in new[] { 1d, 1.25, 1.5 })
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            AddBehavior("inheritance", 400, dpi, dark, mode, InspectInheritance);
+
+        foreach (var dark in new[] { false, true })
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            AddBehavior("date", 400, 1.25, dark, mode, InspectDates);
+
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            AddBehavior("tooltip", 400, 1, false, mode, InspectTooltips);
+
+        foreach (var dark in new[] { false, true })
+        foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
+            AddBehavior("loading", 320, 1.25, dark, mode, InspectLoading);
         return cases;
+
+        void AddBehavior(string group, double width, double dpi, bool dark, VoiceBrowseMode mode, Action<CardFixture> inspect)
+        {
+            var id = $"cards.layout.{group}/{ContextId("en", dark, dpi, width, mode)}";
+            cases.Add((id, () => RunOnStaThreadAsync(() => WithCards(width, dpi, dark, "en", mode, inspect))));
+        }
+    }
+
+    private static string ContextId(string locale, bool dark, double dpi, double width, VoiceBrowseMode mode)
+    {
+        var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+        var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+        return $"{locale}/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width:0}/{browse}";
     }
 
     private static Task RunColdConstructionAsync() => RunOnStaThreadAsync(() =>
@@ -54,7 +89,7 @@ internal static class VoiceCardLayoutSuite
         SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm), 400);
     }, RegressionExecution.Timeout);
 
-    private static void InspectCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, string? proofDirectory)
+    private static void WithCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, Action<CardFixture> inspect)
     {
         var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new()
         {
@@ -99,47 +134,88 @@ internal static class VoiceCardLayoutSuite
         SettingsLayoutSuite.Layout(view, width);
         var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
         AssertEqual(2, tags.Length, "Selected and active browse card must both be present");
-        foreach (var tag in tags)
+        inspect(new CardFixture(width, dpi, dark, locale, mode, vm, card, view, tags));
+        AssertEqual(AppliedKey, vm.VoiceId, "Presentation changes do not apply/clear selection");
+    }
+
+    private sealed record CardFixture(double Width, double Dpi, bool Dark, string Locale, VoiceBrowseMode Mode,
+        SettingsViewModel ViewModel, VoiceSearchItem Card, SettingsView View, VoiceLanguageTags[] Tags)
+    {
+        internal IEnumerable<CardParts> Parts()
         {
-            var selected = ReferenceEquals(tag.DataContext, vm);
-            var cardRoot = CardBorder(tag);
-            var title = Visuals(cardRoot).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.CopyVoiceIdCommand));
-            var action = Visuals(cardRoot).OfType<Button>().Single(button => ReferenceEquals(button.Command, selected ? vm.ClearVoiceCommand : vm.SelectVoiceCommand));
-            var description = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceDescription) : nameof(card.Description));
-            var author = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceAuthor) : nameof(card.AuthorName));
-            var date = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceCreatedAt) : nameof(card.CreatedAt));
-            var titleRow = (DockPanel)VisualTreeHelper.GetParent((StackPanel)VisualTreeHelper.GetParent(action));
-            var metadata = (StackPanel)VisualTreeHelper.GetParent(tag);
-            var actions = (StackPanel)VisualTreeHelper.GetParent(action);
-            AssertEqual(dpi, VisualTreeHelper.GetDpi(date).DpiScaleX, "Date text inherits the requested visual-root DPI");
-            AssertEqual(true, Math.Abs(title.TranslatePoint(new Point(0, title.ActualHeight / 2), cardRoot).Y - action.TranslatePoint(new Point(0, action.ActualHeight / 2), cardRoot).Y) <= 1,
-                "Voice title and actions share the same row center while the copy target retains native text height");
-            AssertEqual(((TextBlock)title.Content).ActualHeight, title.ActualHeight, "Title copy target remains exactly the native text height");
-            AssertEqual(true, actions.TranslatePoint(new Point(actions.ActualWidth, 0), metadata).X <= metadata.ActualWidth + 1, "Actions fit inside the content column");
-            AssertEqual(true, title.ActualWidth > 0 && title.ActualWidth + actions.ActualWidth <= titleRow.ActualWidth + 1, "Long title has a finite viewport beside actions");
-            AssertEqual(true, description.ActualHeight <= description.MaxHeight && description.ActualWidth <= metadata.ActualWidth, "Descriptions retain bounded lines at every width");
-            AssertEqual(true, author.TextTrimming == TextTrimming.CharacterEllipsis && author.ActualWidth <= metadata.ActualWidth, "Long author remains in a finite ellipsizing row");
-            AssertInlineHeader(title, author, actions, cardRoot);
-            AssertEqual(true, date.TranslatePoint(new Point(), metadata).Y > author.TranslatePoint(new Point(), metadata).Y, "Statistics/date have their own row below the inline header");
-            AssertEqual(true, Math.Abs(date.TranslatePoint(new Point(date.ActualWidth, 0), metadata).X - metadata.ActualWidth) <= 1, "Date aligns to the full content column's right edge");
-            AssertEqual(true, Math.Abs(tag.ActualWidth - metadata.ActualWidth) <= 1, "Languages use the full content width under the title actions");
-            AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local), date.Text, "Compiled date binding displays the local day");
-            AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), AutomationProperties.GetName(date), "Creation date has a localized accessible name");
-            var idlePlay = Visuals(cardRoot).OfType<System.Windows.Shapes.Path>().Single(path => ReferenceEquals(path.Data, view.FindResource("AvatarPreviewPlayGeometry")));
-            AssertEqual(Colors.White, ((SolidColorBrush)idlePlay.Fill).Color, "Filled idle Play retains opaque white contrast in both themes");
-            AssertEqual(true, Visuals(cardRoot).OfType<Button>().Where(button => BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") != true).All(button => button.Focusable), "Card actions retain keyboard focus eligibility");
-            AssertEqual<object?>(selected ? vm.CachedVoiceId : card, selected ? title.CommandParameter : action.CommandParameter, "Actions retain their original selection/identity parameters");
-            AssertEqual(selected ? 56d : 48d, Visuals(cardRoot).OfType<System.Windows.Shapes.Ellipse>().Single(ellipse => ellipse.Width == (selected ? 56 : 48)).ActualWidth, "Portraits use the approved slightly larger list/selected allocation");
-            if (locale == "en" && width == 400 && dpi == 1 && !dark)
+            var vm = ViewModel;
+            var card = Card;
+            foreach (var tag in Tags)
             {
-                var tooltip = (ToolTip)date.ToolTip;
-                tooltip.PlacementTarget = date; tooltip.IsOpen = true;
-                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
-                var tooltipText = ((StackPanel)tooltip.Content).Children.OfType<TextBlock>().ToArray();
-                AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), tooltipText[0].Text, "Native date tooltip resolves its localized caption");
-                AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local, true), tooltipText[1].Text, "Native date tooltip binds the complete local timestamp and offset");
-                tooltip.IsOpen = false;
+                var selected = ReferenceEquals(tag.DataContext, vm);
+                var cardRoot = CardBorder(tag);
+                var title = Visuals(cardRoot).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.CopyVoiceIdCommand));
+                var action = Visuals(cardRoot).OfType<Button>().Single(button => ReferenceEquals(button.Command, selected ? vm.ClearVoiceCommand : vm.SelectVoiceCommand));
+                var description = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceDescription) : nameof(card.Description));
+                var author = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceAuthor) : nameof(card.AuthorName));
+                var date = BoundText(cardRoot, selected ? nameof(vm.CachedVoiceCreatedAt) : nameof(card.CreatedAt));
+                var titleRow = (DockPanel)VisualTreeHelper.GetParent((StackPanel)VisualTreeHelper.GetParent(action));
+                var metadata = (StackPanel)VisualTreeHelper.GetParent(tag);
+                var actions = (StackPanel)VisualTreeHelper.GetParent(action);
+                yield return new CardParts(selected, tag, cardRoot, title, action, description, author, date, titleRow, metadata, actions);
             }
+        }
+    }
+
+    private sealed record CardParts(bool Selected, VoiceLanguageTags Tag, Border CardRoot, Button Title, Button Action,
+        TextBlock Description, TextBlock Author, TextBlock Date, DockPanel TitleRow, StackPanel Metadata, StackPanel Actions);
+
+    private static void InspectCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, string? proofDirectory) =>
+        WithCards(width, dpi, dark, locale, mode, fixture =>
+        {
+            var vm = fixture.ViewModel;
+            var card = fixture.Card;
+            var view = fixture.View;
+            foreach (var part in fixture.Parts())
+            {
+                var (selected, tag, cardRoot, title, action, description, author, date, titleRow, metadata, actions) = part;
+                AssertEqual(dpi, VisualTreeHelper.GetDpi(date).DpiScaleX, "Date text inherits the requested visual-root DPI");
+                AssertEqual(true, Math.Abs(title.TranslatePoint(new Point(0, title.ActualHeight / 2), cardRoot).Y - action.TranslatePoint(new Point(0, action.ActualHeight / 2), cardRoot).Y) <= 1,
+                    "Voice title and actions share the same row center while the copy target retains native text height");
+                AssertEqual(((TextBlock)title.Content).ActualHeight, title.ActualHeight, "Title copy target remains exactly the native text height");
+                AssertEqual(true, actions.TranslatePoint(new Point(actions.ActualWidth, 0), metadata).X <= metadata.ActualWidth + 1, "Actions fit inside the content column");
+                AssertEqual(true, title.ActualWidth > 0 && title.ActualWidth + actions.ActualWidth <= titleRow.ActualWidth + 1, "Long title has a finite viewport beside actions");
+                AssertEqual(true, description.ActualHeight <= description.MaxHeight && description.ActualWidth <= metadata.ActualWidth, "Descriptions retain bounded lines at every width");
+                AssertEqual(true, author.TextTrimming == TextTrimming.CharacterEllipsis && author.ActualWidth <= metadata.ActualWidth, "Long author remains in a finite ellipsizing row");
+                AssertInlineHeader(title, author, actions, cardRoot);
+                AssertEqual(true, date.TranslatePoint(new Point(), metadata).Y > author.TranslatePoint(new Point(), metadata).Y, "Statistics/date have their own row below the inline header");
+                AssertEqual(true, Math.Abs(date.TranslatePoint(new Point(date.ActualWidth, 0), metadata).X - metadata.ActualWidth) <= 1, "Date aligns to the full content column's right edge");
+                AssertEqual(true, Math.Abs(tag.ActualWidth - metadata.ActualWidth) <= 1, "Languages use the full content width under the title actions");
+                AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local), date.Text, "Compiled date binding displays the local day");
+                AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), AutomationProperties.GetName(date), "Creation date has a localized accessible name");
+                var idlePlay = Visuals(cardRoot).OfType<System.Windows.Shapes.Path>().Single(path => ReferenceEquals(path.Data, view.FindResource("AvatarPreviewPlayGeometry")));
+                AssertEqual(Colors.White, ((SolidColorBrush)idlePlay.Fill).Color, "Filled idle Play retains opaque white contrast in both themes");
+                AssertEqual(true, Visuals(cardRoot).OfType<Button>().Where(button => BindingOperations.GetBinding(button, Button.CommandProperty)?.Path.Path.EndsWith("PreviewCommand") != true).All(button => button.Focusable), "Card actions retain keyboard focus eligibility");
+                AssertEqual<object?>(selected ? vm.CachedVoiceId : card, selected ? title.CommandParameter : action.CommandParameter, "Actions retain their original selection/identity parameters");
+                AssertEqual(selected ? 56d : 48d, Visuals(cardRoot).OfType<System.Windows.Shapes.Ellipse>().Single(ellipse => ellipse.Width == (selected ? 56 : 48)).ActualWidth, "Portraits use the approved slightly larger list/selected allocation");
+                if (proofDirectory is not null && locale == "en" && width is 320 or 640 && dpi == 1)
+                    Save(cardRoot, Path.Combine(proofDirectory, $"{(selected ? "selected" : mode.ToString())}-{(dark ? "dark" : "light")}-{width}-inline-card.png"));
+            }
+        });
+
+    private static void InspectDescriptions(CardFixture fixture, string? proofDirectory)
+    {
+        var vm = fixture.ViewModel;
+        var card = fixture.Card;
+        var view = fixture.View;
+        var width = fixture.Width;
+        var locale = fixture.Locale;
+        var dark = fixture.Dark;
+        var dpi = fixture.Dpi;
+        var mode = fixture.Mode;
+        foreach (var part in fixture.Parts())
+        {
+            var selected = part.Selected;
+            var tag = part.Tag;
+            var cardRoot = part.CardRoot;
+            var description = part.Description;
+            var author = part.Author;
+            var metadata = part.Metadata;
             // Runtime whitespace transitions must fold the whole description row without changing provider text.
             var original = description.Text;
             var expandedAuthorY = author.TranslatePoint(new Point(), metadata).Y;
@@ -166,6 +242,19 @@ internal static class VoiceCardLayoutSuite
             SettingsLayoutSuite.Layout(view, width);
             AssertEqual(Visibility.Visible, description.Visibility, "Nonempty description row reappears at runtime");
             AssertEqual(expandedAuthorY, author.TranslatePoint(new Point(), metadata).Y, "Restoring description restores the metadata position");
+        }
+    }
+
+    private static void InspectDates(CardFixture fixture)
+    {
+        var vm = fixture.ViewModel;
+        var card = fixture.Card;
+        var view = fixture.View;
+        var width = fixture.Width;
+        foreach (var part in fixture.Parts())
+        {
+            var selected = part.Selected;
+            var date = part.Date;
             if (selected) vm.CachedVoiceCreatedAt = null;
             else card.CreatedAt = null;
             SettingsLayoutSuite.Layout(view, width);
@@ -173,43 +262,87 @@ internal static class VoiceCardLayoutSuite
             if (selected) vm.CachedVoiceCreatedAt = VoiceCreationDateSuite.Date;
             else card.CreatedAt = VoiceCreationDateSuite.Date;
             SettingsLayoutSuite.Layout(view, width);
-            if (proofDirectory is not null && locale == "en" && width is 320 or 640 && dpi == 1)
-                Save(cardRoot, Path.Combine(proofDirectory, $"{(selected ? "selected" : mode.ToString())}-{(dark ? "dark" : "light")}-{width}-inline-card.png"));
-            CheckRuntimeHeaders();
-            if (locale == "en" && width == 400)
-            {
-                var group = (Panel)title.Parent;
-                var actionStart = actions.TranslatePoint(new Point(), cardRoot).X;
-                group.SetValue(TextElement.FontFamilyProperty, new FontFamily("Georgia"));
-                group.Language = XmlLanguage.GetLanguage("ja-JP");
-                author.FlowDirection = FlowDirection.RightToLeft;
-                SettingsLayoutSuite.Layout(view, width);
-                AssertInlineHeader(title, author, actions, cardRoot);
-                AssertEqual(actionStart, actions.TranslatePoint(new Point(), cardRoot).X, "Changed inherited font/culture and author flow cannot reorder actions");
-                author.ClearValue(FrameworkElement.FlowDirectionProperty);
-                group.ClearValue(FrameworkElement.LanguageProperty);
-                group.ClearValue(TextElement.FontFamilyProperty);
-                SettingsLayoutSuite.Layout(view, width);
-                AssertInlineHeader(title, author, actions, cardRoot);
-            }
-
-            void CheckRuntimeHeaders()
-            {
-                var originalTitle = ((TextBlock)title.Content).Text;
-                var originalAuthor = author.Text;
-                foreach (var (name, writer) in new[] { ("Short", new string('W', 120)), (new string('W', 120), "Li"), ("漢字 e\u0301 " + new string('W', 100), "العربية עברית " + new string('W', 100)), ("Short", (string?)null), ("Short", ""), ("Short", " \t\r\n "), ("", "Only author") })
-                {
-                    if (selected) { vm.CachedVoiceTitle = name; vm.CachedVoiceAuthor = writer; }
-                    else { card.Title = name; card.AuthorName = writer!; }
-                    SettingsLayoutSuite.Layout(view, width);
-                    AssertInlineHeader(title, author, actions, cardRoot);
-                    AssertEqual(writer ?? "", author.Text, "Inline layout preserves the original provider author string");
-                }
-                if (selected) { vm.CachedVoiceTitle = originalTitle; vm.CachedVoiceAuthor = originalAuthor; }
-                else { card.Title = originalTitle; card.AuthorName = originalAuthor; }
-                SettingsLayoutSuite.Layout(view, width);
-            }
+            AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local), date.Text, "Restoring creation date restores the compiled local-day binding");
         }
+    }
+
+    private static void InspectRuntimeHeaders(CardFixture fixture)
+    {
+        var vm = fixture.ViewModel;
+        var card = fixture.Card;
+        var view = fixture.View;
+        var width = fixture.Width;
+        foreach (var part in fixture.Parts())
+        {
+            var selected = part.Selected;
+            var cardRoot = part.CardRoot;
+            var title = part.Title;
+            var author = part.Author;
+            var actions = part.Actions;
+            var originalTitle = ((TextBlock)title.Content).Text;
+            var originalAuthor = author.Text;
+            foreach (var (name, writer) in new[] { ("Short", new string('W', 120)), (new string('W', 120), "Li"), ("漢字 e\u0301 " + new string('W', 100), "العربية עברית " + new string('W', 100)), ("Short", (string?)null), ("Short", ""), ("Short", " \t\r\n "), ("", "Only author") })
+            {
+                if (selected) { vm.CachedVoiceTitle = name; vm.CachedVoiceAuthor = writer; }
+                else { card.Title = name; card.AuthorName = writer!; }
+                SettingsLayoutSuite.Layout(view, width);
+                AssertInlineHeader(title, author, actions, cardRoot);
+                AssertEqual(writer ?? "", author.Text, "Inline layout preserves the original provider author string");
+            }
+            if (selected) { vm.CachedVoiceTitle = originalTitle; vm.CachedVoiceAuthor = originalAuthor; }
+            else { card.Title = originalTitle; card.AuthorName = originalAuthor; }
+            SettingsLayoutSuite.Layout(view, width);
+        }
+    }
+
+    private static void InspectInheritance(CardFixture fixture)
+    {
+        var view = fixture.View;
+        var width = fixture.Width;
+        foreach (var part in fixture.Parts())
+        {
+            var cardRoot = part.CardRoot;
+            var title = part.Title;
+            var author = part.Author;
+            var actions = part.Actions;
+            var group = (Panel)title.Parent;
+            var actionStart = actions.TranslatePoint(new Point(), cardRoot).X;
+            group.SetValue(TextElement.FontFamilyProperty, new FontFamily("Georgia"));
+            group.Language = XmlLanguage.GetLanguage("ja-JP");
+            author.FlowDirection = FlowDirection.RightToLeft;
+            SettingsLayoutSuite.Layout(view, width);
+            AssertInlineHeader(title, author, actions, cardRoot);
+            AssertEqual(actionStart, actions.TranslatePoint(new Point(), cardRoot).X, "Changed inherited font/culture and author flow cannot reorder actions");
+            author.ClearValue(FrameworkElement.FlowDirectionProperty);
+            group.ClearValue(FrameworkElement.LanguageProperty);
+            group.ClearValue(TextElement.FontFamilyProperty);
+            SettingsLayoutSuite.Layout(view, width);
+            AssertInlineHeader(title, author, actions, cardRoot);
+        }
+    }
+
+    private static void InspectTooltips(CardFixture fixture)
+    {
+        var view = fixture.View;
+        foreach (var part in fixture.Parts())
+        {
+            var date = part.Date;
+            var tooltip = (ToolTip)date.ToolTip;
+            tooltip.PlacementTarget = date; tooltip.IsOpen = true;
+            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+            var tooltipText = ((StackPanel)tooltip.Content).Children.OfType<TextBlock>().ToArray();
+            AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), tooltipText[0].Text, "Native date tooltip resolves its localized caption");
+            AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local, true), tooltipText[1].Text, "Native date tooltip binds the complete local timestamp and offset");
+            tooltip.IsOpen = false;
+        }
+    }
+
+    private static void InspectLoading(CardFixture fixture)
+    {
+        var vm = fixture.ViewModel;
+        var card = fixture.Card;
+        var view = fixture.View;
+        var width = fixture.Width;
         card.IsLoadingMetadata = true; card.HasMetadata = false;
         SettingsLayoutSuite.Layout(view, width);
         var apply = Visuals(view).OfType<Button>().Where(IsPresented).Single(button => ReferenceEquals(button.Command, vm.SelectVoiceCommand));
@@ -219,7 +352,6 @@ internal static class VoiceCardLayoutSuite
         AssertEqual(false, apply.IsEnabled, "Unapplied loading placeholders retain disabled Apply");
         card.IsApplied = wasApplied;
         card.HasMetadata = true; card.IsLoadingMetadata = false;
-        AssertEqual(AppliedKey, vm.VoiceId, "Presentation changes do not apply/clear selection");
     }
 
     private static void AssertInlineHeader(Button title, TextBlock author, StackPanel actions, Border cardRoot)

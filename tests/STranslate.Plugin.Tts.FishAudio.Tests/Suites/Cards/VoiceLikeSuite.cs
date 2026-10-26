@@ -18,33 +18,50 @@ internal static class VoiceLikeSuite
 {
     internal static async Task RunAllAsync()
     {
-        await SharedCardTemplateIsCompiledAsync();
-        await SettingsLayoutSuite.LikePresentationAsync();
+        foreach (var testCase in CreateCases())
+            await testCase.Run();
+        Console.WriteLine("Like state, seven-locale accessibility, narrow tabs and legacy ID compatibility passed.");
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
+        {
+            ("cards.like/presentation/shared-card-template-is-compiled", SharedCardTemplateIsCompiledAsync),
+        };
+        cases.AddRange(SettingsLayoutSuite.CreateLikePresentationCases());
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var width in new[] { 320d, 640d })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
-            var name = $"{locale}/{(dark ? "dark" : "light")}/{width:0}/{mode}";
-            var elapsed = Stopwatch.StartNew();
-            long enteredAt = -1;
-            try
-            {
-                await RunOnStaThreadAsync(() =>
-                {
-                    Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
-                    InspectLikeState(locale, dark, width, mode);
-                });
-            }
-            catch
-            {
-                try { Console.Error.WriteLine($"[voice-like/{name}] failed after {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms."); }
-                catch { /* Diagnostics cannot replace the original action failure. */ }
-                throw;
-            }
-            Console.WriteLine($"[voice-like/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; ordinary shared-STA action.");
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            var id = FormattableString.Invariant($"cards.like/presentation/{locale}/{(dark ? "dark" : "light")}/width-{width:0}/{browse}");
+            cases.Add((id, () => RunContextAsync(locale, dark, width, mode)));
         }
-        Console.WriteLine("Like state, seven-locale accessibility, narrow tabs and legacy ID compatibility passed.");
+        return cases;
+    }
+
+    private static async Task RunContextAsync(string locale, bool dark, double width, VoiceBrowseMode mode)
+    {
+        var name = $"{locale}/{(dark ? "dark" : "light")}/{width:0}/{mode}";
+        var elapsed = Stopwatch.StartNew();
+        long enteredAt = -1;
+        try
+        {
+            await RunOnStaThreadAsync(() =>
+            {
+                Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+                InspectLikeState(locale, dark, width, mode);
+            });
+        }
+        catch
+        {
+            try { Console.Error.WriteLine($"[voice-like/{name}] failed after {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms."); }
+            catch { /* Diagnostics cannot replace the original action failure. */ }
+            throw;
+        }
+        Console.WriteLine($"[voice-like/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; ordinary shared-STA action.");
     }
 
     internal static Task SharedCardTemplateIsCompiledAsync() => RunOnStaThreadAsync(() =>

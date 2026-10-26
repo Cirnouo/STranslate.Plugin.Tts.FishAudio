@@ -16,28 +16,41 @@ internal static class AcceptedPreviewContinuitySuite
 
     internal static async Task RunAllAsync(string? focus = null)
     {
+        foreach (var testCase in CreateCases(focus))
+            await testCase.Run();
+    }
+
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? focus = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
         if (focus is null or "selection")
             foreach (var origin in Enum.GetValues<Origin>())
-                await StaTestHost.RunOnStaThreadAsync(() => SelectionAsync(origin));
+                cases.Add(($"preview.accepted-continuity/selection/{OriginId(origin)}", () => StaTestHost.RunOnStaThreadAsync(() => SelectionAsync(origin))));
         if (focus is null or "unlike")
             foreach (var applied in new[] { false, true })
-                await StaTestHost.RunOnStaThreadAsync(() => UnlikeAsync(applied));
+                cases.Add(($"preview.accepted-continuity/unlike/{(applied ? "applied" : "unapplied")}", () => StaTestHost.RunOnStaThreadAsync(() => UnlikeAsync(applied))));
         if (focus is null or "browsing")
         {
-            await StaTestHost.RunOnStaThreadAsync(FavoriteBrowsingAsync);
-            await StaTestHost.RunOnStaThreadAsync(ByIdBrowsingAsync);
+            cases.Add(("preview.accepted-continuity/browsing/favorites", () => StaTestHost.RunOnStaThreadAsync(FavoriteBrowsingAsync)));
+            cases.Add(("preview.accepted-continuity/browsing/by-id", () => StaTestHost.RunOnStaThreadAsync(ByIdBrowsingAsync)));
         }
         if (focus is null or "handoff")
         {
             foreach (var origin in new[] { Origin.ById, Origin.Favorite })
-                await StaTestHost.RunOnStaThreadAsync(() => CollectionHandoffAsync(origin));
+                cases.Add(($"preview.accepted-continuity/handoff/collection/{OriginId(origin)}", () => StaTestHost.RunOnStaThreadAsync(() => CollectionHandoffAsync(origin))));
             foreach (var origin in Enum.GetValues<Origin>())
-                await StaTestHost.RunOnStaThreadAsync(() => ManagementHandoffAsync(origin));
+                cases.Add(($"preview.accepted-continuity/handoff/management/{OriginId(origin)}", () => StaTestHost.RunOnStaThreadAsync(() => ManagementHandoffAsync(origin))));
         }
-        if (focus is null or "credentials") await StaTestHost.RunOnStaThreadAsync(CredentialsAsync);
-        if (focus is null or "lifecycle") await StaTestHost.RunOnStaThreadAsync(LifecycleAsync);
-        if (focus is null or "lease") await StaTestHost.RunOnStaThreadAsync(RejectedSavesAsync);
+        if (focus is null or "credentials")
+            cases.Add(("preview.accepted-continuity/credentials", () => StaTestHost.RunOnStaThreadAsync(CredentialsAsync)));
+        if (focus is null or "lifecycle")
+            cases.Add(("preview.accepted-continuity/lifecycle", () => StaTestHost.RunOnStaThreadAsync(LifecycleAsync)));
+        if (focus is null or "lease")
+            cases.Add(("preview.accepted-continuity/rejected-saves", () => StaTestHost.RunOnStaThreadAsync(RejectedSavesAsync)));
+        return cases;
     }
+
+    private static string OriginId(Origin origin) => origin == Origin.ById ? "by-id" : origin.ToString().ToLowerInvariant();
 
     private static async Task SelectionAsync(Origin origin)
     {
