@@ -6,6 +6,11 @@ internal static class RegressionReportSuite
 {
     internal static async Task RunAsync()
     {
+        await ReaderDrainCannotReplaceTheWriterFailureAsync();
+        await ObservedReaderFailureCannotAuthorizeWriterAsync();
+        await TerminalReadersCannotWaitForUnpublishedReadinessAsync();
+        await ReaderFixtureCleanupPreservesPrimaryAndAttemptsEveryReleaseAsync();
+        await ReaderFixtureRootIncludesSetupAndEveryCleanupAsync();
         HeldCanonicalCannotFailDurableUpdatesOrRepeatActions();
         InitialOwnershipAndAuthoritativeFailuresRemainStrict();
         await ConcurrentReadersCannotBlockImmutableUpdatesAsync();
@@ -68,28 +73,162 @@ internal static class RegressionReportSuite
         AssertEqual(false, File.Exists(orphan.Path), "Sidecar ownership is checked before creating a canonical report");
     }
 
-    private static async Task ConcurrentReadersCannotBlockImmutableUpdatesAsync()
+    private static async Task ReaderDrainCannotReplaceTheWriterFailureAsync()
     {
-        using var fixture = new ReportFixture();
-        var report = fixture.Report();
-        report.Create(fixture.Path);
-        using var held = new FileStream(fixture.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var stopped = 0;
-        var observed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var reader = Task.Run(() =>
-        {
-            var previous = -1L;
-            while (Volatile.Read(ref stopped) == 0)
-            {
-                var current = RegressionReport.Read(fixture.Path);
-                AssertEqual(true, current.Generation >= previous, "Immutable generation reads cannot move backwards");
-                previous = current.Generation;
-                observed.TrySetResult();
-            }
-        });
+        var writerFailure = new IOException("private-owned-writer-failure");
+        var readerFailure = new IOException("private-reader-drain-failure");
+        var reader = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var stopCalls = 0;
+        Exception? actual = null;
         try
         {
-            await observed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await RegressionFixtureOwner.RunReaderAsync(observed => { observed(); return reader.Task; },
+                () => throw writerFailure,
+                () => { stopCalls++; reader.SetException(readerFailure); }, () => { });
+        }
+        catch (Exception error) { actual = error; }
+        AssertEqual(true, ReferenceEquals(writerFailure, actual),
+            "The exact owned writer exception remains primary when the same reader fails during drain");
+        AssertEqual(1, stopCalls, "The same reader is stopped exactly once after a writer failure");
+        AssertEqual(true, writerFailure.Data[RegressionFixtureOwner.CleanupTypesKey] is List<string> types &&
+            types.SequenceEqual([typeof(IOException).FullName!]), "Reader drain failure retains only its safe secondary type");
+    }
+
+    private static async Task ObservedReaderFailureCannotAuthorizeWriterAsync()
+    {
+        var readerFailure = new IOException("private-observed-reader-failure");
+        var writerFailure = new IOException("private-unexpected-writer-failure");
+        var writes = 0;
+        var stops = 0;
+        Exception? actual = null;
+        try
+        {
+            await RegressionFixtureOwner.RunReaderAsync(observed =>
+            {
+                observed();
+                return Task.FromException(readerFailure);
+            }, () => { writes++; throw writerFailure; }, () => stops++, () => { });
+        }
+        catch (Exception error) { actual = error; }
+        AssertEqual(true, ReferenceEquals(readerFailure, actual),
+            "An already-observed reader failure remains primary before writer work begins");
+        AssertEqual(0, writes, "A failed reader cannot authorize writer work after publishing readiness");
+        AssertEqual(1, stops, "An observed reader failure retains its single stop owner");
+    }
+
+    private static async Task TerminalReadersCannotWaitForUnpublishedReadinessAsync()
+    {
+        foreach (var failed in new[] { true, false })
+        {
+            var readerFailure = new IOException("private-early-reader-failure");
+            var writes = 0;
+            var stops = 0;
+            Action signal = () => { };
+            var work = RegressionFixtureOwner.RunReaderAsync(observed =>
+            {
+                signal = observed;
+                return failed ? Task.FromException(readerFailure) : Task.CompletedTask;
+            }, () => writes++, () => stops++, () => { });
+            var terminal = work.IsCompleted;
+            // Release the same readiness gate if a broken owner ignores the
+            // already-terminal reader, so this negative contract cannot leak it.
+            if (!terminal) signal();
+            Exception? actual = null;
+            try { await work; }
+            catch (Exception error) { actual = error; }
+            AssertEqual(true, terminal, "An already-terminal reader cannot await an observation it will never publish");
+            AssertEqual(true, failed ? ReferenceEquals(actual, readerFailure) : actual is InvalidOperationException,
+                "Early reader failure retains its identity and successful exit without observation fails");
+            AssertEqual(0, writes, "A reader that ended before readiness cannot authorize writer work");
+            AssertEqual(1, stops, "An early terminal reader retains its single stop owner");
+        }
+    }
+
+    private static async Task ReaderFixtureCleanupPreservesPrimaryAndAttemptsEveryReleaseAsync()
+    {
+        foreach (var hasPrimary in new[] { true, false })
+        {
+            var primary = new IOException("private-writer-failure");
+            var cleanupFailure = new InvalidOperationException("private-held-stream-cleanup");
+            var releases = new List<string>();
+            Exception? actual = null;
+            try
+            {
+                await RegressionFixtureOwner.RunReaderAsync(observed => { observed(); return Task.CompletedTask; },
+                    () => { if (hasPrimary) throw primary; }, () => releases.Add("reader"), () => { },
+                    () => { releases.Add("held"); throw cleanupFailure; },
+                    () => { releases.Add("fixture"); return Task.CompletedTask; });
+            }
+            catch (Exception error) { actual = error; }
+            AssertEqual(true, ReferenceEquals(actual, hasPrimary ? primary : cleanupFailure),
+                "Resource cleanup preserves the exact primary and cleanup-only failure remains failed");
+            AssertEqual(true, releases.SequenceEqual(["reader", "held", "fixture"]),
+                "Reader stop and every ordered resource release execute exactly once after failure");
+            if (hasPrimary)
+                AssertEqual(true, primary.Data[RegressionFixtureOwner.CleanupTypesKey] is List<string> types &&
+                    types.SequenceEqual([typeof(InvalidOperationException).FullName!]), "Resource cleanup diagnostics contain only safe types");
+        }
+    }
+
+    private static async Task ReaderFixtureRootIncludesSetupAndEveryCleanupAsync()
+    {
+        var actions = new List<RegressionActionEvent>();
+        using var owner = RegressionActionScope.BeginCase("runner.probe/reader-lifetime", actions.Add);
+        var cleanupEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseCleanup = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var reader = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var disposed = 0;
+        var work = RegressionFixtureOwner.RunReaderAsync(observed =>
+        {
+            AssertEqual(true, RegressionActionScope.QueueRoot() is null, "Fixture setup starts inside the queued root");
+            observed();
+            return reader.Task;
+        }, () => AssertEqual(true, RegressionActionScope.QueueRoot() is null, "Writer work inherits the original root"),
+            () => reader.SetResult(), () => { }, async () =>
+            {
+                cleanupEntered.SetResult();
+                await releaseCleanup.Task;
+                AssertEqual(true, RegressionActionScope.QueueRoot() is null, "Async cleanup cannot renew the fixture deadline");
+            }, () => { disposed++; return Task.CompletedTask; });
+        try
+        {
+            await cleanupEntered.Task;
+            AssertEqual(true, actions.Select(action => action.Kind).SequenceEqual(["queued", "entered"]),
+                "The actual root cannot publish completion while its cleanup is still held");
+            AssertEqual(0, disposed, "Later cleanup cannot overtake the same held cleanup task");
+        }
+        finally { releaseCleanup.TrySetResult(); await work; }
+        AssertEqual(1, disposed, "The final resource cleanup executes once");
+        AssertEqual(true, actions.Select(action => action.Kind).SequenceEqual(["queued", "entered", "completed"]) &&
+            actions.All(action => action.Ordinal == 1 && action.QueuedTimestamp == actions[0].QueuedTimestamp),
+            "Setup, work, reader drain and resource disposal share one unchanged root timestamp");
+    }
+
+    private static async Task ConcurrentReadersCannotBlockImmutableUpdatesAsync()
+    {
+        ReportFixture fixture = null!;
+        RegressionReport report = null!;
+        FileStream? held = null;
+        var stopped = 0;
+        await RegressionFixtureOwner.RunReaderAsync(observed =>
+        {
+            fixture = new ReportFixture();
+            report = fixture.Report();
+            report.Create(fixture.Path);
+            held = new FileStream(fixture.Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return Task.Run(() =>
+            {
+                var previous = -1L;
+                while (Volatile.Read(ref stopped) == 0)
+                {
+                    var current = RegressionReport.Read(fixture.Path);
+                    AssertEqual(true, current.Generation >= previous, "Immutable generation reads cannot move backwards");
+                    previous = current.Generation;
+                    observed();
+                }
+            });
+        }, () =>
+        {
             for (var index = 0; index < 64; index++)
             {
                 report.Cases[0].ElapsedMilliseconds = index;
@@ -99,9 +238,10 @@ internal static class RegressionReportSuite
             report.Complete = true;
             report.FinishedUtc = DateTimeOffset.UtcNow;
             report.Write(fixture.Path);
-        }
-        finally { Volatile.Write(ref stopped, 1); await reader.WaitAsync(TimeSpan.FromSeconds(5)); }
-        AssertEqual(true, RegressionReport.Read(fixture.Path).Complete, "Concurrent readers cannot fail or lose a final durable report");
+        }, () => Volatile.Write(ref stopped, 1),
+            () => AssertEqual(true, RegressionReport.Read(fixture.Path).Complete, "Concurrent readers cannot fail or lose a final durable report"),
+            () => { held?.Dispose(); return Task.CompletedTask; },
+            () => { fixture?.Dispose(); return Task.CompletedTask; });
     }
 
     private static async Task StaleProjectionReplaysOnlyLatestIncompleteCoverageAsync()
