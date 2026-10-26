@@ -30,6 +30,15 @@
 .PARAMETER Test
     Run the regression test project after building and verifying the package.
 
+.PARAMETER TestGroup
+    Select logical regression groups. Requires -Test.
+
+.PARAMETER TestCase
+    Select exact regression case IDs. Requires -Test.
+
+.PARAMETER Affected
+    Add groups affected by changes from the TestBase merge-base and working tree.
+
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -Clean
@@ -42,12 +51,27 @@ param(
     [switch]$Clean,
     [switch]$CleanOnly,
     [switch]$Test,
-    [switch]$Release
+    [switch]$Release,
+    [string[]]$TestGroup = @(),
+    [string[]]$TestCase = @(),
+    [string]$TestPartition,
+    [string]$TestResults,
+    [string]$RerunFailed,
+    [switch]$Affected,
+    [string]$TestBase
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Configuration = if ($Release) { 'Release' } else { 'Debug' }
+
+if (-not $Test -and ($TestGroup.Count -gt 0 -or $TestCase.Count -gt 0 -or
+    $TestPartition -or $TestResults -or $RerunFailed -or $Affected -or $TestBase)) {
+    throw 'Regression selection and result options require -Test.'
+}
+if ($TestBase -and -not $Affected) {
+    throw '-TestBase requires -Affected.'
+}
 
 # ── Paths ──
 $RepoRoot    = $PSScriptRoot
@@ -212,8 +236,16 @@ finally {
 
 if ($Test) {
     Write-Host ''
-    Write-Host "[test] dotnet run --project $TestCsprojPath -c $Configuration" -ForegroundColor Cyan
-    dotnet run --project $TestCsprojPath -c $Configuration
+    $testArguments = [System.Collections.Generic.List[string]]::new()
+    foreach ($group in $TestGroup) { $testArguments.Add('--group'); $testArguments.Add($group) }
+    foreach ($case in $TestCase) { $testArguments.Add('--case'); $testArguments.Add($case) }
+    if ($TestPartition) { $testArguments.Add('--partition'); $testArguments.Add($TestPartition) }
+    if ($TestResults) { $testArguments.Add('--results'); $testArguments.Add($TestResults) }
+    if ($RerunFailed) { $testArguments.Add('--rerun-failed'); $testArguments.Add($RerunFailed) }
+    if ($Affected) { $testArguments.Add('--affected') }
+    if ($TestBase) { $testArguments.Add('--base'); $testArguments.Add($TestBase) }
+    Write-Host '[test] Build and execute the selected regression contracts.' -ForegroundColor Cyan
+    dotnet run --project $TestCsprojPath -c $Configuration -- @testArguments
     if ($LASTEXITCODE -ne 0) {
         $testExitCode = $LASTEXITCODE
         Write-Error "Tests failed with exit code $testExitCode" -ErrorAction Continue

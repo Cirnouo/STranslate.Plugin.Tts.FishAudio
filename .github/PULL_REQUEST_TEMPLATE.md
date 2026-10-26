@@ -10,7 +10,7 @@ Explain the final change and relevant compatibility, resource or security implic
 
 List checks actually run, their results, the final file state they cover and remaining host/device/provider/publication limits.
 
-- [ ] Affected regressions and `./build.ps1 -Release -Clean -Test` pass.
+- [ ] Affected local regressions and a freshly built package were verified; full PR CI coverage is reported separately.
 - [ ] Relevant offline probe/release-tool checks pass when changed.
 - [ ] The current distributable and its runtime dependencies were checked when applicable.
 - [ ] Changelog changes identify the latest published stable baseline, authoritative release evidence and why the categories describe final net changes.

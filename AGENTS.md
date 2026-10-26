@@ -8,7 +8,7 @@ This is a Windows/WPF .NET 10 plugin using STranslate.Plugin 1.0.15. `Main` is t
 
 Keep credentials, private text, signed resource URLs and personal machine paths out of public files and diagnostics. Ordinary behavioral regressions are offline and require neither a Fish Audio key nor an audio device; CI dependency audits and code scanning have their own external service boundaries. Never silently retry synthesis or select another model. Real synthesis needs the API evidence policy's explicit cost controls. Preserve raw evidence bytes and their `.gitattributes` treatment; do not run blanket text normalization over captured data.
 
-Use meaningful behavior/compatibility regressions at fake network, clock, storage and audio boundaries. The regression project is an executable runner: register new scenarios in its `Program.cs`. Check the final intended file state and the actual distributable. The ordinary combined Windows check is `./build.ps1 -Release -Clean -Test`; report failures and verification limits accurately. A leftover package or software output-start signal is not proof of a successful current build or audible output.
+Use meaningful behavior/compatibility regressions at fake network, clock, storage and audio boundaries. The regression project is an executable runner: register new scenarios in its `RegressionCatalog`, dispatched by `Program.cs`. Check the final intended file state and the actual distributable. The full combined Windows check is `./build.ps1 -Release -Clean -Test`; the verification policy owns affected local pre-push selection. Report failures and verification limits accurately. A leftover package or software output-start signal is not proof of a successful current build or audible output.
 
 ## Read before the relevant action
 
