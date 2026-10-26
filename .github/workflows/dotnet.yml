@@ -18,6 +18,7 @@ jobs:
     uses: ./.github/workflows/validation.yml
     permissions:
       contents: read
+      actions: read
 
   publish:
     name: Publish release
