@@ -19,20 +19,22 @@ internal static class SettingsInputBindingSuite
         var constructionTimeout = RegressionExecution.Timeout;
         var phase = Stopwatch.StartNew();
         var constructionFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Console.WriteLine($"[settings-input] View construction queued with {constructionTimeout.TotalSeconds:0}s execution budget.");
+        Exception? constructionFailure = null;
+        Write($"[settings-input] View construction queued with {constructionTimeout.TotalSeconds:0}s execution budget.");
         try
         {
             await RunOnStaThreadAsync(() =>
             {
-                Console.WriteLine($"[settings-input] View construction entered after {phase.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
+                Write($"[settings-input] View construction entered after {phase.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
                 try
                 {
                     view = new SettingsView();
-                    Console.WriteLine($"[settings-input] Constructor returned after {phase.ElapsedMilliseconds}ms.");
+                    Write($"[settings-input] Constructor returned after {phase.ElapsedMilliseconds}ms.");
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine($"[settings-input] Constructor faulted with {exception.GetType().Name} after {phase.ElapsedMilliseconds}ms.");
+                    Volatile.Write(ref constructionFailure, exception);
+                    Write($"[settings-input] Constructor faulted with {exception.GetType().Name} after {phase.ElapsedMilliseconds}ms.");
                     throw;
                 }
                 finally
@@ -41,27 +43,22 @@ internal static class SettingsInputBindingSuite
                 }
             }, constructionTimeout);
         }
-        catch (TimeoutException)
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref constructionFailure)))
         {
-            Console.WriteLine($"[settings-input] Original construction deadline failed after {phase.ElapsedMilliseconds}ms; observing the same action without retrying it.");
-            try
+            await RegressionDiagnostics.RunAsync(async retired =>
             {
-                await constructionFinished.Task.WaitAsync(TimeSpan.FromSeconds(20));
-                Console.WriteLine($"[settings-input] Timed-out action exited after {phase.ElapsedMilliseconds}ms; preserving the original failed deadline.");
-            }
-            catch (TimeoutException)
-            {
-                Console.WriteLine($"[settings-input] Timed-out action remains incomplete after {phase.ElapsedMilliseconds}ms.");
-            }
+                await constructionFinished.Task.ConfigureAwait(false);
+                if (!retired()) Write($"[settings-input] Timed-out action exited after {phase.ElapsedMilliseconds}ms; preserving the original failed deadline.");
+            }).ConfigureAwait(false);
             throw;
         }
-        Console.WriteLine($"[settings-input] View construction completed after {phase.ElapsedMilliseconds}ms.");
+        Write($"[settings-input] View construction completed after {phase.ElapsedMilliseconds}ms.");
 
         phase.Restart();
-        Console.WriteLine("[settings-input] Binding assertions queued.");
+        Write("[settings-input] Binding assertions queued.");
         await RunOnStaThreadAsync(() =>
         {
-            Console.WriteLine($"[settings-input] Binding assertions entered after {phase.ElapsedMilliseconds}ms.");
+            Write($"[settings-input] Binding assertions entered after {phase.ElapsedMilliseconds}ms.");
             var settings = new Settings { ApiKey = AppliedKey };
             var context = CreateContext(settings: settings);
             var storage = (ContextProxy)(object)context;
@@ -93,11 +90,17 @@ internal static class SettingsInputBindingSuite
                 AssertEqual(savesBeforeEdit + 1, storage.SaveCount, "Each password edit must save once without a focus change");
             }
         });
-        Console.WriteLine($"[settings-input] Binding assertions completed after {phase.ElapsedMilliseconds}ms.");
+        Write($"[settings-input] Binding assertions completed after {phase.ElapsedMilliseconds}ms.");
     }
 
     private static void DrainBindings() =>
         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+
+    private static void Write(string message)
+    {
+        try { Console.WriteLine(message); }
+        catch { /* Diagnostics cannot replace a construction or binding failure. */ }
+    }
 
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
     {

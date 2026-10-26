@@ -127,7 +127,33 @@ internal static class OperationActivityDispatcherSuite
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? actionFailure = null;
         var entered = 0;
-        void Stage(string stage) => (write ?? Console.WriteLine)($"[activity-dispatcher/{name}] {stage} after {elapsed.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
+        var phases = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        var phaseAttempts = 0;
+        void Stage(string stage)
+        {
+            if (Interlocked.Increment(ref phaseAttempts) <= 256)
+                phases.Enqueue($"[activity-dispatcher/{name}] {stage} after {elapsed.ElapsedMilliseconds}ms on thread {Environment.CurrentManagedThreadId}.");
+        }
+        Task ReportAsync(bool failed, bool observeCompletion) => RegressionDiagnostics.RunAsync(async retired =>
+        {
+            if (observeCompletion)
+            {
+                try { await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false); Stage("same action observation complete; original deadline remains failed"); }
+                catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
+            }
+            if (failed)
+            {
+                foreach (var phase in phases)
+                {
+                    if (retired()) break;
+                    try { (write ?? Console.WriteLine)(phase); } catch { }
+                }
+            }
+            else if (!retired())
+            {
+                try { (write ?? Console.WriteLine)($"[activity-dispatcher/{name}] completed in {elapsed.ElapsedMilliseconds}ms."); } catch { }
+            }
+        });
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
@@ -139,16 +165,17 @@ internal static class OperationActivityDispatcherSuite
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { completion.TrySetResult(); Stage("action completed"); }
             }, executionTimeout);
+            await ReportAsync(false, false).ConfigureAwait(false);
         }
-        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
-            Stage(Volatile.Read(ref entered) != 0 ? "outer action deadline; observing same action for at most 20s" : "STA dispatch deadline before entry; observing same queued action for at most 20s");
-            try
-            {
-                await (observe ?? (pending => pending.WaitAsync(TimeSpan.FromSeconds(20))))(completion.Task);
-                Stage("same action observation complete; original deadline remains failed");
-            }
-            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
+            Stage(Volatile.Read(ref entered) != 0 ? "outer action deadline; observing same action for at most 10s" : "STA dispatch deadline before entry; observing same queued action for at most 10s");
+            await ReportAsync(true, true).ConfigureAwait(false);
+            throw;
+        }
+        catch
+        {
+            await ReportAsync(true, false).ConfigureAwait(false);
             throw;
         }
     }
@@ -156,7 +183,7 @@ internal static class OperationActivityDispatcherSuite
     internal static async Task DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync()
     {
         // Deterministic schedule seam: no real deadline waits or extra STA.
-        var outer = new TimeoutException("Synthetic outer deadline");
+        var outer = new RegressionExecutionTimeoutException();
         Func<Task>? queued = null;
         var runs = 0;
         var observations = 0;
@@ -174,8 +201,8 @@ internal static class OperationActivityDispatcherSuite
         AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
         AssertEqual(1, observations, "The outer deadline must observe the same action once");
         AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), executionBudget, "Activity injected async dispatch receives the shared execution guard");
-        AssertEqual(true, messages.Any(message => message.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Activity injected async dispatch receives the shared execution guard");
+        AssertEqual(true, messages.Any(message => message.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
 
         caught = null;
         try

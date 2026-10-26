@@ -13,8 +13,8 @@ internal static class AsyncTestWait
 {
     internal static async Task WaitUntilAsync(Func<bool> predicate, string description)
     {
-        var deadline = DateTime.UtcNow.Add(RegressionExecution.Timeout);
-        while (!predicate() && DateTime.UtcNow < deadline)
+        var elapsed = System.Diagnostics.Stopwatch.StartNew();
+        while (!predicate() && elapsed.Elapsed < RegressionExecution.Timeout)
             await Task.Delay(10);
 
         if (!predicate())

@@ -105,8 +105,36 @@ internal static class SearchAdjustmentControlSuite
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? actionFailure = null;
         long enteredAt = -1;
-        void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
-        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); }
+        var phaseAttempts = 0;
+        void Stage(string phase)
+        {
+            if (Interlocked.Increment(ref phaseAttempts) <= 256)
+                phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+        }
+        Task ReportAsync(bool failed, bool observeCompletion) => RegressionDiagnostics.RunAsync(async retired =>
+        {
+            if (observeCompletion)
+            {
+                try
+                {
+                    await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                    Stage("same action observation completed; original deadline remains failed");
+                }
+                catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
+            }
+            if (failed)
+            {
+                foreach (var phase in phases)
+                {
+                    if (retired()) break;
+                    try { (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); } catch { }
+                }
+            }
+            else if (!retired())
+            {
+                try { (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={actionTimeout.TotalSeconds}s; {details}"); } catch { }
+            }
+        }, observationTimeProvider);
         Stage(FormattableString.Invariant($"queued with {(executionTimeout is null ? "shared" : "explicit")} {actionTimeout.TotalSeconds}s action deadline"));
         try
         {
@@ -118,34 +146,27 @@ internal static class SearchAdjustmentControlSuite
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed"); completion.TrySetResult(); }
             }, actionTimeout);
-            (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={actionTimeout.TotalSeconds}s; {details}");
+            await ReportAsync(false, false).ConfigureAwait(false);
         }
-        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
-            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
-            try
-            {
-                // Bound observation off the shared STA; never replace/cancel/retry its work.
-                await BoundMatrixObservation(Task.Run(() => (observe ?? (pending => pending))(completion.Task)), observationTimeProvider).ConfigureAwait(false);
-                Stage("same action observation completed; original deadline remains failed");
-            }
-            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
-            Dump();
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 10s" : "outer deadline after entry; observing same action off STA for at most 10s");
+            await ReportAsync(true, true).ConfigureAwait(false);
             throw;
         }
         catch
         {
-            Dump();
+            await ReportAsync(true, false).ConfigureAwait(false);
             throw;
         }
     }
 
     private static Task BoundMatrixObservation(Task observation, TimeProvider? timeProvider = null) =>
-        observation.WaitAsync(TimeSpan.FromSeconds(20), timeProvider ?? TimeProvider.System);
+        RegressionDiagnostics.BoundAsync(observation, timeProvider);
 
     internal static async Task MatrixDiagnosticsPreserveFailuresWithoutRetryAsync()
     {
-        var outer = new TimeoutException("Synthetic outer deadline");
+        var outer = new RegressionExecutionTimeoutException();
         Action? queued = null;
         var runs = 0;
         var observations = 0;
@@ -185,10 +206,10 @@ internal static class SearchAdjustmentControlSuite
         var exactClock = new ManualStreamingTimeProvider();
         var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var exactBound = BoundMatrixObservation(incomplete.Task, exactClock);
-        exactClock.Advance(TimeSpan.FromMilliseconds(19999));
-        AssertEqual(false, exactBound.IsCompleted, "The real observation bound stays incomplete at 19999ms");
+        exactClock.Advance(TimeSpan.FromMilliseconds(9999));
+        AssertEqual(false, exactBound.IsCompleted, "The real observation bound stays incomplete at 9999ms");
         exactClock.Advance(TimeSpan.FromMilliseconds(1));
-        AssertEqual(true, exactBound.IsCompleted, "The real observation bound expires at exactly 20000ms");
+        AssertEqual(true, exactBound.IsCompleted, "The real observation bound expires at exactly 10000ms");
         try { await exactBound; throw new InvalidOperationException("The observation did not expire"); }
         catch (TimeoutException) { }
         AssertEqual(false, incomplete.Task.IsCompleted, "The bound never cancels or replaces its incomplete observation");
@@ -204,18 +225,18 @@ internal static class SearchAdjustmentControlSuite
             observe: completion => { sameCompletion = completion; observations++; observing.TrySetResult(); return completion; },
             write: output.Add, observationTimeProvider: clock);
         await observing.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(19999));
-        AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 19999ms");
+        clock.Advance(TimeSpan.FromMilliseconds(9999));
+        AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 9999ms");
         AssertEqual(false, sameCompletion!.IsCompleted, "The same queued action is still incomplete before expiration");
         clock.Advance(TimeSpan.FromMilliseconds(1));
         try { await bounded.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "The real 20000ms observation deadline must preserve original outer-error identity");
+        AssertEqual(true, ReferenceEquals(outer, caught), "The real 10000ms observation deadline must preserve original outer-error identity");
         AssertEqual(1, observations, "An incomplete action gets exactly one bounded observation");
         AssertEqual(1, dispatches, "Expiration never dispatches a replacement or retry");
         AssertEqual(0, runs, "Expiration does not execute or replace the queued action");
         AssertEqual(false, sameCompletion.IsCompleted, "Expiration does not cancel the original action/completion");
-        AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The real bound records observation expiration");
+        AssertEqual(0, output.Count, "An expired observation may leave output absent rather than grant writing another allowance");
         queued!();
         await sameCompletion.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
@@ -226,8 +247,8 @@ internal static class SearchAdjustmentControlSuite
             dispatch: (callback, timeout) => { defaultBudget = timeout; callback(); return Task.CompletedTask; }, write: output.Add);
         AssertEqual(1, output.Count, "A successful action emits one compact line");
         AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), defaultBudget, "An omitted action budget must use the shared execution dispatch boundary");
-        AssertEqual(true, output[0].Contains("deadline=20s", StringComparison.Ordinal), "Matrix success diagnostics describe the actual shared dispatch guard");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), defaultBudget, "An omitted action budget must use the shared execution dispatch boundary");
+        AssertEqual(true, output[0].Contains("deadline=120s", StringComparison.Ordinal), "Matrix success diagnostics describe the actual shared dispatch guard");
     }
 
     private static async Task ObserveViewportActionAsync(Func<Action<string>, Task> action,
@@ -251,13 +272,9 @@ internal static class SearchAdjustmentControlSuite
             catch { /* Phase reporting cannot replace the action outcome. */ }
         }
         void Write(string text) { try { (write ?? Console.WriteLine)(text); } catch { /* Preserve the primary outcome. */ } }
-        async Task ReportAsync(bool failed, bool observeCompletion)
+        Task ReportAsync(bool failed, bool observeCompletion)
         {
-            var retired = 0;
-            // One guard covers scheduling, original completion observation and output together.
-            // A blocked external writer cannot be interrupted; retire later writes and return
-            // the original outcome without granting output a second diagnostic allowance.
-            var diagnostic = Task.Run(async () =>
+            return RegressionDiagnostics.RunAsync(async retired =>
             {
                 try
                 {
@@ -271,30 +288,23 @@ internal static class SearchAdjustmentControlSuite
                         }
                         catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
                     }
-                    if (Volatile.Read(ref retired) != 0) return;
+                    if (retired()) return;
                     await (scheduleReport ?? (report => Task.Run(report)))(() =>
                     {
                         if (failed)
                         {
                             foreach (var phase in phases)
                             {
-                                if (Volatile.Read(ref retired) != 0) break;
+                                if (retired()) break;
                                 Write($"[search-viewport] {phase}");
                             }
                         }
-                        else if (Volatile.Read(ref retired) == 0)
+                        else if (!retired())
                             Write(FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain."));
                     }).ConfigureAwait(false);
                 }
                 catch { /* Best-effort diagnostics cannot replace the original outcome. */ }
-            });
-            try
-            {
-                if (failed) await BoundMatrixObservation(diagnostic, observationTimeProvider).ConfigureAwait(false);
-                else await RegressionExecution.WaitAsync(diagnostic, timeProvider: observationTimeProvider).ConfigureAwait(false);
-            }
-            catch { /* Deadline or output failure leaves the original outcome intact. */ }
-            finally { Interlocked.Exchange(ref retired, 1); }
+            }, observationTimeProvider);
         }
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         Func<Task> callback = async () =>
@@ -314,9 +324,9 @@ internal static class SearchAdjustmentControlSuite
             await (dispatch ?? ((body, timeout) => RunOnStaThreadAsync(body, timeout)))(callback, executionTimeout).ConfigureAwait(false);
             await ReportAsync(false, observeCompletion: false).ConfigureAwait(false);
         }
-        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
-            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 10s" : "outer deadline after entry; observing same action off STA for at most 10s");
             await ReportAsync(true, observeCompletion: true).ConfigureAwait(false);
             throw;
         }
@@ -348,13 +358,13 @@ internal static class SearchAdjustmentControlSuite
         await pending.WaitAsync(RegressionExecution.Timeout);
         AssertEqual(true, cleanup, "Successful completion follows the complete action's cleanup");
         AssertEqual(1, runs, "An async action executes exactly once");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), budget, "The shared execution budget reaches injected async dispatch");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "The shared execution budget reaches injected async dispatch");
         AssertEqual(1, output.Count, "Success emits one compact summary");
-        AssertEqual(true, output[0].Contains("execution=20s", StringComparison.Ordinal), "Success diagnostics use the same dispatched duration");
+        AssertEqual(true, output[0].Contains("execution=120s", StringComparison.Ordinal), "Success diagnostics use the same dispatched duration");
         AssertEqual(false, output[0].Contains("private held phase", StringComparison.Ordinal), "Success does not dump buffered private phases");
 
         var inner = new TimeoutException("Synthetic action-owned timeout");
-        var outer = new TimeoutException("Synthetic outer deadline");
+        var outer = new RegressionExecutionTimeoutException();
         Exception? caught = null;
         var observations = 0;
         output.Clear();
@@ -383,8 +393,8 @@ internal static class SearchAdjustmentControlSuite
         AssertEqual(1, dispatches, "Late completion must not dispatch replacement work");
         AssertEqual(1, runs, "Only the same queued callback may run");
         AssertEqual(1, observations, "An outer timeout observes its one original completion");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), budget, "Failure dispatch receives the shared execution budget");
-        AssertEqual(true, output.Any(line => line.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Failure diagnostics describe the dispatched duration");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "Failure dispatch receives the shared execution budget");
+        AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Failure diagnostics describe the dispatched duration");
 
         var secondary = new IOException("Synthetic observation failure");
         caught = null; observations = 0; output.Clear();
@@ -410,9 +420,9 @@ internal static class SearchAdjustmentControlSuite
             write: output.Add, observationTimeProvider: clock);
         await observing.Task.WaitAsync(RegressionExecution.Timeout);
         await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(19999));
-        AssertEqual(false, bounded.IsCompleted, "The same-action observer cannot expire before 20000ms");
-        AssertEqual(false, sameCompletion!.IsCompleted, "The original callback is still incomplete at 19999ms");
+        clock.Advance(TimeSpan.FromMilliseconds(9999));
+        AssertEqual(false, bounded.IsCompleted, "The same-action observer cannot expire before 10000ms");
+        AssertEqual(false, sameCompletion!.IsCompleted, "The original callback is still incomplete at 9999ms");
         clock.Advance(TimeSpan.FromMilliseconds(1));
         try { await bounded.WaitAsync(RegressionExecution.Timeout); }
         catch (Exception error) { caught = error; }
@@ -435,7 +445,7 @@ internal static class SearchAdjustmentControlSuite
         {
             var clock = new ObservationRegistrationClock();
             var primary = new IOException("Synthetic held-reporter action fault");
-            var outer = new TimeoutException("Synthetic held-reporter outer deadline");
+            var outer = new RegressionExecutionTimeoutException();
             var actionRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var reporterEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -486,13 +496,13 @@ internal static class SearchAdjustmentControlSuite
                 await reportCreated.Task.WaitAsync(RegressionExecution.Timeout);
                 AssertEqual(1, clock.ActiveTimers, "Reporting retains the original active guard after observation/scheduling");
                 AssertEqual(1, clock.TimerCount, "Reporting cannot renew the diagnostic allowance after partial observation");
-                clock.Advance(TimeSpan.FromMilliseconds(scenario == "outer-partial-observation" ? 12999 : 19999));
-                AssertEqual(false, pending.IsCompleted, "Held reporting remains incomplete at total 19999ms");
+                clock.Advance(TimeSpan.FromMilliseconds(scenario == "outer-partial-observation" ? 2999 : 9999));
+                AssertEqual(false, pending.IsCompleted, "Held reporting remains incomplete at total 9999ms");
                 clock.Advance(TimeSpan.FromMilliseconds(1));
                 try { await pending.WaitAsync(RegressionExecution.Timeout); }
                 catch (Exception error) { caught = error; }
                 AssertEqual(true, scenario == "successful-summary" ? caught is null : ReferenceEquals(scenario == "owned-writer" ? primary : outer, caught),
-                    "At total 20000ms auxiliary reporting preserves the exact original success or failure");
+                    "At total 10000ms auxiliary reporting preserves the exact original success or failure");
                 AssertEqual(1, runs, "Held reporting never retries or replaces the original action");
                 AssertEqual(false, reportTask.IsCompleted, "The outcome returns while the external writer or reporter is still held");
                 AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Held scheduling cannot emit a success or failure before release");

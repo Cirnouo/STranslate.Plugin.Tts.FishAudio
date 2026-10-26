@@ -846,7 +846,7 @@ internal static class SettingsInputInteractionSuite
     {
         // These contracts catch replacement/retry, lost failure identity and
         // unbounded observation without dispatching WPF or waiting on real time.
-        var outer = new TimeoutException("Synthetic outer action deadline");
+        var outer = new RegressionExecutionTimeoutException();
         Func<Task>? queued = null;
         var dispatches = 0;
         var runs = 0;
@@ -867,8 +867,8 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(1, runs, "The original queued action must run once without retry");
         AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "Queued failure must identify its pre-entry phase");
         AssertEqual(true, output.Any(line => line.Contains("original action body", StringComparison.Ordinal)), "Failure output must retain the action phases");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), executionBudget, "Numeric tooltip injected dispatch receives the shared execution guard");
-        AssertEqual(true, output.Any(line => line.Contains("queued with shared 20s async action deadline", StringComparison.Ordinal)), "Numeric tooltip diagnostics describe the actual injected guard");
+        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Numeric tooltip injected dispatch receives the shared execution guard");
+        AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Numeric tooltip diagnostics describe the actual injected guard");
 
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Task? originalAction = null;
@@ -921,14 +921,14 @@ internal static class SettingsInputInteractionSuite
         var exactClock = new ManualStreamingTimeProvider();
         var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var exactBound = BoundNativeToolTipObservation(incomplete.Task, exactClock);
-        exactClock.Advance(TimeSpan.FromMilliseconds(19999));
-        AssertEqual(false, exactBound.IsCompleted, "The actual observation helper must remain pending at 19999ms");
+        exactClock.Advance(TimeSpan.FromMilliseconds(9999));
+        AssertEqual(false, exactBound.IsCompleted, "The actual observation helper must remain pending at 9999ms");
         exactClock.Advance(TimeSpan.FromMilliseconds(1));
-        AssertEqual(true, exactBound.IsCompleted, "The actual helper Task must expire at exactly 20000ms, independently of caller scheduling");
+        AssertEqual(true, exactBound.IsCompleted, "The actual helper Task must expire at exactly 10000ms, independently of caller scheduling");
         caught = null;
         try { await exactBound; }
         catch (Exception error) { caught = error; }
-        AssertEqual(true, caught is TimeoutException, "The bounded helper must report its twenty-second observation deadline");
+        AssertEqual(true, caught is TimeoutException, "The bounded helper must report its ten-second observation deadline");
         AssertEqual(false, incomplete.Task.IsCompleted, "Observation expiry must not cancel or complete the original action");
         incomplete.SetResult();
 
@@ -941,8 +941,8 @@ internal static class SettingsInputInteractionSuite
             dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
             observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return observationRelease.Task; }, write: output.Add, observationTimeProvider: clock);
         await observing.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(19999));
-        AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the twenty-second boundary");
+        clock.Advance(TimeSpan.FromMilliseconds(9999));
+        AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the ten-second boundary");
         AssertEqual(false, sameCompletion!.IsCompleted, "The original action remains pending before observation expiry");
         clock.Advance(TimeSpan.FromMilliseconds(1));
         try { await bounded.WaitAsync(RegressionExecution.Timeout); }
@@ -953,7 +953,7 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(0, runs, "Observation expiry must not run replacement work");
         AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry must leave the original completion pending");
         AssertEqual(false, observationRelease.Task.IsCompleted, "Observation expiry must not cancel the observed task");
-        AssertEqual(true, output.Any(line => line.Contains("observation ended (TimeoutException)", StringComparison.Ordinal)), "The exact observation timeout must be reported");
+        AssertEqual(0, output.Count, "Expiry retires output instead of granting another reporting allowance");
         await queued!();
         await sameCompletion.WaitAsync(RegressionExecution.Timeout);
         observationRelease.SetResult();
@@ -976,8 +976,36 @@ internal static class SettingsInputInteractionSuite
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Exception? actionFailure = null;
         long enteredAt = -1;
-        void Stage(string phase) => phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
-        void Dump() { foreach (var phase in phases) (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] {phase}"); }
+        var phaseAttempts = 0;
+        void Stage(string phase)
+        {
+            if (Interlocked.Increment(ref phaseAttempts) <= 256)
+                phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+        }
+        Task ReportAsync(bool failed, bool observeCompletion) => RegressionDiagnostics.RunAsync(async retired =>
+        {
+            if (observeCompletion)
+            {
+                try
+                {
+                    await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                    Stage("same action observation completed; original deadline remains failed");
+                }
+                catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
+            }
+            if (failed)
+            {
+                foreach (var phase in phases)
+                {
+                    if (retired()) break;
+                    try { (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] {phase}"); } catch { }
+                }
+            }
+            else if (!retired())
+            {
+                try { (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native field lifecycle."); } catch { }
+            }
+        }, observationTimeProvider);
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
@@ -989,30 +1017,23 @@ internal static class SettingsInputInteractionSuite
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed after cleanup"); completion.TrySetResult(); }
             }, executionTimeout);
-            (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native field lifecycle.");
+            await ReportAsync(false, false).ConfigureAwait(false);
         }
-        catch (TimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
         {
-            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 20s" : "outer deadline after entry; observing same action off STA for at most 20s");
-            try
-            {
-                // Bound the scheduled observation too; never replace/cancel/retry STA work.
-                await BoundNativeToolTipObservation(Task.Run(() => (observe ?? (pending => pending))(completion.Task)), observationTimeProvider).ConfigureAwait(false);
-                Stage("same action observation completed; original deadline remains failed");
-            }
-            catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
-            Dump();
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 10s" : "outer deadline after entry; observing same action off STA for at most 10s");
+            await ReportAsync(true, true).ConfigureAwait(false);
             throw;
         }
         catch
         {
-            Dump();
+            await ReportAsync(true, false).ConfigureAwait(false);
             throw;
         }
     }
 
     private static Task BoundNativeToolTipObservation(Task observation, TimeProvider? timeProvider = null) =>
-        observation.WaitAsync(TimeSpan.FromSeconds(20), timeProvider ?? TimeProvider.System);
+        RegressionDiagnostics.BoundAsync(observation, timeProvider);
 
     private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, string field, Action<string> stage)
     {
