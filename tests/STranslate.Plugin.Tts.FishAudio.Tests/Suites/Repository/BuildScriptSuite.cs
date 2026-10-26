@@ -35,6 +35,37 @@ internal static class BuildScriptSuite
             "A rejected -Configuration parameter should stop before dotnet is invoked");
     }
 
+    internal static void TestSelectionArgumentsReachRunner()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuild("-Release", "-Test", "-TestGroup", "settings.storage",
+            "-TestCase", "settings.storage/round-trip", "-TestPartition", "core",
+            "-TestResults", "selected results.json", "-Affected", "-TestBase", "origin/main");
+        AssertEqual(0, result.ExitCode, "Selected regressions still build and verify the package");
+        var invocation = repository.ReadDotnetInvocations().Single(line => line.StartsWith("run ", StringComparison.Ordinal));
+        foreach (var argument in new[] { "--group settings.storage", "--case settings.storage/round-trip",
+                     "--partition core", "--results selected results.json", "--affected", "--base origin/main" })
+            AssertEqual(true, invocation.Contains(argument, StringComparison.Ordinal), "Build forwards the requested regression selection");
+        AssertEqual(true, invocation.Contains(" -- ", StringComparison.Ordinal), "Runner arguments follow the dotnet argument separator");
+    }
+
+    internal static void TestSelectionWithoutTestIsRejected()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuild("-TestGroup", "settings.storage");
+        AssertEqual(true, result.ExitCode != 0, "A test selector without -Test is an error");
+        AssertEqual(false, repository.DotnetWasInvoked(), "Invalid selection stops before build or cleanup work");
+    }
+
+    internal static void FailedSelectedTestsKeepExitCode()
+    {
+        using var repository = BuildScriptTestRepository.Create();
+        var result = repository.RunBuildWithFailedTests("-Release", "-Test", "-Clean", "-TestGroup", "settings.storage");
+        AssertEqual(23, result.ExitCode, "Selected regression failure keeps the runner exit code");
+        AssertEqual(true, File.Exists(Path.Combine(repository.RootPath, $"{ProjectName}.spkg")), "A failed test does not erase the inspected package");
+        AssertEqual(true, ArtifactDirectories.All(path => !repository.ArtifactDirectoryExists(path)), "Cleanup still runs after selected failure");
+    }
+
     internal static void ReleaseSwitchSelectsReleaseWithoutDebugPackaging()
     {
         using var repository = BuildScriptTestRepository.Create();

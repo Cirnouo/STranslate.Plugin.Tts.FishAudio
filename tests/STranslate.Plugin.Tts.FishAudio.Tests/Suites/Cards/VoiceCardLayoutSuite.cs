@@ -22,19 +22,37 @@ internal static class VoiceCardLayoutSuite
 {
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
-        // Cold construction remains a separately bounded phase; matrix actions use the shared execution guard.
-        await RunOnStaThreadAsync(() =>
+        foreach (var testCase in CreateCases(proofDirectory))
+            await testCase.Run();
+    }
+
+    // Metadata creation never constructs a WPF fixture or starts the shared dispatcher.
+    // Each delegate retains one original independently bounded native action.
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases(string? proofDirectory = null)
+    {
+        var cases = new List<(string Id, Func<Task> Run)>
         {
-            using var vm = new SettingsViewModel(CreateContext(), new Settings());
-            SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm), 400);
-        }, RegressionExecution.Timeout);
+            ("cards.layout/cold-construction", RunColdConstructionAsync),
+        };
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var dpi in new[] { 1d, 1.25, 1.5 })
         foreach (var width in new[] { 320d, 400, 480, 640 })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-            await RunOnStaThreadAsync(() => InspectCards(width, dpi, dark, locale, mode, proofDirectory));
+        {
+            var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
+            var browse = mode switch { VoiceBrowseMode.Search => "search", VoiceBrowseMode.ById => "by-id", _ => "favorites" };
+            var id = $"cards.layout/{locale}/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width:0}/{browse}";
+            cases.Add((id, () => RunOnStaThreadAsync(() => InspectCards(width, dpi, dark, locale, mode, proofDirectory))));
+        }
+        return cases;
     }
+
+    private static Task RunColdConstructionAsync() => RunOnStaThreadAsync(() =>
+    {
+        using var vm = new SettingsViewModel(CreateContext(), new Settings());
+        SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm), 400);
+    }, RegressionExecution.Timeout);
 
     private static void InspectCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, string? proofDirectory)
     {

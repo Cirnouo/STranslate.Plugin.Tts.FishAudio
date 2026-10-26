@@ -45,4 +45,4 @@ REST metadata, credit and sample downloads use host `IHttpService`. The native s
 
 Observations record monotonic request-relative elapsed time for Request, Connected, PrefixSent, FirstAudio, FirstPcm, PlaybackStarted, Finish and Drained. Observer failures cannot alter playback. Log fields describe software boundaries only. The [dated probe](../evidences/2026-10-20/README.md) gates its tail on network audio; production gates on successful output start, so those measurements are not interchangeable.
 
-Verification: [session suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/StreamingSessionSuite.cs), [entry suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/StreamingEntrySuite.cs). Rationale: [DD-050](../adr/current/DD-050.md), [DD-053](../adr/current/DD-053.md).
+Verification: [session suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/Streaming/StreamingSessionSuite.cs), [entry suite](../../tests/STranslate.Plugin.Tts.FishAudio.Tests/Suites/Streaming/StreamingEntrySuite.cs). Rationale: [DD-050](../adr/current/DD-050.md), [DD-053](../adr/current/DD-053.md).
