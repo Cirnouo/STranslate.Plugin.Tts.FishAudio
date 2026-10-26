@@ -7,6 +7,7 @@ internal static class RegressionProcessSuite
 {
     internal static async Task RunAsync()
     {
+        await PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync();
         WarningAndHardDeadlineUseTheOriginalQueuedClock();
         SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline();
         await ActionContextSurvivesAwaitAndNestedOffStaDispatchAsync();
@@ -55,6 +56,59 @@ internal static class RegressionProcessSuite
         clock.Advance(TimeSpan.FromSeconds(1));
         Observe(watchdog, request, clock, "completed", request.CaseIds[0], 1, queued);
         AssertEqual("action", watchdog.FailureStage, "A finite late callback and its cleanup remain failed");
+    }
+
+    private static async Task PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync()
+    {
+        foreach (var durations in new[] { new[] { 70, 70 }, new[] { 121 } })
+        {
+            var request = Request(["runner.probe/pure-aggregate"]);
+            var clock = new ManualStreamingTimeProvider();
+            var watchdog = new RegressionProcessWatchdog(request, 0, clock.TimestampFrequency);
+            Observe(watchdog, request, clock, "ready");
+            Observe(watchdog, request, clock, "case-start", request.CaseIds[0]);
+            var records = new List<RegressionActionEvent>();
+            var queued = new Dictionary<int, long>();
+            Exception? protocolFailure = null;
+            using var owner = RegressionActionScope.BeginCase(request.CaseIds[0], action =>
+            {
+                records.Add(action);
+                try
+                {
+                    if (action.Kind == "queued") queued[action.Ordinal] = clock.GetTimestamp();
+                    Observe(watchdog, request, clock, action.Kind, action.CaseId, action.Ordinal, queued[action.Ordinal]);
+                }
+                catch (Exception error) { protocolFailure = error; }
+            });
+            var calls = 0;
+            foreach (var duration in durations)
+                await StreamingPlaybackSuite.RunOwnedAsync(async () =>
+                {
+                    calls++;
+                    await Task.Yield();
+                    clock.Advance(TimeSpan.FromSeconds(duration));
+                });
+            AssertEqual<Exception?>(null, protocolFailure, "Actual pure owner events preserve the existing protocol ordering");
+            AssertEqual(durations.Length * 3, records.Count, "Each pure owner publishes queued, entered and actual completion");
+            AssertEqual(durations.Length, calls, "Independent and late owners execute exactly once without retry");
+            if (durations.Length == 2)
+            {
+                Observe(watchdog, request, clock, "case-finished", request.CaseIds[0]);
+                Observe(watchdog, request, clock, "final");
+                AssertEqual<string?>(null, watchdog.FailureStage, "Two original seventy-second pure owners pass despite 140 seconds in their legacy aggregate");
+                AssertEqual(true, records.Where(item => item.Kind == "queued").Select(item => item.Ordinal).SequenceEqual([1, 2]), "A legacy aggregate gives independent pure owners consecutive root ordinals");
+            }
+            else AssertEqual("action", watchdog.FailureStage, "One 121-second pure owner remains hard-failed after late completion");
+        }
+        var original = new IOException("private-owned-error");
+        using var failureOwner = RegressionActionScope.BeginCase("runner.probe/owned-error", action =>
+        {
+            if (action.Kind == "completed") throw new ApplicationException("private-diagnostic-error");
+        });
+        Exception? failure = null;
+        try { await StreamingPlaybackSuite.RunOwnedAsync(() => Task.FromException(original)); }
+        catch (Exception error) { failure = error; }
+        AssertEqual(true, ReferenceEquals(original, failure), "Completion publication failure cannot replace the original pure-owner exception instance");
     }
 
     private static void SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline()

@@ -21,7 +21,7 @@ internal static class RegressionCatalog
         AddSync("settings.streaming/model-order-defaults-and-saved-choices-stay-independent", "core", () => StreamingSettingsSuite.ModelOrderDefaultsAndSavedChoicesStayIndependent());
         AddSync("settings.streaming/view-model-format-and-model-toggles-preserve-settings", "core", () => StreamingSettingsSuite.ViewModelFormatAndModelTogglesPreserveSettings());
         AddSync("settings.streaming/streaming-settings-ui-resources-are-complete", "core", () => StreamingSettingsSuite.StreamingSettingsUiResourcesAreComplete());
-        Add("playback.streaming/run-all", "core", () => StreamingPlaybackSuite.RunAllAsync());
+        foreach (var owner in StreamingPlaybackSuite.CreateCases()) Add(owner.Id, "core", owner.Run);
         Add("streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences", "core", () => StreamingTextSuite.FirstWindowIsLazyAndCutsOrdinaryLongSentencesAsync());
         Add("streaming.text/markup-stays-ordered-across-windows-without-duplicate-directions", "core", () => StreamingTextSuite.MarkupStaysOrderedAcrossWindowsWithoutDuplicateDirectionsAsync());
         Add("streaming.text/control-only-and-incomplete-input-never-claims-readable-prefix", "core", () => StreamingTextSuite.ControlOnlyAndIncompleteInputNeverClaimsReadablePrefixAsync());

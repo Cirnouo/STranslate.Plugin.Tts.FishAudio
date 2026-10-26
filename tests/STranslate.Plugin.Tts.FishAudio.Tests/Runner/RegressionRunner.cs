@@ -18,8 +18,7 @@ internal static class RegressionRunner
                 previous = RegressionReport.Read(options.RerunPath);
                 foreach (var item in previous.Cases.Where(item => item.Outcome != "passed"))
                 {
-                    if (!cases.Any(test => test.Id == item.Id)) throw new RegressionSelectionException("replay-case-removed");
-                    selectedIds.Add(item.Id);
+                    selectedIds.UnionWith(RegressionCaseAliases.Resolve(item.Id, cases, "replay-case-removed"));
                 }
             }
             var source = !options.List || options.Affected || previous is not null ? await RegressionSource.CaptureAsync() : null;
@@ -130,7 +129,9 @@ internal static class RegressionRunner
             report.FinishedUtc = DateTimeOffset.UtcNow;
             report.ElapsedMilliseconds = runClock.ElapsedMilliseconds;
             report.Write(path);
-            SafeWriteLine($"{passed}/{selected.Length} passed; {report.Cases.Count(item => item.Outcome == "not-run")} not run; {report.ElapsedMilliseconds} ms.");
+            foreach (var item in report.Cases.Where(item => item.Outcome is "failed" or "timed-out"))
+                SafeWriteLine($"FAIL {item.Id}: {item.ExceptionType}; stage={item.FailureStage ?? "case"}; action={item.ActionOrdinal}.", error: true);
+            SafeWriteLine($"{passed}/{selected.Length} passed; {report.Cases.Count(item => item.Outcome == "failed")} failed; {report.Cases.Count(item => item.Outcome == "timed-out")} timed out; {report.Cases.Count(item => item.Outcome == "not-run")} not run; {report.ElapsedMilliseconds} ms.");
             foreach (var item in report.Cases.Where(item => item.Outcome != "not-run").OrderByDescending(item => item.ElapsedMilliseconds).Take(5))
                 SafeWriteLine($"Slow: {item.Id} {item.ElapsedMilliseconds} ms ({item.Outcome}).");
             return report.Complete ? 0 : 1;

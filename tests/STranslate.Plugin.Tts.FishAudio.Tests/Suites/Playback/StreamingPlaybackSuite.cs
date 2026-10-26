@@ -6,28 +6,48 @@ internal static class StreamingPlaybackSuite
 {
     internal static async Task RunAllAsync()
     {
-        WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers();
-        await StartsShortPcmAfter100MillisecondsWhileNextChunkBlocksAsync();
-        await StartsAt250MillisecondsWithoutWaitingForTimerAsync();
-        await CarriesSinglePcmBytesAndRejectsOddTailAsync();
-        await DrainsActualDevicePositionIncludingUnderrunSilenceAsync();
-        await BoundsLargePcmAndResumesOnlyAtLowWaterAsync();
-        await DeviceFailureInterruptsAllWaitingPhasesAsync();
-        await CancellationAndDisposalInterruptAllWaitingPhasesAsync();
-        await StartupFailuresNeverNotifyAsync();
-        await DetectsStalledRealDataWithoutTimingOutIdleInputAsync();
-        WaveOutTracks32BitPositionWrapAndUnexpectedStops();
-        Mp3DecodesSplitFramesAndVbrMetadataIncrementally();
-        Mp3RejectsTruncationAndOversizedMetadata();
-        await StopsDecodingLargeMp3EventAtPcmBackpressureAsync();
-        await CancellationInterruptsUncooperativeInputAsync();
-        PcmRingCapsFiveSecondsAndTracksWraparound();
-        await CancellationDuringPlayNeverPublishesStartedAsync();
-        await CleanupPreservesOriginalFailureAndAttemptsEveryResourceAsync();
-        await CleanupFailureSurfacesWhenPlaybackSucceedsAsync();
-        await InputCleanupCannotReplaceDecoderFailureAsync();
-        await SynchronousLargeInputStartsBeforeFurtherProductionAsync();
-        await CancellationCallbackCannotReplacePlaybackFailureAsync();
+        foreach (var owner in CreateCases()) await owner.Run();
+    }
+
+    // Metadata construction cannot run fixtures, clocks or action telemetry.
+    // Each descriptor keeps one complete original method, including its cleanup.
+    internal static IReadOnlyList<(string Id, Func<Task> Run)> CreateCases()
+    {
+        var cases = new List<(string Id, Func<Task> Run)>();
+        AddSync("waveout-provides-200ms-in-four-50ms-buffers", WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers);
+        Add("short-pcm-starts-after-100ms-with-blocked-input", StartsShortPcmAfter100MillisecondsWhileNextChunkBlocksAsync);
+        Add("starts-at-250ms-without-timer", StartsAt250MillisecondsWithoutWaitingForTimerAsync);
+        Add("pcm-byte-carry-and-odd-tail", CarriesSinglePcmBytesAndRejectsOddTailAsync);
+        Add("device-position-drain-including-underrun-silence", DrainsActualDevicePositionIncludingUnderrunSilenceAsync);
+        Add("large-pcm-bounds-and-low-water-resume", BoundsLargePcmAndResumesOnlyAtLowWaterAsync);
+        Add("device-failure-interrupts-waiting-phases", DeviceFailureInterruptsAllWaitingPhasesAsync);
+        Add("cancellation-and-disposal-interrupt-waiting-phases", CancellationAndDisposalInterruptAllWaitingPhasesAsync);
+        Add("startup-failures-never-notify", StartupFailuresNeverNotifyAsync);
+        Add("stalled-real-data-and-idle-input", DetectsStalledRealDataWithoutTimingOutIdleInputAsync);
+        AddSync("waveout-position-wrap-and-unexpected-stops", WaveOutTracks32BitPositionWrapAndUnexpectedStops);
+        AddSync("mp3-split-frames-and-vbr-metadata", Mp3DecodesSplitFramesAndVbrMetadataIncrementally);
+        AddSync("mp3-truncation-and-oversized-metadata", Mp3RejectsTruncationAndOversizedMetadata);
+        Add("mp3-frame-backpressure", StopsDecodingLargeMp3EventAtPcmBackpressureAsync);
+        Add("uncooperative-input-interruption", CancellationInterruptsUncooperativeInputAsync);
+        AddSync("pcm-ring-cap-and-wraparound", PcmRingCapsFiveSecondsAndTracksWraparound);
+        Add("cancellation-during-play-never-notifies", CancellationDuringPlayNeverPublishesStartedAsync);
+        Add("cleanup-preserves-primary-and-attempts-all-resources", CleanupPreservesOriginalFailureAndAttemptsEveryResourceAsync);
+        Add("cleanup-failure-after-success", CleanupFailureSurfacesWhenPlaybackSucceedsAsync);
+        Add("input-cleanup-preserves-decoder-failure", InputCleanupCannotReplaceDecoderFailureAsync);
+        Add("synchronous-large-input-starts-before-further-production", SynchronousLargeInputStartsBeforeFurtherProductionAsync);
+        Add("cancellation-callback-preserves-playback-failure", CancellationCallbackCannotReplacePlaybackFailureAsync);
+        return cases;
+
+        void Add(string id, Func<Task> run) => cases.Add(("playback.streaming/" + id, () => RunOwnedAsync(run)));
+        void AddSync(string id, Action run) => Add(id, () => { run(); return Task.CompletedTask; });
+    }
+
+    internal static async Task RunOwnedAsync(Func<Task> run)
+    {
+        var root = RegressionActionScope.QueueRoot();
+        using var entered = root?.Enter();
+        try { await run(); }
+        finally { root?.Complete(); }
     }
 
     internal static void WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers()

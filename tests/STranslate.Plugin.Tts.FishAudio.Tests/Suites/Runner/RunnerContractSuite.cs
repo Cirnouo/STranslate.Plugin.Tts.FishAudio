@@ -4,6 +4,8 @@ internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        await RunStageAsync("streaming-owner-aliases", StreamingOwnerAliasesPreserveSelectionAndReplayAsync);
+        await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
         await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
         await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
         await RunStageAsync("invalid-selection", InvalidAndEmptySelectionsCannotExecuteAsync);
@@ -50,6 +52,115 @@ internal static class RunnerContractSuite
         File.Delete(fixture.ReportPath);
         calls.Clear();
         Require(await fixture.RunAsync([], cases) == 0 && calls.Count == 3, "No arguments retain the complete default run.");
+    }
+
+    private static async Task StreamingOwnerAliasesPreserveSelectionAndReplayAsync()
+    {
+        using var fixture = new RunnerFixture();
+        var telemetry = new List<RegressionActionEvent>();
+        using (RegressionActionScope.BeginCase("runner.probe/metadata", telemetry.Add))
+        {
+            var registry = RegressionCatalog.Create();
+            var selected = RegressionSelection.Parse(["--list", "--case", "playback.streaming/run-all"]).ExplicitIds(registry);
+            Require(selected.Count == 22 && !registry.Any(item => item.Id == "playback.streaming/run-all"), "Default registration contains exactly the independent streaming leaves, with the old aggregate reserved as an alias.");
+            Require(telemetry.Count == 0, "Creating and selecting streaming descriptors never runs action telemetry or fixtures.");
+        }
+        var calls = new List<string>();
+        RegressionCase[] cases =
+        [
+            new("playback.streaming/first", "core", () => { calls.Add("first"); return Task.CompletedTask; }),
+            new("playback.streaming/second", "core", () => { calls.Add("second"); return Task.CompletedTask; }),
+            new("playback.streaming.extra/not-owned", "native-settings", () => { calls.Add("sibling"); return Task.CompletedTask; }),
+            new("runner.sample/other", "native-settings", () => { calls.Add("other"); return Task.CompletedTask; })
+        ];
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all", "--case", cases[1].Id, "--group", "playback.streaming/run-all", "--partition", "core"], cases) == 0,
+            "The former aggregate remains an exact case/group alias.");
+        Require(calls.SequenceEqual(["first", "second"]), "Aliases union in catalog order without duplicate execution.");
+        foreach (var arguments in new string[][]
+        {
+            ["--case", "playback.streaming/run"], ["--group", "playback.streaming/run-all.extra"],
+            ["--case", "playback.streaming/run-all", "--partition", "native-settings"]
+        })
+        {
+            calls.Clear();
+            Require(await fixture.RunAsync(arguments, cases) != 0 && calls.Count == 0, "Unknown or empty aliases cannot execute a partial match.");
+        }
+        calls.Clear();
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all"], [cases[2]]) != 0 && calls.Count == 0,
+            "A known alias with no registered leaves fails.");
+        foreach (var outcome in new[] { "failed", "not-run", "passed" })
+        {
+            var source = await RegressionSource.CaptureAsync();
+            source.RecordDirtyScope(cases);
+            var previous = new RegressionReport
+            {
+                Source = source.Identity,
+                Cases = [new() { Id = "playback.streaming/run-all", Partition = "core", Outcome = outcome,
+                    ExceptionType = outcome == "failed" ? typeof(IOException).FullName : null }]
+            };
+            var input = Path.Combine(fixture.DirectoryPath, "old-aggregate-" + outcome + ".json");
+            previous.Create(input);
+            var originalBytes = File.ReadAllBytes(input);
+            calls.Clear();
+            var replay = Path.Combine(fixture.DirectoryPath, "replay-" + outcome + ".json");
+            var exit = await fixture.RunAsync(["--rerun-failed", input, "--results", replay], cases);
+            Require(outcome == "passed" ? exit != 0 && calls.Count == 0 : exit == 0 && calls.SequenceEqual(["first", "second"]),
+                "Incomplete old aggregates expand to leaves; old passed aggregates cannot synthesize leaf coverage.");
+            Require(File.ReadAllBytes(input).SequenceEqual(originalBytes), "Alias replay preserves the original report bytes.");
+        }
+        calls.Clear();
+        RegressionCase[] exactRegistry =
+        [
+            new("playback.streaming/run-all", "core", () => { calls.Add("exact"); return Task.CompletedTask; }),
+            cases[0]
+        ];
+        Require(await fixture.RunAsync(["--case", "playback.streaming/run-all", "--group", "playback.streaming/run-all"], exactRegistry) == 0 && calls.SequenceEqual(["exact"]),
+            "An explicitly registered current case takes precedence over its former aggregate alias for case/group selection.");
+        var exactSource = await RegressionSource.CaptureAsync();
+        exactSource.RecordDirtyScope(exactRegistry);
+        var exactPrevious = new RegressionReport
+        {
+            Source = exactSource.Identity,
+            Cases = [new() { Id = "playback.streaming/run-all", Partition = "core", Outcome = "failed", ExceptionType = typeof(IOException).FullName }]
+        };
+        var exactInput = Path.Combine(fixture.DirectoryPath, "current-exact.json");
+        exactPrevious.Create(exactInput);
+        calls.Clear();
+        Require(await fixture.RunAsync(["--rerun-failed", exactInput, "--results", Path.Combine(fixture.DirectoryPath, "current-exact-replay.json")], exactRegistry) == 0 && calls.SequenceEqual(["exact"]),
+            "Failed-report replay also preserves an explicitly registered current exact case instead of expanding its alias.");
+    }
+
+    private static async Task FinalFailureSummaryIncludesEveryFailedOwnerAsync()
+    {
+        using var fixture = new RunnerFixture();
+        var calls = new List<string>();
+        var cases = Registry(calls);
+        var output = Console.Out;
+        var error = Console.Error;
+        using var capture = new StringWriter();
+        try
+        {
+            Console.SetOut(capture);
+            Console.SetError(capture);
+            var exit = await RegressionRunner.RunAsync(["--results", fixture.ReportPath], cases, (_, report, _) =>
+            {
+                report.Cases[0].Outcome = "timed-out";
+                report.Cases[0].ExceptionType = typeof(RegressionExecutionTimeoutException).FullName;
+                report.Cases[0].FailureStage = "action";
+                report.Cases[0].ActionOrdinal = 1;
+                report.Cases[1].Outcome = "failed";
+                report.Cases[1].ExceptionType = typeof(IOException).FullName;
+                report.Cases[1].FailureStage = "case";
+                return Task.CompletedTask;
+            });
+            Require(exit == 1 && calls.Count == 0, "A final child outcome fails without invoking parent delegates.");
+            var text = capture.ToString();
+            Require(text.Contains($"FAIL {cases[0].Id}: {typeof(RegressionExecutionTimeoutException).FullName}; stage=action; action=1.", StringComparison.Ordinal), "Hard failures remain visible without a child completion line.");
+            Require(text.Contains($"FAIL {cases[1].Id}: {typeof(IOException).FullName}; stage=case; action=0.", StringComparison.Ordinal), "Every failed child owner appears in the final safe summary.");
+            Require(text.Contains("1 failed; 1 timed out; 1 not run", StringComparison.Ordinal), "Final counts account explicitly for all non-passing owners.");
+            Require(!text.Contains(fixture.DirectoryPath, StringComparison.OrdinalIgnoreCase), "Final diagnostics contain no private paths.");
+        }
+        finally { Console.SetOut(output); Console.SetError(error); }
     }
 
     private static async Task InvalidAndEmptySelectionsCannotExecuteAsync()
