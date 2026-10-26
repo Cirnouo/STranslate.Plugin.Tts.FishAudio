@@ -70,13 +70,18 @@ internal static class RegressionProcessProtocol
 
     internal static T Read<T>(string path)
     {
-        // Atomic child replacement must not be blocked by a parent's live read.
+        // Active child records are immutable; readers never own a writer's path.
         using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         if (input.Length is <= 0 or > 16 * 1024 * 1024) throw new InvalidDataException("invalid-child-record-size");
         return JsonSerializer.Deserialize<T>(input, Options) ?? throw new InvalidDataException("missing-child-record");
     }
 
-    internal static void Write<T>(string path, T value)
+    internal static void WriteNew<T>(string path, T value) => Write(path, value, replaceExisting: false);
+
+    // Controlled transport fixtures can intentionally replace malformed evidence.
+    internal static void Write<T>(string path, T value) => Write(path, value, replaceExisting: true);
+
+    private static void Write<T>(string path, T value, bool replaceExisting)
     {
         var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
@@ -86,10 +91,7 @@ internal static class RegressionProcessProtocol
                 JsonSerializer.Serialize(output, value, Options);
                 output.Flush(flushToDisk: true);
             }
-            // On Windows Move(overwrite:true) can deny replacement while a
-            // share-delete reader owns the previous file. Replace preserves the
-            // open snapshot and atomically installs the next live manifest.
-            if (File.Exists(path)) File.Replace(temporary, path, destinationBackupFileName: null);
+            if (replaceExisting && File.Exists(path)) File.Replace(temporary, path, destinationBackupFileName: null);
             else File.Move(temporary, path);
         }
         finally

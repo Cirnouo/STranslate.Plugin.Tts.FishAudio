@@ -13,6 +13,8 @@ internal static class RegressionProcessSuite
         StrictEvidenceRejectsForeignIncompleteAndReorderedManifests();
         AtomicEvidenceReplacementPreservesAnOpenReaderSnapshot();
         await ConcurrentImmutableSnapshotsNeverCompeteWithTheWriterAsync();
+        await ChildCompletionNeverReplacesAnActiveManifestAsync();
+        await ChildPublicationFailurePreservesTheOwnedFailureAsync();
         await FakeTransportStopsOnlyTheFailedPartitionAsync();
         await FakeTransportCannotRehabilitateTheSameLateActionAsync();
         await FakeTransportRejectsUnconfirmedPassesAsync();
@@ -160,6 +162,51 @@ internal static class RegressionProcessSuite
         AssertEqual(true, valid.Complete, "Exact ordered complete evidence remains valid");
     }
 
+    private static async Task ChildCompletionNeverReplacesAnActiveManifestAsync()
+    {
+        using var fixture = new ProcessFixture();
+        var request = Request(["runner.probe/first", "runner.probe/second"]);
+        request.ManifestPath = fixture.Path + ".child.json";
+        var calls = new List<int>();
+        var records = new List<RegressionProcessEvent>();
+        FileStream? canonicalReader = null;
+        FileStream? completedReader = null;
+        byte[]? completedBytes = null;
+        using var output = new ProtocolObserver(line =>
+        {
+            var record = JsonSerializer.Deserialize<RegressionProcessEvent>(line[RegressionProcessProtocol.Prefix.Length..], RegressionProcessProtocol.Options)!;
+            records.Add(record);
+            if (record.Kind == "ready" && File.Exists(request.ManifestPath))
+                canonicalReader = new FileStream(request.ManifestPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (record.Kind == "case-finished" && record.Snapshot == 1)
+            {
+                var path = RegressionProcessProtocol.SnapshotPath(request, 1);
+                completedBytes = File.ReadAllBytes(path);
+                completedReader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            }
+        });
+        try
+        {
+            var exit = await RegressionChildHost.RunCasesAsync(request, output, index =>
+            {
+                calls.Add(index);
+                AssertEqual(false, File.Exists(request.ManifestPath), "An active child exposes completion snapshots without a mutable canonical manifest");
+                return Task.CompletedTask;
+            });
+            AssertEqual(0, exit, "Holding a completed snapshot cannot fail a finite child");
+            AssertEqual(true, calls.SequenceEqual([0, 1]), "Each selected delegate executes exactly once");
+            AssertEqual(true, records.Select(item => item.Kind).SequenceEqual(["ready", "case-start", "case-finished", "case-start", "case-finished", "final"]), "Completion publication remains ordered and complete");
+            AssertEqual(true, completedBytes!.SequenceEqual(File.ReadAllBytes(RegressionProcessProtocol.SnapshotPath(request, 1))), "Later completion and final publication never replace earlier evidence");
+            var canonical = RegressionProcessProtocol.Read<RegressionChildManifest>(request.ManifestPath);
+            RegressionProcessProtocol.ValidateManifest(canonical, request);
+            AssertEqual(true, canonical.Final && canonical.Complete, "The canonical manifest is published once with the complete final state");
+            AssertEqual(true, File.ReadAllBytes(request.ManifestPath).SequenceEqual(File.ReadAllBytes(RegressionProcessProtocol.SnapshotPath(request, 3))), "Canonical final bytes match the immutable final snapshot");
+            AssertThrows<IOException>(() => RegressionProcessProtocol.WriteNew(request.ManifestPath, RegressionChildManifest.Create(request)), "A second owner cannot replace the published final manifest");
+            AssertEqual(true, canonical.Complete && File.ReadAllBytes(request.ManifestPath).SequenceEqual(File.ReadAllBytes(RegressionProcessProtocol.SnapshotPath(request, 3))), "Rejected duplicate publication preserves original final bytes");
+        }
+        finally { canonicalReader?.Dispose(); completedReader?.Dispose(); }
+    }
+
     private static async Task FakeTransportStopsOnlyTheFailedPartitionAsync()
     {
         using var fixture = new ProcessFixture();
@@ -199,6 +246,54 @@ internal static class RegressionProcessSuite
         AssertEqual(typeof(TimeoutException).FullName, report.Cases[0].ExceptionType, "An action-owned timeout retains its original type");
         AssertEqual("case", report.Cases[0].FailureStage, "Action-owned timeouts remain ordinary case failures");
         AssertEqual(false, children.Any(item => item.Killed), "Ordinary fixture failures never trigger the hard kill policy");
+    }
+
+    private static async Task ChildPublicationFailurePreservesTheOwnedFailureAsync()
+    {
+        foreach (var scenario in new[] { "completion-event", "final-publication", "untyped-pass" })
+        {
+            using var fixture = new ProcessFixture();
+            RegressionCase[] cases = [new("runner.probe/owned-failure", "core", () => Task.CompletedTask),
+                new("runner.probe/not-run", "core", () => Task.CompletedTask)];
+            var report = fixture.Report(cases);
+            var calls = 0;
+            using var host = new RegressionProcessHost(info =>
+            {
+                var request = RegressionProcessProtocol.Read<RegressionChildRequest>(info.ArgumentList[^1]);
+                using var output = new ProtocolObserver(line =>
+                {
+                    var record = JsonSerializer.Deserialize<RegressionProcessEvent>(line[RegressionProcessProtocol.Prefix.Length..], RegressionProcessProtocol.Options)!;
+                    if (record.Kind != "case-finished") return;
+                    if (scenario != "final-publication") throw new IOException("controlled-completion-pipe-failure");
+                    Directory.CreateDirectory(request.ManifestPath);
+                });
+                try
+                {
+                    RegressionChildHost.RunCasesAsync(request, output, _ =>
+                    {
+                        calls++;
+                        return scenario == "untyped-pass" ? Task.CompletedTask : Task.FromException(new InvalidOperationException("controlled-original-assertion"));
+                    }).GetAwaiter().GetResult();
+                    throw new InvalidOperationException("The controlled publication boundary must fail");
+                }
+                catch (IOException)
+                {
+                    return new FakeChild(output.ToString(), 1, new StringReader("Regression execution failed (IOException).\n"));
+                }
+            });
+            await host.ExecuteAsync(cases, report, fixture.Path);
+            AssertEqual(1, calls, "A publication failure never retries the failed delegate or starts a later one");
+            AssertEqual(true, report.Cases.Select(item => item.Outcome).SequenceEqual(["failed", "not-run"]), "Only the durable failed owner is recovered without new pass coverage");
+            AssertEqual(nameof(IOException), report.Cases[0].ChildInfrastructureExceptionType, "The child publication I/O failure remains safe secondary evidence");
+            if (scenario == "untyped-pass")
+                AssertEqual("child-evidence", report.Cases[0].FailureStage, "An untyped passed snapshot cannot turn missing completion evidence green");
+            else
+            {
+                AssertEqual(typeof(InvalidOperationException).FullName, report.Cases[0].ExceptionType, "The immutable completed failure remains primary when publication fails");
+                AssertEqual("case", report.Cases[0].FailureStage, "The original owned failure keeps its case stage");
+                AssertEqual(true, report.Cases[0].SecondaryExceptionType is not null, "Parent evidence failure cannot replace the original owned failure");
+            }
+        }
     }
 
     private static void AtomicEvidenceReplacementPreservesAnOpenReaderSnapshot()
@@ -267,7 +362,7 @@ internal static class RegressionProcessSuite
 
     private static async Task FakeTransportCannotRehabilitateTheSameLateActionAsync()
     {
-        foreach (var scenario in new[] { "late-pass", "malformed-protocol", "stderr-fault", "late-owned-fault" })
+        foreach (var scenario in new[] { "late-pass", "malformed-protocol", "stderr-fault", "late-owned-fault", "late-owned-snapshot" })
             await VerifyLateActionAsync(scenario);
     }
 
@@ -281,7 +376,7 @@ internal static class RegressionProcessSuite
         {
             var request = RegressionProcessProtocol.Read<RegressionChildRequest>(info.ArgumentList[^1]);
             var manifest = PassedManifest(request);
-            if (scenario == "late-owned-fault")
+            if (scenario is "late-owned-fault" or "late-owned-snapshot")
             {
                 manifest.Complete = false;
                 manifest.Cases[1].Outcome = "failed";
@@ -289,7 +384,12 @@ internal static class RegressionProcessSuite
                 manifest.Cases[1].FailureStage = "case";
                 manifest.Cases[2].Outcome = "not-run";
             }
-            RegressionProcessProtocol.Write(request.ManifestPath, manifest);
+            if (scenario != "late-owned-snapshot") RegressionProcessProtocol.Write(request.ManifestPath, manifest);
+            else
+            {
+                manifest.Final = false;
+                RegressionProcessProtocol.WriteNew(RegressionProcessProtocol.SnapshotPath(request, 2), manifest);
+            }
             var now = Stopwatch.GetTimestamp();
             var records = new List<RegressionProcessEvent>();
             void Add(string kind, string id = "", int ordinal = 0, long queued = 0, long? timestamp = null) => records.Add(new()
@@ -324,7 +424,7 @@ internal static class RegressionProcessSuite
             AssertEqual("child-protocol", report.Cases[1].SecondaryFailureStage, "The secondary protocol failure keeps its safe stage");
             AssertEqual("invalid-child-protocol", report.Cases[1].InfrastructureCode, "The concurrent protocol failure remains diagnosable without changing hard ownership");
         }
-        if (scenario == "late-owned-fault")
+        if (scenario is "late-owned-fault" or "late-owned-snapshot")
         {
             AssertEqual(typeof(IOException).FullName, report.Cases[1].SecondaryExceptionType, "An owned error published after hard expiry cannot replace the earlier hard failure");
             AssertEqual("case", report.Cases[1].SecondaryFailureStage, "The late owned error retains its case stage as secondary evidence");
@@ -631,6 +731,15 @@ internal static class RegressionProcessSuite
             ReleaseCount++;
             tail.AsMemory().CopyTo(_pendingBuffer);
             _pending.SetResult(tail.Length);
+        }
+    }
+
+    private sealed class ProtocolObserver(Action<string> observe) : StringWriter
+    {
+        public override void WriteLine(string? value)
+        {
+            observe(value!);
+            base.WriteLine(value);
         }
     }
 

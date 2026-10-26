@@ -24,29 +24,35 @@ internal static class RegressionChildHost
             registry.Where(item => request.CaseIds.Contains(item.Id, StringComparer.Ordinal)).ToArray();
         if (request.LegacyArguments is null && request.Probe is null &&
             (!selected.Select(item => item.Id).SequenceEqual(request.CaseIds, StringComparer.Ordinal) || selected.Any(item => item.Partition != request.Partition))) return 2;
+        return await RunCasesAsync(request, physicalProtocolOutput, async index =>
+        {
+            if (request.Probe is not null) await RunProbeAsync(request, args[1]);
+            else if (request.LegacyArguments is not null)
+            {
+                // The old dispatcher is deliberately raw here: one alias, one controlled
+                // process, original argument meanings, no recursive parent launch.
+                if (await LegacyRegressionSelectors.TryRunAsync(request.LegacyArguments) != 0)
+                    throw new InvalidOperationException("legacy-child-failed");
+            }
+            else await selected[index].Run();
+        });
+    }
+
+    internal static async Task<int> RunCasesAsync(RegressionChildRequest request, TextWriter physicalProtocolOutput, Func<int, Task> runCase)
+    {
         var manifest = RegressionChildManifest.Create(request);
         var protocol = new RegressionProtocolWriter(physicalProtocolOutput, request);
-        RegressionProcessProtocol.Write(request.ManifestPath, manifest);
         protocol.Publish("ready");
         for (var index = 0; index < request.CaseIds.Length; index++)
         {
             var result = manifest.Cases[index];
             result.Outcome = "running";
-            RegressionProcessProtocol.Write(request.ManifestPath, manifest);
             protocol.Publish("case-start", result.Id);
             var started = Stopwatch.GetTimestamp();
             using var owner = RegressionActionScope.BeginCase(result.Id, action => protocol.Publish(action.Kind, action: action));
             try
             {
-                if (request.Probe is not null) await RunProbeAsync(request, args[1]);
-                else if (request.LegacyArguments is not null)
-                {
-                    // The old dispatcher is deliberately raw here: one alias, one controlled
-                    // process, original argument meanings, no recursive parent launch.
-                    if (await LegacyRegressionSelectors.TryRunAsync(request.LegacyArguments) != 0)
-                        throw new InvalidOperationException("legacy-child-failed");
-                }
-                else await selected[index].Run();
+                await runCase(index);
                 result.Outcome = "passed";
             }
             catch (Exception error)
@@ -56,23 +62,25 @@ internal static class RegressionChildHost
                 result.FailureStage = error is RegressionExecutionTimeoutException ? "action-guard" : "case";
             }
             result.ElapsedMilliseconds = (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds;
-            RegressionProcessProtocol.Write(request.ManifestPath, manifest);
-            // The parent opens only immutable completed generations while this
-            // child is alive. Windows replacement and live reads can otherwise
-            // deny one another even with share-delete handles.
-            RegressionProcessProtocol.Write(RegressionProcessProtocol.SnapshotPath(request, index + 1), manifest);
+            // Completed owners are durable before any later protocol/final I/O.
+            // Active children never create or replace the canonical manifest.
+            RegressionProcessProtocol.WriteNew(RegressionProcessProtocol.SnapshotPath(request, index + 1), manifest);
             protocol.Publish("case-finished", result.Id, snapshot: index + 1);
             if (result.Outcome != "passed") break;
         }
         manifest.Final = true;
         manifest.Complete = manifest.Cases.All(item => item.Outcome == "passed");
-        RegressionProcessProtocol.Write(RegressionProcessProtocol.SnapshotPath(request, request.CaseIds.Length + 1), manifest);
-        if (request.Probe == "missing") File.Delete(request.ManifestPath);
-        else if (request.Probe == "truncated") File.WriteAllText(request.ManifestPath, "{\"version\":");
-        else
+        RegressionProcessProtocol.WriteNew(RegressionProcessProtocol.SnapshotPath(request, request.CaseIds.Length + 1), manifest);
+        if (request.Probe == "truncated")
+        {
+            using var truncated = new FileStream(request.ManifestPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            truncated.Write("{\"version\":"u8);
+            truncated.Flush(flushToDisk: true);
+        }
+        else if (request.Probe != "missing")
         {
             if (request.Probe == "foreign") manifest.RequestId = Guid.NewGuid().ToString("N");
-            RegressionProcessProtocol.Write(request.ManifestPath, manifest);
+            RegressionProcessProtocol.WriteNew(request.ManifestPath, manifest);
         }
         protocol.Publish("final", snapshot: request.CaseIds.Length + 1);
         return manifest.Complete ? 0 : 1;

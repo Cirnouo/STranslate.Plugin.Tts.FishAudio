@@ -81,7 +81,7 @@ internal sealed class RegressionProcessHost : IDisposable
     {
         RegressionProcessProtocol.ValidateRequest(request);
         var requestPath = request.ManifestPath + ".request.json";
-        RegressionProcessProtocol.Write(requestPath, request);
+        RegressionProcessProtocol.WriteNew(requestPath, request);
         var targets = request.CaseIds.Select(id => report.Cases.Single(item => item.Id == id && item.Partition == request.Partition)).ToArray();
         foreach (var target in targets) target.ChildRequestId = request.RequestId;
         var started = Stopwatch.GetTimestamp();
@@ -304,6 +304,19 @@ internal sealed class RegressionProcessHost : IDisposable
     {
         try { MergeManifest(request, targets, requireFinal: false, maximumPassedCases: confirmedCaseCount); }
         catch { /* Invalid evidence cannot confirm a new pass or hide the primary failure. */ }
+        // An owned failure is durable before its completion event or final
+        // canonical publication can fail. Recover only that next incomplete
+        // owner's failed metadata after confirmed exit, never an untyped pass.
+        var index = Array.FindIndex(targets, item => item.Outcome != "passed");
+        if (index < 0) return;
+        try
+        {
+            var snapshot = RegressionProcessProtocol.Read<RegressionChildManifest>(RegressionProcessProtocol.SnapshotPath(request, index + 1));
+            RegressionProcessProtocol.ValidateManifest(snapshot, request);
+            if (snapshot.Cases[index].Outcome is not ("failed" or "timed-out")) return;
+            MergeManifest(request, targets, requireFinal: false, snapshot: index + 1, maximumPassedCases: confirmedCaseCount);
+        }
+        catch { /* Missing or malformed snapshots cannot replace the original failure. */ }
     }
 
     private static RegressionCaseResult MarkFailure(RegressionCaseResult[] targets, string? currentId, string exceptionType, string stage, bool timedOut)
