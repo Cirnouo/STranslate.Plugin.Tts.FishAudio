@@ -49,6 +49,8 @@ internal static class RegressionImpact
     internal static RegressionImpactSelection Recover(IReadOnlyList<RegressionCase> registry, RegressionSourceIdentity previous, IReadOnlyList<string>? changedPaths)
     {
         if (!previous.Available || changedPaths is null) return All(registry, "previous-source-baseline-unavailable");
+        if (!previous.Dirty && !RegressionSource.HasConsistentCleanIdentity(previous))
+            return All(registry, "previous-clean-identity-inconsistent");
         var current = Select(registry, changedPaths);
         if (!previous.Dirty) return current;
         if (!previous.DirtyScopeRecorded || previous.DirtyAffectedIds is not { Length: > 0 } ||

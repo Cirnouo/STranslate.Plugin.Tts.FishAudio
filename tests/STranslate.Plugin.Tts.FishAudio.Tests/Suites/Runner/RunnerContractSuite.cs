@@ -5,16 +5,35 @@ internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
-        await SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync();
-        await InvalidAndEmptySelectionsCannotExecuteAsync();
-        await ListingNeverExecutesAsync();
-        await FailureIsDurableAndReplayDoesNotRewriteItAsync();
-        await IncrementalResultsPrecedeDelegatesAsync();
-        ImpactSelectionKeepsSharedAndUnknownDependenciesConservative();
-        LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion();
-        RecoveryMapsCleanRepairsAndRetainsRevertedDirtyScope();
-        ProviderAndPreviewLeafRulesRetainDirectConsumers();
-        await SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync();
+        await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
+        await RunStageAsync("invalid-selection", InvalidAndEmptySelectionsCannotExecuteAsync);
+        await RunStageAsync("metadata-list", ListingNeverExecutesAsync);
+        RunStage("clean-source-identity", CleanSourceIdentityConsistencyDoesNotDependOnCallerState);
+        await RunStageAsync("durable-replay", FailureIsDurableAndReplayDoesNotRewriteItAsync);
+        await RunStageAsync("incremental-results", IncrementalResultsPrecedeDelegatesAsync);
+        RunStage("shared-impact", ImpactSelectionKeepsSharedAndUnknownDependenciesConservative);
+        RunStage("leaf-impact", LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion);
+        RunStage("scoped-recovery", RecoveryMapsCleanRepairsAndRetainsRevertedDirtyScope);
+        RunStage("direct-consumers", ProviderAndPreviewLeafRulesRetainDirectConsumers);
+        await RunStageAsync("source-checkout-owner", SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync);
+    }
+
+    private static async Task RunStageAsync(string stage, Func<Task> run)
+    {
+        try { await run(); }
+        catch { ReportFailedStage(stage); throw; }
+    }
+
+    private static void RunStage(string stage, Action run)
+    {
+        try { run(); }
+        catch { ReportFailedStage(stage); throw; }
+    }
+
+    private static void ReportFailedStage(string stage)
+    {
+        try { Console.Error.WriteLine($"Runner contract stage failed: {stage}."); }
+        catch { /* Failure-only safe metadata cannot replace the original exception. */ }
     }
 
     private static async Task SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync()
@@ -170,7 +189,7 @@ internal static class RunnerContractSuite
             new RegressionCase("cards.avatar/ring", "native-cards", () => Task.CompletedTask),
             new RegressionCase("cards.layout/header", "native-cards", () => Task.CompletedTask)
         };
-        var clean = new RegressionSourceIdentity { Available = true, Commit = new string('a', 40) };
+        var clean = CleanSourceFixture();
         var repair = RegressionImpact.Recover(registry, clean, ["STranslate.Plugin.Tts.FishAudio/Presentation/PreviewPlaybackController.cs"]);
         Require(repair.Ids.SetEquals(["preview.ownership/failure", "cards.avatar/ring"]) && !repair.ConservativeFallback, "A clean-baseline preview repair adds its ownership/compatibility groups without unrelated layout.");
         var dirty = new RegressionSourceIdentity
@@ -183,6 +202,26 @@ internal static class RunnerContractSuite
         dirty.DirtyScopeRecorded = false;
         Require(RegressionImpact.Recover(registry, dirty, []).ConservativeFallback, "Old dirty reports without scope metadata fall back to all coverage.");
     }
+
+    private static void CleanSourceIdentityConsistencyDoesNotDependOnCallerState()
+    {
+        var registry = Registry([]);
+        var consistent = CleanSourceFixture();
+        var unchanged = RegressionImpact.Recover(registry, consistent, []);
+        Require(unchanged.Ids.Count == 0 && !unchanged.ConservativeFallback, "A consistent clean identity can retain unchanged successful coverage.");
+        var tampered = CleanSourceFixture();
+        tampered.Fingerprint = new string('0', 64);
+        var inconsistent = RegressionImpact.Recover(registry, tampered, []);
+        Require(inconsistent.ConservativeFallback && inconsistent.Ids.Count == registry.Length,
+            "An inconsistent clean commit/tree/fingerprint cannot retain prior successes even with an empty changed-path set.");
+    }
+
+    private static RegressionSourceIdentity CleanSourceFixture() => new()
+    {
+        Available = true, Commit = new string('a', 40), Tree = new string('b', 40),
+        // Independently captured SHA-256 of the two canonical Git hash lines, with no dirty bytes.
+        Fingerprint = "63bdfe090637cf9ff5d40017247b9958fa898fc5c95978a0d28594eb745d27a5"
+    };
 
     private static void ProviderAndPreviewLeafRulesRetainDirectConsumers()
     {

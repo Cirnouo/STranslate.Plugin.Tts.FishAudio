@@ -123,6 +123,18 @@ internal sealed class RegressionSource
         return value.Length is 40 or 64 && value.All(Uri.IsHexDigit) ? value.ToLowerInvariant() : null;
     }
 
+    internal static bool HasConsistentCleanIdentity(RegressionSourceIdentity identity)
+    {
+        if (!identity.Available || identity.Dirty || identity.Commit is not { Length: 40 or 64 } commit ||
+            identity.Tree is not { Length: 40 or 64 } tree || !commit.All(Uri.IsHexDigit) || !tree.All(Uri.IsHexDigit))
+            return false;
+        // A clean capture hashes only these two canonical Git output lines: it has no
+        // diff, untracked paths or file hashes that could explain another fingerprint.
+        var bytes = Encoding.UTF8.GetBytes(commit.ToLowerInvariant() + "\n" + tree.ToLowerInvariant() + "\n");
+        var expected = Convert.ToHexStringLower(SHA256.HashData(bytes));
+        return string.Equals(expected, identity.Fingerprint, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static async Task<byte[]?> CommandAsync(string directory, string command, string[] arguments)
     {
         try
