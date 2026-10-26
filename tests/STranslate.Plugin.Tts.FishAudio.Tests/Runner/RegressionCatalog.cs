@@ -306,6 +306,8 @@ internal static class RegressionCatalog
         Add("runner.contracts/selection", "core", RunnerContractSuite.RunAsync);
         Add("runner.contracts/catalog", "core", RegressionCatalogSuite.RunAsync);
         Add("runner.process/run-all", "core", RegressionProcessSuite.RunAsync);
+        Add("runner.ci/verification", "core", RegressionCiSuite.RunAsync);
+        Add("runner.ci/infrastructure", "core", RegressionCiInfrastructureSuite.RunAsync);
         return cases;
 
         void AddCases(IReadOnlyList<(string Id, Func<Task> Run)> descriptors, string partition)

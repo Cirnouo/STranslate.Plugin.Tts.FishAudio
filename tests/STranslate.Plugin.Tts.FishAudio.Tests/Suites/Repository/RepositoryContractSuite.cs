@@ -279,8 +279,17 @@ internal static class RepositoryContractSuite
             "Release workflow should call the complete shared validation before publication");
         AssertEqual(
             true,
+            Regex.IsMatch(validationWorkflow, @"(?m)^\s+run: \.\\build\.ps1 -Release\r?$"),
+            "The shared gate should build the current Release package after partition evidence verification");
+        AssertEqual(
+            true,
+            validationWorkflow.Contains("--all --partition $env:REGRESSION_PARTITION", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("--verify-reports", StringComparison.Ordinal) && validationWorkflow.Contains("--job-attempts", StringComparison.Ordinal),
+            "Shared CI validation executes complete partitions and verifies their attempt evidence");
+        AssertEqual(
+            false,
             validationWorkflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),
-            "Shared release validation should use the recommended -Release build command");
+            "The final gate must consume complete partition evidence without repeating the monolithic regression run");
         AssertEqual(
             false,
             (workflow + validationWorkflow).Contains("-Configuration", StringComparison.Ordinal),

@@ -73,7 +73,7 @@ internal sealed class RegressionProcessHost : IDisposable
     internal static RegressionChildRequest CreateRequest(RegressionReport report, string partition, string[] ids, string reportPath) => new()
     {
         RunId = report.RunId, Partition = partition, CaseIds = ids, Source = report.Source,
-        Configuration = report.Configuration, Sdk = report.Sdk,
+        Configuration = report.Configuration, Sdk = report.Sdk, Ci = report.Ci,
         ManifestPath = Path.Combine(Path.GetDirectoryName(reportPath)!, report.RunId + "." + Guid.NewGuid().ToString("N") + ".child.json")
     };
 

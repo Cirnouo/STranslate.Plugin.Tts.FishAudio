@@ -3,7 +3,7 @@ using System.Diagnostics;
 internal static class RegressionRunner
 {
     internal static async Task<int> RunAsync(string[] args, IReadOnlyList<RegressionCase> cases,
-        Func<IReadOnlyList<RegressionCase>, RegressionReport, string, Task>? execute = null)
+        Func<IReadOnlyList<RegressionCase>, RegressionReport, string, Task>? execute = null, RegressionCiIdentity? ci = null)
     {
         try
         {
@@ -67,7 +67,7 @@ internal static class RegressionRunner
                 throw new RegressionSelectionException("results-overwrite-replay");
             var report = new RegressionReport
             {
-                Source = source!.Identity,
+                Source = source!.Identity, Ci = ci,
                 Invocation = options.SafeInvocation.ToArray(),
                 PreviousRunId = previous?.RunId,
                 SourceChangedSincePreviousRun = changedSource,

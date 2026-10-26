@@ -20,6 +20,7 @@ internal sealed class RegressionReport
     public string Configuration { get; set; } = BuildMetadata("RegressionBuildConfiguration");
     public string Sdk { get; set; } = BuildMetadata("RegressionBuildSdk");
     public string Runtime { get; set; } = Environment.Version.ToString();
+    public RegressionCiIdentity? Ci { get; set; }
     public string[] Invocation { get; set; } = [];
     public string? PreviousRunId { get; set; }
     public bool SourceChangedSincePreviousRun { get; set; }
@@ -157,9 +158,9 @@ internal sealed class RegressionReport
         return (initial, latest);
     }
 
-    private static string Identity(RegressionReport report) => JsonSerializer.Serialize(new
+    internal static string Identity(RegressionReport report) => JsonSerializer.Serialize(new
     {
-        report.SchemaVersion, report.RunId, report.StartedUtc, report.Source, report.Configuration, report.Sdk, report.Runtime,
+        report.SchemaVersion, report.RunId, report.StartedUtc, report.Source, report.Configuration, report.Sdk, report.Runtime, report.Ci,
         report.Invocation, report.PreviousRunId, report.SourceChangedSincePreviousRun, report.BuildChangedSincePreviousRun,
         report.ConservativeAffectedFallback, report.SelectionReasons, report.RecommendedGroups,
         Cases = report.Cases.Select(item => new { item.Id, item.Partition }).ToArray()

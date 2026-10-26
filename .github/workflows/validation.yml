@@ -83,13 +83,79 @@ jobs:
             }
           }
 
+  regression:
+    name: Regression (${{ matrix.partition }})
+    runs-on: windows-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        partition: [core, native-settings, native-input, native-popups, native-cards]
+    env:
+      REGRESSION_PARTITION: ${{ matrix.partition }}
+    steps:
+      - name: Checkout exact validation commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+        with:
+          dotnet-version: '10.0.403'
+      - name: Fresh-build regression runner with the required SDK
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected regression build SDK.' }
+          dotnet build tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj -c Release --no-incremental
+          if ($LASTEXITCODE -ne 0) { throw 'Regression runner build failed.' }
+      - name: Run complete regression partition
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP "reports/$env:REGRESSION_PARTITION/report.json"
+          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --all --partition $env:REGRESSION_PARTITION --results $report
+          if ($LASTEXITCODE -ne 0) { throw 'Regression partition failed.' }
+      - name: Collect immutable regression evidence
+        if: always()
+        shell: pwsh
+        run: |
+          .\tools\CollectRegressionEvidence.ps1 -ReportPath (Join-Path $env:RUNNER_TEMP "reports/$env:REGRESSION_PARTITION/report.json") -Destination (Join-Path $env:RUNNER_TEMP "regression-evidence/$env:REGRESSION_PARTITION")
+      - name: Preserve this regression attempt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: regression-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.partition }}
+          path: ${{ runner.temp }}/regression-evidence/${{ matrix.partition }}
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+
   build-test-package:
     outputs:
       package-artifact: ${{ steps.package-artifact.outputs.name }}
-    needs: [supply-chain-security, commit-messages]
+    if: ${{ always() }}
+    needs: [supply-chain-security, commit-messages, regression]
     runs-on: windows-latest
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
     steps:
+      - name: Require every validation prerequisite to succeed
+        shell: pwsh
+        env:
+          SUPPLY_CHAIN_RESULT: ${{ needs.supply-chain-security.result }}
+          COMMITS_RESULT: ${{ needs.commit-messages.result }}
+          REGRESSION_RESULT: ${{ needs.regression.result }}
+        run: |
+          if ($env:SUPPLY_CHAIN_RESULT -cne 'success' -or $env:COMMITS_RESULT -cne 'success' -or $env:REGRESSION_RESULT -cne 'success') {
+            throw 'Validation prerequisites did not all succeed.'
+          }
       - name: Checkout exact validation commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -98,11 +164,35 @@ jobs:
           persist-credentials: false
       - name: Set up .NET
         uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: '10.0.403'
-      - name: Build, test, and verify package
+      - name: Download all regression attempts from this workflow run
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: regression-report-${{ github.sha }}-${{ github.run_id }}-*
+          path: ${{ runner.temp }}/regression-reports
+          merge-multiple: false
+          github-token: ${{ github.token }}
+          run-id: ${{ github.run_id }}
+      - name: Capture complete job attempt history
         shell: pwsh
-        run: .\build.ps1 -Release -Clean -Test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: .\tools\GetRegressionJobAttempts.ps1 -OutputPath (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json')
+      - name: Fresh-build verifier and require complete partition coverage
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected verification build SDK.' }
+          dotnet build tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj -c Release --no-incremental
+          if ($LASTEXITCODE -ne 0) { throw 'Regression verifier build failed.' }
+          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --verify-reports (Join-Path $env:RUNNER_TEMP 'regression-reports') --job-attempts (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json')
+          if ($LASTEXITCODE -ne 0) { throw 'Regression evidence verification failed.' }
+      - name: Build and verify fresh Release package
+        shell: pwsh
+        run: .\build.ps1 -Release
       - name: Verify API probe safety and evidence capture offline
         shell: pwsh
         run: dotnet run --project tools/FishAudioProbe -c Release -- --self-test
