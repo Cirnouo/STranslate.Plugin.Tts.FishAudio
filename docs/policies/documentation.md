@@ -30,6 +30,8 @@ Maintain relative repository links and preserve existing inbound anchors when mo
 
 Do not create a second glossary or copy policy text into each specification. Link to the canonical document. Existing historical references to removed symbols or contributor files are provenance and must be labeled as such, not turned into requirements to restore those files.
 
+Keep task-specific plans, review notes and session task lists in ignored local workflow state or outside the checkout. A skill's default output path does not define the repository's documentation layout or authorize a tracked tool-specific directory such as `docs/superpowers/`. Before delivery, remove completed-task planning artifacts from maintained documentation, retain lasting implementation facts and decisions in their canonical specs, policies or ADRs, and check references to removed files.
+
 Published changelog sections describe the version that shipped. Follow the [release policy](releases.md#changelog-editing-workflow) before editing CHANGELOG: verify the latest published stable baseline, use canonical English category headings with Chinese prose, and record cumulative net changes rather than development iterations. Do not retroactively rewrite a published section to describe a later refactor. Historical release checks must not require Unreleased to remain empty. Verify the final documentation state after the last edit, including changelog updates, under the [verification policy](verification.md).
 
 ## User guidance boundaries

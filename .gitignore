@@ -26,5 +26,9 @@ AGENTS.md
 .sisyphus
 .scratch/
 
+# Local agent workflow state; maintained documentation uses canonical owners
+.superpowers/
+/docs/superpowers/
+
 # Transient evidence-index writer lock
 docs/evidences/**/.manifest.lock
