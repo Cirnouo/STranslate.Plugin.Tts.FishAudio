@@ -22,6 +22,21 @@ internal static class RegressionCatalogSuite
         AssertEqual(true, expected.SequenceEqual(cards.Select(item => item.Id), StringComparer.Ordinal), "The card context coverage and native first-use order remain complete");
         AssertEqual(true, cards.All(item => item.Partition == "native-cards"), "Each card context retains native-card ownership");
 
+        var behaviorIds = new List<string>();
+        AddBehavior("description", [false, true], ["1", "1-25", "1-5"], ["320", "400", "480", "640"]);
+        AddBehavior("headers", [false, true], ["1", "1-25", "1-5"], ["320", "400", "480", "640"]);
+        AddBehavior("inheritance", [false, true], ["1", "1-25", "1-5"], ["400"]);
+        AddBehavior("date", [false, true], ["1-25"], ["400"]);
+        AddBehavior("tooltip", [false], ["1"], ["400"]);
+        AddBehavior("loading", [false, true], ["1-25"], ["320"]);
+        var behaviors = cases.Where(item => item.Id.StartsWith("cards.layout.", StringComparison.Ordinal)).ToArray();
+        AssertEqual(true, behaviorIds.SequenceEqual(behaviors.Select(item => item.Id), StringComparer.Ordinal),
+            "Dynamic card ownership retains every declared theme/DPI/width/mode boundary in catalog order");
+        AssertEqual(177, behaviors.Length, "Independent card behavior owners supplement the unchanged static matrix");
+        AssertEqual(true, behaviors.All(item => item.Partition == "native-cards") &&
+            cases.ToList().FindIndex(item => item.Id == behaviors[0].Id) > cases.ToList().FindIndex(item => item.Id == cards[^1].Id),
+            "Behavior owners remain after the complete original static contexts in native-cards");
+
         foreach (var (oldId, count, partition) in new[]
         {
             ("cards.like/run-all", 87, "native-cards"),
@@ -85,6 +100,15 @@ internal static class RegressionCatalogSuite
             new[] { "--voice-card-layout-tests", "private-proof-directory" },
         })
             AssertEqual(true, LegacyRegressionSelectors.AreArgumentsValid(valid), "Original focused groups and private proof-directory parameters stay valid without executing fixtures");
+
+        void AddBehavior(string group, bool[] themes, string[] scales, string[] widths)
+        {
+            foreach (var dark in themes)
+            foreach (var scale in scales)
+            foreach (var width in widths)
+            foreach (var mode in new[] { "search", "by-id", "favorites" })
+                behaviorIds.Add($"cards.layout.{group}/en/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width}/{mode}");
+        }
 
         using var diagnostics = new StringWriter();
         var previousError = Console.Error;
