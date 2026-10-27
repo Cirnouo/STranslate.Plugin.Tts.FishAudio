@@ -38,10 +38,12 @@ jobs:
             'STranslate.Plugin.Tts.FishAudio/STranslate.Plugin.Tts.FishAudio.csproj',
             'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj',
             'tools/FishAudioProbe/FishAudioProbe.csproj',
-            'tools/FishAudioRelease/FishAudioRelease.csproj'
+            'tools/FishAudioRelease/FishAudioRelease.csproj',
+            'tools/FishAudio.Testing/FishAudio.Testing.csproj',
+            'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj'
           )
           foreach ($project in $projects) {
-            dotnet restore $project -p:NuGetAudit=true -p:NuGetAuditMode=all -p:NuGetAuditLevel=low '-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905'
+            dotnet restore $project --locked-mode -p:NuGetAudit=true -p:NuGetAuditMode=all -p:NuGetAuditLevel=low '-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905'
             if ($LASTEXITCODE -ne 0) { throw "NuGet audit/restore failed: $project" }
           }
 
@@ -118,7 +120,7 @@ jobs:
         shell: pwsh
         run: |
           $report = Join-Path $env:RUNNER_TEMP "reports/$env:REGRESSION_PARTITION/report.json"
-          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --all --partition $env:REGRESSION_PARTITION --results $report
+          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --legacy --all --partition $env:REGRESSION_PARTITION --results $report
           if ($LASTEXITCODE -ne 0) { throw 'Regression partition failed.' }
       - name: Collect immutable regression evidence
         if: always()
@@ -135,11 +137,67 @@ jobs:
           retention-days: 30
           overwrite: false
 
+  nunit-foundation:
+    name: NUnit foundation
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout exact validation commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+        with:
+          dotnet-version: '10.0.403'
+      - name: Run all discovered NUnit foundation cases in both assemblies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected framework build SDK.' }
+          .\tools\Test.ps1 -Mode Full -ResultsDirectory (Join-Path $env:RUNNER_TEMP 'framework-evidence')
+          if ($LASTEXITCODE -ne 0) { throw 'NUnit foundation execution failed.' }
+      - name: Record this framework attempt owner
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $directory = Join-Path $env:RUNNER_TEMP 'framework-evidence'
+          [IO.Directory]::CreateDirectory($directory) | Out-Null
+          $head = (git rev-parse --verify HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $head -cne $env:GITHUB_SHA) { throw 'Framework owner checkout mismatch.' }
+          $tree = (git rev-parse 'HEAD^{tree}').Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Framework owner tree unavailable.' }
+          $sdk = (dotnet --version).Trim()
+          if ($LASTEXITCODE -ne 0 -or $sdk -cne '10.0.403') { throw 'Framework owner SDK mismatch.' }
+          $owner = @{ schemaVersion = 1; repository = $env:GITHUB_REPOSITORY; commit = $env:GITHUB_SHA;
+            workflowRunId = $env:GITHUB_RUN_ID; attempt = $env:GITHUB_RUN_ATTEMPT; job = $env:GITHUB_JOB;
+            head = $head; tree = $tree; sdk = $sdk }
+          $stream = [IO.File]::Open((Join-Path $directory 'ci-owner.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+          try {
+            $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($owner | ConvertTo-Json))
+            $stream.Write($bytes, 0, $bytes.Length)
+            $stream.Flush($true)
+          } finally { $stream.Dispose() }
+      - name: Preserve this framework attempt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: framework-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/framework-evidence
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
+
   build-test-package:
     outputs:
       package-artifact: ${{ steps.package-artifact.outputs.name }}
     if: ${{ always() }}
-    needs: [supply-chain-security, commit-messages, regression]
+    needs: [supply-chain-security, commit-messages, regression, nunit-foundation]
     runs-on: windows-latest
     timeout-minutes: 90
     permissions:
@@ -152,8 +210,9 @@ jobs:
           SUPPLY_CHAIN_RESULT: ${{ needs.supply-chain-security.result }}
           COMMITS_RESULT: ${{ needs.commit-messages.result }}
           REGRESSION_RESULT: ${{ needs.regression.result }}
+          FRAMEWORK_RESULT: ${{ needs.nunit-foundation.result }}
         run: |
-          if ($env:SUPPLY_CHAIN_RESULT -cne 'success' -or $env:COMMITS_RESULT -cne 'success' -or $env:REGRESSION_RESULT -cne 'success') {
+          if ($env:SUPPLY_CHAIN_RESULT -cne 'success' -or $env:COMMITS_RESULT -cne 'success' -or $env:REGRESSION_RESULT -cne 'success' -or $env:FRAMEWORK_RESULT -cne 'success') {
             throw 'Validation prerequisites did not all succeed.'
           }
       - name: Checkout exact validation commit
@@ -176,6 +235,14 @@ jobs:
           merge-multiple: false
           github-token: ${{ github.token }}
           run-id: ${{ github.run_id }}
+      - name: Download all framework attempts from this workflow run
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: framework-report-${{ github.sha }}-${{ github.run_id }}-*
+          path: ${{ runner.temp }}/framework-reports
+          merge-multiple: false
+          github-token: ${{ github.token }}
+          run-id: ${{ github.run_id }}
       - name: Capture complete job attempt history
         shell: pwsh
         env:
@@ -190,6 +257,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Regression verifier build failed.' }
           dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --verify-reports (Join-Path $env:RUNNER_TEMP 'regression-reports') --job-attempts (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json')
           if ($LASTEXITCODE -ne 0) { throw 'Regression evidence verification failed.' }
+      - name: Require complete current NUnit foundation evidence
+        shell: pwsh
+        run: |
+          .\tools\VerifyFrameworkCi.ps1 -ArtifactDirectory (Join-Path $env:RUNNER_TEMP 'framework-reports') -JobAttemptsPath (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json') -ResultsDirectory (Join-Path $env:RUNNER_TEMP 'framework-verification')
+          if ($LASTEXITCODE -ne 0) { throw 'Framework evidence verification failed.' }
       - name: Build and verify fresh Release package
         shell: pwsh
         run: .\build.ps1 -Release

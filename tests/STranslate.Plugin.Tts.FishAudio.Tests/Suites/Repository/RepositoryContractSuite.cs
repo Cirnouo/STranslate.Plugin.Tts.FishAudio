@@ -283,9 +283,11 @@ internal static class RepositoryContractSuite
             "The shared gate should build the current Release package after partition evidence verification");
         AssertEqual(
             true,
-            validationWorkflow.Contains("--all --partition $env:REGRESSION_PARTITION", StringComparison.Ordinal) &&
-            validationWorkflow.Contains("--verify-reports", StringComparison.Ordinal) && validationWorkflow.Contains("--job-attempts", StringComparison.Ordinal),
-            "Shared CI validation executes complete partitions and verifies their attempt evidence");
+            validationWorkflow.Contains("-- --legacy --all --partition $env:REGRESSION_PARTITION", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("--verify-reports", StringComparison.Ordinal) && validationWorkflow.Contains("--job-attempts", StringComparison.Ordinal) &&
+            validationWorkflow.Contains(".\\tools\\Test.ps1 -Mode Full -ResultsDirectory", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("VerifyFrameworkCi.ps1", StringComparison.Ordinal),
+            "Shared CI validation executes complete legacy partitions and NUnit foundation cases and verifies both evidence obligations");
         AssertEqual(
             false,
             validationWorkflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),

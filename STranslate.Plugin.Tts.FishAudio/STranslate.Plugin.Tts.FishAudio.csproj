@@ -36,6 +36,15 @@
         <EnableAutoPackage>true</EnableAutoPackage>
     </PropertyGroup>
 
+    <!-- Coverage preserves Release optimization/constants/dependencies; only
+         symbols and isolated output differ. This output never becomes a package. -->
+    <PropertyGroup Condition="'$(FishAudioCoverage)' == 'true'">
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <OutputPath>..\.artifacts\coverage\$(Configuration)\</OutputPath>
+        <EnableAutoPackage>false</EnableAutoPackage>
+    </PropertyGroup>
+
     <ItemGroup>
         <Content Include="Languages\*.*">
             <Generator>MSBuild:Compile</Generator>

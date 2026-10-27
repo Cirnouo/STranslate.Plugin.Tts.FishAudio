@@ -4,6 +4,8 @@ These records explain decisions in the current plugin and the designs they repla
 
 The migration baseline was v1.1.2 behavior with SDK 1.0.15. Current Unreleased code adds host-HTTP memory-backed previews (DD-047), server-window-aware pagination (DD-048), immediate cancellable preview preparation state (DD-049) and native streaming TTS (DD-050–053). DD-046 remains the API Key compatibility decision. An unmerged experiment is not a current ADR.
 
+DD-070 records the current NUnit foundation and complete legacy/framework validation obligations. Coverage baseline publication and formal test-impact selection retain separate admission boundaries.
+
 Each migrated record retains its original rationale, identifies successors and states the current interpretation when applicable. Historical file/type names in the recorded rationale are provenance; the implementation-basis links and current specs locate today's owners. No record establishes a successful live TTS or physical audio measurement.
 
 See the [glossary](../glossary.md), [current behavior specs](../specs/README.md) and [documentation policy](../policies/documentation.md).
@@ -19,6 +21,7 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 - DD-049 amends DD-047's pending state presentation and same-voice cancellation across preview entry points; its bounded download and actual playback rules remain current.
 - DD-050 replaces the complete-buffer formal transport and continue-through-reinitialization portions of DD-009/039/041. Their settings, initialization, credit and ownership constraints remain current.
 - DD-053 advances DD-038's schema version and amends DD-009/031/041 for format, proxy and model choices. It preserves their other constraints. No fully replaced record is moved to history merely because one portion is amended.
+- DD-070 amends DD-069's bootstrap execution mode and final evidence receipt, and DD-065's registration boundary for new ordinary NUnit cases. The staged-tree, remaining legacy ownership and complete-new-commit obligations remain current.
 
 ## Complete register
 
@@ -93,3 +96,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-067 | [Separate native geometry dimensions from behavior ownership](current/DD-067.md) | Current |
 | DD-068 | [Gate complete CI coverage by the latest partition attempts](current/DD-068.md) | Current |
 | DD-069 | [Validate ordinary commits from their actual index snapshot](current/DD-069.md) | Current |
+| DD-070 | [Discover NUnit cases while retaining complete legacy validation](current/DD-070.md) | Current |

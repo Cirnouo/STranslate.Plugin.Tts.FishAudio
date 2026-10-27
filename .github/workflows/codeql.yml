@@ -57,9 +57,11 @@ jobs:
             'STranslate.Plugin.Tts.FishAudio/STranslate.Plugin.Tts.FishAudio.csproj',
             'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj',
             'tools/FishAudioProbe/FishAudioProbe.csproj',
-            'tools/FishAudioRelease/FishAudioRelease.csproj'
+            'tools/FishAudioRelease/FishAudioRelease.csproj',
+            'tools/FishAudio.Testing/FishAudio.Testing.csproj',
+            'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj'
           )) {
-            dotnet build $project -c Release --no-incremental -p:EnableAutoPackage=false
+            dotnet build $project -c Release --no-incremental -p:RestoreLockedMode=true -p:EnableAutoPackage=false
             if ($LASTEXITCODE -ne 0) { throw "CodeQL build failed: $project" }
           }
       - name: Analyze maintained code
@@ -80,7 +82,9 @@ jobs:
               'STranslate.Plugin.Tts.FishAudio/Main.cs',
               'tests/STranslate.Plugin.Tts.FishAudio.Tests/Program.cs',
               'tools/FishAudioProbe/Program.cs',
-              'tools/FishAudioRelease/Publisher.cs'
+              'tools/FishAudioRelease/Publisher.cs',
+              'tools/FishAudio.Testing/Program.cs',
+              'tests/FishAudio.Testing.Tests/NUnitEvidenceTests.cs'
             )) {
               $matches = @($archive.Entries | Where-Object { $_.FullName.Replace('\', '/').EndsWith('/' + $source, [StringComparison]::Ordinal) })
               if ($matches.Count -ne 1) { throw "Missing/ambiguous CodeQL source extraction: $source" }
