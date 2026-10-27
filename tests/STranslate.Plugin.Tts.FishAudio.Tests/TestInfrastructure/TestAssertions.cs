@@ -32,6 +32,7 @@ internal static class TestAssertions
 
     internal static string FindRepoFile(string relativePath)
     {
+        if (SnapshotContext.Read() is { } snapshot) return snapshot.ExistingFile(relativePath);
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null)
         {
@@ -47,6 +48,7 @@ internal static class TestAssertions
 
     internal static string FindRepoPath(string relativePath)
     {
+        if (SnapshotContext.Read() is { } snapshot) return snapshot.InputPath(relativePath);
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null)
         {

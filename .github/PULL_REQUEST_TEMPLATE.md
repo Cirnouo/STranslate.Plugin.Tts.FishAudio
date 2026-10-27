@@ -10,7 +10,8 @@ Explain the final change and relevant compatibility, resource or security implic
 
 List checks actually run, their results, the final file state they cover and remaining host/device/provider/publication limits.
 
-- [ ] Affected local regressions and a freshly built package were verified; full PR CI coverage is reported separately.
+- [ ] The installed pre-commit gate and final commit-msg receipt guard passed for the exact staged tree in `bootstrap/full/legacy-runner` mode; its tree identity and full PR CI results are reported separately.
+- [ ] Any focused diagnostic runs state their selected scope and remaining not-run coverage; they do not replace the commit gate.
 - [ ] Relevant offline probe/release-tool checks pass when changed.
 - [ ] The current distributable and its runtime dependencies were checked when applicable.
 - [ ] Changelog changes identify the latest published stable baseline, authoritative release evidence and why the categories describe final net changes.

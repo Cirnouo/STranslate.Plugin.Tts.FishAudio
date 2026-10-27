@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+repository=$(git rev-parse --show-toplevel)
+state=$(git rev-parse --path-format=absolute --git-path fish-audio-testing)
+exec pwsh -NoLogo -NoProfile -File "$state/hooks/TestGate.ps1" -RepositoryRoot "$repository" -FinalizeCommit -MessagePath "$1"

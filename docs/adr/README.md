@@ -92,3 +92,4 @@ See the [glossary](../glossary.md), [current behavior specs](../specs/README.md)
 | DD-066 | [Supervise regression partitions outside the native STA](current/DD-066.md) | Current |
 | DD-067 | [Separate native geometry dimensions from behavior ownership](current/DD-067.md) | Current |
 | DD-068 | [Gate complete CI coverage by the latest partition attempts](current/DD-068.md) | Current |
+| DD-069 | [Validate ordinary commits from their actual index snapshot](current/DD-069.md) | Current |

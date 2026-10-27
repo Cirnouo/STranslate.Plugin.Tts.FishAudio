@@ -175,6 +175,7 @@ internal static class RegressionCiInfrastructureSuite
             foreach ($index in 1..3) { [IO.File]::WriteAllText((Join-Path $source "$child.snapshot-$($index.ToString('D6')).json"), "{`"index`":$index}") }
             foreach ($index in 1..2) { [IO.File]::WriteAllText((Join-Path $source "$partial.snapshot-$($index.ToString('D6')).json"), "{`"index`":$index}") }
             [IO.File]::WriteAllText((Join-Path $source "$child.request.json"), 'private-request')
+            [IO.File]::WriteAllText((Join-Path $source "$child.failure-000002.json"), '{"version":1,"failure":{"frames":[]}}')
             [IO.File]::WriteAllText((Join-Path $source "$child.unfinished.tmp"), 'unfinished')
             [IO.File]::WriteAllText((Join-Path $source 'unrelated-private.txt'), 'unrelated')
             return $source
@@ -192,7 +193,7 @@ internal static class RegressionCiInfrastructureSuite
             Copy-RegressionEvidence (Join-Path $root "sources/$name/report.json") (Join-Path $root "bundles/$name")
         }
         $normal = Join-Path $root 'bundles/normal'
-        $expected = @('report.json', "report.json.generations/$run/00000000000000000000.json", "report.json.generations/$run/00000000000000000001.json", "report.json.generations/$run/00000000000000000003.json", $child, "$child.snapshot-000003.json", "$partial.snapshot-000002.json")
+        $expected = @('report.json', "report.json.generations/$run/00000000000000000000.json", "report.json.generations/$run/00000000000000000001.json", "report.json.generations/$run/00000000000000000003.json", $child, "$child.snapshot-000003.json", "$partial.snapshot-000002.json", "$child.failure-000002.json")
         $files = @(Get-ChildItem -LiteralPath $normal -File -Recurse)
         Require ($files.Count -eq $expected.Count) 'collector-exact-compact-file-count'
         foreach ($relative in $expected) {

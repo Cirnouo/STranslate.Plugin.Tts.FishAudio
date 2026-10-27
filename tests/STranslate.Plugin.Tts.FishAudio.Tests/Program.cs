@@ -3,6 +3,8 @@
 var physicalProtocolOutput = Console.Out;
 try
 {
+    if (RegressionSnapshotVerifier.IsInvocation(args))
+        return RegressionSnapshotVerifier.Run(args);
     if (RegressionChildHost.IsChildInvocation(args))
         return await RegressionChildHost.RunAsync(args, physicalProtocolOutput);
     if (RegressionCiVerifier.IsInvocation(args))
