@@ -217,14 +217,49 @@ try {
     }
     $bundles = @{}
     $prefix = 'framework-report-' + $commit + '-' + $runId + '-'
-    foreach ($directory in Get-ChildItem -LiteralPath $ArtifactDirectory -Directory) {
-        Require-Framework ($directory.Name.StartsWith($prefix, [StringComparison]::Ordinal)) 'framework-ci-foreign-artifact'
-        $suffix = $directory.Name.Substring($prefix.Length)
+    $artifactRoot = Get-Item -LiteralPath $ArtifactDirectory -Force
+    Require-Framework ($artifactRoot.PSIsContainer -and
+        ($artifactRoot.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) 'framework-ci-foreign-artifact'
+    $entries = @(Get-ChildItem -LiteralPath $ArtifactDirectory -Force)
+    $flatOwnerEntries = @($entries | Where-Object { -not $_.PSIsContainer -and $_.Name -ceq 'ci-owner.json' })
+    $artifactLayout = 'wrapped-attempts'
+    if ($flatOwnerEntries.Count -gt 0) {
+        # The pinned download action extracts a single pattern match directly
+        # into its destination. Its owner locates an attempt, not an authority
+        # replacing the job history or the source/content checks below.
+        $flatFiles = @('ci-owner.json', 'manifest.json', 'owner.json', 'source.json')
+        $flatDirectories = @('phases', 'plugin', 'runtime-evidence', 'testing-tool')
+        Require-Framework ($flatOwnerEntries.Count -eq 1) 'framework-ci-foreign-artifact'
+        foreach ($entry in $entries) {
+            Require-Framework (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and
+                $(if ($entry.PSIsContainer) { $flatDirectories -ccontains $entry.Name }
+                  else { $flatFiles -ccontains $entry.Name })) 'framework-ci-foreign-artifact'
+        }
+        $flatOwnerPath = Resolve-FrameworkFile $ArtifactDirectory 'ci-owner.json' ''
+        $flatOwner = Read-FrameworkJson $flatOwnerPath
+        Require-Framework ($flatOwner.attempt -is [string] -or $flatOwner.attempt -is [int] -or
+            $flatOwner.attempt -is [long]) 'framework-ci-artifact-attempt'
+        $attemptText = if ($flatOwner.attempt -is [string]) { $flatOwner.attempt }
+            else { $flatOwner.attempt.ToString([Globalization.CultureInfo]::InvariantCulture) }
         $number = 0
-        Require-Framework ([int]::TryParse($suffix, [Globalization.NumberStyles]::None,
+        Require-Framework ($attemptText -cmatch '^[1-9][0-9]*\z' -and
+            [int]::TryParse($attemptText, [Globalization.NumberStyles]::None,
             [Globalization.CultureInfo]::InvariantCulture, [ref]$number) -and $number -gt 0 -and $number -le $currentAttempt -and
-            $suffix -ceq $number.ToString([Globalization.CultureInfo]::InvariantCulture) -and -not $bundles.ContainsKey($number)) 'framework-ci-artifact-attempt'
-        $bundles[$number] = $directory.FullName
+            $attemptText -ceq $number.ToString([Globalization.CultureInfo]::InvariantCulture)) 'framework-ci-artifact-attempt'
+        $bundles[$number] = $ArtifactDirectory
+        $artifactLayout = 'flat-single'
+    } else {
+        foreach ($directory in $entries) {
+            Require-Framework ($directory.PSIsContainer -and
+                ($directory.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and
+                $directory.Name.StartsWith($prefix, [StringComparison]::Ordinal)) 'framework-ci-foreign-artifact'
+            $suffix = $directory.Name.Substring($prefix.Length)
+            $number = 0
+            Require-Framework ([int]::TryParse($suffix, [Globalization.NumberStyles]::None,
+                [Globalization.CultureInfo]::InvariantCulture, [ref]$number) -and $number -gt 0 -and $number -le $currentAttempt -and
+                $suffix -ceq $number.ToString([Globalization.CultureInfo]::InvariantCulture) -and -not $bundles.ContainsKey($number)) 'framework-ci-artifact-attempt'
+            $bundles[$number] = $directory.FullName
+        }
     }
     $attempts = @($owners.Keys) + @($bundles.Keys)
     Require-Framework ($attempts.Count -gt 0) 'framework-ci-missing-attempt'
@@ -341,6 +376,7 @@ try {
         }
     }
     Write-Output ('framework-ci: verified checkout ' + $commit + ' with API job head ' + $executionHead + '.')
+    Write-Output ('framework-ci: verified artifact layout ' + $artifactLayout + '.')
     Write-Output ('framework-ci: verified complete NUnit foundation attempt ' + $latest + ' (' + $globalIds.Count + ' cases).')
 } catch {
     [Console]::Error.WriteLine('framework-ci: rejected (' + $failureCode + '; ' + $_.Exception.GetType().Name + ').')

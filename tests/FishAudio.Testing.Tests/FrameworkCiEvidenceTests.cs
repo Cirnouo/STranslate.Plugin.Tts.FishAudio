@@ -175,6 +175,158 @@ public sealed class FrameworkCiEvidenceTests
     }
 
     [Test]
+    [Property("FishAudioCaseId", "framework-ci/flat-single-artifact-keeps-owner-and-results")]
+    public async Task SingleDownloadedArtifactCanBeAdmittedFromItsFlatRoot()
+    {
+        FlattenSingleBundle();
+        var resultHash = Hash(Path.Combine(_bundle, "plugin/result.xml"));
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.Zero, result.Error);
+        Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
+        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify", "evidence-catalog", "evidence-verify" }));
+        Assert.That(Directory.Exists(Bundle(1)), Is.False, "Admission must read the flat artifact without manufacturing a wrapper.");
+        Assert.That(Hash(Path.Combine(_bundle, "plugin/result.xml")), Is.EqualTo(resultHash));
+        Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-terminal.json")), Is.True);
+        Assert.That(File.Exists(Path.Combine(_root, "verification/testing-tool-terminal.json")), Is.True);
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "framework-ci/flat-cached-artifact-keeps-original-attempt")]
+    public async Task SingleFlatArtifactRetainsItsNumericOriginalCachedAttempt()
+    {
+        AdvertiseCachedJob();
+        FlattenSingleBundle();
+        var ownerPath = Path.Combine(_bundle, "ci-owner.json");
+        var owner = JsonNode.Parse(File.ReadAllText(ownerPath))!;
+        owner["attempt"] = 1;
+        WriteJson(ownerPath, owner);
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.Zero, result.Error);
+        Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
+        Assert.That(Directory.Exists(Bundle(1)), Is.False);
+        Assert.That(Directory.Exists(Bundle(2)), Is.False, "A cached job retains the flat original owner rather than creating attempt 2 evidence.");
+        Assert.That(Invocations().Count(item => item == "evidence-verify"), Is.EqualTo(2));
+        Assert.That(JsonNode.Parse(File.ReadAllText(ownerPath))!["attempt"]!.ToJsonString(), Is.EqualTo("1"));
+    }
+
+    [TestCase("mixed-flat-wrapped", "framework-ci-foreign-artifact", TestName = "framework-ci/flat-mixed-wrapped-layout")]
+    [TestCase("foreign-repository", "framework-ci-artifact-owner", TestName = "framework-ci/flat-foreign-repository")]
+    [TestCase("foreign-run", "framework-ci-artifact-owner", TestName = "framework-ci/flat-foreign-run")]
+    [TestCase("foreign-commit", "framework-ci-artifact-owner", TestName = "framework-ci/flat-foreign-commit")]
+    [TestCase("zero-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-zero-attempt")]
+    [TestCase("future-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-future-attempt")]
+    [TestCase("leading-zero-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-noncanonical-attempt")]
+    [TestCase("fractional-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-fractional-attempt")]
+    [TestCase("boolean-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-boolean-attempt")]
+    [TestCase("null-attempt", "framework-ci-artifact-attempt", TestName = "framework-ci/flat-null-attempt")]
+    [TestCase("unexpected-flat-directory", "framework-ci-foreign-artifact", TestName = "framework-ci/flat-unexpected-root-directory")]
+    [TestCase("unexpected-flat-file", "framework-ci-foreign-artifact", TestName = "framework-ci/flat-unexpected-root-file")]
+    [TestCase("unexpected-wrapped-file", "framework-ci-foreign-artifact", TestName = "framework-ci/wrapped-unexpected-root-file")]
+    public async Task FlatArtifactsCannotRelaxLayoutAttemptOrOwnerAdmission(string fault, string expectedReason)
+    {
+        if (fault == "unexpected-wrapped-file")
+        {
+            Write(Path.Combine(_root, "artifacts/unexpected.txt"), "unexpected-root-entry");
+        }
+        else
+        {
+            FlattenSingleBundle();
+            var ownerPath = Path.Combine(_bundle, "ci-owner.json");
+            var owner = JsonNode.Parse(File.ReadAllText(ownerPath))!;
+            switch (fault)
+            {
+                case "mixed-flat-wrapped":
+                    Directory.CreateDirectory(Bundle(1));
+                    break;
+                case "foreign-repository":
+                    owner["repository"] = "other/fish-audio";
+                    break;
+                case "foreign-run":
+                    owner["workflowRunId"] = (RunId + 1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    break;
+                case "foreign-commit":
+                    owner["commit"] = ForeignCommit;
+                    owner["head"] = ForeignCommit;
+                    break;
+                case "zero-attempt":
+                    owner["attempt"] = 0;
+                    break;
+                case "future-attempt":
+                    owner["attempt"] = _attempt + 1;
+                    break;
+                case "leading-zero-attempt":
+                    owner["attempt"] = "01";
+                    break;
+                case "fractional-attempt":
+                    owner["attempt"] = 1.5;
+                    break;
+                case "boolean-attempt":
+                    owner["attempt"] = true;
+                    break;
+                case "null-attempt":
+                    owner["attempt"] = null;
+                    break;
+                case "unexpected-flat-directory":
+                    Directory.CreateDirectory(Path.Combine(_bundle, "unexpected"));
+                    break;
+                case "unexpected-flat-file":
+                    Write(Path.Combine(_bundle, "unexpected.txt"), "unexpected-root-entry");
+                    break;
+                default:
+                    throw new InvalidOperationException("framework-ci-fixture-unknown-flat-fault");
+            }
+            WriteJson(ownerPath, owner);
+        }
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.EqualTo(1), result.Output + result.Error);
+        Assert.That(result.Error, Does.Contain("framework-ci: rejected (" + expectedReason + ";"));
+        Assert.That(result.Output, Does.Not.Contain("verified complete NUnit foundation"));
+        Assert.That(Directory.Exists(Path.Combine(_root, "verification")), Is.False,
+            "Invalid artifact layout, attempt or owner must fail before fresh discovery or parser admission.");
+    }
+
+    private void FlattenSingleBundle()
+    {
+        var source = Path.GetFullPath(_bundle);
+        var destination = Path.GetFullPath(Path.Combine(_root, "artifacts"));
+        Assert.That(source, Is.EqualTo(Path.GetFullPath(Bundle(1))));
+        Assert.That(Path.GetDirectoryName(source), Is.EqualTo(destination));
+        Assert.That(Directory.GetFileSystemEntries(destination), Is.EqualTo(new[] { source }));
+        RequireNoReparseAncestors(source);
+        RequireNoReparseAncestors(destination);
+        WriteJson(Path.Combine(source, "manifest.json"), _manifest);
+        foreach (var name in new[] { "owner.json", "source.json" })
+        {
+            var auxiliary = Path.Combine(source, name);
+            Assert.That(File.Exists(auxiliary), Is.False);
+            // These optional root entries are opaque layout controls. The
+            // fixture does not claim that their contents are admitted evidence.
+            WriteJson(auxiliary, new JsonObject { ["fixtureAuxiliary"] = name });
+        }
+        var entries = Directory.GetFileSystemEntries(source);
+        foreach (var entry in entries)
+        {
+            Assert.That(File.GetAttributes(entry) & FileAttributes.ReparsePoint, Is.EqualTo((FileAttributes)0));
+            var target = Path.Combine(destination, Path.GetFileName(entry));
+            Assert.That(File.Exists(target) || Directory.Exists(target), Is.False, "Flattening cannot overwrite an artifact entry.");
+        }
+        foreach (var entry in entries)
+        {
+            var target = Path.Combine(destination, Path.GetFileName(entry));
+            if ((File.GetAttributes(entry) & FileAttributes.Directory) != 0) Directory.Move(entry, target);
+            else File.Move(entry, target, overwrite: false);
+        }
+        Directory.Delete(source, recursive: false);
+        _bundle = destination;
+    }
+
+    [Test]
     [Property("FishAudioCaseId", "framework-ci/pr-synthetic-merge-keeps-merge-artifact-owner")]
     public async Task PullRequestJobHeadCanDifferFromItsAuthenticatedMergeCheckout()
     {
