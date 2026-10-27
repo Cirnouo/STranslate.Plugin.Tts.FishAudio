@@ -11,6 +11,7 @@ internal static class Program
     public static async Task<int> Main(string[] args)
     {
         if (EvidenceCommands.IsInvocation(args)) return EvidenceCommands.Run(args);
+        if (CoverageCommands.IsInvocation(args)) return CoverageCommands.Run(args);
         if (!TryReadOptions(args, out var options))
         {
             Console.Error.WriteLine("Usage: workspace-probe --project <absolute tests csproj> --output <absolute JSON> [--coverage]");

@@ -18,6 +18,9 @@ internal static class RegressionFailureEvidence
     private static readonly Regex ChangePattern = new(
         @"\A0x([0-9A-F]{2}):0x([0-9A-F]{2})>0x([0-9A-F]{2})\(down=(False|True)>(False|True),low=0x([0-9A-F]{2})>0x([0-9A-F]{2})\)\z",
         RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, TimeSpan.FromMilliseconds(100));
+    private static readonly Regex NativeDownPattern = new(
+        @"\Aphase=(before-action|after-action); nativeKey=0x([0-9A-F]{2}); plannedDown=(True|False); tableDown=(True|False); nativeDown=(True|False)\z",
+        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, TimeSpan.FromMilliseconds(100));
 
     internal static RegressionFailureInfo Capture(Exception error)
     {
@@ -64,6 +67,13 @@ internal static class RegressionFailureEvidence
     private static bool ValidContext(string value)
     {
         if (value.Length > NativeKeyboardStateFixture.MaximumFailureContextLength) return false;
+        var native = NativeDownPattern.Match(value);
+        if (native.Success)
+        {
+            var key = int.Parse(native.Groups[2].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            return ControlledKeys.Contains(key) && native.Groups[3].Value == native.Groups[4].Value &&
+                native.Groups[3].Value != native.Groups[5].Value;
+        }
         var match = ContextPattern.Match(value);
         if (!match.Success || !int.TryParse(match.Groups[2].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var count) || count > 10 ||
             !int.TryParse(match.Groups[5].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var other) || other > 245) return false;

@@ -8,11 +8,12 @@ namespace NUnitCompatibility;
 [NonParallelizable]
 public sealed class ChildCompatibilityCases
 {
-    private const string NUnitCaseId = "compat.child/streaming-text-first-window";
-    private const string LegacyCaseId = "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences";
+    internal const string NUnitCaseId = "compat.child/streaming-text-first-window";
+    internal const string LegacyCaseId = "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences";
 
     [Test]
     [Property("FishAudioCaseId", NUnitCaseId)]
+    [Property("FishAudioOwnedChild", "true")]
     public async Task StreamingTextRunsInTheSupervisedChild()
     {
         try
@@ -84,6 +85,8 @@ public sealed class ChildCompatibilityCases
             authoritative.RunId,
             ChildRequestId = authoritative.Cases.Single().ChildRequestId,
             ChildExitCode = child?.ObservedExitCode,
+            ChildStdoutDrained = child?.StdoutDrained,
+            ChildStderrDrained = child?.StderrDrained,
             authoritative.Source
         });
 
@@ -96,6 +99,8 @@ public sealed class ChildCompatibilityCases
         NUnitAssert.That(result.Partition, Is.EqualTo("core"));
         NUnitAssert.That(authoritative.Complete && authoritative.FinishedUtc is not null && result.Outcome == "passed", Is.True);
         NUnitAssert.That(child is not null && child.ObservedExitCode == 0, Is.True);
+        NUnitAssert.That(child is not null && child.StdoutDrained, Is.True);
+        NUnitAssert.That(child is not null && child.StderrDrained, Is.True);
         NUnitAssert.That(Guid.TryParseExact(result.ChildRequestId, "N", out _), Is.True);
 
         var requestPaths = Directory.GetFiles(directory, "*.child.json.request.json");
@@ -128,18 +133,24 @@ public sealed class ChildCompatibilityCases
     private sealed class ObservedChildProcess : IRegressionChildProcess
     {
         private readonly Process _process;
+        private readonly EofObservingReader _output;
+        private readonly EofObservingReader _error;
 
         internal ObservedChildProcess(ProcessStartInfo info)
         {
             _process = Process.Start(info) ?? throw new IOException("compat-child-start-failed");
             ProcessId = _process.Id;
+            _output = new EofObservingReader(_process.StandardOutput);
+            _error = new EofObservingReader(_process.StandardError);
             Exit = ObserveExitAsync();
         }
 
         internal int ProcessId { get; }
         internal int? ObservedExitCode { get; private set; }
-        public TextReader Output => _process.StandardOutput;
-        public TextReader Error => _process.StandardError;
+        internal bool StdoutDrained => _output.EofObserved;
+        internal bool StderrDrained => _error.EofObserved;
+        public TextReader Output => _output;
+        public TextReader Error => _error;
         public Task Exit { get; }
         public int ExitCode => _process.ExitCode;
 
@@ -155,5 +166,28 @@ public sealed class ChildCompatibilityCases
         }
 
         public void Dispose() => _process.Dispose();
+    }
+
+    // The Process owns the underlying readers. This observer delegates each
+    // original read and records genuine EOF; it never substitutes buffered data
+    // or treats process exit, disposal, a failed read or an empty request as EOF.
+    private sealed class EofObservingReader(TextReader reader) : TextReader
+    {
+        private volatile bool _eofObserved;
+        internal bool EofObserved => _eofObserved;
+
+        public override async Task<int> ReadAsync(char[] buffer, int index, int count)
+        {
+            var read = await reader.ReadAsync(buffer, index, count).ConfigureAwait(false);
+            if (count > 0 && read == 0) _eofObserved = true;
+            return read;
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<char> buffer, CancellationToken cancellationToken = default)
+        {
+            var read = await reader.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+            if (!buffer.IsEmpty && read == 0) _eofObserved = true;
+            return read;
+        }
     }
 }

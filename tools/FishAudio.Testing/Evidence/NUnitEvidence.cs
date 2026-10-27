@@ -8,6 +8,8 @@ namespace FishAudio.Testing.Evidence;
 
 public sealed record DiscoveredNUnitCase(string CanonicalId, string FullName, string PlatformId,
     string ClassName, string MethodName);
+public sealed record NUnitCaseMetadata(string CanonicalId,
+    IReadOnlyDictionary<string, IReadOnlyList<string>> Properties);
 
 public sealed record NUnitCaseResult(string CanonicalId, string FullName, string Outcome, TimeSpan Duration)
 {
@@ -87,6 +89,29 @@ public static class NUnitEvidence
             catalog.Add(new(canonicalId, fullName, platformId, className, methodName));
         }
         return catalog.AsReadOnly();
+    }
+
+    public static NUnitCaseMetadata ReadCaseMetadata(string absoluteDumpPath, string canonicalId)
+    {
+        // Keep one immutable dump open across catalog admission and metadata
+        // extraction; this does not load the test assembly or construct fixtures.
+        Require(Path.IsPathFullyQualified(absoluteDumpPath), "path-must-be-absolute");
+        using var guard = new FileStream(absoluteDumpPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var selected = ReadCatalog(absoluteDumpPath).Where(item => item.CanonicalId == canonicalId).ToArray();
+        Require(selected.Length == 1, "unknown-selected-case");
+        var document = ReadXml(absoluteDumpPath, adapterDump: true);
+        var leaf = document.Descendants("test-case").Single(item => (string?)item.Attribute("id") == selected[0].PlatformId);
+        Require(leaf.Elements("properties").Count() <= 1, "duplicate-properties-container");
+        var values = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (var property in leaf.Elements("properties").Elements("property"))
+        {
+            var name = Required(property, "name");
+            var value = Required(property, "value");
+            if (!values.TryGetValue(name, out var entries)) values.Add(name, entries = []);
+            entries.Add(value);
+        }
+        return new(canonicalId, values.ToDictionary(item => item.Key,
+            item => (IReadOnlyList<string>)item.Value.AsReadOnly(), StringComparer.Ordinal));
     }
 
     public static NUnitEvidenceResult VerifyResults(IReadOnlyList<DiscoveredNUnitCase> catalog,

@@ -95,6 +95,27 @@ public sealed class NUnitEvidenceTests
     }
 
     [Test]
+    public void CaseMetadataPreservesOnlyTheSelectedLeafAndAllDeclaredDependencies()
+    {
+        var xml = XDocument.Parse(Discovery);
+        var leaves = xml.Descendants("test-case").ToArray();
+        leaves[0].Element("properties")!.Add(new XElement("property",
+            new XAttribute("name", "FishAudioRepositoryDependency"), new XAttribute("value", "other.json")));
+        leaves[1].Element("properties")!.Add(
+            new XElement("property", new XAttribute("name", "FishAudioRepositoryDependency"), new XAttribute("value", "one.json")),
+            new XElement("property", new XAttribute("name", "FishAudioRepositoryDependency"), new XAttribute("value", "two.json")),
+            new XElement("property", new XAttribute("name", "FishAudioEmptyProductCoverage"), new XAttribute("value", "RepositoryResourcesOnly")));
+        var metadata = NUnitEvidence.ReadCaseMetadata(Write("metadata.dump", xml.ToString()), "compat.source/row");
+        Assert.That(metadata.CanonicalId, Is.EqualTo("compat.source/row"));
+        Assert.That(metadata.Properties["FishAudioRepositoryDependency"], Is.EqualTo(new[] { "one.json", "two.json" }));
+        Assert.That(metadata.Properties["FishAudioEmptyProductCoverage"], Is.EqualTo(new[] { "RepositoryResourcesOnly" }));
+    }
+
+    [Test]
+    public void UnknownCaseCannotBorrowAnotherLeavesRepositoryMetadata()
+        => Reject(() => NUnitEvidence.ReadCaseMetadata(Write("metadata.dump", Discovery), "compat.missing/case"));
+
+    [Test]
     public void MissingCanonicalPropertyUsesFullNameAndNamedParameterizedRow()
     {
         var text = Discovery.Replace("<property name=\"FishAudioCaseId\" value=\"compat.source/row\" />", "", StringComparison.Ordinal);

@@ -6,11 +6,34 @@ param(
     [ValidateRange(0, 4)][int]$Workers = 4,
     [string]$ResultsDirectory,
     [switch]$NoBuild,
+    [string]$Scenario = 'IsolatedCase',
+    [string]$EvidenceDirectory,
     [string]$RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($Mode -ceq 'Compatibility') {
+    if ($PSBoundParameters.ContainsKey('NoBuild') -or $PSBoundParameters.ContainsKey('Workers')) {
+        [Console]::Error.WriteLine('test-driver: parameters do not apply to compatibility mode.')
+        exit 2
+    }
+    $options = @{ Scenario = $Scenario; RepositoryRoot = $RepositoryRoot; CaseId = $CaseId }
+    if ($ResultsDirectory) { $options.ResultsDirectory = $ResultsDirectory }
+    if ($EvidenceDirectory) { $options.EvidenceDirectory = $EvidenceDirectory }
+    try {
+        & (Join-Path $PSScriptRoot 'TestCompatibility.ps1') @options
+        exit $LASTEXITCODE
+    } catch {
+        [Console]::Error.WriteLine('test-driver: invalid compatibility invocation.')
+        exit 2
+    }
+}
+if ($PSBoundParameters.ContainsKey('Scenario') -or $PSBoundParameters.ContainsKey('EvidenceDirectory')) {
+    [Console]::Error.WriteLine('test-driver: compatibility parameters require compatibility mode.')
+    exit 2
+}
+
 $utf8 = [Text.UTF8Encoding]::new($false)
 $runId = [Guid]::NewGuid().ToString('N')
 $root = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($RepositoryRoot))
@@ -190,6 +213,13 @@ function Invoke-OwnedPhase {
     $start.Environment['DOTNET_CLI_UI_LANGUAGE'] = 'en'
     $start.Environment['VSLANG'] = '1033'
     $start.Environment['FISHAUDIO_COMPAT_PARALLEL_PROOF'] = '0'
+    if ($dotnet) { $start.Environment['FISHAUDIO_DOTNET_EXECUTABLE'] = $dotnet }
+    $start.Environment['FISHAUDIO_TEST_REPOSITORY_ROOT'] = $root
+    $start.Environment['FISHAUDIO_PWSH_EXECUTABLE'] = $shell
+    foreach ($key in @('FISHAUDIO_COVERAGE_SESSION_ID', 'FISHAUDIO_COVERAGE_RUN_ID',
+        'FISHAUDIO_COVERAGE_CASE_ID', 'FISHAUDIO_COVERAGE_SOURCE_TREE', 'FISHAUDIO_COVERAGE_EVIDENCE_ROOT')) {
+        [void]$start.Environment.Remove($key)
+    }
     foreach ($key in $Environment.Keys) { $start.Environment[$key] = [string]$Environment[$key] }
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $start
@@ -206,6 +236,7 @@ function Invoke-OwnedPhase {
     $primary = $null
     $primaryCode = $null
     $cleanup = $null
+    $cleanupClock = $null
     $startedUtc = [DateTimeOffset]::UtcNow
     $clock = [Diagnostics.Stopwatch]::StartNew()
     try {
@@ -225,6 +256,16 @@ function Invoke-OwnedPhase {
         $exitTask = $process.WaitForExitAsync()
         $warned = $false
         while (-not ($exitTask.IsCompleted -and $stdout.IsCompleted -and $stderr.IsCompleted -and $owner.ActiveProcesses -eq 0)) {
+            foreach ($task in @($exitTask, $stdout, $stderr)) {
+                if ($task.IsFaulted -or $task.IsCanceled) { [void]$task.GetAwaiter().GetResult() }
+            }
+            if ($exitTask.IsCompleted) {
+                [void]$exitTask.GetAwaiter().GetResult()
+                $exit = $process.ExitCode
+                if ($null -eq $cleanupClock) { $cleanupClock = [Diagnostics.Stopwatch]::StartNew() }
+                Require-Condition ($exit -eq 0) 'test-driver-target-failed'
+                Require-Condition ($cleanupClock.ElapsedMilliseconds -lt 10000) 'test-driver-exit-drain-deadline'
+            }
             if ($PhaseTimeoutMilliseconds -gt 0) {
                 Require-Condition ($clock.ElapsedMilliseconds -lt $PhaseTimeoutMilliseconds) 'test-driver-process-hard-deadline'
             }
@@ -251,7 +292,7 @@ function Invoke-OwnedPhase {
         # Termination, the original process exit and both original drains share
         # one ten-second allowance. The Job never replaces NUnit action ownership.
         if ($null -ne $primary) {
-            $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
+            if ($null -eq $cleanupClock) { $cleanupClock = [Diagnostics.Stopwatch]::StartNew() }
             try {
                 if ($assigned) { $owner.Terminate() }
                 elseif ($started -and -not $process.HasExited) { $process.Kill($true) }
@@ -328,7 +369,8 @@ function Get-SourceIdentity {
     $hash = [Security.Cryptography.IncrementalHash]::CreateHash([Security.Cryptography.HashAlgorithmName]::SHA256)
     try {
         $unique = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-        foreach ($path in @($paths | Sort-Object -CaseSensitive)) {
+        $paths.Sort([StringComparer]::Ordinal)
+        foreach ($path in $paths) {
             Require-Condition (-not [IO.Path]::IsPathRooted($path) -and $unique.Add($path)) 'test-driver-invalid-source-file'
             $full = [IO.Path]::GetFullPath((Join-Path $root $path))
             Require-Condition (Test-ContainedPath $full $root) 'test-driver-source-file-outside-root'
@@ -348,7 +390,7 @@ function Get-SourceIdentity {
             $hash.AppendData($bytes)
         }
         $identity['fingerprint'] = [Convert]::ToHexString($hash.GetHashAndReset()).ToLowerInvariant()
-        $identity['fingerprintKind'] = 'sha256-source-path-and-bytes-v1'
+        $identity['fingerprintKind'] = 'sha256-source-path-and-bytes-ordinal-v1'
         return $identity
     } finally { $hash.Dispose() }
 }
@@ -420,7 +462,7 @@ function Invoke-AssemblyPhase {
 }
 
 try {
-    Require-Condition ($Mode -cin @('Discover', 'Full')) 'test-driver-unsupported-mode'
+    Require-Condition ($Mode -cin @('Discover', 'DiscoverCoverage', 'Full')) 'test-driver-unsupported-mode'
     Require-Condition $IsWindows 'test-driver-windows-required'
     foreach ($name in @('COR_ENABLE_PROFILING', 'CORECLR_ENABLE_PROFILING')) {
         $value = [Environment]::GetEnvironmentVariable($name)
@@ -451,18 +493,24 @@ try {
         @{ key = 'plugin'; project = 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'; name = 'STranslate.Plugin.Tts.FishAudio.Tests' },
         @{ key = 'testing-tool'; project = 'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj'; name = 'FishAudio.Testing.Tests' }
     )
+    $coverageBuild = $Mode -ceq 'DiscoverCoverage'
     if (-not $NoBuild) {
         $stage = 'build'
+        if ($coverageBuild) {
+            [void](Invoke-OwnedPhase 'restore-dotcover' $dotnet @('tool', 'restore', '--tool-manifest',
+                (Join-Path $root '.config/dotnet-tools.json')) -PhaseTimeoutMilliseconds 120000)
+        }
         foreach ($definition in $definitions) {
             [void](Invoke-OwnedPhase ('build-' + $definition.key) $dotnet @('build', (Join-Path $root $definition.project),
                 '--configuration', 'Release', '--disable-build-servers', '-p:RestoreLockedMode=true',
-                '-p:FishAudioCoverage=false', '-p:UseSharedCompilation=false', '-nodeReuse:false'))
+                ('-p:FishAudioCoverage=' + $coverageBuild.ToString().ToLowerInvariant()), '-p:UseSharedCompilation=false', '-nodeReuse:false'))
         }
     }
     $stage = 'binary-preflight'
-    $toolDll = Join-Path $root 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll'
+    $outputSuffix = $(if ($coverageBuild) { '/bin/coverage/Release/net10.0-windows' } else { '/bin/Release/net10.0-windows' })
+    $toolDll = Join-Path $root ('tools/FishAudio.Testing' + $outputSuffix + '/FishAudio.Testing.dll')
     foreach ($definition in $definitions) {
-        $directory = Join-Path $root ([IO.Path]::GetDirectoryName($definition.project) + '/bin/Release/net10.0-windows')
+        $directory = Join-Path $root ([IO.Path]::GetDirectoryName($definition.project) + $outputSuffix)
         $dll = Join-Path $directory ($definition.name + '.dll')
         foreach ($suffix in @('.dll', '.deps.json', '.runtimeconfig.json')) {
             Require-Condition ([IO.File]::Exists((Join-Path $directory ($definition.name + $suffix)))) 'test-driver-normal-release-output-missing'
@@ -624,3 +672,4 @@ try {
 } finally {
     foreach ($lock in $locks) { $lock.Dispose() }
 }
+exit 0
