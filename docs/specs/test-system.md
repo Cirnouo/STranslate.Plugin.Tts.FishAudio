@@ -24,7 +24,7 @@ The compatibility fixtures retain a supervised legacy child case and direct shar
 
 Status: current Unreleased compatibility implementation, separate from the full hybrid commit gate. The [compatibility record](../testing/compatibility.md) describes the bounded candidate observations, accepted fallback route and measured phase costs. The route uses the pinned NUnit/VSTest stack with dotCover CLI 2026.2.3.1. It does not retain a second daily Microsoft.Testing.Platform execution path.
 
-The public entry is `tools/Test.ps1 -Mode Compatibility -Scenario <name>`, delegated to [TestCompatibility.ps1](../../tools/TestCompatibility.ps1). It accepts a fresh external `-ResultsDirectory` and optional `-RepositoryRoot`. These are implemented interfaces; the current end-to-end public index entry still awaits its own validation. Passed preflight/transport controls and previously admitted sessions do not establish that whole entry.
+The public entry is `tools/Test.ps1 -Mode Compatibility -Scenario <name>`, delegated to [TestCompatibility.ps1](../../tools/TestCompatibility.ps1). It accepts a fresh external `-ResultsDirectory` and optional `-RepositoryRoot`. The public index entry has passed one synchronous leaf through normal execution, isolated collection and admission on its recorded frozen source. The compatibility record retains that exact scope and the earlier failed invocation; it does not establish full-catalog coverage. Passed preflight/transport controls and previously admitted sessions do not establish that whole entry.
 
 | Scenario | Operation | Evidence boundary |
 |---|---|---|
@@ -100,6 +100,8 @@ A pass requires completed successful build/package/legacy execution for `S`, bot
 The installed-hook [acceptance fixture](../../tools/tests/TestHookAcceptance.ps1) uses disposable Git repositories and synthetic build/platform/metadata controls to verify the outer boundary, including command failure, missing terminal evidence and a matching-hash result containing the wrong case. Those controls establish hook and evidence-admission behavior only; product and NUnit execution require their own actual runs.
 
 ## Current CI and later switch points
+
+Pull-request validation binds two distinct identities. The checkout, artifact owner, source manifest and fresh discovery remain bound to `GITHUB_SHA`, the tested synthetic merge commit. The Actions API job head must match the original runner event's PR head. Admission validates the event's target repository and requires the immutable checkout to have exactly two ordered parents matching that event's base and head. Missing or unfamiliar context, different parents or a foreign job head is rejected. Push validation, including a tag-push caller of the reusable workflow, keeps the same-commit API-head check. Cached-attempt witnesses and failed/unfinished-attempt rejection remain unchanged; no current moving PR REST ref supplies historical identity.
 
 PR/main CI requires the complete five-partition legacy validation plus the separate complete NUnit foundation job and independent framework evidence aggregate described in [build and release](build-and-release.md#validation-and-publication). New commits execute both obligations. This stage does not enable affected CI selection, remove existing required checks or alter release publication.
 

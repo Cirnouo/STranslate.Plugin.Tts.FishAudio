@@ -15,7 +15,10 @@ public sealed class FrameworkCiEvidenceTests
 {
     // These fixtures admit CI evidence. They execute the real parser and helper,
     // but their two declared cases do not claim execution of product scenarios.
-    private const string Commit = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string MergeCommit = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string PullRequestHead = "dddddddddddddddddddddddddddddddddddddddd";
+    private const string PullRequestBase = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    private const string ForeignCommit = "ffffffffffffffffffffffffffffffffffffffff";
     private const string Tree = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     private const string Repository = "example/fish-audio";
     private const long RunId = 901;
@@ -28,6 +31,9 @@ public sealed class FrameworkCiEvidenceTests
     private string _bundle = "";
     private JsonObject _manifest = null!;
     private JsonObject _jobs = null!;
+    private JsonObject _event = new();
+    private string _eventName = "push";
+    private string[] _parents = [];
     private int _attempt = 1;
 
     [SetUp]
@@ -168,6 +174,138 @@ public sealed class FrameworkCiEvidenceTests
         Assert.That(Invocations().Count(item => item == "evidence-verify"), Is.EqualTo(2));
     }
 
+    [Test]
+    [Property("FishAudioCaseId", "framework-ci/pr-synthetic-merge-keeps-merge-artifact-owner")]
+    public async Task PullRequestJobHeadCanDifferFromItsAuthenticatedMergeCheckout()
+    {
+        ConfigurePullRequest();
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.Zero, result.Error);
+        Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
+        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify", "evidence-catalog", "evidence-verify" }));
+        var owner = JsonNode.Parse(File.ReadAllText(Path.Combine(_bundle, "ci-owner.json")))!;
+        Assert.That(owner["commit"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
+        Assert.That(owner["head"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
+        Assert.That(_manifest["source"]!["commit"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
+        Assert.That(_manifest["source"]!["sourceCommit"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "framework-ci/pr-cached-merge-keeps-original-artifact-owner")]
+    public async Task PullRequestCachedJobRetainsItsOriginalMergeArtifactOwner()
+    {
+        ConfigurePullRequest();
+        AdvertiseCachedJob();
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.Zero, result.Error);
+        Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
+        Assert.That(Directory.Exists(Bundle(2)), Is.False, "A cached PR job cannot manufacture a later merge artifact owner.");
+        Assert.That(Invocations().Count(item => item == "evidence-verify"), Is.EqualTo(2));
+    }
+
+    [TestCase("job-head-is-merge", "framework-ci-execution-sha", TestName = "framework-ci/pr-job-head-cannot-be-merge-commit")]
+    [TestCase("foreign-job-head", "framework-ci-execution-sha", TestName = "framework-ci/pr-foreign-job-head")]
+    [TestCase("reversed-parents", "framework-ci-pull-request-parents", TestName = "framework-ci/pr-reversed-parents")]
+    [TestCase("wrong-base-parent", "framework-ci-pull-request-parents", TestName = "framework-ci/pr-wrong-base-parent")]
+    [TestCase("wrong-head-parent", "framework-ci-pull-request-parents", TestName = "framework-ci/pr-wrong-head-parent")]
+    [TestCase("missing-parent", "framework-ci-pull-request-parents", TestName = "framework-ci/pr-missing-parent")]
+    [TestCase("extra-parent", "framework-ci-pull-request-parents", TestName = "framework-ci/pr-extra-parent")]
+    [TestCase("owner-is-head", "framework-ci-artifact-owner", TestName = "framework-ci/pr-artifact-owner-cannot-be-head")]
+    [TestCase("manifest-is-head", "framework-ci-session-identity", TestName = "framework-ci/pr-manifest-source-cannot-be-head")]
+    [TestCase("invalid-event-head", "framework-ci-pull-request-context", TestName = "framework-ci/pr-invalid-event-head")]
+    [TestCase("invalid-event-base", "framework-ci-pull-request-context", TestName = "framework-ci/pr-invalid-event-base")]
+    [TestCase("missing-pull-request", "framework-ci-pull-request-context", TestName = "framework-ci/pr-missing-event-pull-request")]
+    [TestCase("foreign-event-repository", "framework-ci-pull-request-context", TestName = "framework-ci/pr-foreign-event-repository")]
+    [TestCase("foreign-base-repository", "framework-ci-pull-request-context", TestName = "framework-ci/pr-foreign-base-repository")]
+    public async Task PullRequestEvidenceCannotRelaxCheckoutOrArtifactIdentity(string fault, string expectedReason)
+    {
+        ConfigurePullRequest();
+        switch (fault)
+        {
+            case "job-head-is-merge":
+                _jobs["jobs"]![0]!["head_sha"] = MergeCommit;
+                break;
+            case "foreign-job-head":
+                _jobs["jobs"]![0]!["head_sha"] = ForeignCommit;
+                break;
+            case "reversed-parents":
+                _parents = [PullRequestHead, PullRequestBase];
+                break;
+            case "wrong-base-parent":
+                _parents = [ForeignCommit, PullRequestHead];
+                break;
+            case "wrong-head-parent":
+                _parents = [PullRequestBase, ForeignCommit];
+                break;
+            case "missing-parent":
+                _parents = [PullRequestBase];
+                break;
+            case "extra-parent":
+                _parents = [PullRequestBase, PullRequestHead, ForeignCommit];
+                break;
+            case "owner-is-head":
+                var ownerPath = Path.Combine(_bundle, "ci-owner.json");
+                var owner = JsonNode.Parse(File.ReadAllText(ownerPath))!;
+                owner["commit"] = PullRequestHead;
+                owner["head"] = PullRequestHead;
+                WriteJson(ownerPath, owner);
+                break;
+            case "manifest-is-head":
+                _manifest["source"]!["commit"] = PullRequestHead;
+                _manifest["source"]!["sourceCommit"] = PullRequestHead;
+                break;
+            case "invalid-event-head":
+                _event["pull_request"]!["head"]!["sha"] = "not-a-commit";
+                break;
+            case "invalid-event-base":
+                _event["pull_request"]!["base"]!["sha"] = "not-a-commit";
+                break;
+            case "missing-pull-request":
+                _event.Remove("pull_request");
+                break;
+            case "foreign-event-repository":
+                _event["repository"]!["full_name"] = "other/fish-audio";
+                break;
+            case "foreign-base-repository":
+                _event["pull_request"]!["base"]!["repo"]!["full_name"] = "other/fish-audio";
+                break;
+            default:
+                throw new InvalidOperationException("framework-ci-fixture-unknown-pr-fault");
+        }
+
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.EqualTo(1), result.Output + result.Error);
+        Assert.That(result.Error, Does.Contain("framework-ci: rejected (" + expectedReason + ";"));
+        Assert.That(result.Output, Does.Not.Contain("verified complete NUnit foundation"));
+        Assert.That(Directory.Exists(Path.Combine(_root, "verification")), Is.False,
+            "Invalid PR identity must fail before fresh discovery or parser admission.");
+    }
+
+    private void ConfigurePullRequest()
+    {
+        _eventName = "pull_request";
+        _event = new JsonObject
+        {
+            ["repository"] = new JsonObject { ["full_name"] = Repository },
+            ["pull_request"] = new JsonObject
+            {
+                ["head"] = new JsonObject { ["sha"] = PullRequestHead },
+                ["base"] = new JsonObject
+                {
+                    ["sha"] = PullRequestBase,
+                    ["repo"] = new JsonObject { ["full_name"] = Repository },
+                },
+            },
+        };
+        _parents = [PullRequestBase, PullRequestHead];
+        _jobs["jobs"]![0]!["head_sha"] = PullRequestHead;
+    }
+
     [TestCase("changed-cached-witness", "framework-ci-unmatched-or-ambiguous-cached-job", TestName = "framework-ci/changed-cached-witness")]
     [TestCase("changed-cached-step", "framework-ci-unmatched-or-ambiguous-cached-job", TestName = "framework-ci/changed-cached-step-timing")]
     [TestCase("foreign-job-head", "framework-ci-execution-sha", TestName = "framework-ci/foreign-job-head")]
@@ -295,7 +433,7 @@ public sealed class FrameworkCiEvidenceTests
         ["platform"] = "VSTest", ["configuration"] = "Release", ["selection"] = "all-discovered", ["baselineClaim"] = false,
         ["source"] = new JsonObject
         {
-            ["snapshot"] = false, ["dirty"] = false, ["tree"] = null, ["commit"] = Commit, ["sourceCommit"] = Commit,
+            ["snapshot"] = false, ["dirty"] = false, ["tree"] = null, ["commit"] = MergeCommit, ["sourceCommit"] = MergeCommit,
             ["fingerprint"] = new string('c', 64), ["fingerprintKind"] = "sha256-source-path-and-bytes-v1",
         },
         ["toolSha256"] = Hash(typeof(BinaryIdentity).Assembly.Location),
@@ -320,7 +458,7 @@ public sealed class FrameworkCiEvidenceTests
     private static JsonObject Job(int attempt) => new()
     {
         ["id"] = 100 + attempt, ["run_id"] = RunId, ["run_attempt"] = attempt, ["name"] = "NUnit foundation",
-        ["head_sha"] = Commit, ["status"] = "completed", ["conclusion"] = "success", ["runner_id"] = 17,
+        ["head_sha"] = MergeCommit, ["status"] = "completed", ["conclusion"] = "success", ["runner_id"] = 17,
         ["runner_name"] = "hosted-fixture-01", ["started_at"] = $"2026-10-20T0{attempt}:01:00Z", ["completed_at"] = $"2026-10-20T0{attempt}:10:00Z",
         ["steps"] = new JsonArray(
             Step("Set up job", 1, attempt, "01:00", "01:10"),
@@ -374,6 +512,14 @@ public sealed class FrameworkCiEvidenceTests
     {
         WriteJson(Path.Combine(_bundle, "manifest.json"), _manifest);
         WriteJson(Path.Combine(_root, "jobs.json"), _jobs);
+        var eventPath = Path.Combine(_root, "event.json");
+        var gitSnapshotPath = Path.Combine(_root, "git-snapshot.json");
+        WriteJson(eventPath, _event);
+        WriteJson(gitSnapshotPath, new JsonObject
+        {
+            ["head"] = MergeCommit, ["tree"] = Tree,
+            ["parents"] = new JsonArray(_parents.Select(parent => (JsonNode?)JsonValue.Create(parent)).ToArray()),
+        });
         var start = new ProcessStartInfo(FindExecutable("pwsh.exe"))
         {
             WorkingDirectory = _root, UseShellExecute = false, CreateNoWindow = true,
@@ -385,11 +531,14 @@ public sealed class FrameworkCiEvidenceTests
             "-Root", Path.Combine(_root, "repository"), "-Helper", Path.Combine(_repositoryRoot, "tools/VerifyFrameworkCi.ps1"),
             "-Artifacts", Path.Combine(_root, "artifacts"), "-Jobs", Path.Combine(_root, "jobs.json"),
             "-Results", Path.Combine(_root, "verification"), "-ActualDotnet", FindExecutable("dotnet.exe"), "-ActualTool", _actualTool,
+            "-GitSnapshot", gitSnapshotPath,
         }) start.ArgumentList.Add(argument);
         foreach (var key in start.Environment.Keys.Where(key => key.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase) ||
                      key.StartsWith("GITHUB_", StringComparison.OrdinalIgnoreCase) || key.StartsWith("FISHAUDIO_", StringComparison.OrdinalIgnoreCase)).ToArray())
             start.Environment.Remove(key);
-        start.Environment["GITHUB_SHA"] = Commit;
+        start.Environment["GITHUB_SHA"] = MergeCommit;
+        start.Environment["GITHUB_EVENT_NAME"] = _eventName;
+        start.Environment["GITHUB_EVENT_PATH"] = eventPath;
         start.Environment["GITHUB_REPOSITORY"] = Repository;
         start.Environment["GITHUB_RUN_ID"] = RunId.ToString(System.Globalization.CultureInfo.InvariantCulture);
         start.Environment["GITHUB_RUN_ATTEMPT"] = _attempt.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -477,11 +626,11 @@ public sealed class FrameworkCiEvidenceTests
     }
 
     private string[] Invocations() => File.ReadAllLines(Path.Combine(_root, "repository/invocations.txt"));
-    private string Bundle(int attempt) => Path.Combine(_root, "artifacts", $"framework-report-{Commit}-{RunId}-{attempt}");
+    private string Bundle(int attempt) => Path.Combine(_root, "artifacts", $"framework-report-{MergeCommit}-{RunId}-{attempt}");
 
     private static void WriteOwner(string bundle, int attempt) => WriteJson(Path.Combine(bundle, "ci-owner.json"), new JsonObject
     {
-        ["schemaVersion"] = 1, ["repository"] = Repository, ["commit"] = Commit, ["head"] = Commit, ["tree"] = Tree,
+        ["schemaVersion"] = 1, ["repository"] = Repository, ["commit"] = MergeCommit, ["head"] = MergeCommit, ["tree"] = Tree,
         ["workflowRunId"] = RunId.ToString(System.Globalization.CultureInfo.InvariantCulture), ["attempt"] = attempt.ToString(System.Globalization.CultureInfo.InvariantCulture),
         ["job"] = "nunit-foundation", ["sdk"] = "10.0.403",
     });
@@ -570,18 +719,25 @@ public sealed class FrameworkCiEvidenceTests
         """;
 
     private const string ProcessBoundary = """
-        param([string]$Root, [string]$Helper, [string]$Artifacts, [string]$Jobs, [string]$Results, [string]$ActualDotnet, [string]$ActualTool)
+        param([string]$Root, [string]$Helper, [string]$Artifacts, [string]$Jobs, [string]$Results, [string]$ActualDotnet, [string]$ActualTool, [string]$GitSnapshot)
         Set-StrictMode -Version Latest
         $ErrorActionPreference = 'Stop'
         $PSNativeCommandUseErrorActionPreference = $false
         $global:fixtureRoot = $Root
         $global:fixtureDotnet = $ActualDotnet
         $global:fixtureTool = $ActualTool
+        $global:fixtureGit = [IO.File]::ReadAllText($GitSnapshot) | ConvertFrom-Json
         function global:git {
-            if ($args.Count -lt 4 -or $args[0] -cne '-C' -or $args[1] -cne $global:fixtureRoot -or $args[2] -cne 'rev-parse') { throw 'fixture-unexpected-git' }
+            if ($args.Count -lt 4 -or $args[0] -cne '-C' -or $args[1] -cne $global:fixtureRoot) { throw 'fixture-unexpected-git' }
             $global:LASTEXITCODE = 0
-            if ($args.Count -eq 5 -and $args[3] -ceq '--verify' -and $args[4] -ceq 'HEAD') { return 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
-            if ($args.Count -eq 4 -and $args[3] -ceq 'HEAD^{tree}') { return 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' }
+            if ($args[2] -ceq 'rev-parse') {
+                if ($args.Count -eq 5 -and $args[3] -ceq '--verify' -and $args[4] -ceq 'HEAD') { return $global:fixtureGit.head }
+                if ($args.Count -eq 4 -and $args[3] -ceq 'HEAD^{tree}') { return $global:fixtureGit.tree }
+            }
+            if ($args.Count -eq 7 -and $args[2] -ceq 'rev-list' -and $args[3] -ceq '--parents' -and
+                $args[4] -ceq '-n' -and $args[5] -ceq '1' -and $args[6] -ceq 'HEAD') {
+                return (@($global:fixtureGit.head) + @($global:fixtureGit.parents)) -join ' '
+            }
             throw 'fixture-unexpected-git'
         }
         function global:dotnet {

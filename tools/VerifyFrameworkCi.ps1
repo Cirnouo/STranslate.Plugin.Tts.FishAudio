@@ -74,9 +74,38 @@ function Assert-FrameworkCaseSet($Actual, $Expected) {
     Require-Framework ($seen.Count -eq @($Expected).Count -and $seen.SetEquals([string[]]@($Expected))) 'framework-ci-case-set'
 }
 
+function Read-FrameworkExecutionHead([string]$CheckoutCommit) {
+    if ($env:GITHUB_EVENT_NAME -cne 'pull_request') { return $CheckoutCommit }
+    $script:failureCode = 'framework-ci-pull-request-context'
+    Require-Framework (-not [string]::IsNullOrWhiteSpace($env:GITHUB_EVENT_PATH) -and
+        [IO.Path]::IsPathFullyQualified($env:GITHUB_EVENT_PATH) -and
+        [IO.File]::Exists($env:GITHUB_EVENT_PATH)) 'framework-ci-pull-request-context'
+    try { $pullRequestEvent = Read-FrameworkJson $env:GITHUB_EVENT_PATH }
+    catch { $script:failureCode = 'framework-ci-pull-request-context'; throw }
+    Require-Framework ($pullRequestEvent.repository.full_name -ceq $env:GITHUB_REPOSITORY -and
+        $pullRequestEvent.pull_request.base.repo.full_name -ceq $env:GITHUB_REPOSITORY -and
+        $pullRequestEvent.pull_request.head.sha -is [string] -and
+        $pullRequestEvent.pull_request.head.sha -cmatch '^[a-f0-9]{40}([a-f0-9]{24})?$' -and
+        $pullRequestEvent.pull_request.base.sha -is [string] -and
+        $pullRequestEvent.pull_request.base.sha -cmatch '^[a-f0-9]{40}([a-f0-9]{24})?$') 'framework-ci-pull-request-context'
+
+    # The runner event describes this immutable run, including reruns. A moving
+    # PR REST head or an unchecked head-or-merge comparison is not a substitute.
+    $script:failureCode = 'framework-ci-pull-request-parents'
+    $parentLines = @(& git -C $root rev-list --parents -n 1 HEAD)
+    Require-Framework ($LASTEXITCODE -eq 0 -and $parentLines.Count -eq 1 -and
+        $parentLines[0] -is [string]) 'framework-ci-pull-request-parents'
+    $parents = $parentLines[0].Split([char[]]" `t", [StringSplitOptions]::RemoveEmptyEntries)
+    Require-Framework ($parents.Count -eq 3 -and $parents[0] -ceq $CheckoutCommit -and
+        $parents[1] -ceq $pullRequestEvent.pull_request.base.sha -and
+        $parents[2] -ceq $pullRequestEvent.pull_request.head.sha) 'framework-ci-pull-request-parents'
+    $script:failureCode = 'framework-ci-operation-failed'
+    return $pullRequestEvent.pull_request.head.sha
+}
+
 function Read-FrameworkExecution($Job) {
     Require-Framework ($Job.head_sha -is [string] -and $Job.head_sha -cmatch '^[A-Fa-f0-9]{40}([A-Fa-f0-9]{24})?$' -and
-        $Job.head_sha.ToLowerInvariant() -ceq $commit) 'framework-ci-execution-sha'
+        $Job.head_sha.ToLowerInvariant() -ceq $executionHead) 'framework-ci-execution-sha'
     $started = Read-FrameworkUtc $Job.started_at
     $completed = Read-FrameworkUtc $Job.completed_at
     $runnerId = Read-FrameworkNumber $Job.runner_id
@@ -133,6 +162,7 @@ try {
         [int]::TryParse($env:GITHUB_RUN_ATTEMPT, [ref]$currentAttempt) -and $currentAttempt -gt 0) 'framework-ci-context'
     $head = (& git -C $root rev-parse --verify HEAD).Trim()
     Require-Framework ($LASTEXITCODE -eq 0 -and $head -ceq $commit) 'framework-ci-checkout'
+    $executionHead = Read-FrameworkExecutionHead $commit
     $tree = (& git -C $root rev-parse 'HEAD^{tree}').Trim()
     Require-Framework ($LASTEXITCODE -eq 0 -and $tree -cmatch '^[a-f0-9]{40}([a-f0-9]{24})?$') 'framework-ci-checkout-tree'
     $jobs = Read-FrameworkJson $JobAttemptsPath
@@ -310,6 +340,7 @@ try {
             Require-Framework ([IO.File]::ReadAllText($marker) -ceq 'constructed') 'framework-ci-execution-marker'
         }
     }
+    Write-Output ('framework-ci: verified checkout ' + $commit + ' with API job head ' + $executionHead + '.')
     Write-Output ('framework-ci: verified complete NUnit foundation attempt ' + $latest + ' (' + $globalIds.Count + ' cases).')
 } catch {
     [Console]::Error.WriteLine('framework-ci: rejected (' + $failureCode + '; ' + $_.Exception.GetType().Name + ').')
