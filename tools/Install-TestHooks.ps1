@@ -75,7 +75,7 @@ if ($Install) {
             [IO.File]::WriteAllText((Join-Path $hooks $file.Name), $entry, $encoding)
         }
     }
-    $manifest = @{ schemaVersion = 1; repositoryRoot = $root; previousHooks = $previous; digests = $digests;
+    $manifest = @{ schemaVersion = 1; gateProtocolVersion = 2; repositoryRoot = $root; previousHooks = $previous; digests = $digests;
         commonGitDirectory = [IO.Path]::GetFullPath((Invoke-HookGit @('rev-parse', '--path-format=absolute', '--git-common-dir'))) }
     [IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json -Depth 8), $encoding)
     [void](Invoke-HookGit @('config', '--worktree', 'core.hooksPath', $hooks))
@@ -83,7 +83,8 @@ if ($Install) {
 
 if (-not [IO.File]::Exists($manifestPath)) { throw 'hook-not-installed' }
 $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
-if ($manifest.schemaVersion -ne 1 -or -not $root.Equals($manifest.repositoryRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'hook-installation-mismatch' }
+if ($manifest.schemaVersion -ne 1 -or $manifest.gateProtocolVersion -ne 2 -or
+    -not $root.Equals($manifest.repositoryRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'hook-installation-mismatch' }
 $effective = [IO.Path]::GetFullPath((Invoke-HookGit @('rev-parse', '--path-format=absolute', '--git-path', 'hooks')))
 if (-not $effective.Equals($hooks, [StringComparison]::OrdinalIgnoreCase)) { throw 'hook-path-not-effective' }
 foreach ($name in $sources.Keys) {

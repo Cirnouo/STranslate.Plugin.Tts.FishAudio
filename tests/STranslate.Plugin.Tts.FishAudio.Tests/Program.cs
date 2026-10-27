@@ -7,11 +7,16 @@ try
         return RegressionSnapshotVerifier.Run(args);
     if (RegressionChildHost.IsChildInvocation(args))
         return await RegressionChildHost.RunAsync(args, physicalProtocolOutput);
+    if (ChildCoverageVerifier.IsInvocation(args))
+        return ChildCoverageVerifier.Run(args);
     if (RegressionCiVerifier.IsInvocation(args))
         return await RegressionCiVerifier.RunAsync(args);
+    // VSTest loads this assembly without executing Main. The explicit prefix
+    // keeps transitional legacy invocations unambiguous for build and CI.
+    var legacyArguments = args.Length != 0 && args[0] == "--legacy" ? args[1..] : args;
     using var processHost = new RegressionProcessHost(progressOutput: physicalProtocolOutput);
-    var legacy = await RegressionProcessHost.TryRunLegacyAsync(args, processHost);
-    return legacy ?? await RegressionRunner.RunAsync(args, RegressionCatalog.Create(), processHost.ExecuteAsync, RegressionCiIdentity.Capture());
+    var legacy = await RegressionProcessHost.TryRunLegacyAsync(legacyArguments, processHost);
+    return legacy ?? await RegressionRunner.RunAsync(legacyArguments, RegressionCatalog.Create(), processHost.ExecuteAsync, RegressionCiIdentity.Capture());
 }
 catch (Exception error)
 {

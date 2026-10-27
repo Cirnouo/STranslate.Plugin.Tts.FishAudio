@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Text;
 using static TestAssertions;
 
 internal static class BuildScriptSuite
@@ -46,7 +47,8 @@ internal static class BuildScriptSuite
         foreach (var argument in new[] { "--group settings.storage", "--case settings.storage/round-trip",
                      "--partition core", "--results selected results.json", "--affected", "--base origin/main" })
             AssertEqual(true, invocation.Contains(argument, StringComparison.Ordinal), "Build forwards the requested regression selection");
-        AssertEqual(true, invocation.Contains(" -- ", StringComparison.Ordinal), "Runner arguments follow the dotnet argument separator");
+        AssertEqual(true, invocation.Contains(" -- --legacy --group ", StringComparison.Ordinal),
+            "Full legacy validation explicitly selects the legacy entry before forwarding selectors");
     }
 
     internal static void TestSelectionWithoutTestIsRejected()
@@ -213,10 +215,83 @@ internal static class BuildScriptSuite
             "-Clean should retain the copied root package when later regression tests fail");
     }
 
+    // NUnit discovers these three orchestration cases independently. They do not
+    // add entries to, or replace assertions in, the legacy repository catalog.
+    internal static Task FullReleaseRunsLegacyAndFrameworkOnceAsync() =>
+        ExerciseFrameworkBuildAsync(legacyOnly: false, failFramework: false);
+
+    internal static Task FrameworkFailureKeepsExitCodePackageAndCleanupAsync() =>
+        ExerciseFrameworkBuildAsync(legacyOnly: false, failFramework: true);
+
+    internal static Task LegacyOnlyCoordinatorSkipsFrameworkAsync() =>
+        ExerciseFrameworkBuildAsync(legacyOnly: true, failFramework: false);
+
+    private static async Task ExerciseFrameworkBuildAsync(bool legacyOnly, bool failFramework)
+    {
+        var clock = Stopwatch.StartNew();
+        BuildScriptTestRepository? repository = null;
+        Exception? primary = null;
+        try
+        {
+            repository = BuildScriptTestRepository.Create(frameworkFixture: true);
+            repository.SeedArtifactDirectories();
+            var arguments = new List<string> { "-Release", "-Clean", "-Test" };
+            if (legacyOnly) arguments.Add("-LegacyOnly");
+            var result = await repository.RunFrameworkBuildAsync(clock, failFramework, arguments.ToArray());
+            AssertEqual(failFramework ? 31 : 0, result.ExitCode, "Combined build preserves the framework outcome");
+            var legacy = repository.ReadDotnetInvocations().Where(line => line.StartsWith("run ", StringComparison.Ordinal)).ToArray();
+            AssertEqual(1, legacy.Length, "Combined build executes the legacy runner exactly once");
+            AssertEqual(true, legacy[0].Contains("-c Release -- --legacy|", StringComparison.Ordinal),
+                "The unfiltered Release invocation uses the explicit legacy entry without selectors");
+            var framework = repository.ReadFrameworkInvocations();
+            AssertEqual(legacyOnly ? 0 : 1, framework.Length, "The framework driver runs exactly once unless the outer coordinator owns it");
+            if (!legacyOnly)
+            {
+                var fields = framework[0].Split('|');
+                AssertEqual(4, fields.Length, "The framework process records its invocation and actual host");
+                AssertEqual("Full", fields[0], "The combined build requests both complete framework catalogs");
+                AssertEqual("Core", fields[1], "Windows PowerShell launches the framework phase in PowerShell Core");
+                AssertEqual(true, int.TryParse(fields[2], out var major) && major >= 7, "The framework phase uses PowerShell 7 or later");
+                AssertEqual("True", fields[3], "The inspected package exists before framework execution");
+                var inspected = result.Output.IndexOf("All required files present.", StringComparison.Ordinal);
+                var invoked = result.Output.IndexOf("framework-fixture: invoked", StringComparison.Ordinal);
+                AssertEqual(true, inspected >= 0 && invoked > inspected, "Package inspection completes before framework execution");
+            }
+            AssertEqual(true, repository.RootPackageContains("plugin.json"), "The current inspected package remains available after the framework outcome");
+            AssertEqual(true, ArtifactDirectories.All(path => !repository.ArtifactDirectoryExists(path)), "Deferred cleanup completes after the framework outcome");
+            foreach (var project in new[] { "tools/FishAudio.Testing", "tests/FishAudio.Testing.Tests" })
+                foreach (var output in new[] { "bin", "obj", ".artifacts" })
+                    AssertEqual(false, repository.ArtifactDirectoryExists(Path.Combine(project, output)), "Deferred cleanup also removes framework build artifacts");
+            _ = RemainingFixtureTime(clock);
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            repository?.RetainUnexpectedFailure();
+            throw;
+        }
+        finally
+        {
+            try { repository?.Dispose(); }
+            catch (Exception cleanup) when (primary is not null)
+            {
+                Console.Error.WriteLine("build-compatibility: cleanup failed (" + cleanup.GetType().Name + ").");
+            }
+        }
+    }
+
+    private static TimeSpan RemainingFixtureTime(Stopwatch clock)
+    {
+        var remaining = TimeSpan.FromSeconds(120) - clock.Elapsed;
+        return remaining > TimeSpan.Zero ? remaining : throw new TimeoutException("build-compatibility-fixture-root-deadline");
+    }
+
     private sealed class BuildScriptTestRepository : IDisposable
     {
         private readonly string _fakeDotnetDirectory;
         private readonly string _invocationLogPath;
+        private readonly string _frameworkLogPath;
+        private bool _retainUnexpectedFailure;
         private bool _omitAudioDependency;
         private bool _omitOcticonsNotice;
         private bool _omitFlagIconsNotice;
@@ -228,13 +303,14 @@ internal static class BuildScriptSuite
             RootPath = rootPath;
             _fakeDotnetDirectory = fakeDotnetDirectory;
             _invocationLogPath = invocationLogPath;
+            _frameworkLogPath = Path.Combine(rootPath, "framework-invocations.log");
         }
 
         internal string RootPath { get; }
 
-        internal static BuildScriptTestRepository Create()
+        internal static BuildScriptTestRepository Create(bool frameworkFixture = false)
         {
-            var rootPath = CreateTempDirectory();
+            var rootPath = frameworkFixture ? CreateFrameworkFixtureDirectory() : CreateTempDirectory();
             var projectDirectory = Path.Combine(rootPath, ProjectName);
             var testProjectDirectory = Path.Combine(rootPath, "tests", TestProjectName);
             var fakeDotnetDirectory = Path.Combine(rootPath, "fake-dotnet");
@@ -243,6 +319,7 @@ internal static class BuildScriptSuite
             Directory.CreateDirectory(projectDirectory);
             Directory.CreateDirectory(testProjectDirectory);
             Directory.CreateDirectory(fakeDotnetDirectory);
+            Directory.CreateDirectory(Path.Combine(rootPath, "tools"));
             File.Copy(FindRepoFile("build.ps1"), Path.Combine(rootPath, "build.ps1"));
             File.WriteAllText(Path.Combine(projectDirectory, $"{ProjectName}.csproj"), "<Project />");
             File.WriteAllText(Path.Combine(testProjectDirectory, $"{TestProjectName}.csproj"), "<Project />");
@@ -362,7 +439,50 @@ internal static class BuildScriptSuite
                 }
                 """);
 
+            File.WriteAllText(Path.Combine(rootPath, "tools", "Test.ps1"),
+                """
+                param([string]$Mode)
+                Set-StrictMode -Version Latest
+                $ErrorActionPreference = 'Stop'
+                $package = Join-Path $env:FISH_AUDIO_BUILD_TEST_REPO 'STranslate.Plugin.Tts.FishAudio.spkg'
+                $fields = @($Mode, $PSVersionTable.PSEdition, [string]$PSVersionTable.PSVersion.Major, [string][IO.File]::Exists($package))
+                [IO.File]::AppendAllText($env:FISH_AUDIO_BUILD_TEST_FRAMEWORK_LOG, (($fields -join '|') + "`n"), [Text.UTF8Encoding]::new($false))
+                foreach ($project in @('tools/FishAudio.Testing', 'tests/FishAudio.Testing.Tests')) {
+                    foreach ($output in @('bin', 'obj', '.artifacts')) {
+                        $directory = Join-Path $env:FISH_AUDIO_BUILD_TEST_REPO ($project + '/' + $output)
+                        [IO.Directory]::CreateDirectory($directory) | Out-Null
+                        [IO.File]::WriteAllText((Join-Path $directory 'framework-produced.txt'), 'produced')
+                    }
+                }
+                Write-Output 'framework-fixture: invoked'
+                if ($env:FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK -eq '1') { exit 31 }
+                exit 0
+                """, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+
             return new BuildScriptTestRepository(rootPath, fakeDotnetDirectory, invocationLogPath);
+        }
+
+        private static string CreateFrameworkFixtureDirectory()
+        {
+            var configured = Environment.GetEnvironmentVariable("FISHAUDIO_COMPAT_EVIDENCE_ROOT");
+            if (string.IsNullOrEmpty(configured)) return CreateTempDirectory();
+            if (!Path.IsPathFullyQualified(configured) || !Directory.Exists(configured))
+                throw new InvalidOperationException("build-compatibility-evidence-root-invalid");
+            var parent = Path.TrimEndingDirectorySeparator(Path.GetFullPath(configured));
+            for (var directory = new DirectoryInfo(parent); directory is not null; directory = directory.Parent)
+                if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+                    throw new InvalidOperationException("build-compatibility-evidence-root-reparse");
+            // Windows PowerShell 5.1 changes the argv of a .cmd executable
+            // whose path exceeds MAX_PATH. Keep this fake-tool workspace in
+            // the same short temp layout used by the legacy build fixtures;
+            // the configured results directory may be much deeper.
+            var name = "fa-build-" + Guid.NewGuid().ToString("N");
+            var path = Path.Combine(Path.GetTempPath(), name);
+            if (File.Exists(path) || Directory.Exists(path)) throw new InvalidOperationException("build-compatibility-evidence-root-exists");
+            Directory.CreateDirectory(path);
+            using var record = new FileStream(Path.Combine(parent, name + ".json"), FileMode.CreateNew, FileAccess.Write);
+            System.Text.Json.JsonSerializer.Serialize(record, new { fixtureRoot = path });
+            return path;
         }
 
         internal void SeedArtifactDirectories()
@@ -422,7 +542,7 @@ internal static class BuildScriptSuite
             return RunBuild("-Release", "-Clean");
         }
 
-        private (int ExitCode, string Output) RunBuildCore(bool failTests, params string[] arguments)
+        private ProcessStartInfo CreateBuildStartInfo(bool failTests, string[] arguments)
         {
             var startInfo = new ProcessStartInfo
             {
@@ -449,6 +569,14 @@ internal static class BuildScriptSuite
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_FLAGS"] = _omitFlagIconsNotice ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_AUDIO"] = _omitAudioDependency ? "1" : "0";
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_OMIT_STREAMING"] = _omittedStreamingDependency;
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_FRAMEWORK_LOG"] = _frameworkLogPath;
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK"] = "0";
+            return startInfo;
+        }
+
+        private (int ExitCode, string Output) RunBuildCore(bool failTests, params string[] arguments)
+        {
+            var startInfo = CreateBuildStartInfo(failTests, arguments);
 
             using var process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Failed to start PowerShell build-script test process.");
@@ -456,6 +584,78 @@ internal static class BuildScriptSuite
             var standardError = process.StandardError.ReadToEnd();
             process.WaitForExit();
             return (process.ExitCode, $"{standardOutput}{Environment.NewLine}{standardError}");
+        }
+
+        internal async Task<(int ExitCode, string Output)> RunFrameworkBuildAsync(Stopwatch clock, bool failFramework, params string[] arguments)
+        {
+            var startInfo = CreateBuildStartInfo(failTests: false, arguments);
+            startInfo.CreateNoWindow = true;
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK"] = failFramework ? "1" : "0";
+            _ = RemainingFixtureTime(clock);
+            using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("build-compatibility-process-start");
+            var stdout = process.StandardOutput.ReadToEndAsync();
+            var stderr = process.StandardError.ReadToEndAsync();
+            var completion = Task.WhenAll(process.WaitForExitAsync(), stdout, stderr);
+            try
+            {
+                var warning = TimeSpan.FromSeconds(20) - clock.Elapsed;
+                if (warning <= TimeSpan.Zero || await Task.WhenAny(completion, Task.Delay(warning)) != completion)
+                    Console.Error.WriteLine("build-compatibility: same fixture process still running after twenty seconds.");
+                await completion.WaitAsync(RemainingFixtureTime(clock));
+                CaptureFrameworkOutput(stdout, stderr);
+                _ = RemainingFixtureTime(clock);
+                return (process.ExitCode, stdout.Result + Environment.NewLine + stderr.Result);
+            }
+            catch
+            {
+                var drain = Stopwatch.StartNew();
+                try
+                {
+                    if (!process.HasExited) process.Kill(entireProcessTree: true);
+                    await process.WaitForExitAsync().WaitAsync(RemainingDrainTime(drain));
+                    await Task.WhenAll(stdout, stderr).WaitAsync(RemainingDrainTime(drain));
+                    CaptureFrameworkOutput(stdout, stderr);
+                    _ = RemainingDrainTime(drain);
+                }
+                catch (Exception cleanup)
+                {
+                    Console.Error.WriteLine("build-compatibility: bounded process cleanup failed (" + cleanup.GetType().Name + ").");
+                }
+                throw;
+            }
+        }
+
+        private void CaptureFrameworkOutput(Task<string> stdout, Task<string> stderr)
+        {
+            foreach (var item in new[] { ("build.stdout.log", stdout), ("build.stderr.log", stderr) })
+            {
+                var path = Path.Combine(RootPath, item.Item1);
+                if (File.Exists(path) || !item.Item2.IsCompletedSuccessfully) continue;
+                using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+                output.Write(Encoding.UTF8.GetBytes(item.Item2.Result));
+            }
+        }
+
+        private static TimeSpan RemainingDrainTime(Stopwatch clock)
+        {
+            var remaining = TimeSpan.FromSeconds(10) - clock.Elapsed;
+            return remaining > TimeSpan.Zero ? remaining : throw new TimeoutException("build-compatibility-fixture-drain-deadline");
+        }
+
+        internal string[] ReadFrameworkInvocations() => File.Exists(_frameworkLogPath) ? File.ReadAllLines(_frameworkLogPath) : [];
+
+        internal void RetainUnexpectedFailure()
+        {
+            _retainUnexpectedFailure = true;
+            try { Console.Error.WriteLine("build-compatibility: unexpected failure evidence retained as " + Path.GetFileName(RootPath) + "."); }
+            catch { /* A diagnostic failure cannot replace the original fixture failure. */ }
+            try
+            {
+                var configured = Environment.GetEnvironmentVariable("FISHAUDIO_COMPAT_EVIDENCE_ROOT");
+                if (!string.IsNullOrEmpty(configured) && Path.IsPathFullyQualified(configured) && Directory.Exists(configured))
+                    ZipFile.CreateFromDirectory(RootPath, Path.Combine(configured, Path.GetFileName(RootPath) + ".zip"));
+            }
+            catch { /* Preserve both the primary failure and the original workspace. */ }
         }
 
         internal bool FirstDotnetInvocationSawNoSeededArtifacts()
@@ -495,6 +695,7 @@ internal static class BuildScriptSuite
 
         public void Dispose()
         {
+            if (_retainUnexpectedFailure) return;
             if (Directory.Exists(RootPath))
                 Directory.Delete(RootPath, recursive: true);
         }

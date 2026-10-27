@@ -81,7 +81,7 @@ internal static class NativeKeyboardStateSuite
         catch (Exception error) { return error; }
     }
 
-    private static void FailureContextIsBoundedAndPrivate()
+    internal static void FailureContextIsBoundedAndPrivate()
     {
         var success = new FakeApi();
         var successOutput = CaptureError(() => NativeKeyboardStateFixture.Run(success, () => { }));
@@ -156,7 +156,7 @@ internal static class NativeKeyboardStateSuite
         Console.WriteLine("Native keyboard failure-context privacy and strict-boundary regressions passed.");
     }
 
-    private static void PostActionChecksOnlyOwnedBitsAndRestoresEverything()
+    internal static void PostActionChecksOnlyOwnedBitsAndRestoresEverything()
     {
         // The same unrelated key remains strict during preparation/restoration,
         // but does not belong to the native Space postcondition.
@@ -237,7 +237,7 @@ internal static class NativeKeyboardStateSuite
         Console.WriteLine("Native keyboard owned-Down-bit postcondition and full-restoration regressions passed.");
     }
 
-    private static void CleanupMetadataCannotReplacePrimaryFailure()
+    internal static void CleanupMetadataCannotReplacePrimaryFailure()
     {
         foreach (var throwingGetter in new[] { false, true })
         {

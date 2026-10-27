@@ -28,7 +28,11 @@ internal static class WorkflowTests
         SelfTest.Equal(true, gate[upload..].Contains("uses: actions/upload-artifact@", StringComparison.Ordinal));
         SelfTest.Equal(true, Position(gate, "Require every validation prerequisite to succeed") < Position(gate, "Checkout exact validation commit"));
         SelfTest.Equal(true, Position(gate, "--verify-reports") < Position(gate, "run: .\\build.ps1 -Release"));
-        SelfTest.Equal(true, gate.Contains("needs: [supply-chain-security, commit-messages, regression]", StringComparison.Ordinal));
+        SelfTest.Equal(true, Position(gate, "VerifyFrameworkCi.ps1") < Position(gate, "run: .\\build.ps1 -Release"));
+        SelfTest.Equal(true, gate.Contains("needs: [supply-chain-security, commit-messages, regression, nunit-foundation]", StringComparison.Ordinal));
+        SelfTest.Equal(true, gate.Contains("FRAMEWORK_RESULT: ${{ needs.nunit-foundation.result }}", StringComparison.Ordinal));
+        SelfTest.Equal(true, validation.Contains(".\\tools\\Test.ps1 -Mode Full -ResultsDirectory", StringComparison.Ordinal));
+        SelfTest.Equal(true, validation.Contains("framework-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}", StringComparison.Ordinal));
         SelfTest.Equal(true, gate.Contains("actions: read", StringComparison.Ordinal));
         SelfTest.Equal(true, gate.Contains("github-token: ${{ github.token }}", StringComparison.Ordinal) &&
             gate.Contains("run-id: ${{ github.run_id }}", StringComparison.Ordinal) && gate.Contains("merge-multiple: false", StringComparison.Ordinal));
