@@ -5,6 +5,9 @@ internal static class RunnerContractSuite
 {
     internal static async Task RunAsync()
     {
+        RunStage("snapshot-input-boundary", SnapshotContextSuite.Run);
+        RunStage("snapshot-full-catalog-evidence", SnapshotContextSuite.VerifierRequiresCompleteCatalog);
+        await RunStageAsync("safe-failure-evidence", RegressionFailureEvidenceSuite.RunAsync);
         await RunStageAsync("source-checkout-process-budget", GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync);
         await RunStageAsync("source-checkout-cleanup", SourceCheckoutOwnerPreservesFailuresAndOneRootAsync);
         await RunStageAsync("native-owner-aliases", NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync);
@@ -16,6 +19,8 @@ internal static class RunnerContractSuite
         await RunStageAsync("metadata-list", ListingNeverExecutesAsync);
         RunStage("clean-source-identity", CleanSourceIdentityConsistencyDoesNotDependOnCallerState);
         await RunStageAsync("durable-replay", FailureIsDurableAndReplayDoesNotRewriteItAsync);
+        await RunStageAsync("fixture-expired-entry", ExpiredFixtureEntriesDoNotPreventDeletionAsync);
+        await RunStageAsync("fixture-cleanup-priority", FixtureCleanupRetainsItsPrimaryFailureAsync);
         await RunStageAsync("incremental-results", IncrementalResultsPrecedeDelegatesAsync);
         RunStage("shared-impact", ImpactSelectionKeepsSharedAndUnknownDependenciesConservative);
         RunStage("leaf-impact", LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion);
@@ -303,9 +308,8 @@ internal static class RunnerContractSuite
         Require(calls.Count == 3, "A source mismatch cannot silently reuse a prior success.");
     }
 
-    private static async Task IncrementalResultsPrecedeDelegatesAsync()
+    private static Task IncrementalResultsPrecedeDelegatesAsync() => RunFixtureAsync(async fixture =>
     {
-        using var fixture = new RunnerFixture();
         var remainingCalled = false;
         RegressionCase[] registry =
         [
@@ -326,6 +330,90 @@ internal static class RunnerContractSuite
         var recovered = new List<string>();
         var replay = registry.Select(item => item with { Run = () => { recovered.Add(item.Id); return Task.CompletedTask; } }).ToArray();
         Require(await fixture.RunAsync(["--rerun-failed", fixture.ReportPath, "--results", Path.Combine(fixture.DirectoryPath, "timeout-replay.json")], replay) == 0 && recovered.Count == 2, "Timeout recovery includes the original timed-out and not-run IDs.");
+    });
+
+    private static async Task ExpiredFixtureEntriesDoNotPreventDeletionAsync()
+    {
+        var directory = "";
+        await RunFixtureAsync(fixture =>
+        {
+            directory = fixture.DirectoryPath;
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, "expired.txt"), "owned");
+            var delivered = false;
+            ResetFixtureFileAttributes(ExpiredEntries());
+            Require(delivered, "The real owned entry expired before attribute reset consumed its enumerated path.");
+            var survivor = Path.Combine(directory, "survivor.txt");
+            File.WriteAllText(survivor, "owned");
+            File.SetAttributes(survivor, FileAttributes.ReadOnly);
+            return Task.CompletedTask;
+
+            IEnumerable<string> ExpiredEntries()
+            {
+                foreach (var entry in Directory.EnumerateFiles(directory))
+                {
+                    File.Delete(entry);
+                    delivered = true;
+                    yield return entry;
+                }
+            }
+        });
+        Require(!Directory.Exists(directory), "Actual fixture disposal still deletes the owned directory and remaining read-only file.");
+    }
+
+    private static async Task FixtureCleanupRetainsItsPrimaryFailureAsync()
+    {
+        foreach (var bodyFails in new[] { true, false })
+        {
+            FileStream? held = null;
+            string? directory = null;
+            await RegressionFixtureOwner.RunAsync(async () =>
+            {
+                var original = new RunnerOwnedException("controlled-primary");
+                Exception? caught = null;
+                var calls = 0;
+                try
+                {
+                    await RunFixtureAsync(fixture =>
+                    {
+                        calls++;
+                        directory = fixture.DirectoryPath;
+                        Directory.CreateDirectory(directory);
+                        var file = Path.Combine(directory, "held.txt");
+                        File.WriteAllText(file, "owned");
+                        held = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                        return bodyFails ? Task.FromException(original) : Task.CompletedTask;
+                    });
+                }
+                catch (Exception error) { caught = error; }
+                Require(calls == 1 && caught is IOException, "A real Windows handle without share-delete makes actual fixture disposal fail without rerunning the body.");
+                if (bodyFails)
+                {
+                    Require(ReferenceEquals(original, caught), "Cleanup failure preserves the exact original body exception.");
+                    Require(original.Data[RegressionFixtureOwner.CleanupTypesKey] is List<string> types &&
+                        types.SequenceEqual([typeof(IOException).FullName!]), "Only the safe secondary cleanup exception type is retained.");
+                }
+                else Require(!ReferenceEquals(original, caught), "Cleanup failure remains a failure when the body succeeded.");
+            },
+            () => { held?.Dispose(); return Task.CompletedTask; },
+            () => { if (directory is not null) Directory.Delete(directory, recursive: true); return Task.CompletedTask; });
+        }
+    }
+
+    private static Task RunFixtureAsync(Func<RunnerFixture, Task> work)
+    {
+        var fixture = new RunnerFixture();
+        return RegressionFixtureOwner.RunAsync(() => work(fixture),
+            () => { fixture.Dispose(); return Task.CompletedTask; });
+    }
+
+    private static void ResetFixtureFileAttributes(IEnumerable<string> paths)
+    {
+        foreach (var file in paths)
+        {
+            try { File.SetAttributes(file, FileAttributes.Normal); }
+            catch (FileNotFoundException) { /* An enumerated owned file can expire before attribute reset. */ }
+        }
     }
 
     private static void ImpactSelectionKeepsSharedAndUnknownDependenciesConservative()
@@ -659,8 +747,7 @@ internal static class RunnerContractSuite
         {
             if (!System.IO.Directory.Exists(DirectoryPath)) return;
             // Git marks its object files read-only on Windows; these are owned fixture files.
-            foreach (var file in System.IO.Directory.EnumerateFiles(DirectoryPath, "*", SearchOption.AllDirectories))
-                File.SetAttributes(file, FileAttributes.Normal);
+            ResetFixtureFileAttributes(System.IO.Directory.EnumerateFiles(DirectoryPath, "*", SearchOption.AllDirectories));
             System.IO.Directory.Delete(DirectoryPath, recursive: true);
         }
     }

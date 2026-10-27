@@ -63,8 +63,9 @@ function Copy-RegressionEvidence {
     foreach ($file in [IO.Directory]::GetFiles($source, "$runId.*.child.json*")) {
         $name = [IO.Path]::GetFileName($file)
         if ($name.EndsWith('.request.json', [StringComparison]::Ordinal) -or $name.EndsWith('.tmp', [StringComparison]::Ordinal)) { continue }
-        if ($name -cmatch "^($runId\.[a-f0-9]{32}\.child\.json)(?:\.snapshot-[0-9]{6}\.json)?$") {
+        if ($name -cmatch "^($runId\.[a-f0-9]{32}\.child\.json)(?:\.(?:snapshot|failure)-[0-9]{6}\.json)?$") {
             $children.Add([IO.Path]::Combine($source, $Matches[1])) | Out-Null
+            if ($name -cmatch '\.failure-[0-9]{6}\.json$') { Copy-OwnedFile $file }
         } else { throw 'ci-evidence-invalid-child-name' }
     }
     foreach ($child in $children) {

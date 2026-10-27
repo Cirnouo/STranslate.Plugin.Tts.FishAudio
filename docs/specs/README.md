@@ -10,6 +10,7 @@ These specifications describe current Unreleased code based on v1.1.2, SDK 1.0.1
 - [Incremental decoding and output](streaming-playback.md)
 - [Voice browsing, preview and cover cache](voice-browsing-and-preview.md)
 - [Build and release](build-and-release.md)
+- [Test system and staged-tree commit validation](test-system.md)
 
 Use the [glossary](../glossary.md), [policies](../policies/documentation.md) and [ADR register](../adr/README.md) for terminology, maintenance rules and rationale. API references describe provider capabilities separately from this implemented subset.
 

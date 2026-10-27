@@ -9,6 +9,7 @@ internal sealed class RegressionSourceIdentity
     public string Fingerprint { get; set; } = "";
     public bool Dirty { get; set; }
     public bool Available { get; set; }
+    public bool Snapshot { get; set; }
     public bool DirtyScopeRecorded { get; set; }
     public string[] DirtyAffectedIds { get; set; } = [];
     public string[] DirtyRuleIds { get; set; } = [];
@@ -33,6 +34,8 @@ internal sealed class RegressionSource
 
     internal static async Task<RegressionSource> CaptureAsync()
     {
+        if (SnapshotContext.Read() is { } snapshot)
+            return new RegressionSource { Root = snapshot.Root, Identity = snapshot.Identity() };
         var sourceRoot = FindSourceRoot();
         if (sourceRoot is null)
             return new RegressionSource { Identity = new() { Fingerprint = Convert.ToHexStringLower(SHA256.HashData("unavailable"u8)) } };
@@ -80,7 +83,7 @@ internal sealed class RegressionSource
         };
     }
 
-    private static string? FindSourceRoot()
+    internal static string? FindSourceRoot()
     {
         // The executable's ancestry remains stable when an absolute build/run command is
         // invoked from another checkout. The ignored standalone harness has the same owner.
@@ -98,6 +101,7 @@ internal sealed class RegressionSource
 
     internal async Task<string[]?> ChangedPathsAsync(string baseRef)
     {
+        if (Identity.Snapshot) return null;
         if (Root is null || !Identity.Available) return null;
         var mergeBaseBytes = await CommandAsync(Root, "git", ["merge-base", "HEAD", baseRef]);
         var mergeBase = mergeBaseBytes is null ? null : SafeHash(mergeBaseBytes);
@@ -107,6 +111,7 @@ internal sealed class RegressionSource
 
     internal async Task<string[]?> ChangedPathsSinceCommitAsync(string? commit)
     {
+        if (Identity.Snapshot) return null;
         if (Root is null || !Identity.Available || commit is null || commit.Length is not (40 or 64) || !commit.All(Uri.IsHexDigit)) return null;
         // A direct previous-commit comparison also includes current staged/unstaged work;
         // disabling rename detection preserves both old and new dependency boundaries.
@@ -125,7 +130,7 @@ internal sealed class RegressionSource
 
     internal static bool HasConsistentCleanIdentity(RegressionSourceIdentity identity)
     {
-        if (!identity.Available || identity.Dirty || identity.Commit is not { Length: 40 or 64 } commit ||
+        if (!identity.Available || identity.Dirty || identity.Snapshot || identity.Commit is not { Length: 40 or 64 } commit ||
             identity.Tree is not { Length: 40 or 64 } tree || !commit.All(Uri.IsHexDigit) || !tree.All(Uri.IsHexDigit))
             return false;
         // A clean capture hashes only these two canonical Git output lines: it has no

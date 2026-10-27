@@ -1,4 +1,5 @@
 # Captured response bytes and their hashes must survive every checkout unchanged.
+/.githooks/* text eol=lf
 docs/evidences/** -text whitespace=trailing-space,space-before-tab,cr-at-eol
 docs/evidences/**/*.msgpack binary
 docs/evidences/**/*.pcm binary

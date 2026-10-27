@@ -42,6 +42,8 @@ internal static class RegressionChildHost
     {
         var manifest = RegressionChildManifest.Create(request);
         var protocol = new RegressionProtocolWriter(physicalProtocolOutput, request);
+        Exception? failure = null;
+        var failureIndex = -1;
         protocol.Publish("ready");
         for (var index = 0; index < request.CaseIds.Length; index++)
         {
@@ -60,6 +62,8 @@ internal static class RegressionChildHost
                 result.Outcome = error is RegressionExecutionTimeoutException ? "timed-out" : "failed";
                 result.ExceptionType = error.GetType().FullName ?? error.GetType().Name;
                 result.FailureStage = error is RegressionExecutionTimeoutException ? "action-guard" : "case";
+                failure = error;
+                failureIndex = index;
             }
             result.ElapsedMilliseconds = (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds;
             // Completed owners are durable before any later protocol/final I/O.
@@ -83,6 +87,9 @@ internal static class RegressionChildHost
             RegressionProcessProtocol.WriteNew(request.ManifestPath, manifest);
         }
         protocol.Publish("final", snapshot: request.CaseIds.Length + 1);
+        // Publish authoritative failed results before optional diagnostic I/O.
+        // The supervisor's existing shared exit/drain allowance bounds this work.
+        if (failure is not null) RegressionFailureEvidence.TryWrite(request, failureIndex, failure);
         return manifest.Complete ? 0 : 1;
     }
 
