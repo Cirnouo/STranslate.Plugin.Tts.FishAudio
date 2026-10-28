@@ -13,7 +13,7 @@ internal static class HookAcceptanceSuite
         "verifier-rejects-report", "late-commit-message-mutation"
     }.Select(scenario => new RegressionCase("runner.hooks/" + scenario, "core", () => RunAsync(scenario))).ToArray();
 
-    private static Task RunAsync(string scenario)
+    internal static Task RunAsync(string scenario)
     {
         Process? process = null;
         Task<string>? output = null;

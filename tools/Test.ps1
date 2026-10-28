@@ -417,7 +417,8 @@ function Get-SourceIdentity {
     } finally { $hash.Dispose() }
 }
 
-function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$FullNames = @(), [bool]$StopOnError = $false) {
+function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$FullNames = @(),
+    [bool]$StopOnError = $false, [int]$ExecutionWorkers = $Workers) {
     $settings = [Xml.XmlWriterSettings]::new()
     $settings.Encoding = $utf8
     $settings.Indent = $true
@@ -432,7 +433,7 @@ function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$F
         $writer.WriteEndElement()
         $writer.WriteStartElement('NUnit')
         foreach ($pair in @(
-            @('NumberOfTestWorkers', [string]$Workers), @('PreFilter', 'false'),
+            @('NumberOfTestWorkers', [string]$ExecutionWorkers), @('PreFilter', 'false'),
             @('UseParentFQNForParametrizedTests', 'false'), @('IncludeStackTrace', 'false'),
             @('DumpXmlTestDiscovery', 'true'), @('DumpXmlTestResults', 'false'),
             @('TestOutputXml', $OutputDirectory), @('OutputXmlFolderMode', 'AsSpecified')
@@ -546,6 +547,7 @@ try {
             catalog = $null; selection = @(); executionAttempted = $false; executed = $false; terminal = $null
             resultXml = $null; trx = $null; discovery = $null; supervisor = $null; supervisorSha256 = $null
             markerRequired = $false; markerObserved = $false; parallelProof = $false
+            executionPlan = $null; executionPhases = [Collections.Generic.List[object]]::new()
         })
     }
     foreach ($suffix in @('.dll', '.deps.json', '.runtimeconfig.json')) {
@@ -568,11 +570,13 @@ try {
             '--ListTests', ('--Settings:' + $settingsPath)) @{ FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence } -PhaseTimeoutMilliseconds 120000
         $raw = Join-Path $phase 'discovery.dump'
         $assembly.discovery = $raw
+        [void](Lock-FrameworkEvidence $raw)
         Require-Condition (@(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'fixture-created-*.txt').Count -eq 0) 'test-driver-discovery-constructed-fixture'
         $catalogPath = Join-Path $assemblyDirectory 'catalog.json'
         [void](Invoke-OwnedPhase ('catalog-' + $assembly.key) $dotnet @($toolDll, 'evidence-catalog',
             '--discovery', $raw, '--output', $catalogPath) -PhaseTimeoutMilliseconds 120000)
         $assembly.catalog = [IO.File]::ReadAllText($catalogPath) | ConvertFrom-Json
+        [void](Lock-FrameworkEvidence $catalogPath)
         Require-Condition ($assembly.catalog.schemaVersion -eq 1 -and $assembly.catalog.kind -ceq 'nunit-catalog' -and
             $assembly.catalog.complete -and @($assembly.catalog.cases).Count -gt 0) 'test-driver-invalid-catalog'
     }
@@ -592,109 +596,124 @@ try {
         }
     }
     foreach ($assembly in $assemblies) {
+        $directory = Join-Path $runRoot $assembly.key
         $assembly.selection = @($assembly.catalog.cases | Where-Object { $requested.Count -eq 0 -or $requested.Contains($_.canonicalId) })
-        Write-NewJson (Join-Path (Join-Path $runRoot $assembly.key) 'selection.json') @{
+        if ($Mode -ceq 'Full') {
+            $requestSelection = Join-Path $directory 'requested-selection.json'
+            Write-NewJson $requestSelection @{
+                schemaVersion = 1; ids = @($assembly.selection | ForEach-Object canonicalId)
+                maximumConcurrency = [Math]::Max(1, $Workers)
+            }
+            [void](Lock-FrameworkEvidence $requestSelection)
+            if ($assembly.selection.Count -gt 0) {
+                $planPath = Join-Path $directory 'execution-plan.json'
+                [void](Invoke-OwnedPhase ('plan-' + $assembly.key) $dotnet @($toolDll, 'evidence-execution-plan',
+                    '--discovery', $assembly.discovery, '--selection', $requestSelection, '--output', $planPath) -PhaseTimeoutMilliseconds 120000)
+                $assembly.executionPlan = [IO.File]::ReadAllText($planPath) | ConvertFrom-Json -Depth 40
+                [void](Lock-FrameworkEvidence $planPath)
+                Require-Condition ($assembly.executionPlan.schemaVersion -eq 1 -and
+                    $assembly.executionPlan.kind -ceq 'nunit-execution-plan' -and $assembly.executionPlan.complete -eq $true -and
+                    $assembly.executionPlan.plan.rawDiscoverySha256 -ceq (Get-Digest $assembly.discovery)) 'test-driver-invalid-execution-plan'
+                $expanded = [Collections.Generic.HashSet[string]]::new([string[]]$assembly.executionPlan.plan.expandedIds, [StringComparer]::Ordinal)
+                $assembly.selection = @($assembly.catalog.cases | Where-Object { $expanded.Contains($_.canonicalId) })
+                Require-ExactFrameworkIds $assembly.executionPlan.plan.expandedIds @($assembly.selection | ForEach-Object canonicalId) 'test-driver-invalid-expanded-selection'
+                foreach ($group in $assembly.executionPlan.plan.phases) {
+                    $assembly.executionPhases.Add([pscustomobject]@{
+                        id = $group.id; kind = $group.kind; profile = $group.profile
+                        requireOrder = $group.requireOrder; maximumConcurrency = $group.maximumConcurrency
+                        exclusiveResources = @($group.exclusiveResources); selection = @($group.cases)
+                        executionAttempted = $false; executed = $false; terminal = $null
+                        markerRequired = $false; markerObserved = $false; parallelProof = $false
+                        directory = $assembly.key + '/execution/' + $group.id
+                    })
+                }
+            }
+        }
+        Write-NewJson (Join-Path $directory 'selection.json') @{
             schemaVersion = 1; ids = @($assembly.selection | ForEach-Object canonicalId)
         }
+        [void](Lock-FrameworkEvidence (Join-Path $directory 'selection.json'))
     }
     if ($Mode -ceq 'Full') {
         $stage = 'execution'
         foreach ($assembly in $assemblies) {
             if ($assembly.selection.Count -eq 0) { continue }
-            Require-Condition ((Get-Digest $assembly.dll) -ceq $assembly.sha256 -and (Get-Digest $toolDll) -ceq $toolDigest) 'test-driver-binary-changed'
             $directory = Join-Path $runRoot $assembly.key
-            $supervised = Join-Path $directory 'supervised'
-            $output = Join-Path $supervised 'nunit'
-            $trxDirectory = Join-Path $supervised 'trx'
-            $resultPath = Join-Path $output ([IO.Path]::GetFileNameWithoutExtension($assembly.dll) + '.xml')
-            $trxPath = Join-Path $trxDirectory 'results.trx'
-            $settingsPath = Join-Path $directory 'execution.runsettings'
-            $names = @()
-            if ($requested.Count -ne 0) { $names = @($assembly.selection | ForEach-Object fullName) }
-            Write-RunSettings $settingsPath $output $names -StopOnError $true
-            $ids = @($assembly.selection | ForEach-Object canonicalId)
-            $assembly.parallelProof = $assembly.key -ceq 'plugin' -and $Workers -ge 2 -and
-                $ids -ccontains 'compat.parallel/api-key-format' -and $ids -ccontains 'compat.parallel/voice-id-format'
-            $assembly.markerRequired = $assembly.key -ceq 'plugin' -and
-                @($assembly.selection | Where-Object className -CEQ 'NUnitCompatibility.CompatibilityCases').Count -gt 0
-            $dump = Join-Path ([IO.Path]::GetDirectoryName($assembly.dll)) ('Dump/D_' + [IO.Path]::GetFileName($assembly.dll) + '.dump')
-            if ([IO.File]::Exists($dump)) {
-                [IO.File]::Move($dump, (Join-Path $directory 'preexisting-execution.dump'))
+            $passed = [Collections.Generic.List[object]]::new()
+            foreach ($group in $assembly.executionPhases) {
+                Require-Condition ((Get-Digest $assembly.dll) -ceq $assembly.sha256 -and (Get-Digest $toolDll) -ceq $toolDigest) 'test-driver-binary-changed'
+                $phaseDirectory = Join-Path $runRoot $group.directory
+                [void][IO.Directory]::CreateDirectory($phaseDirectory)
+                $phaseRuntime = Join-Path $phaseDirectory 'runtime-evidence'
+                [void][IO.Directory]::CreateDirectory($phaseRuntime)
+                $supervised = Join-Path $phaseDirectory 'supervised'
+                $output = Join-Path $supervised 'nunit'
+                $resultPath = Join-Path $output ([IO.Path]::GetFileNameWithoutExtension($assembly.dll) + '.xml')
+                $trxPath = Join-Path $supervised 'trx/results.trx'
+                $settingsPath = Join-Path $phaseDirectory 'execution.runsettings'
+                # Every phase has its own exact filter, including all-discovered runs.
+                Write-RunSettings $settingsPath $output @($group.selection | ForEach-Object fullName) -StopOnError $true `
+                    -ExecutionWorkers $(if ($Workers -eq 0) { 0 } else { $group.maximumConcurrency })
+                $ids = @($group.selection | ForEach-Object canonicalId)
+                Write-NewJson (Join-Path $phaseDirectory 'selection.json') @{ schemaVersion = 1; ids = $ids }
+                $group.parallelProof = $assembly.key -ceq 'plugin' -and $group.maximumConcurrency -ge 2 -and
+                    $ids -ccontains 'compat.parallel/api-key-format' -and $ids -ccontains 'compat.parallel/voice-id-format'
+                $group.markerRequired = $assembly.key -ceq 'plugin' -and
+                    @($group.selection | Where-Object className -CEQ 'NUnitCompatibility.CompatibilityCases').Count -gt 0
+                $dump = Join-Path ([IO.Path]::GetDirectoryName($assembly.dll)) ('Dump/D_' + [IO.Path]::GetFileName($assembly.dll) + '.dump')
+                if ([IO.File]::Exists($dump)) { [IO.File]::Move($dump, (Join-Path $phaseDirectory 'preexisting-execution.dump')) }
+                $executionEnvironment = @{
+                    FISHAUDIO_COMPAT_EVIDENCE_ROOT = $phaseRuntime
+                    FISHAUDIO_COMPAT_PARALLEL_PROOF = $(if ($group.parallelProof) { '1' } else { '0' })
+                    FISHAUDIO_TEST_REPOSITORY_ROOT = $root
+                    FISHAUDIO_PWSH_EXECUTABLE = $shell; FISHAUDIO_DOTNET_EXECUTABLE = $dotnet
+                    DOTNET_CLI_UI_LANGUAGE = 'en'; VSLANG = '1033'
+                }
+                $requestPath = Join-Path $phaseDirectory 'execution-request.json'
+                Write-NewJson $requestPath ([ordered]@{
+                    schemaVersion = 1; runId = $runId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
+                    workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet
+                    launcherScript = Join-Path $root 'tools/Invoke-TestProcess.ps1'
+                    testAssembly = $assembly.dll; testAssemblySha256 = $assembly.sha256
+                    runSettings = $settingsPath; discoveryPath = $assembly.discovery
+                    resultXmlPath = $resultPath; trxPath = $trxPath; outputDirectory = $supervised
+                    cases = @($group.selection | ForEach-Object { [ordered]@{ canonicalId = $_.canonicalId; fullName = $_.fullName } })
+                    maximumConcurrency = $group.maximumConcurrency; requireOrder = $group.requireOrder; environment = $executionEnvironment
+                })
+                $requestDigest = Get-Digest (Lock-FrameworkEvidence $requestPath)
+                [void](Lock-FrameworkEvidence $settingsPath)
+                Require-Condition (-not [IO.Directory]::Exists($supervised) -and -not [IO.File]::Exists($supervised)) 'test-driver-supervisor-output-not-fresh'
+                $group.executionAttempted = $true; $assembly.executionAttempted = $true
+                [void](Invoke-AssemblyPhase $assembly ('execute-' + $assembly.key + '-' + $group.id) @($toolDll, 'framework-run', '--request', $requestPath) $executionEnvironment)
+                $supervisorPath = Lock-FrameworkEvidence (Join-Path $supervised 'supervisor.json')
+                [void](Lock-FrameworkEvidence $resultPath); [void](Lock-FrameworkEvidence $trxPath)
+                & (Join-Path $root 'tools/Assert-FrameworkSupervisor.ps1') -Path $supervisorPath -RunId $runId `
+                    -SourceTree $source.tree -SourceFingerprint $source.fingerprint -AssemblySha256 $assembly.sha256 `
+                    -CaseIds $ids -ResultXmlSha256 (Get-Digest $resultPath) -TrxSha256 (Get-Digest $trxPath) `
+                    -ExecutionRequestPath $requestPath -ExecutionRequestSha256 $requestDigest `
+                    -ExpectedMaximumConcurrency $group.maximumConcurrency -ExpectedRequireOrder $group.requireOrder
+                $xmlFiles = @(Get-ChildItem -LiteralPath $output -File -Filter '*.xml')
+                Require-Condition ($xmlFiles.Count -eq 1 -and (Test-SamePath $xmlFiles[0].FullName $resultPath)) 'test-driver-terminal-xml-count'
+                $terminalPath = Join-Path $phaseDirectory 'terminal.json'
+                [void](Invoke-OwnedPhase ('verify-' + $assembly.key + '-' + $group.id) $dotnet @($toolDll, 'evidence-verify',
+                    '--catalog', (Join-Path $directory 'catalog.json'), '--selection', (Join-Path $phaseDirectory 'selection.json'),
+                    '--result', $resultPath, '--trx', $trxPath, '--output', $terminalPath) -PhaseTimeoutMilliseconds 120000)
+                $group.terminal = [IO.File]::ReadAllText($terminalPath) | ConvertFrom-Json
+                Require-Condition ($group.terminal.schemaVersion -eq 1 -and $group.terminal.kind -ceq 'nunit-terminal' -and
+                    $group.terminal.complete -and $group.terminal.passedCount -eq $group.selection.Count) 'test-driver-invalid-terminal'
+                if ($group.markerRequired) {
+                    $markers = @(Get-ChildItem -LiteralPath $phaseRuntime -File -Filter 'fixture-created-*.txt')
+                    Require-Condition ($markers.Count -eq 1 -and $markers[0].Name -cmatch '^fixture-created-[1-9][0-9]*\.txt$' -and
+                        [IO.File]::ReadAllText($markers[0].FullName) -ceq 'constructed') 'test-driver-positive-execution-marker-missing'
+                    $group.markerObserved = $true
+                }
+                $group.executed = $true
+                foreach ($case in $group.terminal.cases) { $passed.Add($case) }
             }
-            $executionEnvironment = @{
-                FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence
-                FISHAUDIO_COMPAT_PARALLEL_PROOF = $(if ($assembly.parallelProof) { '1' } else { '0' })
-                FISHAUDIO_TEST_REPOSITORY_ROOT = $root
-                FISHAUDIO_PWSH_EXECUTABLE = $shell
-                FISHAUDIO_DOTNET_EXECUTABLE = $dotnet
-                DOTNET_CLI_UI_LANGUAGE = 'en'
-                VSLANG = '1033'
-            }
-            $requestPath = Join-Path $directory 'execution-request.json'
-            Write-NewJson $requestPath ([ordered]@{
-                schemaVersion = 1; runId = $runId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
-                workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet
-                launcherScript = Join-Path $root 'tools/Invoke-TestProcess.ps1'
-                testAssembly = $assembly.dll; testAssemblySha256 = $assembly.sha256
-                runSettings = $settingsPath; discoveryPath = $assembly.discovery
-                resultXmlPath = $resultPath; trxPath = $trxPath; outputDirectory = $supervised
-                cases = @($assembly.selection | ForEach-Object { [ordered]@{ canonicalId = $_.canonicalId; fullName = $_.fullName } })
-                maximumConcurrency = [Math]::Max(1, $Workers); requireOrder = $false; environment = $executionEnvironment
-            })
-            Require-Condition (-not [IO.Directory]::Exists($supervised) -and -not [IO.File]::Exists($supervised)) 'test-driver-supervisor-output-not-fresh'
-            $assembly.executionAttempted = $true
-            [void](Invoke-AssemblyPhase $assembly ('execute-' + $assembly.key) @($toolDll, 'framework-run', '--request', $requestPath) $executionEnvironment)
+            Require-ExactFrameworkIds @($passed | ForEach-Object canonicalId) @($assembly.selection | ForEach-Object canonicalId) 'test-driver-phase-union-mismatch'
+            # This is a derived case union, never a manufactured merged raw XML/TRX.
+            $assembly.terminal = [pscustomobject]@{ passedCount = $passed.Count; cases = $passed.ToArray() }
             $assembly.executed = $true
-            $supervisorPath = Lock-FrameworkEvidence (Join-Path $supervised 'supervisor.json')
-            [void](Lock-FrameworkEvidence $resultPath)
-            [void](Lock-FrameworkEvidence $trxPath)
-            $supervisor = [IO.File]::ReadAllText($supervisorPath) | ConvertFrom-Json -Depth 40
-            $sameTree = ($null -eq $source.tree -and $null -eq $supervisor.sourceTree) -or
-                ($source.tree -is [string] -and $supervisor.sourceTree -is [string] -and $supervisor.sourceTree -ceq $source.tree)
-            Require-Condition ($supervisor.schemaVersion -eq 1 -and $supervisor.kind -ceq 'framework-execution' -and
-                $supervisor.runId -ceq $runId -and $supervisor.testAssemblySha256 -ceq $assembly.sha256 -and
-                $sameTree -and $supervisor.sourceFingerprint -is [string] -and
-                $supervisor.sourceFingerprint -cmatch '^[a-f0-9]{64}$' -and $supervisor.sourceFingerprint -ceq $source.fingerprint -and
-                $supervisor.state.complete -is [bool] -and $supervisor.state.complete -and
-                $null -eq $supervisor.state.failureStage -and $null -eq $supervisor.failureCode -and
-                $supervisor.baselineClaim -is [bool] -and -not $supervisor.baselineClaim) 'test-driver-invalid-supervisor'
-            Require-ExactFrameworkIds $supervisor.selectedIds $ids 'test-driver-supervisor-selection-mismatch'
-            Require-ExactFrameworkIds $supervisor.state.passedIds $ids 'test-driver-supervisor-passed-set-mismatch'
-            foreach ($field in @('failedIds', 'timedOutIds', 'interruptedIds', 'notRunIds', 'activeIds')) {
-                Require-Condition (@($supervisor.state.$field).Count -eq 0) 'test-driver-supervisor-nonpassing-state'
-            }
-            Require-Condition ($supervisor.target.started -is [bool] -and $supervisor.target.started -and
-                $supervisor.target.pid -gt 0 -and $supervisor.target.exitCode -eq 0 -and
-                $supervisor.process.launcherPid -gt 0 -and $supervisor.process.launcherExited -is [bool] -and
-                $supervisor.process.launcherExited -and $supervisor.process.stdoutDrained -is [bool] -and
-                $supervisor.process.stdoutDrained -and $supervisor.process.stderrDrained -is [bool] -and
-                $supervisor.process.stderrDrained -and $supervisor.process.ownedActiveProcesses -eq 0) 'test-driver-supervisor-process-incomplete'
-            Require-Condition ($supervisor.rawEvidence.verified -is [bool] -and $supervisor.rawEvidence.verified -and
-                [IO.Path]::IsPathFullyQualified($supervisor.rawEvidence.resultXmlPath) -and
-                [IO.Path]::IsPathFullyQualified($supervisor.rawEvidence.trxPath) -and
-                (Test-SamePath $supervisor.rawEvidence.resultXmlPath $resultPath) -and
-                (Test-SamePath $supervisor.rawEvidence.trxPath $trxPath) -and
-                $supervisor.rawEvidence.resultXmlSha256 -ceq (Get-Digest $resultPath) -and
-                $supervisor.rawEvidence.trxSha256 -ceq (Get-Digest $trxPath)) 'test-driver-supervisor-raw-evidence-mismatch'
-            $assembly.supervisor = [IO.Path]::GetRelativePath($runRoot, $supervisorPath).Replace('\', '/')
-            $assembly.supervisorSha256 = Get-Digest $supervisorPath
-            $xmlFiles = @(Get-ChildItem -LiteralPath $output -File -Filter '*.xml')
-            Require-Condition ($xmlFiles.Count -eq 1 -and (Test-SamePath $xmlFiles[0].FullName $resultPath)) 'test-driver-terminal-xml-count'
-            $assembly.resultXml = [IO.Path]::GetRelativePath($runRoot, $xmlFiles[0].FullName).Replace('\', '/')
-            $assembly.trx = [IO.Path]::GetRelativePath($runRoot, $trxPath).Replace('\', '/')
-            $terminalPath = Join-Path $directory 'terminal.json'
-            [void](Invoke-OwnedPhase ('verify-' + $assembly.key) $dotnet @($toolDll, 'evidence-verify',
-                '--catalog', (Join-Path $directory 'catalog.json'), '--selection', (Join-Path $directory 'selection.json'),
-                '--result', $xmlFiles[0].FullName, '--trx', $trxPath, '--output', $terminalPath) -PhaseTimeoutMilliseconds 120000)
-            $assembly.terminal = [IO.File]::ReadAllText($terminalPath) | ConvertFrom-Json
-            Require-Condition ($assembly.terminal.schemaVersion -eq 1 -and $assembly.terminal.kind -ceq 'nunit-terminal' -and
-                $assembly.terminal.complete -and $assembly.terminal.passedCount -eq $assembly.selection.Count) 'test-driver-invalid-terminal'
-            if ($assembly.markerRequired) {
-                $markers = @(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'fixture-created-*.txt')
-                Require-Condition ($markers.Count -eq 1 -and $markers[0].Name -cmatch '^fixture-created-[1-9][0-9]*\.txt$' -and
-                    [IO.File]::ReadAllText($markers[0].FullName) -ceq 'constructed') 'test-driver-positive-execution-marker-missing'
-                $assembly.markerObserved = $true
-            }
         }
     }
     $stage = 'final-identity'
@@ -706,25 +725,68 @@ try {
     Require-Condition ((Get-Digest $toolDll) -ceq $toolDigest) 'test-driver-tool-binary-changed'
     $stage = 'manifest'
     $records = @($assemblies | ForEach-Object {
-        [ordered]@{
-            key = $_.key; project = $_.project; assembly = [IO.Path]::GetRelativePath($root, $_.dll).Replace('\', '/')
-            sha256 = $_.sha256; catalog = $_.key + '/catalog.json'; selection = $_.key + '/selection.json'
-            catalogSha256 = Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'catalog.json')
-            selectionSha256 = Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'selection.json')
-            discoveredCount = @($_.catalog.cases).Count; selectedCount = $_.selection.Count; executed = $_.executed
-            selectedIds = @($_.selection | ForEach-Object canonicalId)
-            passedCount = $(if ($_.executed) { $_.terminal.passedCount } else { 0 })
-            terminal = $(if ($_.executed) { $_.key + '/terminal.json' } else { $null })
-            terminalSha256 = $(if ($_.executed) { Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'terminal.json') } else { $null })
-            resultXml = $_.resultXml; trx = $_.trx
-            supervisor = $_.supervisor; supervisorSha256 = $_.supervisorSha256
-            resultXmlSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.resultXml) } else { $null })
-            trxSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.trx) } else { $null })
-            markerRequired = $_.markerRequired; markerObserved = $_.markerObserved; parallelProof = $_.parallelProof
+        $assembly = $_
+        if ($Mode -ceq 'Full') {
+            $groupRecords = @(foreach ($group in $assembly.executionPhases) {
+                $directory = Join-Path $runRoot $group.directory
+                $supervised = Join-Path $directory 'supervised'
+                $xmlName = [IO.Path]::GetFileNameWithoutExtension($assembly.dll) + '.xml'
+                $paths = [ordered]@{
+                    selection = 'selection.json'; request = 'execution-request.json'; runSettings = 'execution.runsettings'
+                    terminal = 'terminal.json'; resultXml = 'supervised/nunit/' + $xmlName
+                    trx = 'supervised/trx/results.trx'; supervisor = 'supervised/supervisor.json'
+                }
+                $record = [ordered]@{
+                    id = $group.id; kind = $group.kind; profile = $group.profile
+                    requireOrder = $group.requireOrder; maximumConcurrency = $group.maximumConcurrency
+                    exclusiveResources = @($group.exclusiveResources)
+                    selectedIds = @($group.selection | ForEach-Object canonicalId); executed = $group.executed
+                    passedCount = $(if ($group.executed) { $group.terminal.passedCount } else { 0 })
+                    runtimeEvidence = $group.directory + '/runtime-evidence'
+                    markerRequired = $group.markerRequired; markerObserved = $group.markerObserved; parallelProof = $group.parallelProof
+                }
+                foreach ($name in $paths.Keys) {
+                    $relative = $group.directory + '/' + $paths[$name]
+                    $record[$name] = $relative
+                    $record[$name + 'Sha256'] = Get-Digest (Join-Path $runRoot $relative)
+                }
+                $record
+            })
+            [ordered]@{
+                key = $assembly.key; project = $assembly.project
+                assembly = [IO.Path]::GetRelativePath($root, $assembly.dll).Replace('\', '/'); sha256 = $assembly.sha256
+                catalog = $assembly.key + '/catalog.json'; catalogSha256 = Get-Digest (Join-Path (Join-Path $runRoot $assembly.key) 'catalog.json')
+                requestedSelection = $assembly.key + '/requested-selection.json'
+                requestedSelectionSha256 = Get-Digest (Join-Path (Join-Path $runRoot $assembly.key) 'requested-selection.json')
+                selection = $assembly.key + '/selection.json'; selectionSha256 = Get-Digest (Join-Path (Join-Path $runRoot $assembly.key) 'selection.json')
+                executionPlan = $(if ($null -ne $assembly.executionPlan) { $assembly.key + '/execution-plan.json' } else { $null })
+                executionPlanSha256 = $(if ($null -ne $assembly.executionPlan) { Get-Digest (Join-Path (Join-Path $runRoot $assembly.key) 'execution-plan.json') } else { $null })
+                discoveredCount = @($assembly.catalog.cases).Count; selectedCount = $assembly.selection.Count
+                selectedIds = @($assembly.selection | ForEach-Object canonicalId); executed = $assembly.executed
+                passedCount = $(if ($assembly.executed) { $assembly.terminal.passedCount } else { 0 })
+                executionPhases = $groupRecords
+            }
+        } else {
+            [ordered]@{
+                key = $_.key; project = $_.project; assembly = [IO.Path]::GetRelativePath($root, $_.dll).Replace('\', '/')
+                sha256 = $_.sha256; catalog = $_.key + '/catalog.json'; selection = $_.key + '/selection.json'
+                catalogSha256 = Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'catalog.json')
+                selectionSha256 = Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'selection.json')
+                discoveredCount = @($_.catalog.cases).Count; selectedCount = $_.selection.Count; executed = $_.executed
+                selectedIds = @($_.selection | ForEach-Object canonicalId)
+                passedCount = $(if ($_.executed) { $_.terminal.passedCount } else { 0 })
+                terminal = $(if ($_.executed) { $_.key + '/terminal.json' } else { $null })
+                terminalSha256 = $(if ($_.executed) { Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'terminal.json') } else { $null })
+                resultXml = $_.resultXml; trx = $_.trx
+                supervisor = $_.supervisor; supervisorSha256 = $_.supervisorSha256
+                resultXmlSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.resultXml) } else { $null })
+                trxSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.trx) } else { $null })
+                markerRequired = $_.markerRequired; markerObserved = $_.markerObserved; parallelProof = $_.parallelProof
+            }
         }
     })
     Write-NewJson (Join-Path $runRoot 'manifest.json') ([ordered]@{
-        schemaVersion = 1; kind = 'unified-test-session'; runId = $runId; mode = $Mode; complete = $true
+        schemaVersion = $(if ($Mode -ceq 'Full') { 2 } else { 1 }); kind = 'unified-test-session'; runId = $runId; mode = $Mode; complete = $true
         platform = 'VSTest'; configuration = 'Release'; workers = $Workers; baselineClaim = $false
         selection = $(if ($requested.Count -eq 0) { 'all-discovered' } else { 'focused' })
         source = $source; toolSha256 = $toolDigest; assemblies = $records; phases = $phases.ToArray()
@@ -737,23 +799,36 @@ try {
         try { Write-NewText (Join-Path $runRoot 'private-failure.txt') ($failure | Out-String) } catch { }
         try {
             $remaining = @($assemblies | ForEach-Object {
-                $observedSupervisor = Join-Path $runRoot ($_.key + '/supervised/supervisor.json')
+                $assembly = $_
+                $groups = @(foreach ($group in $assembly.executionPhases) {
+                    $observed = $group.directory + '/supervised/supervisor.json'
+                    [ordered]@{
+                        id = $group.id; kind = $group.kind; profile = $group.profile
+                        selectedIds = @($group.selection | ForEach-Object canonicalId)
+                        executionAttempted = $group.executionAttempted; executed = $group.executed
+                        verifiedPassedIds = @(if ($group.executed) { $group.terminal.cases | ForEach-Object canonicalId })
+                        # Failed producer state remains unadmitted evidence, even if it contains some passing cases.
+                        unadmittedSupervisor = $(if (-not $group.executed -and [IO.File]::Exists((Join-Path $runRoot $observed))) { $observed } else { $null })
+                        notStartedIds = @(if (-not $group.executionAttempted) { $group.selection | ForEach-Object canonicalId })
+                        unresolvedIds = @(if ($group.executionAttempted -and -not $group.executed) { $group.selection | ForEach-Object canonicalId })
+                    }
+                })
+                $planned = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                foreach ($group in $groups) { foreach ($id in $group.selectedIds) { [void]$planned.Add($id) } }
+                # A rejected plan must not erase the already known selection.
+                $unplanned = @($assembly.selection | Where-Object { -not $planned.Contains($_.canonicalId) } | ForEach-Object canonicalId)
                 [ordered]@{
-                    key = $_.key; catalogAvailable = $null -ne $_.catalog
-                    selectedIds = @($_.selection | ForEach-Object canonicalId)
-                    executionAttempted = $_.executionAttempted
-                    verifiedPassedIds = @(if ($_.executed -and $null -ne $_.terminal) { $_.terminal.cases | ForEach-Object canonicalId })
-                    # A failed producer's raw state is retained for diagnosis;
-                    # it cannot turn this incomplete session into a passing one.
-                    unadmittedSupervisor = $(if ([IO.File]::Exists($observedSupervisor)) { [IO.Path]::GetRelativePath($runRoot, $observedSupervisor).Replace('\', '/') } else { $null })
-                    notStartedIds = @(if (-not $_.executionAttempted) { $_.selection | ForEach-Object canonicalId })
-                    unresolvedIds = @(if ($_.executionAttempted -and -not [IO.File]::Exists($observedSupervisor) -and -not $_.executed) {
-                        $_.selection | ForEach-Object canonicalId
-                    })
+                    key = $assembly.key; catalogAvailable = $null -ne $assembly.catalog
+                    selectedIds = @($assembly.selection | ForEach-Object canonicalId)
+                    executionAttempted = $assembly.executionAttempted; executionPhases = $groups
+                    verifiedPassedIds = @($groups | ForEach-Object verifiedPassedIds)
+                    notStartedIds = @($groups | ForEach-Object notStartedIds) + $unplanned
+                    planningUnresolvedIds = $unplanned
+                    unresolvedIds = @($groups | ForEach-Object unresolvedIds)
                 }
             })
             Write-NewJson (Join-Path $runRoot 'failure.json') ([ordered]@{
-                schemaVersion = 1; kind = 'unified-test-session-failure'; runId = $runId; complete = $false
+                schemaVersion = $(if ($Mode -ceq 'Full') { 2 } else { 1 }); kind = 'unified-test-session-failure'; runId = $runId; complete = $false
                 mode = $Mode; stage = $stage; reason = $failureCode; exceptionType = $failure.Exception.GetType().Name
                 baselineClaim = $false; source = $source; assemblies = $remaining
                 phases = $phases.ToArray(); finishedUtc = [DateTimeOffset]::UtcNow

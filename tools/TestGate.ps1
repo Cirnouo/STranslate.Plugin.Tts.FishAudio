@@ -174,14 +174,23 @@ function Invoke-GatePhase {
 
 function Resolve-GateArtifact {
     param([string]$Parent, [string]$Relative, [string]$Digest)
-    if ([string]::IsNullOrWhiteSpace($Relative) -or [IO.Path]::IsPathRooted($Relative) -or $Digest -cnotmatch '^[a-f0-9]{64}$') {
-        throw 'gate-platform-invalid-artifact'
+    if ([string]::IsNullOrWhiteSpace($Relative) -or [IO.Path]::IsPathRooted($Relative) -or
+        $Relative.Contains('\') -or @($Relative.Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -ne 0 -or
+        $Digest -cnotmatch '^[a-f0-9]{64}$') { throw 'gate-platform-invalid-artifact' }
+    $parentPath = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($Parent))
+    $path = [IO.Path]::GetFullPath((Join-Path $parentPath $Relative))
+    if (-not $path.StartsWith($parentPath + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+        -not [IO.File]::Exists($path)) { throw 'gate-platform-artifact-mismatch' }
+    $current = Get-Item -LiteralPath $path -Force
+    if ($current.PSIsContainer) { throw 'gate-platform-artifact-mismatch' }
+    while ($null -ne $current) {
+        if (($current.Attributes -band ([IO.FileAttributes]::ReparsePoint -bor [IO.FileAttributes]::Device)) -ne 0) {
+            throw 'gate-platform-artifact-mismatch'
+        }
+        if ($current.FullName.Equals($parentPath, [StringComparison]::OrdinalIgnoreCase)) { break }
+        $current = $(if ($current -is [IO.DirectoryInfo]) { $current.Parent } else { $current.Directory })
     }
-    $path = [IO.Path]::GetFullPath((Join-Path $Parent $Relative))
-    if (-not $path.StartsWith($Parent + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
-        -not [IO.File]::Exists($path) -or
-        ((Get-Item -LiteralPath $path -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
-        (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $Digest) {
+    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $Digest) {
         throw 'gate-platform-artifact-mismatch'
     }
     return $path
@@ -394,7 +403,7 @@ public static class FishAudioGitSnapshot
     $platformManifestPath = Join-Path $platformRoot 'manifest.json'
     $platform = [IO.File]::ReadAllText($platformManifestPath) | ConvertFrom-Json
     $contextDigest = (Get-FileHash -LiteralPath $contextPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($platform.schemaVersion -ne 1 -or $platform.kind -cne 'unified-test-session' -or
+    if ($platform.schemaVersion -ne 2 -or $platform.kind -cne 'unified-test-session' -or
         $platform.mode -cne 'Full' -or $platform.platform -cne 'VSTest' -or $platform.configuration -cne 'Release' -or
         $platform.selection -cne 'all-discovered' -or -not $platform.complete -or $platform.baselineClaim -ne $false -or
         -not $platform.source.snapshot -or -not $platform.source.snapshotRootValidated -or
@@ -424,7 +433,7 @@ public static class FishAudioGitSnapshot
             $assembly.passedCount -ne $assembly.selectedCount) { throw 'gate-platform-assembly-mismatch' }
         [void](Resolve-GateArtifact $snapshotRoot $assembly.assembly $assembly.sha256)
         $paths = @{}
-        foreach ($name in @('catalog','selection','terminal','resultXml','trx','supervisor')) {
+        foreach ($name in @('catalog','selection','requestedSelection','executionPlan')) {
             $relative = [string]$assembly.$name
             $digest = [string]$assembly.($name + 'Sha256')
             $paths[$name] = Resolve-GateArtifact $platformRoot $relative $digest
@@ -432,22 +441,22 @@ public static class FishAudioGitSnapshot
         }
         $catalog = [IO.File]::ReadAllText($paths.catalog) | ConvertFrom-Json
         $selection = [IO.File]::ReadAllText($paths.selection) | ConvertFrom-Json
-        $terminal = [IO.File]::ReadAllText($paths.terminal) | ConvertFrom-Json
+        $requestedSelection = [IO.File]::ReadAllText($paths.requestedSelection) | ConvertFrom-Json
         if ($catalog.schemaVersion -ne 1 -or $catalog.kind -cne 'nunit-catalog' -or -not $catalog.complete -or
-            $selection.schemaVersion -ne 1 -or $terminal.schemaVersion -ne 1 -or $terminal.kind -cne 'nunit-terminal' -or
-            -not $terminal.complete -or $terminal.passedCount -ne $assembly.passedCount -or
-            @($catalog.cases).Count -ne $assembly.discoveredCount) { throw 'gate-platform-invalid-catalog-or-terminal' }
+            $selection.schemaVersion -ne 1 -or $requestedSelection.schemaVersion -ne 1 -or
+            @($catalog.cases).Count -ne $assembly.discoveredCount) { throw 'gate-platform-invalid-catalog' }
+        if (($platform.workers -isnot [int] -and $platform.workers -isnot [long]) -or $platform.workers -lt 0 -or $platform.workers -gt 4 -or
+            ($requestedSelection.maximumConcurrency -isnot [int] -and $requestedSelection.maximumConcurrency -isnot [long]) -or
+            $requestedSelection.maximumConcurrency -ne [Math]::Max(1, $platform.workers)) { throw 'gate-platform-invalid-workers' }
         $ids = @($catalog.cases | ForEach-Object canonicalId)
         Assert-GateCaseSet @($assembly.selectedIds) $ids
         Assert-GateCaseSet @($selection.ids) $ids
-        Assert-GateCaseSet @($terminal.cases | ForEach-Object canonicalId) $ids
-        & (Join-Path $snapshotRoot 'tools/Assert-FrameworkSupervisor.ps1') -Path $paths.supervisor -RunId $platform.runId `
-            -SourceTree $platform.source.tree -SourceFingerprint $platform.source.fingerprint -AssemblySha256 $assembly.sha256 `
-            -CaseIds $ids -ResultXmlSha256 $assembly.resultXmlSha256 -TrxSha256 $assembly.trxSha256
+        Assert-GateCaseSet @($requestedSelection.ids) $ids
+        if ((@($requestedSelection.ids) -join "`n") -cne ($ids -join "`n")) { throw 'gate-platform-request-order' }
         foreach ($case in $catalog.cases) {
             if (-not $globalIds.Add([string]$case.canonicalId)) { throw 'gate-platform-ambiguous-canonical-id' }
         }
-        foreach ($name in @('discover','catalog','execute','verify')) {
+        foreach ($name in @('discover','catalog','plan')) {
             $matching = @($platform.phases | Where-Object name -CEQ ($name + '-' + $key))
             if ($matching.Count -ne 1) { throw 'gate-platform-missing-required-phase' }
         }
@@ -462,19 +471,91 @@ public static class FishAudioGitSnapshot
         Invoke-GatePhase ('framework-catalog-' + $key) 'dotnet' @($tool, 'evidence-catalog', '--discovery', $dump, '--output', $verifiedCatalogPath) 120000
         $verifiedCatalog = [IO.File]::ReadAllText($verifiedCatalogPath) | ConvertFrom-Json
         Assert-GateCaseSet @($verifiedCatalog.cases | ForEach-Object canonicalId) $ids
+        $currentNames = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
         foreach ($case in $catalog.cases) {
             $other = @($verifiedCatalog.cases | Where-Object canonicalId -CEQ $case.canonicalId)
             if ($other.Count -ne 1 -or $other[0].fullName -cne $case.fullName -or
                 $other[0].className -cne $case.className -or $other[0].methodName -cne $case.methodName) { throw 'gate-platform-discovery-mismatch' }
+            $currentNames.Add([string]$case.canonicalId, [string]$other[0].fullName)
         }
-        $verifiedPath = Join-Path $runRoot ('framework-terminal-' + $key + '.json')
-        Invoke-GatePhase ('framework-verify-' + $key) 'dotnet' @($tool, 'evidence-verify', '--catalog', $verifiedCatalogPath,
-            '--selection', $paths.selection, '--result', $paths.resultXml, '--trx', $paths.trx, '--output', $verifiedPath) 120000
-        $verified = [IO.File]::ReadAllText($verifiedPath) | ConvertFrom-Json
-        if ($verified.schemaVersion -ne 1 -or $verified.kind -cne 'nunit-terminal' -or -not $verified.complete -or
-            $verified.passedCount -ne $ids.Count) { throw 'gate-platform-unverified-results' }
-        Assert-GateCaseSet @($verified.cases | ForEach-Object canonicalId) $ids
-        foreach ($name in @($verifiedCatalogPath, $verifiedPath)) {
+        $expectedSelectionPath = Join-Path $runRoot ('framework-requested-' + $key + '.json')
+        [IO.File]::WriteAllText($expectedSelectionPath, (@{ schemaVersion = 1; ids = $ids;
+            maximumConcurrency = [Math]::Max(1, $platform.workers) } | ConvertTo-Json -Depth 4), $encoding)
+        $expectedPlanPath = Join-Path $runRoot ('framework-plan-' + $key + '.json')
+        Invoke-GatePhase ('framework-plan-' + $key) 'dotnet' @($tool, 'evidence-execution-plan', '--discovery', $dump,
+            '--selection', $expectedSelectionPath, '--output', $expectedPlanPath) 120000
+        & (Join-Path $snapshotRoot 'tools/Assert-FrameworkExecutionPlan.ps1') -PlanPath $paths.executionPlan -ExpectedPlanPath $expectedPlanPath `
+            -RawDiscoverySha256 $dumpDigest -RequestedIds $ids -SelectionIds ([string[]]$selection.ids) -PhaseRecords ([object[]]$assembly.executionPhases)
+        $passed = [Collections.Generic.List[string]]::new()
+        foreach ($group in $assembly.executionPhases) {
+            $prefix = $key + '/execution/' + $group.id + '/'
+            if ($group.runtimeEvidence -cne ($prefix + 'runtime-evidence')) { throw 'gate-platform-phase-directory' }
+            $phasePaths = @{}
+            foreach ($name in @('selection','request','runSettings','terminal','resultXml','trx','supervisor')) {
+                if ($group.$name -isnot [string] -or -not $group.$name.StartsWith($prefix, [StringComparison]::Ordinal)) { throw 'gate-platform-phase-directory' }
+                $relative = [string]$group.$name; $digest = [string]$group.($name + 'Sha256')
+                $phasePaths[$name] = Resolve-GateArtifact $platformRoot $relative $digest
+                $artifacts.Add(@{ path = 'platform/' + $relative; sha256 = $digest })
+            }
+            foreach ($name in @('execute','verify')) {
+                if (@($platform.phases | Where-Object name -CEQ ($name + '-' + $key + '-' + $group.id)).Count -ne 1) {
+                    throw 'gate-platform-missing-execution-phase'
+                }
+            }
+            $phaseSelection = [IO.File]::ReadAllText($phasePaths.selection) | ConvertFrom-Json
+            $terminal = [IO.File]::ReadAllText($phasePaths.terminal) | ConvertFrom-Json
+            $phaseIds = [string[]]$group.selectedIds
+            $phaseRequest = [IO.File]::ReadAllText($phasePaths.request) | ConvertFrom-Json
+            if ($phaseRequest.cases -isnot [Array] -or $phaseRequest.cases.Count -ne $phaseIds.Count) {
+                throw 'gate-platform-phase-request-binding'
+            }
+            for ($index = 0; $index -lt $phaseIds.Count; $index++) {
+                $binding = $phaseRequest.cases[$index]
+                if (-not $currentNames.ContainsKey($phaseIds[$index]) -or
+                    $binding.canonicalId -isnot [string] -or $binding.fullName -isnot [string] -or
+                    -not $binding.canonicalId.Equals($phaseIds[$index], [StringComparison]::Ordinal) -or
+                    -not $binding.fullName.Equals($currentNames[$phaseIds[$index]], [StringComparison]::Ordinal)) {
+                    throw 'gate-platform-phase-request-binding'
+                }
+            }
+            if ($phaseSelection.schemaVersion -ne 1 -or $terminal.schemaVersion -ne 1 -or $terminal.kind -cne 'nunit-terminal' -or
+                -not $terminal.complete -or $terminal.passedCount -ne $phaseIds.Count) { throw 'gate-platform-invalid-phase-terminal' }
+            Assert-GateCaseSet @($phaseSelection.ids) $phaseIds
+            if ((@($phaseSelection.ids) -join "`n") -cne ($phaseIds -join "`n")) { throw 'gate-platform-phase-selection-order' }
+            Assert-GateCaseSet @($terminal.cases | ForEach-Object canonicalId) $phaseIds
+            & (Join-Path $snapshotRoot 'tools/Assert-FrameworkSupervisor.ps1') -Path $phasePaths.supervisor -RunId $platform.runId `
+                -SourceTree $platform.source.tree -SourceFingerprint $platform.source.fingerprint -AssemblySha256 $assembly.sha256 `
+                -CaseIds $phaseIds -ResultXmlSha256 $group.resultXmlSha256 -TrxSha256 $group.trxSha256 `
+                -ExecutionRequestPath $phasePaths.request -ExecutionRequestSha256 $group.requestSha256 `
+                -ExpectedMaximumConcurrency $group.maximumConcurrency -ExpectedRequireOrder $group.requireOrder
+            $verifiedPath = Join-Path $runRoot ('framework-terminal-' + $key + '-' + $group.id + '.json')
+            Invoke-GatePhase ('framework-verify-' + $key + '-' + $group.id) 'dotnet' @($tool, 'evidence-verify', '--catalog', $verifiedCatalogPath,
+                '--selection', $phasePaths.selection, '--result', $phasePaths.resultXml, '--trx', $phasePaths.trx, '--output', $verifiedPath) 120000
+            $verified = [IO.File]::ReadAllText($verifiedPath) | ConvertFrom-Json
+            if ($verified.schemaVersion -ne 1 -or $verified.kind -cne 'nunit-terminal' -or -not $verified.complete -or
+                $verified.passedCount -ne $phaseIds.Count) { throw 'gate-platform-unverified-phase-results' }
+            Assert-GateCaseSet @($verified.cases | ForEach-Object canonicalId) $phaseIds
+            $markerRequired = $key -ceq 'plugin' -and @($catalog.cases | Where-Object {
+                $_.className -ceq 'NUnitCompatibility.CompatibilityCases' -and $_.canonicalId -cin $phaseIds
+            }).Count -gt 0
+            if ($group.markerRequired -ne $markerRequired -or ($markerRequired -and $group.markerObserved -ne $true)) {
+                throw 'gate-platform-execution-marker'
+            }
+            if ($markerRequired) {
+                $markers = @(Get-ChildItem -LiteralPath (Join-Path $platformRoot $group.runtimeEvidence) -File -Filter 'fixture-created-*.txt')
+                if ($markers.Count -ne 1 -or $markers[0].Name -cnotmatch '^fixture-created-[1-9][0-9]*\.txt$' -or
+                    [IO.File]::ReadAllText($markers[0].FullName) -cne 'constructed') { throw 'gate-platform-execution-marker' }
+                $relative = $group.runtimeEvidence + '/' + $markers[0].Name
+                $digest = (Get-FileHash -LiteralPath $markers[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+                [void](Resolve-GateArtifact $platformRoot $relative $digest)
+                $artifacts.Add(@{ path = 'platform/' + $relative; sha256 = $digest })
+            }
+            foreach ($id in $phaseIds) { $passed.Add($id) }
+            $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $verifiedPath).Replace('\', '/');
+                sha256 = (Get-FileHash -LiteralPath $verifiedPath -Algorithm SHA256).Hash.ToLowerInvariant() })
+        }
+        Assert-GateCaseSet $passed.ToArray() $ids
+        foreach ($name in @($verifiedCatalogPath, $expectedSelectionPath, $expectedPlanPath)) {
             $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $name).Replace('\', '/');
                 sha256 = (Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash.ToLowerInvariant() })
         }
