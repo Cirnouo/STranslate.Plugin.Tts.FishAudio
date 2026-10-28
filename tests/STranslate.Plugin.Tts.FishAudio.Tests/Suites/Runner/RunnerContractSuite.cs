@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FishAudio.Testing.Fixtures;
 using System.Runtime.ExceptionServices;
 
 internal static class RunnerContractSuite
@@ -613,6 +614,7 @@ internal static class RunnerContractSuite
     {
         var fixture = new RunnerFixture();
         var originalDirectory = Environment.CurrentDirectory;
+        var signingRoot = Path.Combine(Path.GetTempPath(), "fa-source-sign-" + Guid.NewGuid().ToString("N"));
         await RunSourceCheckoutOwnerAsync(async () =>
         {
             Directory.CreateDirectory(fixture.DirectoryPath);
@@ -620,7 +622,14 @@ internal static class RunnerContractSuite
             var readme = Path.Combine(fixture.DirectoryPath, "README.md");
             await File.WriteAllTextAsync(readme, "# Foreign fixture\n");
             await RunGitAsync(fixture.DirectoryPath, "add", "README.md");
-            await RunGitAsync(fixture.DirectoryPath, "-c", "user.name=Runner fixture", "-c", "user.email=runner@example.invalid", "commit", "--quiet", "-m", "fixture");
+            var git = GitFixtureSigning.ResolveGitExecutable();
+            var signing = GitFixtureSigning.Generate(signingRoot, GitFixtureSigning.ResolveSshKeygenExecutable(git),
+                "runner@example.invalid", (executable, arguments) =>
+                    RunFixtureProcessAsync(fixture.DirectoryPath, executable, arguments).GetAwaiter().GetResult());
+            await RunFixtureProcessAsync(fixture.DirectoryPath, git, signing.ConfigurationArguments().Concat(new[]
+                { "-c", "user.name=Runner fixture", "-c", "user.email=runner@example.invalid", "commit", "--quiet", "-S", "-m", "fixture" }).ToArray());
+            var objectId = (await RunFixtureProcessAsync(fixture.DirectoryPath, git, ["rev-parse", "HEAD"])).Trim();
+            await RunFixtureProcessAsync(fixture.DirectoryPath, git, signing.VerifyCommitArguments(objectId));
             await File.AppendAllTextAsync(readme, "Documentation-only foreign change.\n");
             var expected = await RegressionSource.CaptureAsync();
             Require(expected.Identity.Available, "The runner fixture is bound to its source checkout.");
@@ -634,7 +643,8 @@ internal static class RunnerContractSuite
             Require(actualScope.Ids.SetEquals(expectedScope.Ids) && actualScope.ConservativeFallback == expectedScope.ConservativeFallback,
                 "Affected selection follows the executable's checkout rather than foreign documentation changes.");
         }, () => { Environment.CurrentDirectory = originalDirectory; return Task.CompletedTask; },
-            () => { fixture.Dispose(); return Task.CompletedTask; });
+            () => { fixture.Dispose(); return Task.CompletedTask; },
+            () => { DeleteSourceSigningRoot(signingRoot); return Task.CompletedTask; });
     }
 
     private static async Task RunSourceCheckoutOwnerAsync(Func<Task> work, params Func<Task>[] cleanup)
@@ -664,14 +674,19 @@ internal static class RunnerContractSuite
         finally { root?.Complete(); }
     }
 
-    private static async Task RunGitAsync(string directory, params string[] arguments)
+    private static Task RunGitAsync(string directory, params string[] arguments)
+        => RunFixtureProcessAsync(directory, GitFixtureSigning.ResolveGitExecutable(), arguments);
+
+    private static async Task<string> RunFixtureProcessAsync(string directory, string executable, string[] arguments)
     {
         var process = new Process
         {
-            StartInfo = new ProcessStartInfo("git") { WorkingDirectory = directory, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true }
+            StartInfo = new ProcessStartInfo(executable) { WorkingDirectory = directory, UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true }
         };
+        process.StartInfo.Environment.Remove("SSH_AUTH_SOCK");
         var started = false;
-        Task stdout = Task.CompletedTask;
+        Task<string> stdout = Task.FromResult("");
         Task stderr = Task.CompletedTask;
         await RunSourceCheckoutOwnerAsync(async () =>
         {
@@ -680,14 +695,38 @@ internal static class RunnerContractSuite
             Require(started, "A local Git fixture starts.");
             stdout = process.StandardOutput.ReadToEndAsync();
             stderr = process.StandardError.ReadToEndAsync();
-            await WaitForGitProcessAsync(process, stdout, stderr);
+            process.StandardInput.Close();
+            await WaitForGitProcessAsync(process, stdout, stderr).ConfigureAwait(false);
         }, () => CleanupGitProcessAsync(process, started, stdout, stderr),
-            () => { process.Dispose(); return Task.CompletedTask; });
+            () => { process.Dispose(); return Task.CompletedTask; }).ConfigureAwait(false);
+        return await stdout.ConfigureAwait(false);
+    }
+
+    private static void DeleteSourceSigningRoot(string root)
+    {
+        if (!Directory.Exists(root)) return;
+        var full = Path.GetFullPath(root);
+        var parent = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath()));
+        var name = Path.GetFileName(full);
+        const string prefix = "fa-source-sign-";
+        Require(Path.GetDirectoryName(full)!.Equals(parent, StringComparison.OrdinalIgnoreCase) &&
+            name.StartsWith(prefix, StringComparison.Ordinal) && name.Length == prefix.Length + 32 &&
+            Guid.TryParseExact(name[prefix.Length..], "N", out _), "The signing fixture owns its exact Temp root.");
+        for (DirectoryInfo? item = new(full); item is not null; item = item.Parent)
+            Require((item.Attributes & FileAttributes.ReparsePoint) == 0, "Signing fixture cleanup rejects reparse directories.");
+        var allowed = new HashSet<string>(["fixture-ed25519", "fixture-ed25519.pub", "allowed_signers"], StringComparer.Ordinal);
+        var files = Directory.EnumerateFileSystemEntries(full).ToArray();
+        foreach (var path in files)
+            Require(allowed.Contains(Path.GetFileName(path)) &&
+                (File.GetAttributes(path) & (FileAttributes.Directory | FileAttributes.ReparsePoint)) == 0,
+                "Signing fixture cleanup only owns its regular material files.");
+        foreach (var path in files) File.Delete(path);
+        Directory.Delete(full, recursive: false);
     }
 
     private static async Task WaitForGitProcessAsync(Process process, Task stdout, Task stderr)
     {
-        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr);
+        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).ConfigureAwait(false);
         Require(process.ExitCode == 0, "A local Git fixture operation succeeds.");
     }
 
@@ -695,7 +734,7 @@ internal static class RunnerContractSuite
     {
         if (!started) return;
         if (!process.HasExited) process.Kill(entireProcessTree: true);
-        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(RegressionExecution.DiagnosticTimeout);
+        await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(RegressionExecution.DiagnosticTimeout).ConfigureAwait(false);
     }
 
     private static RegressionCase[] Registry(List<string> calls) =>

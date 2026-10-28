@@ -2,6 +2,7 @@ using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 
 internal enum NativeKeyboardCondition { Neutral, AltOnly }
 
@@ -23,15 +24,42 @@ internal static class NativeKeyboardStateFixture
     internal const int MaximumFailureContextLength = 1600;
     private static readonly int[] ControlledKeys = [0x01, 0x10, 0xA0, 0xA1, 0x11, 0xA2, 0xA3, 0x12, 0xA4, 0xA5];
 
-    internal static void Run(HwndSource source, Action action, NativeKeyboardCondition condition = NativeKeyboardCondition.Neutral) =>
-        Run(new Win32Api(source), action, condition);
+    internal static void Run(HwndSource source, Action action, NativeKeyboardCondition condition = NativeKeyboardCondition.Neutral)
+    {
+        var api = new Win32Api(source);
+        // Read the explicit diagnostic switch before touching the keyboard table.
+        // Thread identities were captured when this calling-thread API was created.
+        var configured = Environment.GetEnvironmentVariable("FISHAUDIO_NATIVE_KEYBOARD_FOLLOW_UP");
+        var followUp = configured switch
+        {
+            null or "" => null,
+            "1" => new NativeKeyboardFollowUpIdentity(api.CapturedManagedThreadId, api.CapturedNativeThreadId),
+            _ => throw new InvalidOperationException("native-key-follow-up-option-invalid")
+        };
+        RunOnSource(source, api, action, condition, followUp);
+    }
 
-    internal static void Run(INativeKeyboardStateApi api, Action action, NativeKeyboardCondition condition = NativeKeyboardCondition.Neutral)
+    internal static void RunOnSource(HwndSource ownedSource, INativeKeyboardStateApi api, Action action,
+        NativeKeyboardCondition condition = NativeKeyboardCondition.Neutral, NativeKeyboardFollowUpIdentity? followUp = null)
+    {
+        ownedSource.Dispatcher.VerifyAccess();
+        RunCore(api, action, condition, followUp, ownedSource.Dispatcher);
+    }
+
+    internal static void Run(INativeKeyboardStateApi api, Action action, NativeKeyboardCondition condition = NativeKeyboardCondition.Neutral) =>
+        Run(api, action, condition, null);
+
+    internal static void Run(INativeKeyboardStateApi api, Action action, NativeKeyboardCondition condition,
+        NativeKeyboardFollowUpIdentity? followUp) => RunCore(api, action, condition, followUp, null);
+
+    private static void RunCore(INativeKeyboardStateApi api, Action action, NativeKeyboardCondition condition,
+        NativeKeyboardFollowUpIdentity? followUp, Dispatcher? dispatcher)
     {
         ArgumentNullException.ThrowIfNull(action);
         if (condition is not (NativeKeyboardCondition.Neutral or NativeKeyboardCondition.AltOnly))
             throw new ArgumentOutOfRangeException(nameof(condition));
         api.VerifyContext();
+        using var processing = dispatcher?.DisableProcessing();
         var original = Read(api, "capture");
         var planned = (byte[])original.Clone();
         foreach (var key in ControlledKeys) planned[key] &= 0x7F;
@@ -42,9 +70,9 @@ internal static class NativeKeyboardStateFixture
         {
             api.VerifyContext();
             Require(api.Write(planned), "apply");
-            Verify(api, planned, condition, "before-action", ownedOnly: false);
+            Verify(api, planned, condition, "before-action", ownedOnly: false, followUp);
             action();
-            Verify(api, planned, condition, "after-action", ownedOnly: true);
+            Verify(api, planned, condition, "after-action", ownedOnly: true, followUp);
         }
         catch (Exception error) { primary = ExceptionDispatchInfo.Capture(error); }
         finally
@@ -78,7 +106,8 @@ internal static class NativeKeyboardStateFixture
         return state;
     }
 
-    private static void Verify(INativeKeyboardStateApi api, byte[] planned, NativeKeyboardCondition condition, string phase, bool ownedOnly)
+    private static void Verify(INativeKeyboardStateApi api, byte[] planned, NativeKeyboardCondition condition,
+        string phase, bool ownedOnly, NativeKeyboardFollowUpIdentity? followUp)
     {
         api.VerifyContext();
         var table = Read(api, "planned readback");
@@ -89,6 +118,19 @@ internal static class NativeKeyboardStateFixture
             var plannedDown = (planned[key] & 0x80) != 0;
             if (nativeDown == plannedDown) continue;
             var error = new InvalidOperationException("Native keyboard fixture failed at native down-bit mismatch.");
+            if (followUp is not null)
+            {
+                // The first mismatch is already latched. Exactly one optional
+                // read/query precedes formatting, Console, WPF and restoration.
+                // It cannot repair state, retry the action or recover this error.
+                var first = new NativeKeyboardFirstMismatch(error,
+                    phase == "before-action" ? NativeKeyboardFollowUpPhase.BeforeAction : NativeKeyboardFollowUpPhase.AfterAction,
+                    key, plannedDown, (table[key] & 0x80) != 0, nativeDown,
+                    followUp.ManagedThreadId, followUp.NativeThreadId);
+                var observed = NativeKeyboardFollowUp.Capture(api, first);
+                try { error.Data[NativeKeyboardFollowUp.EvidenceKey] = observed; }
+                catch { /* Optional metadata cannot replace the first mismatch. */ }
+            }
             try
             {
                 var context = $"phase={phase}; nativeKey=0x{key:X2}; plannedDown={plannedDown}; tableDown={(table[key] & 0x80) != 0}; nativeDown={nativeDown}";
@@ -148,6 +190,8 @@ internal static class NativeKeyboardStateFixture
     {
         private readonly int _managedThread = Environment.CurrentManagedThreadId;
         private readonly uint _nativeThread = GetCurrentThreadId();
+        internal int CapturedManagedThreadId => _managedThread;
+        internal uint CapturedNativeThreadId => _nativeThread;
 
         public void VerifyContext()
         {

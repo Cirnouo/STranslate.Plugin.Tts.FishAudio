@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -43,7 +44,7 @@ internal static class SearchAdjustmentControlSuite
         if (group is "proof")
         {
             foreach (var (locale, dark) in new[] { ("en", false), ("en", true), ("ru", true) })
-                await ObserveMatrixActionAsync($"proof/{locale}/{dark}", stage => GeometryAndFlags(locale, dark, 1.25, stage, proofDirectory));
+                await ObserveMatrixTaskAsync($"proof/{locale}/{dark}", stage => GeometryAndFlagsAsync(locale, dark, 1.25, stage, proofDirectory));
             await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
             return;
         }
@@ -119,11 +120,14 @@ internal static class SearchAdjustmentControlSuite
         {
             var scale = dpi switch { 1 => "1", 1.25 => "1-25", _ => "1-5" };
             cases.Add(($"popup.search-adjustment/native/geometry/{locale}/{(dark ? "dark" : "light")}/dpi-{scale}",
-                () => ObserveMatrixActionAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
-                    stage => GeometryAndFlags(locale, dark, dpi, stage, proofDirectory))));
+                () => ObserveMatrixTaskAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
+                    stage => GeometryAndFlagsAsync(locale, dark, dpi, stage, proofDirectory))));
         }
         return cases;
     }
+
+    private static Task ObserveMatrixTaskAsync(string name, Func<Action<string>, Task> action) =>
+        ObserveViewportActionAsync(action, matrixName: name);
 
     internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
         Func<Action, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
@@ -283,7 +287,8 @@ internal static class SearchAdjustmentControlSuite
 
     private static async Task ObserveViewportActionAsync(Func<Action<string>, Task> action,
         Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null,
-        Action<string>? write = null, TimeProvider? observationTimeProvider = null, Func<Action, Task>? scheduleReport = null)
+        Action<string>? write = null, TimeProvider? observationTimeProvider = null, Func<Action, Task>? scheduleReport = null,
+        string? matrixName = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -314,7 +319,8 @@ internal static class SearchAdjustmentControlSuite
                         {
                             await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
                             var eventual = Volatile.Read(ref actionFailure);
-                            Stage(eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
+                            Stage(matrixName is not null ? "same action observation completed; original deadline remains failed"
+                                : eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
                         }
                         catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
                     }
@@ -326,17 +332,21 @@ internal static class SearchAdjustmentControlSuite
                             foreach (var phase in phases)
                             {
                                 if (retired()) break;
-                                Write($"[search-viewport] {phase}");
+                                Write(matrixName is null ? $"[search-viewport] {phase}" : $"[search-adjustment/{matrixName}] {phase}");
                             }
                         }
                         else if (!retired())
-                            Write(FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain."));
+                            Write(matrixName is null
+                                ? FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain.")
+                                : $"[search-adjustment/{matrixName}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={executionTimeout.TotalSeconds}s; 320/480 DIP.");
                     }).ConfigureAwait(false);
                 }
                 catch { /* Best-effort diagnostics cannot replace the original outcome. */ }
             }, observationTimeProvider);
         }
-        Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
+        Stage(matrixName is null
+            ? FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline")
+            : FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s action deadline"));
         Func<Task> callback = async () =>
         {
             Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
@@ -345,7 +355,7 @@ internal static class SearchAdjustmentControlSuite
             catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
             finally
             {
-                Stage("action completed after original source and VM cleanup/unwind");
+                Stage(matrixName is null ? "action completed after original source and VM cleanup/unwind" : "action completed");
                 completion.TrySetResult();
             }
         };
@@ -1369,31 +1379,35 @@ internal static class SearchAdjustmentControlSuite
 
     // Incorrect inset/padding/DPI conversion or missing/mismatched tile flags must
     // fail against the actual themed TextBox viewport and popup presentation source.
-    private static void GeometryAndFlags(string locale, bool dark, double dpi, Action<string> stage, string? proofDirectory = null)
+    private static async Task GeometryAndFlagsAsync(string locale, bool dark, double dpi, Action<string> stage, string? proofDirectory = null)
     {
         stage("ViewModel construction begin");
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-        stage("ViewModel ready; compiled view construction begin");
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        stage("compiled view ready; locale/theme setup begin");
-        SetLocale(view, locale);
-        view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-        // Headless STA has no Application/OS accent initialization. Supply a labeled
-        // palette state, retaining the production DynamicResource and native metrics.
-        var accentPalette = new SolidColorBrush(dark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8));
-        view.Resources["AccentFillColorDefaultBrush"] = accentPalette;
-        view.Resources["AccentButtonBackground"] = accentPalette;
-        view.Resources["AccentButtonForeground"] = Brushes.White;
-        view.Resources["RadioButtonOuterEllipseCheckedFill"] = accentPalette;
-        view.Resources["RadioButtonOuterEllipseCheckedStroke"] = accentPalette;
-        stage("locale/theme ready (concrete accent fixture); source attach/layout begin");
-        var source = Attach(view);
-        stage("source attach/layout ready");
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        HwndSource? source = null;
         FrameworkElement? diagnosticControl = null;
+        PopupCloseObserver? popupObserver = null;
+        Task? popupClosing = null;
+        ExceptionDispatchInfo? failure = null;
         try
         {
+            stage("ViewModel ready; compiled view construction begin");
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            stage("compiled view ready; locale/theme setup begin");
+            SetLocale(view, locale);
+            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            // Headless STA has no Application/OS accent initialization. Supply a labeled
+            // palette state, retaining the production DynamicResource and native metrics.
+            var accentPalette = new SolidColorBrush(dark ? Color.FromRgb(0x4C, 0xC2, 0xFF) : Color.FromRgb(0x00, 0x5F, 0xB8));
+            view.Resources["AccentFillColorDefaultBrush"] = accentPalette;
+            view.Resources["AccentButtonBackground"] = accentPalette;
+            view.Resources["AccentButtonForeground"] = Brushes.White;
+            view.Resources["RadioButtonOuterEllipseCheckedFill"] = accentPalette;
+            view.Resources["RadioButtonOuterEllipseCheckedStroke"] = accentPalette;
+            stage("locale/theme ready (concrete accent fixture); source attach/layout begin");
+            source = Attach(view);
+            stage("source attach/layout ready");
             var control = Control(view);
             diagnosticControl = control;
             var input = (TextBox)view.FindName("VoiceSearchInput");
@@ -1431,6 +1445,7 @@ internal static class SearchAdjustmentControlSuite
                 AssertEqual(true, caret.Right <= input.ActualWidth - 34, $"The final caret remains within the reserved text viewport ({locale}/{dpi}/{width}: {caret.Right}/{input.ActualWidth}, offset {input.HorizontalOffset})");
                 AssertEqual(true, caret.Right <= clear.TranslatePoint(new Point(), input).X, "The terminal native caret ends before clear");
                 stage($"width={width}: main popup begin");
+                popupObserver = new PopupCloseObserver(Part<Popup>(control, "AdjustmentPopup"));
                 Open(control);
                 stage($"width={width}: main popup open/drain ready");
                 var surface = Part<Border>(control, "PopupSurface");
@@ -1528,14 +1543,48 @@ internal static class SearchAdjustmentControlSuite
                 stage($"width={width}: popup cleanup begin");
                 Click(control, "CloseButton");
                 stage($"width={width}: popup cleanup ready open={IsOpen(control)} inputOwned={control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(control)}");
+                popupClosing = popupObserver.CloseAsync(() =>
+                {
+                    if (IsOpen(control)) Click(control, "CloseButton");
+                });
+                await popupClosing;
+                popupObserver.Dispose();
+                popupObserver = null;
+                popupClosing = null;
             }
         }
+        catch (Exception error) { failure = ExceptionDispatchInfo.Capture(error); }
         finally
         {
-            stage("HwndSource cleanup begin");
-            source.Dispose();
-            stage($"HwndSource cleanup ready inputOwned={diagnosticControl?.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(diagnosticControl)}");
+            if (popupObserver is not null)
+            {
+                try
+                {
+                    popupClosing ??= popupObserver.CloseAsync(() =>
+                    {
+                        if (diagnosticControl is not null && IsOpen(diagnosticControl))
+                            Click(diagnosticControl, "CloseButton");
+                    }, failure?.SourceException);
+                    await popupClosing;
+                }
+                catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
+                try { popupObserver.Dispose(); }
+                catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
+            }
+            try
+            {
+                if (source is not null)
+                {
+                    stage("HwndSource cleanup begin");
+                    source.Dispose();
+                    stage($"HwndSource cleanup ready inputOwned={diagnosticControl?.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(diagnosticControl)}");
+                }
+            }
+            catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
+            try { vm.Dispose(); }
+            catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
         }
+        failure?.Throw();
     }
 
 

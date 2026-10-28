@@ -80,6 +80,28 @@ function Test-ContainedPath([string]$Path, [string]$Parent) {
         [StringComparison]::OrdinalIgnoreCase)
 }
 
+function Lock-FrameworkEvidence([string]$Path) {
+    Require-Condition ([IO.Path]::IsPathFullyQualified($Path)) 'test-driver-framework-evidence-path'
+    $full = [IO.Path]::GetFullPath($Path)
+    $file = [IO.FileInfo]::new($full)
+    Require-Condition ($file.Exists -and ($file.Attributes -band
+        ([IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint)) -eq 0) 'test-driver-framework-evidence-not-regular'
+    for ($parent = $file.Directory; $null -ne $parent; $parent = $parent.Parent) {
+        Require-Condition ($parent.Exists -and ($parent.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) 'test-driver-framework-evidence-parent'
+    }
+    $locks.Add([IO.FileStream]::new($full, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    return $full
+}
+
+function Require-ExactFrameworkIds($Actual, [string[]]$Expected, [string]$Code) {
+    $values = @($Actual)
+    $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    Require-Condition ($values.Count -eq $Expected.Count) $Code
+    foreach ($id in $values) {
+        Require-Condition ($id -is [string] -and $seen.Add($id) -and $Expected -ccontains $id) $Code
+    }
+}
+
 function Initialize-ProcessOwner {
     if ('FishAudio.Testing.Driver.JobOwner' -as [type]) { return }
     Add-Type -TypeDefinition @'
@@ -395,7 +417,7 @@ function Get-SourceIdentity {
     } finally { $hash.Dispose() }
 }
 
-function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$FullNames = @()) {
+function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$FullNames = @(), [bool]$StopOnError = $false) {
     $settings = [Xml.XmlWriterSettings]::new()
     $settings.Encoding = $utf8
     $settings.Indent = $true
@@ -415,6 +437,7 @@ function Write-RunSettings([string]$Path, [string]$OutputDirectory, [string[]]$F
             @('DumpXmlTestDiscovery', 'true'), @('DumpXmlTestResults', 'false'),
             @('TestOutputXml', $OutputDirectory), @('OutputXmlFolderMode', 'AsSpecified')
         )) { $writer.WriteElementString($pair[0], $pair[1]) }
+        if ($StopOnError) { $writer.WriteElementString('StopOnError', 'true') }
         if ($FullNames.Count -gt 0) {
             $terms = foreach ($fullName in $FullNames) {
                 $regex = '\A' + [Text.RegularExpressions.Regex]::Escape($fullName) + '\z'
@@ -520,8 +543,8 @@ try {
         [IO.Directory]::CreateDirectory((Join-Path $runRoot $definition.key)) | Out-Null
         $assemblies.Add([pscustomobject]@{
             key = $definition.key; project = $definition.project; dll = $dll; sha256 = Get-Digest $dll
-            catalog = $null; selection = @(); executed = $false; terminal = $null
-            resultXml = $null; trx = $null
+            catalog = $null; selection = @(); executionAttempted = $false; executed = $false; terminal = $null
+            resultXml = $null; trx = $null; discovery = $null; supervisor = $null; supervisorSha256 = $null
             markerRequired = $false; markerObserved = $false; parallelProof = $false
         })
     }
@@ -544,6 +567,7 @@ try {
         $phase = Invoke-AssemblyPhase $assembly ('discover-' + $assembly.key) @('vstest', $assembly.dll,
             '--ListTests', ('--Settings:' + $settingsPath)) @{ FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence } -PhaseTimeoutMilliseconds 120000
         $raw = Join-Path $phase 'discovery.dump'
+        $assembly.discovery = $raw
         Require-Condition (@(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'fixture-created-*.txt').Count -eq 0) 'test-driver-discovery-constructed-fixture'
         $catalogPath = Join-Path $assemblyDirectory 'catalog.json'
         [void](Invoke-OwnedPhase ('catalog-' + $assembly.key) $dotnet @($toolDll, 'evidence-catalog',
@@ -579,14 +603,15 @@ try {
             if ($assembly.selection.Count -eq 0) { continue }
             Require-Condition ((Get-Digest $assembly.dll) -ceq $assembly.sha256 -and (Get-Digest $toolDll) -ceq $toolDigest) 'test-driver-binary-changed'
             $directory = Join-Path $runRoot $assembly.key
-            $output = Join-Path $directory 'result-xml'
-            $trxDirectory = Join-Path $directory 'trx'
-            [IO.Directory]::CreateDirectory($output) | Out-Null
-            [IO.Directory]::CreateDirectory($trxDirectory) | Out-Null
+            $supervised = Join-Path $directory 'supervised'
+            $output = Join-Path $supervised 'nunit'
+            $trxDirectory = Join-Path $supervised 'trx'
+            $resultPath = Join-Path $output ([IO.Path]::GetFileNameWithoutExtension($assembly.dll) + '.xml')
+            $trxPath = Join-Path $trxDirectory 'results.trx'
             $settingsPath = Join-Path $directory 'execution.runsettings'
             $names = @()
             if ($requested.Count -ne 0) { $names = @($assembly.selection | ForEach-Object fullName) }
-            Write-RunSettings $settingsPath $output $names
+            Write-RunSettings $settingsPath $output $names -StopOnError $true
             $ids = @($assembly.selection | ForEach-Object canonicalId)
             $assembly.parallelProof = $assembly.key -ceq 'plugin' -and $Workers -ge 2 -and
                 $ids -ccontains 'compat.parallel/api-key-format' -and $ids -ccontains 'compat.parallel/voice-id-format'
@@ -596,21 +621,71 @@ try {
             if ([IO.File]::Exists($dump)) {
                 [IO.File]::Move($dump, (Join-Path $directory 'preexisting-execution.dump'))
             }
-            [void](Invoke-AssemblyPhase $assembly ('execute-' + $assembly.key) @('vstest', $assembly.dll,
-                ('--Settings:' + $settingsPath), ('--ResultsDirectory:' + $trxDirectory),
-                '--logger:trx;LogFileName=results.trx') @{
-                    FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence
-                    FISHAUDIO_COMPAT_PARALLEL_PROOF = $(if ($assembly.parallelProof) { '1' } else { '0' })
-                })
+            $executionEnvironment = @{
+                FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence
+                FISHAUDIO_COMPAT_PARALLEL_PROOF = $(if ($assembly.parallelProof) { '1' } else { '0' })
+                FISHAUDIO_TEST_REPOSITORY_ROOT = $root
+                FISHAUDIO_PWSH_EXECUTABLE = $shell
+                FISHAUDIO_DOTNET_EXECUTABLE = $dotnet
+                DOTNET_CLI_UI_LANGUAGE = 'en'
+                VSLANG = '1033'
+            }
+            $requestPath = Join-Path $directory 'execution-request.json'
+            Write-NewJson $requestPath ([ordered]@{
+                schemaVersion = 1; runId = $runId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
+                workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet
+                launcherScript = Join-Path $root 'tools/Invoke-TestProcess.ps1'
+                testAssembly = $assembly.dll; testAssemblySha256 = $assembly.sha256
+                runSettings = $settingsPath; discoveryPath = $assembly.discovery
+                resultXmlPath = $resultPath; trxPath = $trxPath; outputDirectory = $supervised
+                cases = @($assembly.selection | ForEach-Object { [ordered]@{ canonicalId = $_.canonicalId; fullName = $_.fullName } })
+                maximumConcurrency = [Math]::Max(1, $Workers); requireOrder = $false; environment = $executionEnvironment
+            })
+            Require-Condition (-not [IO.Directory]::Exists($supervised) -and -not [IO.File]::Exists($supervised)) 'test-driver-supervisor-output-not-fresh'
+            $assembly.executionAttempted = $true
+            [void](Invoke-AssemblyPhase $assembly ('execute-' + $assembly.key) @($toolDll, 'framework-run', '--request', $requestPath) $executionEnvironment)
             $assembly.executed = $true
+            $supervisorPath = Lock-FrameworkEvidence (Join-Path $supervised 'supervisor.json')
+            [void](Lock-FrameworkEvidence $resultPath)
+            [void](Lock-FrameworkEvidence $trxPath)
+            $supervisor = [IO.File]::ReadAllText($supervisorPath) | ConvertFrom-Json -Depth 40
+            $sameTree = ($null -eq $source.tree -and $null -eq $supervisor.sourceTree) -or
+                ($source.tree -is [string] -and $supervisor.sourceTree -is [string] -and $supervisor.sourceTree -ceq $source.tree)
+            Require-Condition ($supervisor.schemaVersion -eq 1 -and $supervisor.kind -ceq 'framework-execution' -and
+                $supervisor.runId -ceq $runId -and $supervisor.testAssemblySha256 -ceq $assembly.sha256 -and
+                $sameTree -and $supervisor.sourceFingerprint -is [string] -and
+                $supervisor.sourceFingerprint -cmatch '^[a-f0-9]{64}$' -and $supervisor.sourceFingerprint -ceq $source.fingerprint -and
+                $supervisor.state.complete -is [bool] -and $supervisor.state.complete -and
+                $null -eq $supervisor.state.failureStage -and $null -eq $supervisor.failureCode -and
+                $supervisor.baselineClaim -is [bool] -and -not $supervisor.baselineClaim) 'test-driver-invalid-supervisor'
+            Require-ExactFrameworkIds $supervisor.selectedIds $ids 'test-driver-supervisor-selection-mismatch'
+            Require-ExactFrameworkIds $supervisor.state.passedIds $ids 'test-driver-supervisor-passed-set-mismatch'
+            foreach ($field in @('failedIds', 'timedOutIds', 'interruptedIds', 'notRunIds', 'activeIds')) {
+                Require-Condition (@($supervisor.state.$field).Count -eq 0) 'test-driver-supervisor-nonpassing-state'
+            }
+            Require-Condition ($supervisor.target.started -is [bool] -and $supervisor.target.started -and
+                $supervisor.target.pid -gt 0 -and $supervisor.target.exitCode -eq 0 -and
+                $supervisor.process.launcherPid -gt 0 -and $supervisor.process.launcherExited -is [bool] -and
+                $supervisor.process.launcherExited -and $supervisor.process.stdoutDrained -is [bool] -and
+                $supervisor.process.stdoutDrained -and $supervisor.process.stderrDrained -is [bool] -and
+                $supervisor.process.stderrDrained -and $supervisor.process.ownedActiveProcesses -eq 0) 'test-driver-supervisor-process-incomplete'
+            Require-Condition ($supervisor.rawEvidence.verified -is [bool] -and $supervisor.rawEvidence.verified -and
+                [IO.Path]::IsPathFullyQualified($supervisor.rawEvidence.resultXmlPath) -and
+                [IO.Path]::IsPathFullyQualified($supervisor.rawEvidence.trxPath) -and
+                (Test-SamePath $supervisor.rawEvidence.resultXmlPath $resultPath) -and
+                (Test-SamePath $supervisor.rawEvidence.trxPath $trxPath) -and
+                $supervisor.rawEvidence.resultXmlSha256 -ceq (Get-Digest $resultPath) -and
+                $supervisor.rawEvidence.trxSha256 -ceq (Get-Digest $trxPath)) 'test-driver-supervisor-raw-evidence-mismatch'
+            $assembly.supervisor = [IO.Path]::GetRelativePath($runRoot, $supervisorPath).Replace('\', '/')
+            $assembly.supervisorSha256 = Get-Digest $supervisorPath
             $xmlFiles = @(Get-ChildItem -LiteralPath $output -File -Filter '*.xml')
-            Require-Condition ($xmlFiles.Count -eq 1) 'test-driver-terminal-xml-count'
+            Require-Condition ($xmlFiles.Count -eq 1 -and (Test-SamePath $xmlFiles[0].FullName $resultPath)) 'test-driver-terminal-xml-count'
             $assembly.resultXml = [IO.Path]::GetRelativePath($runRoot, $xmlFiles[0].FullName).Replace('\', '/')
-            $assembly.trx = $assembly.key + '/trx/results.trx'
+            $assembly.trx = [IO.Path]::GetRelativePath($runRoot, $trxPath).Replace('\', '/')
             $terminalPath = Join-Path $directory 'terminal.json'
             [void](Invoke-OwnedPhase ('verify-' + $assembly.key) $dotnet @($toolDll, 'evidence-verify',
                 '--catalog', (Join-Path $directory 'catalog.json'), '--selection', (Join-Path $directory 'selection.json'),
-                '--result', $xmlFiles[0].FullName, '--trx', (Join-Path $trxDirectory 'results.trx'), '--output', $terminalPath) -PhaseTimeoutMilliseconds 120000)
+                '--result', $xmlFiles[0].FullName, '--trx', $trxPath, '--output', $terminalPath) -PhaseTimeoutMilliseconds 120000)
             $assembly.terminal = [IO.File]::ReadAllText($terminalPath) | ConvertFrom-Json
             Require-Condition ($assembly.terminal.schemaVersion -eq 1 -and $assembly.terminal.kind -ceq 'nunit-terminal' -and
                 $assembly.terminal.complete -and $assembly.terminal.passedCount -eq $assembly.selection.Count) 'test-driver-invalid-terminal'
@@ -642,6 +717,7 @@ try {
             terminal = $(if ($_.executed) { $_.key + '/terminal.json' } else { $null })
             terminalSha256 = $(if ($_.executed) { Get-Digest (Join-Path (Join-Path $runRoot $_.key) 'terminal.json') } else { $null })
             resultXml = $_.resultXml; trx = $_.trx
+            supervisor = $_.supervisor; supervisorSha256 = $_.supervisorSha256
             resultXmlSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.resultXml) } else { $null })
             trxSha256 = $(if ($_.executed) { Get-Digest (Join-Path $runRoot $_.trx) } else { $null })
             markerRequired = $_.markerRequired; markerObserved = $_.markerObserved; parallelProof = $_.parallelProof
@@ -660,10 +736,27 @@ try {
     if ($null -ne $runRoot) {
         try { Write-NewText (Join-Path $runRoot 'private-failure.txt') ($failure | Out-String) } catch { }
         try {
+            $remaining = @($assemblies | ForEach-Object {
+                $observedSupervisor = Join-Path $runRoot ($_.key + '/supervised/supervisor.json')
+                [ordered]@{
+                    key = $_.key; catalogAvailable = $null -ne $_.catalog
+                    selectedIds = @($_.selection | ForEach-Object canonicalId)
+                    executionAttempted = $_.executionAttempted
+                    verifiedPassedIds = @(if ($_.executed -and $null -ne $_.terminal) { $_.terminal.cases | ForEach-Object canonicalId })
+                    # A failed producer's raw state is retained for diagnosis;
+                    # it cannot turn this incomplete session into a passing one.
+                    unadmittedSupervisor = $(if ([IO.File]::Exists($observedSupervisor)) { [IO.Path]::GetRelativePath($runRoot, $observedSupervisor).Replace('\', '/') } else { $null })
+                    notStartedIds = @(if (-not $_.executionAttempted) { $_.selection | ForEach-Object canonicalId })
+                    unresolvedIds = @(if ($_.executionAttempted -and -not [IO.File]::Exists($observedSupervisor) -and -not $_.executed) {
+                        $_.selection | ForEach-Object canonicalId
+                    })
+                }
+            })
             Write-NewJson (Join-Path $runRoot 'failure.json') ([ordered]@{
                 schemaVersion = 1; kind = 'unified-test-session-failure'; runId = $runId; complete = $false
                 mode = $Mode; stage = $stage; reason = $failureCode; exceptionType = $failure.Exception.GetType().Name
-                baselineClaim = $false; source = $source; phases = $phases.ToArray(); finishedUtc = [DateTimeOffset]::UtcNow
+                baselineClaim = $false; source = $source; assemblies = $remaining
+                phases = $phases.ToArray(); finishedUtc = [DateTimeOffset]::UtcNow
             })
         } catch { }
     }

@@ -88,6 +88,7 @@ if ($FinalizeCommit) {
 $gateLock = [IO.File]::Open((Join-Path $state 'gate.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
 $exitCode = 1
 $manifest = $null
+$legacyCatalogGuard = $null
 $runRoot = $null
 $snapshotRoot = $null
 $snapshotOwned = $false
@@ -349,13 +350,15 @@ public static class FishAudioGitSnapshot
     # generation-aware metadata verifier below decides the authoritative result.
     $stage = 'verify-complete-catalog'
     $runner = Join-Path $snapshotRoot 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
+    $verifiedLegacyCatalog = Join-Path $runRoot 'verified-legacy-catalog.json'
     $verify = [Diagnostics.ProcessStartInfo]::new('dotnet')
     $verify.WorkingDirectory = $snapshotRoot
     $verify.UseShellExecute = $false
     $verify.CreateNoWindow = $true
     $verify.RedirectStandardOutput = $true
     $verify.RedirectStandardError = $true
-    foreach ($argument in @($runner, '--verify-snapshot-report', $reportPath, $tree)) { $verify.ArgumentList.Add($argument) }
+    foreach ($argument in @($runner, '--verify-snapshot-report', $reportPath, $tree,
+        '--catalog-output', $verifiedLegacyCatalog)) { $verify.ArgumentList.Add($argument) }
     foreach ($key in @($verify.Environment.Keys)) {
         if ($key -in @('GIT_INDEX_FILE','GIT_DIR','GIT_WORK_TREE','GIT_COMMON_DIR','GIT_PREFIX','FISHAUDIO_EXPECTED_TREE')) {
             $verify.Environment.Remove($key) | Out-Null
@@ -379,6 +382,7 @@ public static class FishAudioGitSnapshot
         if ($verificationStarted -and -not $verification.HasExited) { $verification.Kill($true); [void]$verification.WaitForExit(10000) }
         $verification.Dispose()
     }
+    $legacyCatalogGuard = [IO.File]::Open($verifiedLegacyCatalog, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
 
     # Transitional full hybrid: the old catalog and the framework-discovered
     # leaves are both obligations. A new selector cannot exempt its own changes.
@@ -404,6 +408,7 @@ public static class FishAudioGitSnapshot
     $artifacts.Add(@{ path = 'platform/manifest.json'; sha256 = (Get-FileHash -LiteralPath $platformManifestPath -Algorithm SHA256).Hash.ToLowerInvariant() })
     $assemblyKeys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $globalIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $migrationDiscoveries = [Collections.Generic.List[string]]::new()
     $expectedAssemblies = @{
         'plugin' = 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
         'testing-tool' = 'tests/FishAudio.Testing.Tests/bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll'
@@ -419,7 +424,7 @@ public static class FishAudioGitSnapshot
             $assembly.passedCount -ne $assembly.selectedCount) { throw 'gate-platform-assembly-mismatch' }
         [void](Resolve-GateArtifact $snapshotRoot $assembly.assembly $assembly.sha256)
         $paths = @{}
-        foreach ($name in @('catalog','selection','terminal','resultXml','trx')) {
+        foreach ($name in @('catalog','selection','terminal','resultXml','trx','supervisor')) {
             $relative = [string]$assembly.$name
             $digest = [string]$assembly.($name + 'Sha256')
             $paths[$name] = Resolve-GateArtifact $platformRoot $relative $digest
@@ -436,6 +441,9 @@ public static class FishAudioGitSnapshot
         Assert-GateCaseSet @($assembly.selectedIds) $ids
         Assert-GateCaseSet @($selection.ids) $ids
         Assert-GateCaseSet @($terminal.cases | ForEach-Object canonicalId) $ids
+        & (Join-Path $snapshotRoot 'tools/Assert-FrameworkSupervisor.ps1') -Path $paths.supervisor -RunId $platform.runId `
+            -SourceTree $platform.source.tree -SourceFingerprint $platform.source.fingerprint -AssemblySha256 $assembly.sha256 `
+            -CaseIds $ids -ResultXmlSha256 $assembly.resultXmlSha256 -TrxSha256 $assembly.trxSha256
         foreach ($case in $catalog.cases) {
             if (-not $globalIds.Add([string]$case.canonicalId)) { throw 'gate-platform-ambiguous-canonical-id' }
         }
@@ -445,6 +453,7 @@ public static class FishAudioGitSnapshot
         }
         $discovery = @($platform.phases | Where-Object name -CEQ ('discover-' + $key))[0]
         $dump = Join-Path $platformRoot ($discovery.directory + '/discovery.dump')
+        $migrationDiscoveries.Add($dump)
         $dumpDigest = (Get-FileHash -LiteralPath $dump -Algorithm SHA256).Hash.ToLowerInvariant()
         $dumpRelative = [IO.Path]::GetRelativePath($platformRoot, $dump).Replace('\', '/')
         [void](Resolve-GateArtifact $platformRoot $dumpRelative $dumpDigest)
@@ -469,6 +478,29 @@ public static class FishAudioGitSnapshot
             $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $name).Replace('\', '/');
                 sha256 = (Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash.ToLowerInvariant() })
         }
+    }
+    # A retired legacy descriptor must have an independently discovered NUnit
+    # successor. The pinned historical bytes cannot be rewritten to hide a loss.
+    # This is migration identity conservation, not a new test registry or proof
+    # that a moved assertion body retained its meaning.
+    $stage = 'verify-migration-conservation'
+    $migrationInputs = Join-Path $runRoot 'migration-discoveries.json'
+    [IO.File]::WriteAllText($migrationInputs, (@{ schemaVersion = 1; paths = $migrationDiscoveries.ToArray() } |
+        ConvertTo-Json -Depth 4), $encoding)
+    $migrationOutput = Join-Path $runRoot 'migration-conservation.json'
+    Invoke-GatePhase 'migration-conservation' 'dotnet' @($tool, 'evidence-migration',
+        '--reference', (Join-Path $snapshotRoot 'tests/Migration/legacy-catalog.json'),
+        '--legacy', $verifiedLegacyCatalog, '--discoveries', $migrationInputs,
+        '--migrations', (Join-Path $snapshotRoot 'tests/Migration/migrated-cases.json'), '--output', $migrationOutput) 120000
+    $migrationEvidence = [IO.File]::ReadAllText($migrationOutput) | ConvertFrom-Json
+    if ($migrationEvidence.schemaVersion -ne 1 -or $migrationEvidence.kind -cne 'migration-conservation' -or
+        -not $migrationEvidence.complete -or $migrationEvidence.baselineClaim -ne $false -or
+        $migrationEvidence.legacyCount -ne @($migrationEvidence.evidence.checkedOwners | Where-Object owner -EQ 0).Count) {
+        throw 'gate-migration-conservation-invalid'
+    }
+    foreach ($name in @($verifiedLegacyCatalog, $migrationInputs, $migrationOutput)) {
+        $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $name).Replace('\', '/');
+            sha256 = (Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash.ToLowerInvariant() })
     }
     foreach ($artifact in $artifacts) { [void](Resolve-GateArtifact $runRoot $artifact.path $artifact.sha256) }
     $manifest.platformArtifacts = $artifacts.ToArray()
@@ -504,6 +536,8 @@ public static class FishAudioGitSnapshot
     }
     catch { $cleanupFailure = $_ }
     try { Remove-GateSnapshot }
+    catch { if ($null -eq $cleanupFailure) { $cleanupFailure = $_ } }
+    try { if ($null -ne $legacyCatalogGuard) { $legacyCatalogGuard.Dispose() } }
     catch { if ($null -eq $cleanupFailure) { $cleanupFailure = $_ } }
     if ($null -ne $cleanupFailure) {
         if ($manifest) { $manifest['cleanupFailure'] = $cleanupFailure.Exception.GetType().FullName }

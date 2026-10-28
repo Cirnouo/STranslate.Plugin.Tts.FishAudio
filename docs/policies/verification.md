@@ -2,6 +2,10 @@
 
 Choose verification that exercises the changed contract. NUnit owns discovery, lifecycle, assertions and framework results for new ordinary cases; use attributes and named parameter rows without changing a central registry. Existing legacy scenarios remain independently required until their assertion responsibilities and lifecycle ownership have migrated. Keep normal tests deterministic and offline; do not make a credential or provider availability a prerequisite for CI. The [test-system specification](../specs/test-system.md) distinguishes the implemented full hybrid gate from later complete-baseline and test-impact stages.
 
+Code commits must be signed. Use the contributor's configured signing key and an explicit `git commit -S`; the pre-commit gate and final commit-msg receipt remain required. Verify the actual created commit's signature as well as its tested tree. Do not disable signing to work around a prompt or failure.
+
+Disposable Git fixtures also create signed commits and verify their exact object IDs. They use isolated SSH test keys through the shared [fixture signing helper](../../tools/FishAudio.Testing/Fixtures/GitFixtureSigning.cs), rather than the contributor's key or agent. Private material stays in an independently owned Temp directory outside repository sources and retained evidence; only public verification metadata may be captured. Signing and verification share the fixture's existing process, deadline and cleanup ownership. A signature failure is a fixture failure, with no unsigned fallback.
+
 ## Commit gate and staged-tree identity
 
 Install and check the worktree-private `pre-commit` and `commit-msg` hooks with `./tools/Install-TestHooks.ps1 -Install` and `./tools/Install-TestHooks.ps1 -Check`; both accept `-RepositoryRoot <path>`. Keep existing pre-commit before the test gate and retain existing prepare/message hooks in their Git order. Run the prior commit-msg hook before the final receipt guard and propagate prior-hook failures. The installation check establishes hook and exit-code plumbing, not product-test success.

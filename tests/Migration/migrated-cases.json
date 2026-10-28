@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "migrations": [
+    {
+      "originalId": "settings.api-key/api-key-format-accepts-legacy-and-prefixed-keys",
+      "successorIds": [
+        "settings.api-key/api-key-format-accepts-legacy-and-prefixed-keys"
+      ],
+      "responsibility": "Preserves the complete original accepted-format loop and assertion messages in NUnitCases.Settings.ApiKeyFormatTests.ApiKeyFormatAcceptsLegacyAndPrefixedKeys."
+    },
+    {
+      "originalId": "settings.api-key/api-key-format-rejects-malformed-keys",
+      "successorIds": [
+        "settings.api-key/api-key-format-rejects-malformed-keys"
+      ],
+      "responsibility": "Preserves all original malformed, null, length, case, whitespace and suffix-character inputs and assertion messages in NUnitCases.Settings.ApiKeyFormatTests.ApiKeyFormatRejectsMalformedKeys."
+    },
+    {
+      "originalId": "settings.api-key/voice-id-format-remains-legacy-only",
+      "successorIds": [
+        "settings.api-key/voice-id-format-remains-legacy-only"
+      ],
+      "responsibility": "Preserves the original lowercase, uppercase and prefixed-key Voice ID assertions and messages in NUnitCases.Settings.ApiKeyFormatTests.VoiceIdFormatRemainsLegacyOnly."
+    },
+    {
+      "originalId": "settings.streaming/missing-configuration-loads-pcm",
+      "successorIds": [
+        "settings.streaming/missing-configuration-loads-pcm"
+      ],
+      "responsibility": "Preserves the original null host-configuration load and schema-2/PCM default assertions in StreamingSettingsSuite.MissingConfigurationLoadsPcm."
+    },
+    {
+      "originalId": "settings.streaming/legacy-formats-migrate-and-current-defaults-use-pcm",
+      "successorIds": [
+        "settings.streaming/legacy-formats-migrate-and-current-defaults-use-pcm"
+      ],
+      "responsibility": "Preserves every original legacy/current schema, valid/invalid/duplicate audio-format loop and the key, voice, model, bitrate and canonical-save assertions in StreamingSettingsSuite.LegacyFormatsMigrateAndCurrentDefaultsUsePcm."
+    },
+    {
+      "originalId": "settings.streaming/future-and-duplicate-schemas-remain-read-only",
+      "successorIds": [
+        "settings.streaming/future-and-duplicate-schemas-remain-read-only"
+      ],
+      "responsibility": "Preserves the original future/duplicate-schema inputs, read-only host-save rejection and retained future schema number assertions in StreamingSettingsSuite.FutureAndDuplicateSchemasRemainReadOnly."
+    },
+    {
+      "originalId": "settings.streaming/invalid-streaming-field-types-default-independently",
+      "successorIds": [
+        "settings.streaming/invalid-streaming-field-types-default-independently"
+      ],
+      "responsibility": "Preserves both original malformed/duplicate streaming-field inputs and the independent defaults, retained key/bitrate and canonical-save assertions in StreamingSettingsSuite.InvalidStreamingFieldTypesDefaultIndependently."
+    },
+    {
+      "originalId": "settings.streaming/new-fields-round-trip-and-snapshots-preserve-all-settings",
+      "successorIds": [
+        "settings.streaming/new-fields-round-trip-and-snapshots-preserve-all-settings"
+      ],
+      "responsibility": "Preserves the complete original persisted-field round trip, canonical-save state and detached format/cached-metadata snapshot assertions in StreamingSettingsSuite.NewFieldsRoundTripAndSnapshotsPreserveAllSettings."
+    },
+    {
+      "originalId": "settings.streaming/lease-commit-and-rollback-preserve-streaming-settings",
+      "successorIds": [
+        "settings.streaming/lease-commit-and-rollback-preserve-streaming-settings"
+      ],
+      "responsibility": "Preserves the original initialization lease clone, failed and successful saves, update callback and runtime/backing-store rollback assertions in StreamingSettingsSuite.LeaseCommitAndRollbackPreserveStreamingSettings."
+    },
+    {
+      "originalId": "settings.streaming/model-order-defaults-and-saved-choices-stay-independent",
+      "successorIds": [
+        "settings.streaming/model-order-defaults-and-saved-choices-stay-independent"
+      ],
+      "responsibility": "Preserves the original before/at-cutoff model ordering and defaults, all saved-choice normalization inputs and loudness-capability assertions in StreamingSettingsSuite.ModelOrderDefaultsAndSavedChoicesStayIndependent."
+    },
+    {
+      "originalId": "settings.streaming/view-model-format-and-model-toggles-preserve-settings",
+      "successorIds": [
+        "settings.streaming/view-model-format-and-model-toggles-preserve-settings"
+      ],
+      "responsibility": "Preserves the original context/view-model ownership, construction-save count, audio-format/bitrate toggles, saved model/loudness preference and API-key lock assertions in StreamingSettingsSuite.ViewModelFormatAndModelTogglesPreserveSettings."
+    },
+    {
+      "originalId": "settings.streaming/streaming-settings-ui-resources-are-complete",
+      "successorIds": [
+        "settings.streaming/streaming-settings-ui-resources-are-complete"
+      ],
+      "responsibility": "Preserves the original snapshot-source AudioFormat binding check and every locale's format-description/streaming-failure resource assertions in StreamingSettingsSuite.StreamingSettingsUiResourcesAreComplete."
+    },
+    {
+      "originalId": "streaming.text/markup-stays-ordered-across-windows-without-duplicate-directions",
+      "successorIds": [
+        "streaming.text/markup-stays-ordered-across-windows-without-duplicate-directions"
+      ],
+      "responsibility": "Preserves every original markup/direction input, complete chunk-reassembly loop, surrogate-boundary check and incomplete-direction flush assertions in StreamingTextSuite.MarkupStaysOrderedAcrossWindowsWithoutDuplicateDirectionsAsync."
+    },
+    {
+      "originalId": "streaming.text/control-only-and-incomplete-input-never-claims-readable-prefix",
+      "successorIds": [
+        "streaming.text/control-only-and-incomplete-input-never-claims-readable-prefix"
+      ],
+      "responsibility": "Preserves all original control-only/incomplete inputs and unchanged-content, non-readable-prefix and finality assertions in StreamingTextSuite.ControlOnlyAndIncompleteInputNeverClaimsReadablePrefixAsync."
+    },
+    {
+      "originalId": "streaming.text/boundary-priority-and-huge-tail-do-not-change-first-prefix",
+      "successorIds": [
+        "streaming.text/boundary-priority-and-huge-tail-do-not-change-first-prefix"
+      ],
+      "responsibility": "Preserves the original sentence-boundary priority and identical first-prefix comparison with a million-character unread tail in StreamingTextSuite.BoundaryPriorityAndHugeTailDoNotChangeFirstPrefixAsync."
+    }
+  ]
+}

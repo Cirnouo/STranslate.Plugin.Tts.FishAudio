@@ -10,7 +10,14 @@ internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "framework-run")
+        {
+            if (args.Length != 3 || args[1] != "--request") return 2;
+            try { return await Execution.FrameworkExecutionDriver.RunAsync(args[2]); }
+            catch (Exception) { Console.Error.WriteLine("framework-run: rejected invocation or incomplete execution."); return 1; }
+        }
         if (EvidenceCommands.IsInvocation(args)) return EvidenceCommands.Run(args);
+        if (MigrationCommands.IsInvocation(args)) return MigrationCommands.Run(args);
         if (CoverageCommands.IsInvocation(args)) return CoverageCommands.Run(args);
         if (!TryReadOptions(args, out var options))
         {
