@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using Microsoft.Extensions.Logging;
 using static AsyncTestWait;
@@ -5,9 +6,11 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class TtsSuite
 {
-    internal static async Task PlayAudioUsesOldInitializationWhileReinitLoadIsBlockedAsync()
+    public static async Task PlayAudioUsesOldInitializationWhileReinitLoadIsBlockedAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         var oldSettings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);
@@ -43,7 +46,7 @@ internal static class TtsSuite
         AssertEqual(0, oldHttp.PostAsBytesCallCount + newHttp.PostAsBytesCallCount, "Neither context should request whole-buffer HTTP audio");
     }
 
-    internal static async Task PlayAudioUsesInitializationSnapshotAcrossReinitAsync()
+    public static async Task PlayAudioUsesInitializationSnapshotAcrossReinitAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         var oldLogger = new TestLogger();
@@ -84,7 +87,10 @@ internal static class TtsSuite
         await WaitUntilAsync(() => !newVm.IsApiKeyInputLocked, "new startup credit lock release");
     }
 
-    internal static async Task PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.tts/play-audio-preflight-stops-before-request-for-missing-network")]
+    [Order(156)]
+    public static async Task PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var snackbar = new TestSnackbar(); var logger = new TestLogger(); var session = new StreamingSessionDouble();
@@ -97,7 +103,10 @@ internal static class TtsSuite
         AssertEqual(false, logger.Contains(AppliedKey), "Preflight logs must not include keys");
     }
 
-    internal static async Task PlayAudioPreflightStopsBeforeRequestForEmptyAndMalformedKeysAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.tts/play-audio-preflight-stops-before-request-for-empty-and-malformed-keys")]
+    [Order(157)]
+    public static async Task PlayAudioPreflightStopsBeforeRequestForEmptyAndMalformedKeysAsync()
     {
         foreach (var key in new[] { "", "ABC" })
         {
@@ -112,7 +121,10 @@ internal static class TtsSuite
         }
     }
 
-    internal static async Task PlayAudioWithFormattedKeyStreamsWithoutCreditValidationAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.tts/play-audio-with-formatted-key-streams-without-credit-validation")]
+    [Order(158)]
+    public static async Task PlayAudioWithFormattedKeyStreamsWithoutCreditValidationAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var (service, http) = TestHttpServiceProxy.Create(); var session = new StreamingSessionDouble();
@@ -125,7 +137,10 @@ internal static class TtsSuite
         AssertEqual(AppliedKey, session.Request!.ApiKey, "The session must receive the full key unchanged");
     }
 
-    internal static async Task PlayAudioTimeoutShowsLocalizedErrorAndLogsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.tts/play-audio-timeout-shows-localized-error-and-logs")]
+    [Order(159)]
+    public static async Task PlayAudioTimeoutShowsLocalizedErrorAndLogsAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var snackbar = new TestSnackbar(); var logger = new TestLogger();

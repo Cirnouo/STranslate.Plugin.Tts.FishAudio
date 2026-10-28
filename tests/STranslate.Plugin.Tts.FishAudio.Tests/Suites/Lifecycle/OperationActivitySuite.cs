@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -7,6 +8,7 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static AsyncTestWait;
@@ -15,9 +17,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class OperationActivitySuite
 {
-    internal static void OperationActivityCounterLinearizesStateTransitions()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/operation-activity-counter-linearizes-state-transitions")]
+    [Order(99)]
+    public static void OperationActivityCounterLinearizesStateTransitions()
     {
         var sharedGate = new object();
         var counter = new OperationActivityCounter(sharedGate);
@@ -41,7 +48,10 @@ internal static class OperationActivitySuite
         counter.End();
     }
 
-    internal static void OperationActivityCounterPublishesOutsideGateAcrossThreads()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/operation-activity-counter-publishes-outside-gate-across-threads")]
+    [Order(100)]
+    public static void OperationActivityCounterPublishesOutsideGateAcrossThreads()
     {
         var sharedGate = new object();
         var observableState = false;
@@ -104,7 +114,10 @@ internal static class OperationActivitySuite
         AssertEqual(false, counter.End(), "An extra End should remain safe after cross-thread publication");
     }
 
-    internal static void OperationActivityCounterRecoveryFailureLeavesPublisherReusable()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/operation-activity-counter-recovery-failure-leaves-publisher-reusable")]
+    [Order(101)]
+    public static void OperationActivityCounterRecoveryFailureLeavesPublisherReusable()
     {
         var sharedGate = new object();
         var observableState = false;
@@ -185,7 +198,10 @@ internal static class OperationActivitySuite
         AssertEqual(false, observableState, "Observable state should converge to inactive after publisher recovery");
     }
 
-    internal static void OperationActivityCounterPublishesPendingStateBeforeRethrowingPublicationFailure()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/operation-activity-counter-publishes-pending-state-before-rethrowing-publication-failure")]
+    [Order(102)]
+    public static void OperationActivityCounterPublishesPendingStateBeforeRethrowingPublicationFailure()
     {
         var sharedGate = new object();
         var observableState = false;
@@ -279,46 +295,85 @@ internal static class OperationActivitySuite
                 _ => Task.FromException<string>(new InvalidOperationException("Unexpected credit request.")),
             };
         };
-        var plugin = new Main();
-
-        plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await startupCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        var viewModel = plugin.GetOrCreateSettingsViewModel();
-        viewModel.BeginApiKeyOperation();
-
-        releaseStartupCredit.SetResult("{\"credit\":\"45.67\"}");
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-        await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit overlap to complete");
-
-        AssertEqual(true, viewModel.IsApiKeyInputLocked, "Startup completion should not unlock the overlapping TTS operation");
-
-        var manualRefreshTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
-        await manualCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(true, viewModel.IsLoadingCredit, "Manual refresh should become the active credit operation");
-        AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual refresh should keep the API Key locked while TTS is active");
-
-        viewModel.EndApiKeyOperation();
-        AssertEqual(true, viewModel.IsApiKeyInputLocked, "TTS completion should not unlock the overlapping manual refresh");
-
-        var reentrantTtsStarted = false;
-        viewModel.PropertyChanging += (_, args) =>
+        ExceptionDispatchInfo? failure = null;
+        try
         {
-            if (!reentrantTtsStarted && args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+            using var plugin = new Main();
+            Task? startupTask = null;
+            Task? manualRefreshTask = null;
+            try
             {
-                reentrantTtsStarted = true;
+                plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+                startupTask = plugin.PendingStartupTask;
+                await startupCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
+                var viewModel = plugin.GetOrCreateSettingsViewModel();
                 viewModel.BeginApiKeyOperation();
+
+                releaseStartupCredit.SetResult("{\"credit\":\"45.67\"}");
+                await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+                await WaitUntilAsync(() => !viewModel.IsLoadingCredit, "startup credit overlap to complete");
+
+                AssertEqual(true, viewModel.IsApiKeyInputLocked, "Startup completion should not unlock the overlapping TTS operation");
+
+                manualRefreshTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
+                await manualCreditStarted.Task.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(true, viewModel.IsLoadingCredit, "Manual refresh should become the active credit operation");
+                AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual refresh should keep the API Key locked while TTS is active");
+
+                viewModel.EndApiKeyOperation();
+                AssertEqual(true, viewModel.IsApiKeyInputLocked, "TTS completion should not unlock the overlapping manual refresh");
+
+                var reentrantTtsStarted = false;
+                viewModel.PropertyChanging += (_, args) =>
+                {
+                    if (!reentrantTtsStarted && args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+                    {
+                        reentrantTtsStarted = true;
+                        viewModel.BeginApiKeyOperation();
+                    }
+                };
+
+                releaseManualCredit.SetResult("{\"credit\":\"56.78\"}");
+                await manualRefreshTask.WaitAsync(RegressionExecution.Timeout);
+
+                AssertEqual(true, reentrantTtsStarted, "Manual completion should deterministically start the final reentrant TTS operation");
+                AssertEqual(false, viewModel.IsLoadingCredit, "Manual completion should clear credit loading after startup has completed");
+                AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual completion should not overwrite the final TTS lock");
+
+                viewModel.EndApiKeyOperation();
+                AssertEqual(false, viewModel.IsApiKeyInputLocked, "The API Key should unlock only after the final TTS operation completes");
             }
-        };
-
-        releaseManualCredit.SetResult("{\"credit\":\"56.78\"}");
-        await manualRefreshTask.WaitAsync(RegressionExecution.Timeout);
-
-        AssertEqual(true, reentrantTtsStarted, "Manual completion should deterministically start the final reentrant TTS operation");
-        AssertEqual(false, viewModel.IsLoadingCredit, "Manual completion should clear credit loading after startup has completed");
-        AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual completion should not overwrite the final TTS lock");
-
-        viewModel.EndApiKeyOperation();
-        AssertEqual(false, viewModel.IsApiKeyInputLocked, "The API Key should unlock only after the final TTS operation completes");
+            catch (Exception error)
+            {
+                failure = ExceptionDispatchInfo.Capture(error);
+            }
+            finally
+            {
+                releaseStartupCredit.TrySetResult("{\"credit\":\"45.67\"}");
+                releaseManualCredit.TrySetResult("{\"credit\":\"56.78\"}");
+                try
+                {
+                    await (startupTask ?? plugin.PendingStartupTask);
+                }
+                catch (Exception error)
+                {
+                    failure ??= ExceptionDispatchInfo.Capture(error);
+                }
+                try
+                {
+                    if (manualRefreshTask is not null) await manualRefreshTask;
+                }
+                catch (Exception error)
+                {
+                    failure ??= ExceptionDispatchInfo.Capture(error);
+                }
+            }
+        }
+        catch (Exception error)
+        {
+            failure ??= ExceptionDispatchInfo.Capture(error);
+        }
+        failure?.Throw();
 
         static Task<string> StartRequest(TaskCompletionSource started, TaskCompletionSource<string> release)
         {
@@ -327,7 +382,11 @@ internal static class OperationActivitySuite
         }
     }
 
-    internal static void ApiKeyOperationCounterHandlesPropertyChangingReentrancy()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/api-key-operation-counter-handles-property-changing-reentrancy")]
+    [Property("FishAudioFreshHost", "true")]
+    [Order(104)]
+    public static void ApiKeyOperationCounterHandlesPropertyChangingReentrancy()
     {
         var viewModel = new SettingsViewModel(CreateContext(), new Settings());
         viewModel.BeginApiKeyOperation();
@@ -350,7 +409,11 @@ internal static class OperationActivitySuite
         AssertEqual(false, viewModel.IsApiKeyInputLocked, "The reentrant operation should unlock when its own End completes");
     }
 
-    internal static async Task ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync()
+    [Test]
+    [Property("FishAudioCaseId", "lifecycle.activity/api-key-operation-counter-handles-property-changed-reentrancy")]
+    [Property("FishAudioFreshHost", "true")]
+    [Order(105)]
+    public static async Task ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync()
     {
         var viewModel = new SettingsViewModel(CreateContext(), new Settings());
         viewModel.BeginApiKeyOperation();

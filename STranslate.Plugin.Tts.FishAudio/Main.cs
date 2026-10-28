@@ -46,6 +46,9 @@ public class Main : ITtsPlugin
 
     internal Task PendingStartupTask => _initializationCoordinator.PendingStartupTask;
 
+    internal PluginInitializationCoordinator.InitializationWorkCapture? CaptureInitializationWork() =>
+        _initializationCoordinator.CaptureInitializationWork();
+
     public Control GetSettingUI() => _initializationCoordinator.GetSettingUI();
 
     internal SettingsViewModel GetOrCreateSettingsViewModel() =>

@@ -12,7 +12,7 @@ internal static class RunnerContractSuite
         await RunStageAsync("source-checkout-process-budget", GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync);
         await RunStageAsync("source-checkout-cleanup", SourceCheckoutOwnerPreservesFailuresAndOneRootAsync);
         await RunStageAsync("native-owner-aliases", NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync);
-        await RunStageAsync("streaming-owner-aliases", StreamingOwnerAliasesPreserveSelectionAndReplayAsync);
+        await RunStageAsync("streaming-owner-aliases", HistoricalStreamingDescriptorAliasRulesAsync);
         await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
         await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
         await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
@@ -130,15 +130,18 @@ internal static class RunnerContractSuite
         RegressionCase Fake(string id, string partition) => new(id, partition, () => { calls.Add(id); return Task.CompletedTask; });
     }
 
-    private static async Task StreamingOwnerAliasesPreserveSelectionAndReplayAsync()
+    internal static async Task HistoricalStreamingDescriptorAliasRulesAsync()
     {
         using var fixture = new RunnerFixture();
         var telemetry = new List<RegressionActionEvent>();
         using (RegressionActionScope.BeginCase("runner.probe/metadata", telemetry.Add))
         {
-            var registry = RegressionCatalog.Create();
+            // This block tests historical descriptor metadata and generic alias rules.
+            // Retired selectors are checked separately against the real CLI entrypoint.
+            var registry = StreamingPlaybackSuite.CreateCases()
+                .Select(item => new RegressionCase(item.Id, "core", item.Run)).ToArray();
             var selected = RegressionSelection.Parse(["--list", "--case", "playback.streaming/run-all"]).ExplicitIds(registry);
-            Require(selected.Count == 22 && !registry.Any(item => item.Id == "playback.streaming/run-all"), "Default registration contains exactly the independent streaming leaves, with the old aggregate reserved as an alias.");
+            Require(selected.Count == 22 && !registry.Any(item => item.Id == "playback.streaming/run-all"), "Historical streaming descriptors contain exactly the independent leaves, with the old aggregate reserved as an alias.");
             Require(telemetry.Count == 0, "Creating and selecting streaming descriptors never runs action telemetry or fixtures.");
         }
         var calls = new List<string>();
@@ -150,7 +153,7 @@ internal static class RunnerContractSuite
             new("runner.sample/other", "native-settings", () => { calls.Add("other"); return Task.CompletedTask; })
         ];
         Require(await fixture.RunAsync(["--case", "playback.streaming/run-all", "--case", cases[1].Id, "--group", "playback.streaming/run-all", "--partition", "core"], cases) == 0,
-            "The former aggregate remains an exact case/group alias.");
+            "The synthetic legacy registry retains exact case/group alias rules.");
         Require(calls.SequenceEqual(["first", "second"]), "Aliases union in catalog order without duplicate execution.");
         foreach (var arguments in new string[][]
         {

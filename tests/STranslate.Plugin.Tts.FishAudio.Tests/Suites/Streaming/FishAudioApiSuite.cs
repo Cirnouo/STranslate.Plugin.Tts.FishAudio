@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -15,9 +16,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class FishAudioApiSuite
 {
-    internal static async Task PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.http/post-tts-request-honors-model-specific-prosody-and-timeout")]
+    [Order(223)]
+    public static async Task PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync()
     {
         foreach (var model in new[] { FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel })
         {

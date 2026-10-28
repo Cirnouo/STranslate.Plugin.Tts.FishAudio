@@ -15,9 +15,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class VoiceDiscoverySuite
 {
-    internal static async Task ByIdTimerCreationCannotOutliveConcurrentRetirementAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/by-id-timer-creation-cannot-outlive-concurrent-retirement")]
+    [NUnit.Framework.Order(203)]
+    public static async Task ByIdTimerCreationCannotOutliveConcurrentRetirementAsync()
     {
         // Installing a timer without rechecking its reserved owner after CreateTimer must fail.
         foreach (var retirement in new[] { "dispose", "replacement" })
@@ -67,7 +72,10 @@ internal static class VoiceDiscoverySuite
         }
     }
 
-    internal static async Task ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/reentrant-by-id-timer-creation-cannot-replace-its-successor")]
+    [NUnit.Framework.Order(204)]
+    public static async Task ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync()
     {
         // A TimeProvider may reenter before returning; the outer candidate must not overwrite its successor.
         using var clock = new InterceptingTimeProvider();
@@ -87,7 +95,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual(true, clock.Timers[1].IsDisposed, "Expiry disposes the surviving timer");
     }
 
-    internal static async Task ByIdErrorsExpireAtFiveSecondsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/by-id-errors-expire-at-five-seconds")]
+    [NUnit.Framework.Order(202)]
+    public static async Task ByIdErrorsExpireAtFiveSecondsAsync()
     {
         // Removing expiry, expiring early, or expiring only local validation must fail.
         (string Input, Exception? Failure, string Json, string Error)[] cases =
@@ -127,7 +138,10 @@ internal static class VoiceDiscoverySuite
         }
     }
 
-    internal static async Task IdenticalByIdErrorsRestartTheirLifetimeAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/identical-by-id-errors-restart-their-lifetime")]
+    [NUnit.Framework.Order(205)]
+    public static async Task IdenticalByIdErrorsRestartTheirLifetimeAsync()
     {
         // A text-equality guard or an old timer clearing a replacement must fail.
         var clock = new ManualStreamingTimeProvider();
@@ -146,37 +160,62 @@ internal static class VoiceDiscoverySuite
         AssertEqual<string?>(null, view.VoiceIdError, "The replacement must expire at its own five-second deadline");
     }
 
-    internal static async Task EditsAndNewByIdLookupsClearErrorsImmediatelyAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/edits-and-new-by-id-lookups-clear-errors-immediately")]
+    [NUnit.Framework.Order(206)]
+    public static Task EditsAndNewByIdLookupsClearErrorsImmediatelyAsync() =>
+        RunEditsAndNewByIdLookupsClearErrorsImmediatelyAsync();
+
+    internal static async Task RunEditsAndNewByIdLookupsClearErrorsImmediatelyAsync(
+        Action<NUnitCompatibility.PendingLookupOwnershipObservation>? onHeldWork = null)
     {
-        // Omitting edit/lookup retirement must fail before fake time advances.
-        var clock = new ManualStreamingTimeProvider();
-        var settings = new Settings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        using var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
-        view.VoiceIdInput = "bad";
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        view.VoiceIdInput = "also bad";
-        AssertEqual<string?>(null, view.VoiceIdError, "Editing an invalid draft must immediately clear its former error");
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        view.VoiceIdInput = "11111111111111111111111111111111";
-        http.GetException = new TimeoutException();
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        AssertNotNull(view.VoiceIdError, "The failed request should publish an error before replacement");
-        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) => pending.Task;
-        var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        AssertEqual<string?>(null, view.VoiceIdError, "A new lookup must clear the previous error while pending");
-        pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}");
-        await lookup.WaitAsync(RegressionExecution.Timeout);
-        var card = view.ByIdResults.Single();
-        clock.Advance(TimeSpan.FromSeconds(5));
-        AssertEqual<string?>(null, view.VoiceIdError, "Successful lookup must remain error-free");
-        AssertEqual(true, ReferenceEquals(card, view.ByIdResults.Single()), "An old error deadline must preserve the successful result object");
-        AssertEqual("11111111111111111111111111111111", view.VoiceIdInput, "Successful lookup retains the input");
-        AssertEqual("", settings.VoiceId, "Successful lookup still requires explicit Apply");
+        SettingsViewModel? ownedView = null;
+        TaskCompletionSource<string>? ownedResponse = null;
+        Task? ownedLookup = null;
+        await RegressionFixtureOwner.RunAsync(async () =>
+        {
+            // Omitting edit/lookup retirement must fail before fake time advances.
+            var clock = new ManualStreamingTimeProvider();
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
+            ownedView = view;
+            view.VoiceIdInput = "bad";
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            view.VoiceIdInput = "also bad";
+            AssertEqual<string?>(null, view.VoiceIdError, "Editing an invalid draft must immediately clear its former error");
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            view.VoiceIdInput = "11111111111111111111111111111111";
+            http.GetException = new TimeoutException();
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            AssertNotNull(view.VoiceIdError, "The failed request should publish an error before replacement");
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ownedResponse = pending;
+            http.GetAsyncHandler = (_, _, _) => pending.Task;
+            var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            ownedLookup = lookup;
+            onHeldWork?.Invoke(new NUnitCompatibility.PendingLookupOwnershipObservation(
+                lookup, pending.Task,
+                () => { pending.TrySetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}"); }, view, http.GetCallCount));
+            AssertEqual<string?>(null, view.VoiceIdError, "A new lookup must clear the previous error while pending");
+            pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}");
+            await lookup.WaitAsync(RegressionExecution.Timeout);
+            var card = view.ByIdResults.Single();
+            clock.Advance(TimeSpan.FromSeconds(5));
+            AssertEqual<string?>(null, view.VoiceIdError, "Successful lookup must remain error-free");
+            AssertEqual(true, ReferenceEquals(card, view.ByIdResults.Single()), "An old error deadline must preserve the successful result object");
+            AssertEqual("11111111111111111111111111111111", view.VoiceIdInput, "Successful lookup retains the input");
+            AssertEqual("", settings.VoiceId, "Successful lookup still requires explicit Apply");
+        },
+        () => { ownedView?.Dispose(); return Task.CompletedTask; },
+        () => { ownedResponse?.TrySetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Found\"}"); return Task.CompletedTask; },
+        () => ownedLookup ?? Task.CompletedTask);
     }
 
-    internal static async Task DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/deferred-by-id-expiry-rechecks-occurrence-and-disposal")]
+    [NUnit.Framework.Order(207)]
+    public static async Task DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync()
     {
         // A generation check before dispatch alone permits a queued old expiry to clear new text.
         foreach (var retirement in new[] { "identical", "different", "edit", "dispose" })
@@ -230,66 +269,93 @@ internal static class VoiceDiscoverySuite
         }
     }
 
-    internal static async Task ByIdDisposalRetiresTimerAndLateResponsesAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/by-id-disposal-retires-timer-and-late-responses")]
+    [NUnit.Framework.Order(208)]
+    public static async Task ByIdDisposalRetiresTimerAndLateResponsesAsync()
     {
-        // Missing timer disposal or request-owner checks must fail at the observable facade.
-        foreach (var retirement in new[] { "edit", "replacement", "credentials", "dispose" })
-        foreach (var fail in new[] { false, true })
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            var clock = new ManualStreamingTimeProvider();
-            var settings = new Settings();
-            var (service, http) = TestHttpServiceProxy.Create();
-            using var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
-            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            CancellationToken requestToken = default;
-            http.GetAsyncHandler = (_, _, token) => { requestToken = token; return pending.Task; }; // Intentionally ignores cancellation.
-            view.VoiceIdInput = "11111111111111111111111111111111";
-            var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
-            switch (retirement)
+            // Missing timer disposal or request-owner checks must fail at the observable facade.
+            foreach (var retirement in new[] { "edit", "replacement", "credentials", "dispose" })
+            foreach (var fail in new[] { false, true })
             {
-                case "edit": view.VoiceIdInput = "edited"; break;
-                case "replacement":
-                    http.GetAsyncHandler = null;
-                    http.GetException = new TimeoutException();
-                    await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-                    break;
-                case "credentials": view.ApiKey = "new-account"; break;
-                case "dispose": view.Dispose(); break;
+                SettingsViewModel? ownedView = null;
+                TaskCompletionSource<string>? ownedResponse = null;
+                Task? ownedLookup = null;
+                await RegressionFixtureOwner.RunAsync(async () =>
+                {
+                    var clock = new ManualStreamingTimeProvider();
+                    var settings = new Settings();
+                    var (service, http) = TestHttpServiceProxy.Create();
+                    var view = CreateTimedDiscoveryView(CreateContext(settings: settings, httpService: service), settings, clock);
+                    ownedView = view;
+                    var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ownedResponse = pending;
+                    CancellationToken requestToken = default;
+                    http.GetAsyncHandler = (_, _, token) => { requestToken = token; return pending.Task; }; // Intentionally ignores cancellation.
+                    view.VoiceIdInput = "11111111111111111111111111111111";
+                    var lookup = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                    ownedLookup = lookup;
+                    switch (retirement)
+                    {
+                        case "edit": view.VoiceIdInput = "edited"; break;
+                        case "replacement":
+                            http.GetAsyncHandler = null;
+                            http.GetException = new TimeoutException();
+                            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                            break;
+                        case "credentials": view.ApiKey = "new-account"; break;
+                        case "dispose": view.Dispose(); break;
+                    }
+                    AssertEqual(true, requestToken.IsCancellationRequested, "Retiring lookup ownership must propagate cancellation");
+                    var expectedError = view.VoiceIdError;
+                    if (fail) pending.SetException(new InvalidOperationException("late failure"));
+                    else pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Late\"}");
+                    await lookup.WaitAsync(RegressionExecution.Timeout);
+                    AssertEqual(expectedError, view.VoiceIdError, "Cancellation-ignoring completion cannot republish an error");
+                    AssertEqual(0, view.ByIdResults.Count, "Cancellation-ignoring completion cannot republish a card");
+                    clock.Advance(TimeSpan.FromSeconds(5));
+                    AssertEqual<string?>(null, view.VoiceIdError, "Only a current replacement error may expire");
+                },
+                () => { ownedView?.Dispose(); return Task.CompletedTask; },
+                () =>
+                {
+                    if (ownedLookup is null) return Task.CompletedTask;
+                    if (fail) ownedResponse?.TrySetException(new InvalidOperationException("late failure"));
+                    else ownedResponse?.TrySetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Late\"}");
+                    return Task.CompletedTask;
+                },
+                () => ownedLookup ?? Task.CompletedTask);
             }
-            AssertEqual(true, requestToken.IsCancellationRequested, "Retiring lookup ownership must propagate cancellation");
-            var expectedError = view.VoiceIdError;
-            if (fail) pending.SetException(new InvalidOperationException("late failure"));
-            else pending.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Late\"}");
-            await lookup.WaitAsync(RegressionExecution.Timeout);
-            AssertEqual(expectedError, view.VoiceIdError, "Cancellation-ignoring completion cannot republish an error");
-            AssertEqual(0, view.ByIdResults.Count, "Cancellation-ignoring completion cannot republish a card");
-            clock.Advance(TimeSpan.FromSeconds(5));
-            AssertEqual<string?>(null, view.VoiceIdError, "Only a current replacement error may expire");
-        }
 
-        var disposalClock = new ManualStreamingTimeProvider();
-        var disposalSettings = new Settings();
-        using var disposedView = CreateTimedDiscoveryView(CreateContext(settings: disposalSettings), disposalSettings, disposalClock);
-        await disposedView.SubmitVoiceIdCommand.ExecuteAsync(null);
-        disposedView.Dispose();
-        var notifications = 0;
-        disposedView.PropertyChanged += (_, _) => notifications++;
-        var previous = SettingsViewModel.UiThreadInvokerOverride;
-        var dispatches = 0;
-        try
-        {
-            SettingsViewModel.UiThreadInvokerOverride = _ => dispatches++;
-            disposalClock.Advance(TimeSpan.FromSeconds(10));
-        }
-        finally { SettingsViewModel.UiThreadInvokerOverride = previous; }
-        AssertEqual(0, dispatches, "Disposal must dispose its timer rather than leave a queued UI callback");
-        AssertEqual(0, notifications, "Timer retirement must leave a disposed facade untouched");
+            var disposalClock = new ManualStreamingTimeProvider();
+            var disposalSettings = new Settings();
+            using var disposedView = CreateTimedDiscoveryView(CreateContext(settings: disposalSettings), disposalSettings, disposalClock);
+            await disposedView.SubmitVoiceIdCommand.ExecuteAsync(null);
+            disposedView.Dispose();
+            var notifications = 0;
+            disposedView.PropertyChanged += (_, _) => notifications++;
+            var previous = SettingsViewModel.UiThreadInvokerOverride;
+            var dispatches = 0;
+            try
+            {
+                SettingsViewModel.UiThreadInvokerOverride = _ => dispatches++;
+                disposalClock.Advance(TimeSpan.FromSeconds(10));
+            }
+            finally { SettingsViewModel.UiThreadInvokerOverride = previous; }
+            AssertEqual(0, dispatches, "Disposal must dispose its timer rather than leave a queued UI callback");
+            AssertEqual(0, notifications, "Timer retirement must leave a disposed facade untouched");
+        });
     }
 
     private static SettingsViewModel CreateTimedDiscoveryView(IPluginContext context, Settings settings, TimeProvider clock) =>
         new(context, settings, null, null, voiceIdErrorTimeProvider: clock);
 
-    internal static async Task SearchAndByIdUseConfiguredTokenOrDummyAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-and-by-id-use-configured-token-or-dummy")]
+    [NUnit.Framework.Order(190)]
+    public static async Task SearchAndByIdUseConfiguredTokenOrDummyAsync()
     {
         foreach (var key in new[] { AppliedKey, "unvalidated-configured-key", "", " \t" })
         {
@@ -318,49 +384,67 @@ internal static class VoiceDiscoverySuite
         }
     }
 
-    internal static async Task CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/credential-changes-preserve-display-and-invalidate-pending-search")]
+    [NUnit.Framework.Order(200)]
+    public static async Task CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync()
     {
-        var settings = new Settings { ApiKey = "first-account" };
-        var (service, http) = TestHttpServiceProxy.Create();
-        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
-        const string id = "fedcba9876543210fedcba9876543210";
-        http.GetResponseJson = "{\"_id\":\"" + id + "\",\"title\":\"Private voice\"}";
-        view.VoiceIdInput = id;
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        view.ToggleFavoriteCommand.Execute(view.ByIdResults.Single());
-        view.SelectVoiceCommand.Execute(view.ByIdResults.Single());
-        var calls = http.GetCallCount;
-        view.ApiKey = "second-account";
-        AssertEqual(id, settings.VoiceId, "Key edits retain selected voice identity");
-        AssertEqual("Private voice", settings.CachedVoice?.Title, "Key edits retain the selected display snapshot");
-        AssertEqual("Private voice", view.ByIdResults.Single().Title, "Changing credentials retains the inspected detail card");
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        AssertEqual(calls + 1, http.GetCallCount, "The new account must not reuse the old metadata cache");
-        AssertEqual("Bearer second-account", AssertHeaders(http.LastGetOptions, "New credential headers")["Authorization"], "New lookup uses new credentials");
+        SettingsViewModel? ownedView = null;
+        TaskCompletionSource<string>? ownedResponse = null;
+        Task? ownedSearch = null;
+        await RegressionFixtureOwner.RunAsync(async () =>
+        {
+            var settings = new Settings { ApiKey = "first-account" };
+            var (service, http) = TestHttpServiceProxy.Create();
+            var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            ownedView = view;
+            const string id = "fedcba9876543210fedcba9876543210";
+            http.GetResponseJson = "{\"_id\":\"" + id + "\",\"title\":\"Private voice\"}";
+            view.VoiceIdInput = id;
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            view.ToggleFavoriteCommand.Execute(view.ByIdResults.Single());
+            view.SelectVoiceCommand.Execute(view.ByIdResults.Single());
+            var calls = http.GetCallCount;
+            view.ApiKey = "second-account";
+            AssertEqual(id, settings.VoiceId, "Key edits retain selected voice identity");
+            AssertEqual("Private voice", settings.CachedVoice?.Title, "Key edits retain the selected display snapshot");
+            AssertEqual("Private voice", view.ByIdResults.Single().Title, "Changing credentials retains the inspected detail card");
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            AssertEqual(calls + 1, http.GetCallCount, "The new account must not reuse the old metadata cache");
+            AssertEqual("Bearer second-account", AssertHeaders(http.LastGetOptions, "New credential headers")["Authorization"], "New lookup uses new credentials");
 
-        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) => pending.Task; // Deliberately ignores cancellation.
-        var search = view.SearchVoicesCommand.ExecuteAsync(null);
-        view.ApiKey = "";
-        pending.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + id + "\",\"title\":\"Late private voice\"}]}");
-        await search;
-        AssertEqual(0, view.SearchResults.Count, "An old credential response must not republish private cards");
-        http.GetAsyncHandler = null;
-        http.GetException = new HttpRequestException("rejected", null, HttpStatusCode.Unauthorized);
-        view.ApiKey = "rejected-key";
-        calls = http.GetCallCount;
-        await view.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(calls + 1, http.GetCallCount, "Rejected configured credentials must not fall back to dummy");
-        AssertEqual("Bearer rejected-key", AssertHeaders(http.LastGetOptions, "Rejected key headers")["Authorization"], "Rejected key is forwarded once");
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ownedResponse = pending;
+            http.GetAsyncHandler = (_, _, _) => pending.Task; // Deliberately ignores cancellation.
+            var search = view.SearchVoicesCommand.ExecuteAsync(null);
+            ownedSearch = search;
+            view.ApiKey = "";
+            pending.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + id + "\",\"title\":\"Late private voice\"}]}");
+            await search;
+            AssertEqual(0, view.SearchResults.Count, "An old credential response must not republish private cards");
+            http.GetAsyncHandler = null;
+            http.GetException = new HttpRequestException("rejected", null, HttpStatusCode.Unauthorized);
+            view.ApiKey = "rejected-key";
+            calls = http.GetCallCount;
+            await view.SearchVoicesCommand.ExecuteAsync(null);
+            AssertEqual(calls + 1, http.GetCallCount, "Rejected configured credentials must not fall back to dummy");
+            AssertEqual("Bearer rejected-key", AssertHeaders(http.LastGetOptions, "Rejected key headers")["Authorization"], "Rejected key is forwarded once");
+        },
+        () => { ownedView?.Dispose(); return Task.CompletedTask; },
+        () => { ownedResponse?.TrySetResult("{\"total\":1,\"items\":[{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Late private voice\"}]}"); return Task.CompletedTask; },
+        () => ownedSearch ?? Task.CompletedTask);
     }
 
-    internal static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/voice-lookup-requests-use-timeout-and-preserve-failure-semantics")]
+    [NUnit.Framework.Order(209)]
+    public static async Task VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
         var snackbar = new TestSnackbar();
         var context = CreateContext(snackbar, settings, httpService);
-        var viewModel = new SettingsViewModel(context, settings)
+        using var viewModel = new SettingsViewModel(context, settings)
         {
             SearchQuery = "voice",
         };
@@ -523,7 +607,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual(0, proxy.SaveCount, "Dispose and late by-ID completion should not issue redundant or stale saves");
     }
 
-    internal static async Task SearchPaginationHonorsServerWindowAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-pagination-honors-server-window")]
+    [NUnit.Framework.Order(213)]
+    public static async Task SearchPaginationHonorsServerWindowAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
@@ -549,7 +636,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual("1", viewModel.PageInput, "An out-of-window page should restore the visible page input");
     }
 
-    internal static void PaginationMetadataPreservesLegacyAndUnknownTotals()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/pagination-metadata-preserves-legacy-and-unknown-totals")]
+    [NUnit.Framework.Order(214)]
+    public static void PaginationMetadataPreservesLegacyAndUnknownTotals()
     {
         (string Json, int Page, int? Total, bool Exact, int? LastPage, bool Next, bool Limited)[] cases =
         [
@@ -593,7 +683,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual(false, unknown.CanRequestPage(int.MaxValue), "Large input must not overflow the navigation boundary");
     }
 
-    internal static async Task SearchWindowTailAndExplicitHasMoreAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-window-tail-and-explicit-has-more")]
+    [NUnit.Framework.Order(215)]
+    public static async Task SearchWindowTailAndExplicitHasMoreAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
@@ -630,7 +723,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual(calls, http.GetCallCount, "An explicit server end must also reject a forward page jump");
     }
 
-    internal static async Task SearchUnknownTotalsAndRawTypeFilteringAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-unknown-totals-and-raw-type-filtering")]
+    [NUnit.Framework.Order(216)]
+    public static async Task SearchUnknownTotalsAndRawTypeFilteringAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
@@ -675,7 +771,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual(3, viewModel.SearchPage, "Returning to an earlier unknown-total page must not forget previously visited pages");
     }
 
-    internal static async Task SearchCommittedQuerySurvivesEditsAndFailureAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-committed-query-survives-edits-and-failure")]
+    [NUnit.Framework.Order(217)]
+    public static async Task SearchCommittedQuerySurvivesEditsAndFailureAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
@@ -705,7 +804,10 @@ internal static class VoiceDiscoverySuite
             "An explicit successful search should commit the new query");
     }
 
-    internal static async Task SearchEmptyPageStopsForwardNavigationAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-empty-page-stops-forward-navigation")]
+    [NUnit.Framework.Order(218)]
+    public static async Task SearchEmptyPageStopsForwardNavigationAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
@@ -726,42 +828,60 @@ internal static class VoiceDiscoverySuite
         AssertEqual(0, viewModel.SearchResults.Count, "A new empty query must keep previous cards cleared");
     }
 
-    internal static async Task SearchReplacementRejectsLatePaginationAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-replacement-rejects-late-pagination")]
+    [NUnit.Framework.Order(220)]
+    public static async Task SearchReplacementRejectsLatePaginationAsync()
     {
-        var settings = new Settings();
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseFirst = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (url, _, _) =>
+        SettingsViewModel? ownedView = null;
+        TaskCompletionSource<string>? ownedResponse = null;
+        Task? ownedSearch = null;
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            if (url.Contains("title=first", StringComparison.Ordinal))
+            var settings = new Settings();
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseFirst = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ownedResponse = releaseFirst;
+            http.GetAsyncHandler = (url, _, _) =>
             {
-                firstStarted.TrySetResult();
-                return releaseFirst.Task;
-            }
-            return Task.FromResult(CreateSearchResponse(new { total = 12 }, new { _id = "new", title = "New result" }));
-        };
-        using var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
-        {
-            SearchQuery = "first",
-        };
-        var first = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        viewModel.SearchQuery = "second";
-        await viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        releaseFirst.SetResult(CreateSearchResponse(
-            new { total = 1000000, total_is_exact = false, max_offset = 1000, has_more = true },
-            new { _id = "old", title = "Stale result" }));
-        await first.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(2, viewModel.SearchTotalPages, "A replaced response must not overwrite applied pagination");
-        AssertEqual("New result", viewModel.SearchResults[0].Title, "A replaced response must not overwrite applied cards");
-        viewModel.SearchQuery = "uncommitted edit";
-        await viewModel.NextPageCommand.ExecuteAsync(null);
-        AssertEqual(true, http.LastGetUrl!.Contains("title=second", StringComparison.Ordinal),
-            "A late response must not replace the committed query snapshot");
+                if (url.Contains("title=first", StringComparison.Ordinal))
+                {
+                    firstStarted.TrySetResult();
+                    return releaseFirst.Task;
+                }
+                return Task.FromResult(CreateSearchResponse(new { total = 12 }, new { _id = "new", title = "New result" }));
+            };
+            var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+            {
+                SearchQuery = "first",
+            };
+            ownedView = viewModel;
+            var first = viewModel.SearchVoicesCommand.ExecuteAsync(null);
+            ownedSearch = first;
+            await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            viewModel.SearchQuery = "second";
+            await viewModel.SearchVoicesCommand.ExecuteAsync(null);
+            releaseFirst.SetResult(CreateSearchResponse(
+                new { total = 1000000, total_is_exact = false, max_offset = 1000, has_more = true },
+                new { _id = "old", title = "Stale result" }));
+            await first.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(2, viewModel.SearchTotalPages, "A replaced response must not overwrite applied pagination");
+            AssertEqual("New result", viewModel.SearchResults[0].Title, "A replaced response must not overwrite applied cards");
+            viewModel.SearchQuery = "uncommitted edit";
+            await viewModel.NextPageCommand.ExecuteAsync(null);
+            AssertEqual(true, http.LastGetUrl!.Contains("title=second", StringComparison.Ordinal),
+                "A late response must not replace the committed query snapshot");
+        },
+        () => { ownedView?.Dispose(); return Task.CompletedTask; },
+        () => { ownedResponse?.TrySetResult(CreateSearchResponse(new { total = 1000000, total_is_exact = false, max_offset = 1000, has_more = true }, new { _id = "old", title = "Stale result" })); return Task.CompletedTask; },
+        () => ownedSearch ?? Task.CompletedTask);
     }
 
-    internal static async Task ByIdRejectsExplicitNonTtsModelsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/by-id-rejects-explicit-non-tts-models")]
+    [NUnit.Framework.Order(219)]
+    public static async Task ByIdRejectsExplicitNonTtsModelsAsync()
     {
         const string originalVoiceId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
         var settings = new Settings { VoiceId = originalVoiceId };
@@ -790,12 +910,15 @@ internal static class VoiceDiscoverySuite
         return JsonSerializer.Serialize(body);
     }
 
-    internal static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-pagination-updates-visible-page-after-success-only")]
+    [NUnit.Framework.Order(212)]
+    public static async Task SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = "{\"total\":12,\"items\":[{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Page 1\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}";
-        var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
 
         await viewModel.SearchVoicesCommand.ExecuteAsync(null);
 
@@ -826,7 +949,10 @@ internal static class VoiceDiscoverySuite
         AssertEqual("Page 2", viewModel.SearchResults[0].Title, "Malformed pagination metadata must retain the last successful cards");
     }
 
-    internal static async Task SearchPublishesPaginationBeforeResolvingCoversAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/search-publishes-pagination-before-resolving-covers")]
+    [NUnit.Framework.Order(221)]
+    public static async Task SearchPublishesPaginationBeforeResolvingCoversAsync()
     {
         var settings = new Settings();
         var (httpService, http) = TestHttpServiceProxy.Create();

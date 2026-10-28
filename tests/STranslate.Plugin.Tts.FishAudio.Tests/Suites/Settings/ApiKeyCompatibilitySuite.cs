@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using Microsoft.Extensions.Logging;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -7,12 +8,17 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class ApiKeyCompatibilitySuite
 {
     // Synthetic fixture: eight five-character groups followed by three characters.
     private const string PrefixedKey = "sk-fish-Ab0_-Ab0_-Ab0_-Ab0_-Ab0_-Ab0_-Ab0_-Ab0_-Ab0";
 
-    internal static async Task RequestPathsPreservePreflightAndBearerAsync()
+    [Test]
+    [Property("FishAudioCaseId", "settings.api-key/request-paths-preserve-preflight-and-bearer")]
+    [Order(57)]
+    public static async Task RequestPathsPreservePreflightAndBearerAsync()
     {
         (string Key, bool Online, string? Error)[] cases =
         [

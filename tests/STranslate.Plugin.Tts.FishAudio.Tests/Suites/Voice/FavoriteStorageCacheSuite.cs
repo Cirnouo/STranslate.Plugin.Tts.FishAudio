@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -8,9 +9,14 @@ using static FavoriteVoicesSuite;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class FavoriteStorageCacheSuite
 {
-    internal static async Task SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/same-path-writers-keep-ids-and-corrupt-files-remain-untouched")]
+    [Order(178)]
+    public static async Task SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync()
     {
         var directory = CreateTempDirectory();
         using var first = new FavoriteVoiceStore(directory);
@@ -32,7 +38,10 @@ internal static class FavoriteStorageCacheSuite
         }
     }
 
-    internal static async Task LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/lease-retirement-linearizes-id-writes-without-blocking-snapshots")]
+    [Order(179)]
+    public static async Task LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync()
     {
         var directory = CreateTempDirectory();
         var context = CreateContext();
@@ -64,7 +73,10 @@ internal static class FavoriteStorageCacheSuite
         finally { release.Set(); }
     }
 
-    internal static void MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/metadata-cache-is-bounded-detached-and-uses-an-independent-client-ttl")]
+    [Order(180)]
+    public static void MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl()
     {
         var clock = new MetadataTestClock();
         var cache = new VoiceMetadataCache(clock);
@@ -84,7 +96,7 @@ internal static class FavoriteStorageCacheSuite
         AssertEqual(false, cache.TryGet(Id(1), out _), "The explicit fifteen-minute client TTL must expire metadata independently of sample URL shape");
     }
 
-    internal static async Task FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync()
+    public static async Task FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 7).Select(Id)));
@@ -131,7 +143,10 @@ internal static class FavoriteStorageCacheSuite
         AssertEqual(true, cold.FavoriteResults.All(card => !card.HasMetadata && card.MetadataError is not null && card.IsFavorite), "Failed metadata keeps unavailable but removable ID cards");
     }
 
-    internal static void BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/bookmark-mutations-cannot-refresh-or-replace-remote-metadata")]
+    [Order(181)]
+    public static void BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata()
     {
         var clock = new MetadataTestClock();
         var cache = new VoiceMetadataCache(clock);
@@ -153,7 +168,10 @@ internal static class FavoriteStorageCacheSuite
         AssertEqual(false, cache.TryGet(Id(1), out _), "Adding a favorite without a cache hit must not promote stale card metadata");
     }
 
-    internal static async Task PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/plugin-cache-is-shared-across-search-by-id-and-reinitialization")]
+    [Order(183)]
+    public static async Task PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var directory = CreateTempDirectory();
@@ -181,7 +199,10 @@ internal static class FavoriteStorageCacheSuite
         AssertEnumerableEqual(new[] { Id(1) }, store.Read(), "Retired views cannot mutate the shared persistent ID file");
     }
 
-    internal static async Task SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/search-and-favorites-reuse-existing-cover-cache-and-clear-keeps-ids")]
+    [Order(184)]
+    public static async Task SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync()
     {
         var directory = CreateTempDirectory();
         var cacheDirectory = CreateTempDirectory();

@@ -15,9 +15,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class CoverImageCacheSuite
 {
-    internal static void CoverImageCacheUsesExistingFile()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-uses-existing-file")]
+    [NUnit.Framework.Order(266)]
+    public static void CoverImageCacheUsesExistingFile()
     {
         var root = CreateTempDirectory();
         try
@@ -198,7 +203,10 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    internal static void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-clears-only-cover-images-and-formats-size")]
+    [NUnit.Framework.Order(271)]
+    public static void CoverImageCacheClearsOnlyCoverImagesAndFormatsSize()
     {
         var root = CreateTempDirectory();
         try
@@ -229,7 +237,10 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    internal static void CoverImageCacheSizeScansCoverImagesDirectory()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-size-scans-cover-images-directory")]
+    [NUnit.Framework.Order(272)]
+    public static void CoverImageCacheSizeScansCoverImagesDirectory()
     {
         var root = CreateTempDirectory();
         try
@@ -331,7 +342,10 @@ internal static class CoverImageCacheSuite
         AssertEqual(false, viewModel.IsClearingCoverImageCache, "Second clear cache operation should leave busy state after completion");
     }
 
-    internal static void ClearCacheButtonUsesLocalizedTextAndBusySpinner()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/clear-cache-button-uses-localized-text-and-busy-spinner")]
+    [NUnit.Framework.Order(276)]
+    public static void ClearCacheButtonUsesLocalizedTextAndBusySpinner()
     {
         var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Presentation", "View", "SettingsView.xaml")));
         const string commandBinding = "Command=\"{Binding ClearCoverImageCacheCommand}\"";

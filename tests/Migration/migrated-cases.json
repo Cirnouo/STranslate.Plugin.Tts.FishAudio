@@ -105,6 +105,1608 @@
         "streaming.text/boundary-priority-and-huge-tail-do-not-change-first-prefix"
       ],
       "responsibility": "Preserves the original sentence-boundary priority and identical first-prefix comparison with a million-character unread tail in StreamingTextSuite.BoundaryPriorityAndHugeTailDoNotChangeFirstPrefixAsync."
+    },
+    {
+      "originalId": "repository.contract/ui-locales-have-complete-resources-and-metadata",
+      "successorIds": [
+        "repository.contract/ui-locales-have-complete-resources-and-metadata"
+      ],
+      "responsibility": "Preserves every original locale's complete resource/key set, metadata fields, protected technical tokens and formatting-boundary assertions in RepositoryContractSuite.UiLocalesHaveCompleteResourcesAndMetadata."
+    },
+    {
+      "originalId": "repository.contract/release112-metadata-is-complete",
+      "successorIds": [
+        "repository.contract/release112-metadata-is-complete"
+      ],
+      "responsibility": "Preserves the exact plugin version, ordered historical changelog headings, complete 1.1.2 change list and DD-046 reference assertions in RepositoryContractSuite.Release112MetadataIsComplete."
+    },
+    {
+      "originalId": "repository.contract/release111-metadata-is-complete",
+      "successorIds": [
+        "repository.contract/release111-metadata-is-complete"
+      ],
+      "responsibility": "Preserves the complete 1.1.1 historical change list, ordered release boundaries, retained decision references and current cutoff assertions in RepositoryContractSuite.Release111MetadataIsComplete."
+    },
+    {
+      "originalId": "repository.contract/release110-metadata-is-complete",
+      "successorIds": [
+        "repository.contract/release110-metadata-is-complete"
+      ],
+      "responsibility": "Preserves all 1.1.0 historical changelog assertions, current/history decision checks and complete cross-locale resource-key comparison in RepositoryContractSuite.Release110MetadataIsComplete."
+    },
+    {
+      "originalId": "repository.contract/package-reference-uses-sdk1015",
+      "successorIds": [
+        "repository.contract/package-reference-uses-sdk1015"
+      ],
+      "responsibility": "Preserves the exact STranslate.Plugin 1.0.15 package-reference assertion against the owned project source in RepositoryContractSuite.PackageReferenceUsesSdk1015."
+    },
+    {
+      "originalId": "repository.contract/release-output-is-isolated-from-debug-artifacts",
+      "successorIds": [
+        "repository.contract/release-output-is-isolated-from-debug-artifacts"
+      ],
+      "responsibility": "Preserves the exact Release output-path assertion that prevents mixing Debug artifacts into packaging in RepositoryContractSuite.ReleaseOutputIsIsolatedFromDebugArtifacts."
+    },
+    {
+      "originalId": "repository.contract/release-build-uses-single-release-switch",
+      "successorIds": [
+        "repository.contract/release-build-uses-single-release-switch"
+      ],
+      "responsibility": "Preserves every original build-switch, complete shared CI obligation and five-language README command/cleanup-boundary assertion in RepositoryContractSuite.ReleaseBuildUsesSingleReleaseSwitch."
+    },
+    {
+      "originalId": "settings.storage/new-settings-serialize-current-schema-first",
+      "successorIds": [
+        "settings.storage/new-settings-serialize-current-schema-first"
+      ],
+      "responsibility": "Preserves the new-settings schema default and first-serialized-property assertions in SettingsStorageSuite.NewSettingsSerializeCurrentSchemaFirst."
+    },
+    {
+      "originalId": "settings.storage/version100-settings-migrate",
+      "successorIds": [
+        "settings.storage/version100-settings-migrate"
+      ],
+      "responsibility": "Preserves the complete v1.0.0 migration fixture and current schema, voice metadata and new-field default assertions in SettingsStorageSuite.Version100SettingsMigrate."
+    },
+    {
+      "originalId": "settings.storage/version101-settings-migrate",
+      "successorIds": [
+        "settings.storage/version101-settings-migrate"
+      ],
+      "responsibility": "Preserves the complete v1.0.1 migration fixture and voice, cached metadata and bitrate-default assertions in SettingsStorageSuite.Version101SettingsMigrate."
+    },
+    {
+      "originalId": "settings.storage/version102-unversioned-settings-migrate",
+      "successorIds": [
+        "settings.storage/version102-unversioned-settings-migrate"
+      ],
+      "responsibility": "Preserves the complete unversioned v1.0.2 fixture and current voice metadata, bitrate and context-setting assertions in SettingsStorageSuite.Version102UnversionedSettingsMigrate."
+    },
+    {
+      "originalId": "settings.storage/current-voice-fields-win-regardless-of-property-order",
+      "successorIds": [
+        "settings.storage/current-voice-fields-win-regardless-of-property-order"
+      ],
+      "responsibility": "Preserves both original JSON property orders and the shared current-over-legacy voice-field assertions in SettingsStorageSuite.CurrentVoiceFieldsWinRegardlessOfPropertyOrder."
+    },
+    {
+      "originalId": "settings.storage/invalid-current-voice-fields-fall-back-to-legacy",
+      "successorIds": [
+        "settings.storage/invalid-current-voice-fields-fall-back-to-legacy"
+      ],
+      "responsibility": "Preserves the original wrong-type current-field fixture and valid legacy voice/cache fallback assertions in SettingsStorageSuite.InvalidCurrentVoiceFieldsFallBackToLegacy."
+    },
+    {
+      "originalId": "settings.storage/wrong-json-type-defaults-only-that-field",
+      "successorIds": [
+        "settings.storage/wrong-json-type-defaults-only-that-field"
+      ],
+      "responsibility": "Preserves the original malformed API-key JSON type and all neighboring valid-field preservation assertions in SettingsStorageSuite.WrongJsonTypeDefaultsOnlyThatField."
+    },
+    {
+      "originalId": "settings.storage/wrong-schema-type-defaults-only-schema-field",
+      "successorIds": [
+        "settings.storage/wrong-schema-type-defaults-only-schema-field"
+      ],
+      "responsibility": "Preserves wrong-schema-type migration, fake-context canonical-save ownership and all neighboring field/read-only assertions in SettingsStorageSuite.WrongSchemaTypeDefaultsOnlySchemaField."
+    },
+    {
+      "originalId": "settings.storage/unknown-and-deleted-properties-are-cleaned-up",
+      "successorIds": [
+        "settings.storage/unknown-and-deleted-properties-are-cleaned-up"
+      ],
+      "responsibility": "Preserves the original legacy/unknown-property fixture, single canonical-save count and every removed-property assertion in SettingsStorageSuite.UnknownAndDeletedPropertiesAreCleanedUp."
+    },
+    {
+      "originalId": "settings.storage/numeric-settings-normalize-ranges-and-granularity",
+      "successorIds": [
+        "settings.storage/numeric-settings-normalize-ranges-and-granularity"
+      ],
+      "responsibility": "Preserves the complete invalid/range/precision/nonfinite normalization sequence, all exact numeric assertions and existing native precision diagnostic caller in SettingsStorageSuite.NumericSettingsNormalizeRangesAndGranularity."
+    },
+    {
+      "originalId": "settings.storage/ordinary-duplicate-defaults-only-that-field",
+      "successorIds": [
+        "settings.storage/ordinary-duplicate-defaults-only-that-field"
+      ],
+      "responsibility": "Preserves the original duplicated ordinary-field fixture, neighboring values and single fake-context canonical-save assertion in SettingsStorageSuite.OrdinaryDuplicateDefaultsOnlyThatField."
+    },
+    {
+      "originalId": "settings.storage/duplicate-and-future-schemas-are-read-only",
+      "successorIds": [
+        "settings.storage/duplicate-and-future-schemas-are-read-only"
+      ],
+      "responsibility": "Preserves both original duplicate/future schema owner chains, blocked-save counts, compatible fields and safe logger assertions in SettingsStorageSuite.DuplicateAndFutureSchemasAreReadOnly."
+    },
+    {
+      "originalId": "settings.storage/current-settings-round-trip",
+      "successorIds": [
+        "settings.storage/current-settings-round-trip"
+      ],
+      "responsibility": "Preserves the entire original settings/cache/promo fixture and every serialized round-trip assertion in SettingsStorageSuite.CurrentSettingsRoundTrip."
+    },
+    {
+      "originalId": "settings.storage/production-uses-settings-store-for-context-storage",
+      "successorIds": [
+        "settings.storage/production-uses-settings-store-for-context-storage"
+      ],
+      "responsibility": "Preserves the full owned-source scan for forbidden context-storage calls and focused Settings source-location assertion in SettingsStorageSuite.ProductionUsesSettingsStoreForContextStorage."
+    },
+    {
+      "originalId": "settings.storage/api-key-editing-persists-immediately",
+      "successorIds": [
+        "settings.storage/api-key-editing-persists-immediately"
+      ],
+      "responsibility": "Preserves the original local settings/context/view-model chain and immediate API-key value plus exact save-count assertions in SettingsStorageSuite.ApiKeyEditingPersistsImmediately."
+    },
+    {
+      "originalId": "repository.contract/free-model-deadline-documentation-is-consistent",
+      "successorIds": [
+        "repository.contract/free-model-deadline-documentation-is-consistent"
+      ],
+      "responsibility": "Preserves the complete overview/guide/locale/reference cutoff loops and historical extension changelog assertion in RepositoryContractSuite.FreeModelDeadlineDocumentationIsConsistent."
+    },
+    {
+      "originalId": "repository.presentation/promo-state-persists-dismissal-and-use",
+      "successorIds": [
+        "repository.presentation/promo-state-persists-dismissal-and-use"
+      ],
+      "responsibility": "Preserves all original fixed-cutoff local view-model chains for promo dismissal/use, save count, model selection and loudness capability in PresentationContractSuite.PromoStatePersistsDismissalAndUse."
+    },
+    {
+      "originalId": "repository.presentation/settings-view-removes-api-key-validation-ui-and-uses-latency-bars",
+      "successorIds": [
+        "repository.presentation/settings-view-removes-api-key-validation-ui-and-uses-latency-bars"
+      ],
+      "responsibility": "Preserves every original removed validation binding, enabled-state style and complete latency-bar XAML structure assertion in PresentationContractSuite.SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars."
+    },
+    {
+      "originalId": "repository.presentation/settings-view-shows-persistent-credit-placeholder",
+      "successorIds": [
+        "repository.presentation/settings-view-shows-persistent-credit-placeholder"
+      ],
+      "responsibility": "Preserves the original persistent DynamicResource/balance bindings and every locale's nonempty credit-placeholder assertion in PresentationContractSuite.SettingsViewShowsPersistentCreditPlaceholder."
+    },
+    {
+      "originalId": "repository.presentation/settings-view-includes-s21-promo-and-dynamic-model-descriptions",
+      "successorIds": [
+        "repository.presentation/settings-view-includes-s21-promo-and-dynamic-model-descriptions"
+      ],
+      "responsibility": "Preserves all original local promo resource, geometry reservation, view-only command, model-description and project-embedding assertions in PresentationContractSuite.SettingsViewIncludesS21PromoAndDynamicModelDescriptions."
+    },
+    {
+      "originalId": "repository.presentation/language-resources-match-api-key-rollback",
+      "successorIds": [
+        "repository.presentation/language-resources-match-api-key-rollback"
+      ],
+      "responsibility": "Preserves every original locale's required network/timeout/model/promo keys and removed API-key validation-key assertions in PresentationContractSuite.LanguageResourcesMatchApiKeyRollback."
+    },
+    {
+      "originalId": "repository.presentation/preview-failure-language-resources-are-complete",
+      "successorIds": [
+        "repository.presentation/preview-failure-language-resources-are-complete"
+      ],
+      "responsibility": "Preserves the complete locale-by-preview-failure-key matrix and every nonempty resource assertion in PresentationContractSuite.PreviewFailureLanguageResourcesAreComplete."
+    },
+    {
+      "originalId": "repository.presentation/language-resources-describe-context-conditioning-consistency",
+      "successorIds": [
+        "repository.presentation/language-resources-describe-context-conditioning-consistency"
+      ],
+      "responsibility": "Preserves all seven exact original localized same-synthesis context-conditioning descriptions in PresentationContractSuite.LanguageResourcesDescribeContextConditioningConsistency."
+    },
+    {
+      "originalId": "repository.presentation/translated-readmes-match-current-source-and-control-names",
+      "successorIds": [
+        "repository.presentation/translated-readmes-match-current-source-and-control-names"
+      ],
+      "responsibility": "Preserves the complete translated overview/guide/resource comparison and exact Korean terminology assertions in PresentationContractSuite.TranslatedReadmesMatchCurrentSourceAndControlNames."
+    },
+    {
+      "originalId": "streaming.entry/formal-playback-uses-session-without-whole-buffer-host-audio",
+      "successorIds": [
+        "streaming.entry/formal-playback-uses-session-without-whole-buffer-host-audio"
+      ],
+      "responsibility": "Preserves the original fake-session formal entry, captured request, no whole-buffer HTTP/host playback and exact session-disposal assertions in StreamingEntrySuite.FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAsync."
+    },
+    {
+      "originalId": "streaming.entry/snapshot-stays-immutable-while-settings-are-edited",
+      "successorIds": [
+        "streaming.entry/snapshot-stays-immutable-while-settings-are-edited"
+      ],
+      "responsibility": "Preserves the original active-playback settings-edit chain, captured format/prosody/bitrate and API-key lock ownership assertions in StreamingEntrySuite.SnapshotStaysImmutableWhileSettingsAreEditedAsync."
+    },
+    {
+      "originalId": "streaming.entry/supersession-waits-for-output-cleanup-across-three-calls",
+      "successorIds": [
+        "streaming.entry/supersession-waits-for-output-cleanup-across-three-calls"
+      ],
+      "responsibility": "Preserves the original three-call supersession sequence, held cleanup boundary, canceled waiting call and exact final-session creation/disposal assertions in StreamingEntrySuite.SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync. Failure cleanup retires Main, releases the original output barrier, joins the captured startup and all three original playback calls, then joins the retained actual initialization retirement Tasks. The first failure is preserved; previously observed cancellation is distinguished from unknown cleanup failure."
+    },
+    {
+      "originalId": "streaming.entry/caller-and-disposal-cancel-owned-sessions",
+      "successorIds": [
+        "streaming.entry/caller-and-disposal-cancel-owned-sessions"
+      ],
+      "responsibility": "Preserves both original caller/disposal cancellation paths, token observation, exact disposal count and quiet snackbar assertions in StreamingEntrySuite.CallerAndDisposalCancelOwnedSessionsAsync."
+    },
+    {
+      "originalId": "streaming.entry/cancellation-probe-observes-synchronous-retirement",
+      "successorIds": [
+        "streaming.entry/cancellation-probe-observes-synchronous-retirement"
+      ],
+      "responsibility": "Preserves both original synchronous cancellation-retirement paths, token-registration cleanup and exact cancellation/disposal observations in StreamingEntrySuite.CancellationProbeObservesSynchronousRetirementAsync."
+    },
+    {
+      "originalId": "streaming.entry/cancellation-probe-retains-only-active-observation",
+      "successorIds": [
+        "streaming.entry/cancellation-probe-retains-only-active-observation"
+      ],
+      "responsibility": "Preserves the original completed, synchronously canceled and later-completed calls on the same probe and all retained-observation assertions in StreamingEntrySuite.CancellationProbeRetainsOnlyActiveObservationAsync."
+    },
+    {
+      "originalId": "streaming.entry/transport-failures-do-not-expose-credentials",
+      "successorIds": [
+        "streaming.entry/transport-failures-do-not-expose-credentials"
+      ],
+      "responsibility": "Preserves the original synthetic credential-bearing transport fault and localized snackbar plus key/proxy-secret log-redaction assertions in StreamingEntrySuite.TransportFailuresDoNotExposeCredentialsAsync."
+    },
+    {
+      "originalId": "streaming.session/tail-waits-for-successful-playback-and-finish-waits-for-drain",
+      "successorIds": [
+        "streaming.session/tail-waits-for-successful-playback-and-finish-waits-for-drain"
+      ],
+      "responsibility": "Preserves the same sentinel text source, held playback/drain sequence, unread-tail checks, sender/receiver ownership and exact stage telemetry assertions in StreamingSessionSuite.TailWaitsForSuccessfulPlaybackAndFinishWaitsForDrainAsync."
+    },
+    {
+      "originalId": "streaming.session/short-input-stops-without-waiting-for-playback",
+      "successorIds": [
+        "streaming.session/short-input-stops-without-waiting-for-playback"
+      ],
+      "responsibility": "Preserves the original fake-socket short-input event order and exact bytes delivered to the fake player in StreamingSessionSuite.ShortInputStopsWithoutWaitingForPlaybackAsync."
+    },
+    {
+      "originalId": "streaming.session/protocol-rejects-malformed-oversize-and-missing-finish",
+      "successorIds": [
+        "streaming.session/protocol-rejects-malformed-oversize-and-missing-finish"
+      ],
+      "responsibility": "Preserves every original malformed/oversize/provider-event injection and protocol failure, transport abort and payload-redaction assertion in StreamingSessionSuite.ProtocolRejectsMalformedOversizeAndMissingFinishAsync."
+    },
+    {
+      "originalId": "streaming.session/fragmented-audio-uses-owned-bounded-ordered-blocks",
+      "successorIds": [
+        "streaming.session/fragmented-audio-uses-owned-bounded-ordered-blocks"
+      ],
+      "responsibility": "Preserves the original fragmented 120000-byte audio input, exact reconstructed order and owned 16KiB block bound in StreamingSessionSuite.FragmentedAudioUsesOwnedBoundedOrderedBlocksAsync."
+    },
+    {
+      "originalId": "streaming.session/model-and-request-snapshot-are-exact-before-connect",
+      "successorIds": [
+        "streaming.session/model-and-request-snapshot-are-exact-before-connect"
+      ],
+      "responsibility": "Preserves all invalid-model and valid model/format combinations, pre-connect rejection and immutable request/prosody/bitrate assertions in StreamingSessionSuite.ModelAndRequestSnapshotAreExactBeforeConnectAsync."
+    },
+    {
+      "originalId": "streaming.session/cancellation-and-faults-abort-every-worker",
+      "successorIds": [
+        "streaming.session/cancellation-and-faults-abort-every-worker"
+      ],
+      "responsibility": "Preserves every original connect/send/receive/prefix/queue/drain/device phase, causal readiness waits and cancellation-versus-primary-failure assertions in StreamingSessionSuite.CancellationAndFaultsAbortEveryWorkerAsync."
+    },
+    {
+      "originalId": "streaming.session/connect-first-pcm-and-idle-use-independent-deadlines",
+      "successorIds": [
+        "streaming.session/connect-first-pcm-and-idle-use-independent-deadlines"
+      ],
+      "responsibility": "Preserves all original fake-clock connect, first-playable-PCM and post-playback idle thresholds and their exact timeout assertions in StreamingSessionSuite.ConnectFirstPcmAndIdleUseIndependentDeadlinesAsync."
+    },
+    {
+      "originalId": "streaming.session/idle-excludes-union-of-actual-queue-and-pcm-pressure",
+      "successorIds": [
+        "streaming.session/idle-excludes-union-of-actual-queue-and-pcm-pressure"
+      ],
+      "responsibility": "Preserves the original held reader, overlapping queue/PCM backpressure leases, union accounting and resumed idle-boundary assertions in StreamingSessionSuite.IdleExcludesUnionOfActualQueueAndPcmPressureAsync."
+    },
+    {
+      "originalId": "streaming.session/free-cutoff-rejects-before-connect-and-aborts-long-session",
+      "successorIds": [
+        "streaming.session/free-cutoff-rejects-before-connect-and-aborts-long-session"
+      ],
+      "responsibility": "Preserves both original fake-clock cutoff scenarios, no-connect/no-paid-retry checks and active transport-abort assertions in StreamingSessionSuite.FreeCutoffRejectsBeforeConnectAndAbortsLongSessionAsync."
+    },
+    {
+      "originalId": "streaming.session/receiver-and-audio-failures-keep-their-cause-and-dispose-cancels",
+      "successorIds": [
+        "streaming.session/receiver-and-audio-failures-keep-their-cause-and-dispose-cancels"
+      ],
+      "responsibility": "Preserves all original receiver/audio/disposal modes, blocked-sibling aborts and exact primary-versus-cancellation assertions in StreamingSessionSuite.ReceiverAndAudioFailuresKeepTheirCauseAndDisposeCancelsAsync."
+    },
+    {
+      "originalId": "streaming.session/cancellation-callback-cannot-replace-primary-audio-failure",
+      "successorIds": [
+        "streaming.session/cancellation-callback-cannot-replace-primary-audio-failure"
+      ],
+      "responsibility": "Preserves the original throwing cancellation callback, exact primary exception instance, joined receiver, disposed resources and withheld-tail assertions in StreamingSessionSuite.CancellationCallbackCannotReplacePrimaryAudioFailureAsync."
+    },
+    {
+      "originalId": "settings.api-key/request-paths-preserve-preflight-and-bearer",
+      "successorIds": [
+        "settings.api-key/request-paths-preserve-preflight-and-bearer"
+      ],
+      "responsibility": "Preserves all four original request paths and ten key/network inputs, complete bearer forwarding/error/logging assertions and per-iteration plugin/view-model/network cleanup in ApiKeyCompatibilitySuite.RequestPathsPreservePreflightAndBearerAsync."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-preflight-stops-before-request-for-missing-network",
+      "successorIds": [
+        "streaming.tts/play-audio-preflight-stops-before-request-for-missing-network"
+      ],
+      "responsibility": "Preserves the original offline entry, localized error, warning, no-session and credential-redaction assertions in TtsSuite.PlayAudioPreflightStopsBeforeRequestForMissingNetworkAsync."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-preflight-stops-before-request-for-empty-and-malformed-keys",
+      "successorIds": [
+        "streaming.tts/play-audio-preflight-stops-before-request-for-empty-and-malformed-keys"
+      ],
+      "responsibility": "Preserves both original empty/malformed key inputs, independent network preflight and no-session/error distinctions in TtsSuite.PlayAudioPreflightStopsBeforeRequestForEmptyAndMalformedKeysAsync."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-with-formatted-key-streams-without-credit-validation",
+      "successorIds": [
+        "streaming.tts/play-audio-with-formatted-key-streams-without-credit-validation"
+      ],
+      "responsibility": "Preserves the original formatted-key entry, absence of extra credit validation and exact fake-session/full-key assertions in TtsSuite.PlayAudioWithFormattedKeyStreamsWithoutCreditValidationAsync."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-timeout-shows-localized-error-and-logs",
+      "successorIds": [
+        "streaming.tts/play-audio-timeout-shows-localized-error-and-logs"
+      ],
+      "responsibility": "Preserves the original synthetic session timeout, localized error, safe log and exact session-disposal assertions in TtsSuite.PlayAudioTimeoutShowsLocalizedErrorAndLogsAsync."
+    },
+    {
+      "originalId": "voice.favorite-cache/same-path-writers-keep-ids-and-corrupt-files-remain-untouched",
+      "successorIds": [
+        "voice.favorite-cache/same-path-writers-keep-ids-and-corrupt-files-remain-untouched"
+      ],
+      "responsibility": "Preserves the original concurrent same-path stores, ordered explicit intents and every corrupt/oversize file byte-preservation assertion in FavoriteStorageCacheSuite.SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync."
+    },
+    {
+      "originalId": "voice.favorite-cache/lease-retirement-linearizes-id-writes-without-blocking-snapshots",
+      "successorIds": [
+        "voice.favorite-cache/lease-retirement-linearizes-id-writes-without-blocking-snapshots"
+      ],
+      "responsibility": "Preserves the original held atomic commit, independent snapshot access, retirement ordering, release-finally and rejected retired-write assertions in FavoriteStorageCacheSuite.LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync."
+    },
+    {
+      "originalId": "voice.favorite-cache/metadata-cache-is-bounded-detached-and-uses-an-independent-client-ttl",
+      "successorIds": [
+        "voice.favorite-cache/metadata-cache-is-bounded-detached-and-uses-an-independent-client-ttl"
+      ],
+      "responsibility": "Preserves the original detached metadata, signed-value redaction, bounded LRU and exact local fake-clock TTL assertions in FavoriteStorageCacheSuite.MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl."
+    },
+    {
+      "originalId": "voice.favorite-cache/bookmark-mutations-cannot-refresh-or-replace-remote-metadata",
+      "successorIds": [
+        "voice.favorite-cache/bookmark-mutations-cannot-refresh-or-replace-remote-metadata"
+      ],
+      "responsibility": "Preserves the original T0/T5 remote metadata and T10 bookmark sequence, exact expiry and no stale-card promotion assertions in FavoriteStorageCacheSuite.BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata."
+    },
+    {
+      "originalId": "voice.favorite-cache/plugin-cache-is-shared-across-search-by-id-and-reinitialization",
+      "successorIds": [
+        "voice.favorite-cache/plugin-cache-is-shared-across-search-by-id-and-reinitialization"
+      ],
+      "responsibility": "Preserves the original plugin/settings-generation cache owner, Search/By-ID reuse, replacement Favorites hit and retired-view write rejection assertions in FavoriteStorageCacheSuite.PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync."
+    },
+    {
+      "originalId": "voice.favorite-cache/search-and-favorites-reuse-existing-cover-cache-and-clear-keeps-ids",
+      "successorIds": [
+        "voice.favorite-cache/search-and-favorites-reuse-existing-cover-cache-and-clear-keeps-ids"
+      ],
+      "responsibility": "Preserves the original isolated ID/cache directories, fake cover stream, shared file reuse/clear/redownload sequence and exact retained bookmark assertions in FavoriteStorageCacheSuite.SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync."
+    },
+    {
+      "originalId": "streaming.http/post-tts-request-honors-model-specific-prosody-and-timeout",
+      "successorIds": [
+        "streaming.http/post-tts-request-honors-model-specific-prosody-and-timeout"
+      ],
+      "responsibility": "Preserves every original model capability loop and complete fake-HTTP payload, prosody, bearer/model header and provider-timeout assertion in FishAudioApiSuite.PostTtsRequestHonorsModelSpecificProsodyAndTimeoutAsync."
+    },
+    {
+      "originalId": "settings.proxy/retired-proxy-inputs-are-discarded-and-socket-uses-system-proxy",
+      "successorIds": [
+        "settings.proxy/retired-proxy-inputs-are-discarded-and-socket-uses-system-proxy"
+      ],
+      "responsibility": "Preserves all original retired-mode inputs, canonical storage assertions and real unconnected WebSocket proxy inspection with finally-restored DefaultProxy in SystemProxyAndSelectedFavoritesSuite.RetiredProxyInputsAreDiscardedAndSocketUsesSystemProxy."
+    },
+    {
+      "originalId": "settings.proxy/retired-proxy-inputs-cannot-block-formal-reading",
+      "successorIds": [
+        "settings.proxy/retired-proxy-inputs-cannot-block-formal-reading"
+      ],
+      "responsibility": "Preserves every original retired routing mode through the fake-session formal entry and selected-voice snapshot assertions under the scoped network override in SystemProxyAndSelectedFavoritesSuite.RetiredProxyInputsCannotBlockFormalReadingAsync."
+    },
+    {
+      "originalId": "voice.selection/selected-favorite-tracks-apply-clear-browse-mutations-and-failed-writes",
+      "successorIds": [
+        "voice.selection/selected-favorite-tracks-apply-clear-browse-mutations-and-failed-writes"
+      ],
+      "responsibility": "Preserves the original local file/store/view chain, Apply/Clear/browse mutations, exact ID-only bytes and failed-write recovery assertions in SystemProxyAndSelectedFavoritesSuite.SelectedFavoriteTracksApplyClearBrowseMutationsAndFailedWrites."
+    },
+    {
+      "originalId": "voice.selection/matching-cards-toggle-selection-without-changing-favorite-ids",
+      "successorIds": [
+        "voice.selection/matching-cards-toggle-selection-without-changing-favorite-ids"
+      ],
+      "responsibility": "Preserves the original matching Search/By-ID/Favorites card owner chain, Apply/Cross/clear state and unchanged persistent bookmark assertions in VoiceSelectionToggleSuite.MatchingCardsToggleSelectionWithoutChangingFavoriteIds."
+    },
+    {
+      "originalId": "voice.selection/removed-origins-cannot-apply-or-clear-matching-current-cards",
+      "successorIds": [
+        "voice.selection/removed-origins-cannot-apply-or-clear-matching-current-cards"
+      ],
+      "responsibility": "Preserves the original replaced/removed card identities and complete stale-origin rejection plus current-card Apply/Cross assertions in VoiceSelectionToggleSuite.RemovedOriginsCannotApplyOrClearMatchingCurrentCards."
+    },
+    {
+      "originalId": "voice.selection/failed-selection-writes-keep-applied-identity-and-stars",
+      "successorIds": [
+        "voice.selection/failed-selection-writes-keep-applied-identity-and-stars"
+      ],
+      "responsibility": "Preserves the original leased settings/view/file owner chain, failed Apply/Clear rollback, exact applied/favorite state and successful recovery assertions in VoiceSelectionToggleSuite.FailedSelectionWritesKeepAppliedIdentityAndStars."
+    },
+    {
+      "originalId": "voice.selection/matching-by-id-queries-inspect-without-canceling-selection",
+      "successorIds": [
+        "voice.selection/matching-by-id-queries-inspect-without-canceling-selection"
+      ],
+      "responsibility": "Preserves both original matching By-ID requests, old-versus-current card identity and explicit current-card selection-cancellation assertions in VoiceSelectionToggleSuite.MatchingByIdQueriesInspectWithoutCancelingSelectionAsync."
+    },
+    {
+      "originalId": "numeric.top-p/client-floor-keeps-displayed-precision-defaults-and-temperature-zero",
+      "successorIds": [
+        "numeric.top-p/client-floor-keeps-displayed-precision-defaults-and-temperature-zero"
+      ],
+      "responsibility": "Preserves every original numeric input, client-floor/default/precision result, temperature-zero and normalization-idempotence assertion in TopPCompatibilitySuite.ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero."
+    },
+    {
+      "originalId": "numeric.top-p/old-zero-canonically-rewrites-once-and-saved-floor-round-trips",
+      "successorIds": [
+        "numeric.top-p/old-zero-canonically-rewrites-once-and-saved-floor-round-trips"
+      ],
+      "responsibility": "Preserves both original supported-schema load/save/restart chains and exact canonical-save counts plus unrelated synthesis-setting assertions in TopPCompatibilitySuite.OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips."
+    },
+    {
+      "originalId": "numeric.top-p/future-and-duplicate-schemas-keep-their-read-only-protection",
+      "successorIds": [
+        "numeric.top-p/future-and-duplicate-schemas-keep-their-read-only-protection"
+      ],
+      "responsibility": "Preserves both original future/duplicate schema inputs and blocked-save/read-only assertions under the fixed policy time in TopPCompatibilitySuite.FutureAndDuplicateSchemasKeepTheirReadOnlyProtection."
+    },
+    {
+      "originalId": "numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads",
+      "successorIds": [
+        "numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads"
+      ],
+      "responsibility": "Preserves every original numeric input through actual MessagePack and fake-HTTP bodies, temperature-zero checks and immutable caller/snapshot assertions in TopPCompatibilitySuite.RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync."
+    },
+    {
+      "originalId": "repository.build/package-missing-russian-xaml-fails",
+      "successorIds": [
+        "repository.build/package-missing-russian-xaml-fails"
+      ],
+      "responsibility": "Preserves the original missing-Russian-XAML package rejection and exact diagnostic assertions in BuildScriptSuite.PackageMissingRussianXamlFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/package-missing-turkish-metadata-fails",
+      "successorIds": [
+        "repository.build/package-missing-turkish-metadata-fails"
+      ],
+      "responsibility": "Preserves the original missing-Turkish-metadata package rejection and exact diagnostic assertions in BuildScriptSuite.PackageMissingTurkishMetadataFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/configuration-parameter-is-rejected",
+      "successorIds": [
+        "repository.build/configuration-parameter-is-rejected"
+      ],
+      "responsibility": "Preserves the original removed-Configuration rejection and no-dotnet-invocation assertions in BuildScriptSuite.ConfigurationParameterIsRejected. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/release-switch-selects-release-without-debug-packaging",
+      "successorIds": [
+        "repository.build/release-switch-selects-release-without-debug-packaging"
+      ],
+      "responsibility": "Preserves the original isolated fake-build chain, Release arguments, absent Debug packaging target and retained package-content assertions in BuildScriptSuite.ReleaseSwitchSelectsReleaseWithoutDebugPackaging. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/package-missing-audio-runtime-dependency-fails",
+      "successorIds": [
+        "repository.build/package-missing-audio-runtime-dependency-fails"
+      ],
+      "responsibility": "Preserves the original missing-audio-runtime package rejection and dependency-name diagnostic assertions in BuildScriptSuite.PackageMissingAudioRuntimeDependencyFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/package-missing-octicons-notice-fails",
+      "successorIds": [
+        "repository.build/package-missing-octicons-notice-fails"
+      ],
+      "responsibility": "Preserves the original missing-Octicons-license package rejection and diagnostic assertions in BuildScriptSuite.PackageMissingOcticonsNoticeFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/package-missing-flag-icons-notice-fails",
+      "successorIds": [
+        "repository.build/package-missing-flag-icons-notice-fails"
+      ],
+      "responsibility": "Preserves the original missing-flag-license package rejection and diagnostic assertions in BuildScriptSuite.PackageMissingFlagIconsNoticeFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/package-missing-streaming-runtime-dependency-fails",
+      "successorIds": [
+        "repository.build/package-missing-streaming-runtime-dependency-fails"
+      ],
+      "responsibility": "Preserves every original streaming-dependency omission, package rejection and dependency-name diagnostic assertion in BuildScriptSuite.PackageMissingStreamingRuntimeDependencyFails. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/ordinary-build-cleans-every-artifact-directory-before-building",
+      "successorIds": [
+        "repository.build/ordinary-build-cleans-every-artifact-directory-before-building"
+      ],
+      "responsibility": "Preserves the original seeded-artifact fixture, Debug packaging, pre-build cleanup and retained-output/package assertions in BuildScriptSuite.OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/clean-build-cleans-every-artifact-directory-after-building",
+      "successorIds": [
+        "repository.build/clean-build-cleans-every-artifact-directory-after-building"
+      ],
+      "responsibility": "Preserves the original seeded-artifact fixture, deferred cleanup and retained-package assertions in BuildScriptSuite.CleanBuildCleansEveryArtifactDirectoryAfterBuilding. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/clean-build-cleans-after-failed-regression-tests",
+      "successorIds": [
+        "repository.build/clean-build-cleans-after-failed-regression-tests"
+      ],
+      "responsibility": "Preserves the original selected fake-runner failure, exact exit code, deferred cleanup and retained-package assertions in BuildScriptSuite.CleanBuildCleansAfterFailedRegressionTests. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/test-selection-arguments-reach-runner",
+      "successorIds": [
+        "repository.build/test-selection-arguments-reach-runner"
+      ],
+      "responsibility": "Preserves the original selector, affected/base and results-path forwarding assertions through the explicit legacy entry in BuildScriptSuite.TestSelectionArgumentsReachRunner. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/test-selection-without-test-is-rejected",
+      "successorIds": [
+        "repository.build/test-selection-without-test-is-rejected"
+      ],
+      "responsibility": "Preserves the original selector-without-Test rejection and no-build-or-cleanup assertions in BuildScriptSuite.TestSelectionWithoutTestIsRejected. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.build/failed-selected-tests-keep-exit-code",
+      "successorIds": [
+        "repository.build/failed-selected-tests-keep-exit-code"
+      ],
+      "responsibility": "Preserves the original selected-regression failure, exact exit code, inspected-package retention and artifact-cleanup assertions in BuildScriptSuite.FailedSelectedTestsKeepExitCode. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "repository.architecture/api-key-validation-state-was-removed",
+      "successorIds": [
+        "repository.architecture/api-key-validation-state-was-removed"
+      ],
+      "responsibility": "Preserves the original snapshot-aware obsolete-source absence assertion in ArchitectureContractSuite.ApiKeyValidationStateWasRemoved. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "repository.architecture/main-delegates-initialization-to-lifecycle-coordinator",
+      "successorIds": [
+        "repository.architecture/main-delegates-initialization-to-lifecycle-coordinator"
+      ],
+      "responsibility": "Preserves the original reflection checks for the lifecycle coordinator, gate ownership and atomic operation-snapshot boundary in ArchitectureContractSuite.MainDelegatesInitializationToLifecycleCoordinator. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "repository.architecture/settings-view-model-splits-preview-and-cover-cache-responsibilities",
+      "successorIds": [
+        "repository.architecture/settings-view-model-splits-preview-and-cover-cache-responsibilities"
+      ],
+      "responsibility": "Preserves the original public-constructor compatibility and preview/cover-cache responsibility reflection assertions in ArchitectureContractSuite.SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "repository.architecture/settings-view-model-delegates-credit-refresh-workflow",
+      "successorIds": [
+        "repository.architecture/settings-view-model-delegates-credit-refresh-workflow"
+      ],
+      "responsibility": "Preserves the original credit-coordinator ownership, shared activity-gate/counter and internal API-key operation reflection assertions in ArchitectureContractSuite.SettingsViewModelDelegatesCreditRefreshWorkflow. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "repository.architecture/settings-view-model-delegates-voice-discovery-workflow",
+      "successorIds": [
+        "repository.architecture/settings-view-model-delegates-voice-discovery-workflow"
+      ],
+      "responsibility": "Preserves the original discovery-coordinator ownership, operation identity and cancellation-source reflection assertions in ArchitectureContractSuite.SettingsViewModelDelegatesVoiceDiscoveryWorkflow. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "repository.architecture/settings-view-model-delegates-preview-refresh-workflow",
+      "successorIds": [
+        "repository.architecture/settings-view-model-delegates-preview-refresh-workflow"
+      ],
+      "responsibility": "Preserves the original preview-coordinator/controller ownership, obsolete-type absence, public namespace and snapshot-aware source-location assertions in ArchitectureContractSuite.SettingsViewModelDelegatesPreviewRefreshWorkflow. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/startup-credit-refresh-preflight-skips-request",
+      "successorIds": [
+        "lifecycle.startup-credit/startup-credit-refresh-preflight-skips-request"
+      ],
+      "responsibility": "Preserves every original blank-key/offline startup preflight input, completed startup task and no-request assertion in StartupCreditSuite.StartupCreditRefreshPreflightSkipsRequestAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/startup-credit-refresh-requests-once-per-initialization",
+      "successorIds": [
+        "lifecycle.startup-credit/startup-credit-refresh-requests-once-per-initialization"
+      ],
+      "responsibility": "Preserves the original repeated initialization, awaited startup tasks, one-request-per-cycle and request timeout/header assertions in StartupCreditSuite.StartupCreditRefreshRequestsOncePerInitializationAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/completed-startup-credit-refresh-applies-when-settings-view-model-is-created",
+      "successorIds": [
+        "lifecycle.startup-credit/completed-startup-credit-refresh-applies-when-settings-view-model-is-created"
+      ],
+      "responsibility": "Preserves the original completed-startup-before-view-model chain and balance, loading and absent-latency assertions in StartupCreditSuite.CompletedStartupCreditRefreshAppliesWhenSettingsViewModelIsCreatedAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/pending-startup-credit-refresh-locks-settings-until-completion",
+      "successorIds": [
+        "lifecycle.startup-credit/pending-startup-credit-refresh-locks-settings-until-completion"
+      ],
+      "responsibility": "Preserves the original held startup response, busy/input-lock assertions, released task and completed publication observations in StartupCreditSuite.PendingStartupCreditRefreshLocksSettingsUntilCompletionAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/failed-startup-credit-refresh-keeps-placeholder-without-snackbar",
+      "successorIds": [
+        "lifecycle.startup-credit/failed-startup-credit-refresh-keeps-placeholder-without-snackbar"
+      ],
+      "responsibility": "Preserves the original startup timeout, completed task, placeholder, absent-snackbar and logging assertions in StartupCreditSuite.FailedStartupCreditRefreshKeepsPlaceholderWithoutSnackbarAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/null-startup-credit-keeps-not-loaded-state",
+      "successorIds": [
+        "lifecycle.startup-credit/null-startup-credit-keeps-not-loaded-state"
+      ],
+      "responsibility": "Preserves the original null startup response, completed task and not-loaded display assertions in StartupCreditSuite.NullStartupCreditKeepsNotLoadedStateAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/startup-credit-refresh-ignores-result-after-api-key-changes",
+      "successorIds": [
+        "lifecycle.startup-credit/startup-credit-refresh-ignores-result-after-api-key-changes"
+      ],
+      "responsibility": "Preserves the original held startup response, accepted key change and rejected late-credit/publication assertions in StartupCreditSuite.StartupCreditRefreshIgnoresResultAfterApiKeyChangesAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/reinitialized-startup-credit-refresh-ignores-old-cycle",
+      "successorIds": [
+        "lifecycle.startup-credit/reinitialized-startup-credit-refresh-ignores-old-cycle"
+      ],
+      "responsibility": "Preserves the original old/new initialization tasks, released old response and stale-cycle rejection assertions in StartupCreditSuite.ReinitializedStartupCreditRefreshIgnoresOldCycleAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/reinitialized-startup-credit-refresh-remains-active-during-reload",
+      "successorIds": [
+        "lifecycle.startup-credit/reinitialized-startup-credit-refresh-remains-active-during-reload"
+      ],
+      "responsibility": "Preserves the original reload boundary, released old response, pre-dispose original startup tasks and active-old-cycle-until-commit assertions in StartupCreditSuite.ReinitializedStartupCreditRefreshRemainsActiveDuringReloadAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/disposed-settings-view-model-ignores-startup-credit-result",
+      "successorIds": [
+        "lifecycle.startup-credit/disposed-settings-view-model-ignores-startup-credit-result"
+      ],
+      "responsibility": "Preserves the original cancellation-aware held response, plugin disposal, pre-dispose original startup task and retired-view-model publication assertions in StartupCreditSuite.DisposedSettingsViewModelIgnoresStartupCreditResultAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "lifecycle.startup-credit/published-replacement-invalidates-old-startup-credit-immediately",
+      "successorIds": [
+        "lifecycle.startup-credit/published-replacement-invalidates-old-startup-credit-immediately"
+      ],
+      "responsibility": "Preserves the original background reinitialization, held publication barrier, joined old/new startup tasks and immediate generation-ownership assertions in StartupCreditSuite.PublishedReplacementInvalidatesOldStartupCreditImmediatelyAsync. Requires NonParallelizable execution. Ownership correction captures published initialization work and original observer/reinitialization tasks, independently releases held responses and publication windows, disposes Main, and joins the actual retirement continuations while preserving the first body failure. This does not establish unpublished construction-failure cleanup."
+    },
+    {
+      "originalId": "repository.architecture/apply-available-models-uses-ui-thread-invoker",
+      "successorIds": [
+        "repository.architecture/apply-available-models-uses-ui-thread-invoker"
+      ],
+      "responsibility": "Preserves the original saved-previous UI-invoker scope, model normalization and no-extra-save assertions in ArchitectureContractSuite.ApplyAvailableModelsUsesUiThreadInvoker. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.favorites/by-id-lookup-rejects-whitespace-without-request-or-selection-change",
+      "successorIds": [
+        "voice.favorites/by-id-lookup-rejects-whitespace-without-request-or-selection-change"
+      ],
+      "responsibility": "Preserves every original whitespace input, request-count, selected-voice and explicit lookup assertion under the existing disposable view/store owners in FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorite-settings/id-file-transactions-leave-streaming-settings-and-snapshots-untouched",
+      "successorIds": [
+        "voice.favorite-settings/id-file-transactions-leave-streaming-settings-and-snapshots-untouched"
+      ],
+      "responsibility": "Preserves the original ID-file transaction and failed-write owner chains, unchanged streaming settings/snapshots, detached cache values and exact ID-only bytes in FavoriteSettingsIntegrationSuite.IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorite-settings/legacy-settings-and-favorite-ids-restart-independently",
+      "successorIds": [
+        "voice.favorite-settings/legacy-settings-and-favorite-ids-restart-independently"
+      ],
+      "responsibility": "Preserves the original shared settings-deserialization helper, independent favorite-ID restart, streaming defaults and unchanged settings-schema assertions in FavoriteSettingsIntegrationSuite.LegacySettingsAndFavoriteIdsRestartIndependently. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/favorite-voice-ids-reject-whitespace-and-retain-canonical-deduplication",
+      "successorIds": [
+        "voice.favorites/favorite-voice-ids-reject-whitespace-and-retain-canonical-deduplication"
+      ],
+      "responsibility": "Preserves every original whitespace/case/deduplication input and exact durable canonical-ID assertion in FavoriteVoicesSuite.FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/by-id-lookup-keeps-selected-voice-until-apply",
+      "successorIds": [
+        "voice.favorites/by-id-lookup-keeps-selected-voice-until-apply"
+      ],
+      "responsibility": "Preserves the original explicit lookup, retained selection and explicit Apply assertions under the existing disposable view owner in FavoriteVoicesSuite.ByIdLookupKeepsSelectedVoiceUntilApplyAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/favorite-metadata-migrates-bounds-and-round-trips",
+      "successorIds": [
+        "voice.favorites/favorite-metadata-migrates-bounds-and-round-trips"
+      ],
+      "responsibility": "Preserves the original metadata migration, bounds, detached values, restart and exact ID-only persistence assertions in FavoriteVoicesSuite.FavoriteMetadataMigratesBoundsAndRoundTrips. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/new-likes-and-relikes-display-first-without-rewriting-durable-order",
+      "successorIds": [
+        "voice.favorites/new-likes-and-relikes-display-first-without-rewriting-durable-order"
+      ],
+      "responsibility": "Preserves the original new-like/re-like owner chain, restart, displayed order and unchanged durable-order assertions in FavoriteVoicesSuite.NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/legacy-favorites-reverse-globally-and-adding-keeps-the-current-page",
+      "successorIds": [
+        "voice.favorites/legacy-favorites-reverse-globally-and-adding-keeps-the-current-page"
+      ],
+      "responsibility": "Preserves the original globally reversed legacy-ID paging, add/relike and current-page preservation assertions in FavoriteVoicesSuite.LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/favorites-sync-across-cards-persist-and-clamp-pages",
+      "successorIds": [
+        "voice.favorites/favorites-sync-across-cards-persist-and-clamp-pages"
+      ],
+      "responsibility": "Preserves the original search/by-ID/favorite card synchronization, ID-file persistence and page-clamping assertions in FavoriteVoicesSuite.FavoritesSyncAcrossCardsPersistAndClampPages. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/favorite-saves-rollback-and-respect-read-only-and-retired-leases",
+      "successorIds": [
+        "voice.favorites/favorite-saves-rollback-and-respect-read-only-and-retired-leases"
+      ],
+      "responsibility": "Preserves the original atomic-write fault, rollback, read-only/full-store and retired-lease assertions under the existing disposable store/view owners in FavoriteVoicesSuite.FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/by-id-replacement-and-input-edits-reject-late-results",
+      "successorIds": [
+        "voice.favorites/by-id-replacement-and-input-edits-reject-late-results"
+      ],
+      "responsibility": "Preserves the original held request replacement, input edits, joined late work and stale-result rejection assertions in FavoriteVoicesSuite.ByIdReplacementAndInputEditsRejectLateResultsAsync. Requires NonParallelizable execution. Failure cleanup retires the original ViewModel, releases its held response and joins the same started lookup before returning."
+    },
+    {
+      "originalId": "voice.favorites/favorite-and-by-id-preview-refreshes-metadata-without-applying",
+      "successorIds": [
+        "voice.favorites/favorite-and-by-id-preview-refreshes-metadata-without-applying"
+      ],
+      "responsibility": "Preserves every original favorite/by-ID preview variant, fake HTTP/player ownership, refreshed metadata and no-implicit-Apply persistence assertion in FavoriteVoicesSuite.FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.favorites/unfavorite-cancels-originating-preview-and-rejects-late-work",
+      "successorIds": [
+        "voice.favorites/unfavorite-cancels-originating-preview-and-rejects-late-work"
+      ],
+      "responsibility": "Preserves the original unfavorite/cancel owner chain, released and joined late preview work, stream disposal and stale-playback rejection assertions in FavoriteVoicesSuite.UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync. Requires NonParallelizable execution. Each original refresh variant retains its preview Task and detail/audio barriers; failure cleanup retires the ViewModel, releases those barriers, joins the same preview, disposes an unconsumed late stream and removes only its owned directory after work terminates."
+    },
+    {
+      "originalId": "voice.credentials/cache-writes-and-queued-events-keep-captured-credential-scope",
+      "successorIds": [
+        "voice.credentials/cache-writes-and-queued-events-keep-captured-credential-scope"
+      ],
+      "responsibility": "Preserves the original captured cache scopes, queued callbacks and cross-credential rejection assertions in VoiceCredentialScopeSuite.CacheWritesAndQueuedEventsKeepCapturedCredentialScope. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override."
+    },
+    {
+      "originalId": "voice.credentials/rejected-credential-saves-retain-accepted-key",
+      "successorIds": [
+        "voice.credentials/rejected-credential-saves-retain-accepted-key"
+      ],
+      "responsibility": "Preserves both original leased/unleased save-failure variants, accepted identity and subsequent request-credential assertions in VoiceCredentialScopeSuite.RejectedCredentialSavesRetainAcceptedKeyAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credentials/queued-startup-apply-rechecks-credential-inside-dispatcher",
+      "successorIds": [
+        "voice.credentials/queued-startup-apply-rechecks-credential-inside-dispatcher"
+      ],
+      "responsibility": "Preserves the original queued startup publication, accepted key change and stale selected-display/sample rejection assertions in VoiceCredentialScopeSuite.QueuedStartupApplyRechecksCredentialInsideDispatcher. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override."
+    },
+    {
+      "originalId": "voice.credentials/failed-replacement-construction-preserves-accepted-cache",
+      "successorIds": [
+        "voice.credentials/failed-replacement-construction-preserves-accepted-cache"
+      ],
+      "responsibility": "Preserves the original failed replacement construction, candidate disposal, restored facade and accepted-cache reuse assertions in VoiceCredentialScopeSuite.FailedReplacementConstructionPreservesAcceptedCacheAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credentials/reentrant-preview-metadata-event-cannot-restore-old-account",
+      "successorIds": [
+        "voice.credentials/reentrant-preview-metadata-event-cannot-restore-old-account"
+      ],
+      "responsibility": "Preserves every original subscriber-order/favorite variant, reentrant accepted-key changes and old-account card, selection and playback rejection assertion in VoiceCredentialScopeSuite.ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credential-display/accepted-edits-preserve-cards-snapshots-and-navigation",
+      "successorIds": [
+        "voice.credential-display/accepted-edits-preserve-cards-snapshots-and-navigation"
+      ],
+      "responsibility": "Preserves every original accepted key edit and exact retained card identity, snapshot, cover, selected display, navigation, draft, save-count and later paging assertion in CredentialDisplayPreservationSuite.AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credential-display/credential-round-trip-rejects-queued-publications",
+      "successorIds": [
+        "voice.credential-display/credential-round-trip-rejects-queued-publications"
+      ],
+      "responsibility": "Preserves both original cache/startup queued-publication variants and A-to-B-to-A stale-publication rejection assertions in CredentialDisplayPreservationSuite.CredentialRoundTripRejectsQueuedPublications. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override."
+    },
+    {
+      "originalId": "voice.credential-display/pending-metadata-cannot-replace-retained-display",
+      "successorIds": [
+        "voice.credential-display/pending-metadata-cannot-replace-retained-display"
+      ],
+      "responsibility": "Preserves every original search/by-ID/favorite/preview operation, held cancellation-ignoring response, joined late work and retained display/cache/save/playback assertions in CredentialDisplayPreservationSuite.PendingMetadataCannotReplaceRetainedDisplayAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Failure cleanup retains each actual search, By-ID, favorite-page or preview Task, retires the ViewModel, releases its held response and joins that original Task before deleting its owned directory."
+    },
+    {
+      "originalId": "voice.credential-display/reinitialization-does-not-seed-new-credential-cache-from-retained-snapshot",
+      "successorIds": [
+        "voice.credential-display/reinitialization-does-not-seed-new-credential-cache-from-retained-snapshot"
+      ],
+      "responsibility": "Preserves the original disposable plugin replacement chain, persisted display, independently scoped cache partitions and explicit request/selection assertions in CredentialDisplayPreservationSuite.ReinitializationDoesNotSeedNewCredentialCacheFromRetainedSnapshotAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credential-display/failed-saves-preserve-identity-subscription-and-pending-work",
+      "successorIds": [
+        "voice.credential-display/failed-saves-preserve-identity-subscription-and-pending-work"
+      ],
+      "responsibility": "Preserves both original leased/unleased save-failure variants, queued accepted publication, unchanged identity, uncanceled held request and joined accepted-response assertions in CredentialDisplayPreservationSuite.FailedSavesPreserveIdentitySubscriptionAndPendingWorkAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override. Each leased variant retains the original pending search and response; failure cleanup retires the ViewModel, releases the response and joins the captured search after the original queue scope has unwound."
+    },
+    {
+      "originalId": "voice.credential-display/accepted-publication-owns-identity-across-copies-and-reentrant-saves",
+      "successorIds": [
+        "voice.credential-display/accepted-publication-owns-identity-across-copies-and-reentrant-saves"
+      ],
+      "responsibility": "Preserves the original detached snapshot/runtime identity, queued accepted publication, nested save/key-edit and outer-save publication assertions in CredentialDisplayPreservationSuite.AcceptedPublicationOwnsIdentityAcrossCopiesAndReentrantSaves. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override."
+    },
+    {
+      "originalId": "voice.credential-display/subscription-rebinding-and-disposal-keep-only-the-current-owner",
+      "successorIds": [
+        "voice.credential-display/subscription-rebinding-and-disposal-keep-only-the-current-owner"
+      ],
+      "responsibility": "Preserves the original old/current queued callbacks, accepted-key round trip, exact subscriber count, explicit facade disposal and post-disposal rejection assertions in CredentialDisplayPreservationSuite.SubscriptionRebindingAndDisposalKeepOnlyTheCurrentOwner. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established. Retains the original finally-to-null queue scope without a global reset or an outer override."
+    },
+    {
+      "originalId": "voice.credential-display/retained-preview-entry-uses-resource-without-auth-and-refreshes-with-accepted-key",
+      "successorIds": [
+        "voice.credential-display/retained-preview-entry-uses-resource-without-auth-and-refreshes-with-accepted-key"
+      ],
+      "responsibility": "Preserves the original disposable fake-player owner, unauthenticated retained/refreshed resource downloads, current detail-request key and no-implicit-Apply assertions in CredentialDisplayPreservationSuite.RetainedPreviewEntryUsesResourceWithoutAuthAndRefreshesWithAcceptedKeyAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.credential-display/startup-credential-round-trip-at-save-boundary-cannot-write",
+      "successorIds": [
+        "voice.credential-display/startup-credential-round-trip-at-save-boundary-cannot-write"
+      ],
+      "responsibility": "Preserves the original held startup response, accepted-key round trip at the save boundary, joined startup task and rejected stale persistence/display assertions in CredentialDisplayPreservationSuite.StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync. Requires NonParallelizable execution. Requires a fresh host with initially null SettingsViewModel.UiThreadInvokerOverride; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "voice.favorites/favorite-requests-use-current-credential",
+      "successorIds": [
+        "voice.favorites/favorite-requests-use-current-credential"
+      ],
+      "responsibility": "Preserves every original credential variant, current request headers, held old request and joined stale-result rejection assertion in FavoriteVoicesSuite.FavoriteRequestsUseCurrentCredentialAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "settings.credit/manual-credit-refresh-uses-preflight-and-locks-api-key-input",
+      "successorIds": [
+        "settings.credit/manual-credit-refresh-uses-preflight-and-locks-api-key-input"
+      ],
+      "responsibility": "Preserves the original offline preflight, network/log/request-count checks, held manual response, API Key input lock and paste-command assertions, original successful release and joined command in CreditRefreshSuite.ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsync. Retains the separately prepared disposable VM and failure-path release/join that preserve the primary failure; this migration does not change that repaired method body. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "settings.credit/manual-credit-refresh-success-shows-balance-and-latency",
+      "successorIds": [
+        "settings.credit/manual-credit-refresh-success-shows-balance-and-latency"
+      ],
+      "responsibility": "Preserves the original successful balance, latency text and color, and explicit request-timeout assertions in CreditRefreshSuite.ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync. Retains the separately prepared disposable VM that retires the four-second latency timer; this migration does not change that repaired method body. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "settings.credit/manual-credit-refresh-timeout-shows-localized-error-and-logs",
+      "successorIds": [
+        "settings.credit/manual-credit-refresh-timeout-shows-localized-error-and-logs"
+      ],
+      "responsibility": "Preserves the original timeout, localized error, cleared latency, unlocked input and error-log assertions in CreditRefreshSuite.ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync. Adds using ownership of the existing VM as a fixture cleanup correction; the original method body is not claimed byte-equivalent. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "settings.credit/silent-credit-refresh-preflight-and-timeout-only-log",
+      "successorIds": [
+        "settings.credit/silent-credit-refresh-preflight-and-timeout-only-log"
+      ],
+      "responsibility": "Preserves both original offline and timeout phases, snackbar suppression, request-count and warning/error-log assertions in CreditRefreshSuite.SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync. Adds using ownership of the existing VM as a fixture cleanup correction; the original method body is not claimed byte-equivalent. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-and-by-id-use-configured-token-or-dummy",
+      "successorIds": [
+        "voice.discovery/search-and-by-id-use-configured-token-or-dummy"
+      ],
+      "responsibility": "Preserves every original configured, blank and dummy credential variant, search and By-ID Authorization checks, inspected-card count and no-implicit-Apply assertion in VoiceDiscoverySuite.SearchAndByIdUseConfiguredTokenOrDummyAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/credential-changes-preserve-display-and-invalidate-pending-search",
+      "successorIds": [
+        "voice.discovery/credential-changes-preserve-display-and-invalidate-pending-search"
+      ],
+      "responsibility": "Preserves the original disposable VM, selected/display snapshot, credential-scoped metadata cache, held cancellation-ignoring search, joined stale response and no-dummy-fallback assertions in VoiceDiscoverySuite.CredentialChangesPreserveDisplayAndInvalidatePendingSearchAsync. Requires NonParallelizable execution. Failure cleanup retires the ViewModel, releases the cancellation-ignoring response and joins the original search without starting a replacement request."
+    },
+    {
+      "originalId": "voice.discovery/by-id-errors-expire-at-five-seconds",
+      "successorIds": [
+        "voice.discovery/by-id-errors-expire-at-five-seconds"
+      ],
+      "responsibility": "Preserves every original By-ID error variant, manual-clock 4999/5000 millisecond boundaries, input/card/selection retention, save-count and request-count assertions in VoiceDiscoverySuite.ByIdErrorsExpireAtFiveSecondsAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/by-id-timer-creation-cannot-outlive-concurrent-retirement",
+      "successorIds": [
+        "voice.discovery/by-id-timer-creation-cannot-outlive-concurrent-retirement"
+      ],
+      "responsibility": "Preserves both original concurrent timer-creation retirement/replacement variants, the same intercepted timer and release signal, finally-joined lookup, explicit disposal milestone and successor lifetime assertions in VoiceDiscoverySuite.ByIdTimerCreationCannotOutliveConcurrentRetirementAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/reentrant-by-id-timer-creation-cannot-replace-its-successor",
+      "successorIds": [
+        "voice.discovery/reentrant-by-id-timer-creation-cannot-replace-its-successor"
+      ],
+      "responsibility": "Preserves the original reentrant timer-creation chain, disposed outer candidate, retained successor, error ownership and fake-clock expiry assertions in VoiceDiscoverySuite.ReentrantByIdTimerCreationCannotReplaceItsSuccessorAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/identical-by-id-errors-restart-their-lifetime",
+      "successorIds": [
+        "voice.discovery/identical-by-id-errors-restart-their-lifetime"
+      ],
+      "responsibility": "Preserves the original repeated identical error occurrences and exact fake-clock lifetime restart boundaries in VoiceDiscoverySuite.IdenticalByIdErrorsRestartTheirLifetimeAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/edits-and-new-by-id-lookups-clear-errors-immediately",
+      "successorIds": [
+        "voice.discovery/edits-and-new-by-id-lookups-clear-errors-immediately"
+      ],
+      "responsibility": "Preserves the original edit/new-request error clearing, held response and joined lookup, same successful card, fake-clock expiry and no-implicit-Apply assertions in VoiceDiscoverySuite.EditsAndNewByIdLookupsClearErrorsImmediatelyAsync. Requires NonParallelizable execution. Failure cleanup retires the ViewModel, releases its original Found response and joins the captured lookup; the separate ownership-fault case observes completion before independent rescue."
+    },
+    {
+      "originalId": "voice.discovery/deferred-by-id-expiry-rechecks-occurrence-and-disposal",
+      "successorIds": [
+        "voice.discovery/deferred-by-id-expiry-rechecks-occurrence-and-disposal"
+      ],
+      "responsibility": "Preserves every original replacement/edit/disposal branch, background fake-clock expiry, queued UI callback, saved-previous UiThreadInvokerOverride restoration, explicit Dispose milestone and occurrence/lifetime assertions in VoiceDiscoverySuite.DeferredByIdExpiryRechecksOccurrenceAndDisposalAsync. The process-global invoker scope must remain serial; no general outer-scope safety is established. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/by-id-disposal-retires-timer-and-late-responses",
+      "successorIds": [
+        "voice.discovery/by-id-disposal-retires-timer-and-late-responses"
+      ],
+      "responsibility": "Preserves all original key-edit/disposal cancellation-ignoring response variants, canceled request token, joined lookup, retained error/card state, explicit Dispose milestones and zero post-disposal timer dispatch/notification assertions in VoiceDiscoverySuite.ByIdDisposalRetiresTimerAndLateResponsesAsync. Retains the original saved-previous process-global invoker cleanup. Requires NonParallelizable execution. Every original retirement/late-outcome variant retains its started lookup and response; failure cleanup retires the owner, releases the same success or failure and joins that lookup without manufacturing an unobserved faulted response."
+    },
+    {
+      "originalId": "voice.discovery/voice-lookup-requests-use-timeout-and-preserve-failure-semantics",
+      "successorIds": [
+        "voice.discovery/voice-lookup-requests-use-timeout-and-preserve-failure-semantics"
+      ],
+      "responsibility": "Preserves the original search/By-ID request timeouts and distinct 404, timeout, other-exception and null-response assertions in VoiceDiscoverySuite.VoiceLookupRequestsUseTimeoutAndPreserveFailureSemanticsAsync. Retains the separately prepared using VM that retires its final five-second error timer; this migration does not change that repaired method body. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-pagination-updates-visible-page-after-success-only",
+      "successorIds": [
+        "voice.discovery/search-pagination-updates-visible-page-after-success-only"
+      ],
+      "responsibility": "Preserves the original successful page one, failed page two, successful page two and malformed previous-page response chain and every visible page/input/card assertion in VoiceDiscoverySuite.SearchPaginationUpdatesVisiblePageAfterSuccessOnlyAsync. Adds using ownership of the existing VM as a fixture cleanup correction; all existing search requests remain joined and the original method body is not claimed byte-equivalent. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-pagination-honors-server-window",
+      "successorIds": [
+        "voice.discovery/search-pagination-honors-server-window"
+      ],
+      "responsibility": "Preserves the original server-window page cap, approximate total and page-limit display, permitted Next and rejected out-of-window request assertions in VoiceDiscoverySuite.SearchPaginationHonorsServerWindowAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/pagination-metadata-preserves-legacy-and-unknown-totals",
+      "successorIds": [
+        "voice.discovery/pagination-metadata-preserves-legacy-and-unknown-totals"
+      ],
+      "responsibility": "Preserves the complete original pagination JSON metadata table, optional/unknown total semantics, accessible-page and has-more rules, visited-page navigation and overflow boundaries in VoiceDiscoverySuite.PaginationMetadataPreservesLegacyAndUnknownTotals. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-window-tail-and-explicit-has-more",
+      "successorIds": [
+        "voice.discovery/search-window-tail-and-explicit-has-more"
+      ],
+      "responsibility": "Preserves the original partial window-tail response, raw page-number request, stale has-more rejection, compatibility setter independence, explicit server-end and request-count assertions in VoiceDiscoverySuite.SearchWindowTailAndExplicitHasMoreAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-unknown-totals-and-raw-type-filtering",
+      "successorIds": [
+        "voice.discovery/search-unknown-totals-and-raw-type-filtering"
+      ],
+      "responsibility": "Preserves the original raw-model filtering, unknown-total display, next-page and arbitrary-jump rules, all-ASR/full/short raw-page transitions and visited-page assertions in VoiceDiscoverySuite.SearchUnknownTotalsAndRawTypeFilteringAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-committed-query-survives-edits-and-failure",
+      "successorIds": [
+        "voice.discovery/search-committed-query-survives-edits-and-failure"
+      ],
+      "responsibility": "Preserves the original committed-query paging, edited draft, failed replacement, continued old-query navigation and successful replacement reset assertions in VoiceDiscoverySuite.SearchCommittedQuerySurvivesEditsAndFailureAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-empty-page-stops-forward-navigation",
+      "successorIds": [
+        "voice.discovery/search-empty-page-stops-forward-navigation"
+      ],
+      "responsibility": "Preserves the original inconsistent empty-page metadata, cleared cards, stopped forward navigation, no extra request and new-empty-query reset assertions in VoiceDiscoverySuite.SearchEmptyPageStopsForwardNavigationAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/by-id-rejects-explicit-non-tts-models",
+      "successorIds": [
+        "voice.discovery/by-id-rejects-explicit-non-tts-models"
+      ],
+      "responsibility": "Preserves every original explicit non-TTS model variant, retained saved Voice ID, absent Apply card, localized error and no-save assertions in VoiceDiscoverySuite.ByIdRejectsExplicitNonTtsModelsAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.discovery/search-replacement-rejects-late-pagination",
+      "successorIds": [
+        "voice.discovery/search-replacement-rejects-late-pagination"
+      ],
+      "responsibility": "Preserves the original held old pagination request, replacement query, released and joined old response, retained new cards/pagination and subsequent new-query request assertions in VoiceDiscoverySuite.SearchReplacementRejectsLatePaginationAsync. Requires NonParallelizable execution. Failure cleanup retires the ViewModel, releases the original first-page barrier and joins the same old search without issuing another query."
+    },
+    {
+      "originalId": "voice.discovery/search-publishes-pagination-before-resolving-covers",
+      "successorIds": [
+        "voice.discovery/search-publishes-pagination-before-resolving-covers"
+      ],
+      "responsibility": "Preserves the original directly owned VoiceDiscoveryCoordinator and exact publication-before-cover-resolution event sequence in VoiceDiscoverySuite.SearchPublishesPaginationBeforeResolvingCoversAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-metadata-rejects-changed-credentials",
+      "successorIds": [
+        "lifecycle.initialization/startup-metadata-rejects-changed-credentials"
+      ],
+      "responsibility": "Preserves both original accepted-credential replacement and round-trip variants, the same disposable Main/VM owner, held metadata response and joined current startup Task, retained cache/display and rejected-save assertions in InitializationLifecycleSuite.StartupMetadataRejectsChangedCredentialsAsync. PendingStartupTask retains its actual metadata/credit-cycle scope and does not prove a join of separately discarded observers. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-audio-url-validation-allows-only-fish-audio-storage-hosts",
+      "successorIds": [
+        "preview.ownership/preview-audio-url-validation-allows-only-fish-audio-storage-hosts"
+      ],
+      "responsibility": "Preserves the complete original allowed/rejected preview URI table and URL-policy assertions in PreviewSuite.PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts, without creating a VM or player. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-download-uses-host-stream-without-credentials",
+      "successorIds": [
+        "preview.ownership/preview-download-uses-host-stream-without-credentials"
+      ],
+      "responsibility": "Preserves the original disposable VM/fake-player owner, joined display command, host-stream URL/timeout/credential checks and no-synthesis assertion in PreviewSuite.PreviewDownloadUsesHostStreamWithoutCredentialsAsync. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-publishes-preparation-before-first-await",
+      "successorIds": [
+        "preview.ownership/preview-publishes-preparation-before-first-await"
+      ],
+      "responsibility": "Preserves the original before-first-await preparation observations, second-click cancellation, same held stream response and finally-joined first command in PreviewSuite.PreviewPublishesPreparationBeforeFirstAwaitAsync. Retains the existing disposable VM and original response-release ordering. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-audio-url-expiration-refreshes-at-thirty-second-window",
+      "successorIds": [
+        "preview.ownership/preview-audio-url-expiration-refreshes-at-thirty-second-window"
+      ],
+      "responsibility": "Preserves the original fixed issued time and both sides of the thirty-second signed-URL refresh boundary in PreviewSuite.PreviewAudioUrlExpirationRefreshesAtThirtySecondWindow. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-audio-url-expiration-treats-malformed-signatures-as-expiring",
+      "successorIds": [
+        "preview.ownership/preview-audio-url-expiration-treats-malformed-signatures-as-expiring"
+      ],
+      "responsibility": "Preserves every original unsigned, incomplete, malformed and duplicate signature/timing input in PreviewSuite.PreviewAudioUrlExpirationTreatsMalformedSignaturesAsExpiring. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/selected-preview-cache-update-rejects-changed-voice",
+      "successorIds": [
+        "preview.ownership/selected-preview-cache-update-rejects-changed-voice"
+      ],
+      "responsibility": "Preserves the original changed-Voice-ID rejection, original cache object and no stale replacement assertions in PreviewSuite.SelectedPreviewCacheUpdateRejectsChangedVoice. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-valid-url-skips-detail-refresh",
+      "successorIds": [
+        "preview.ownership/display-preview-valid-url-skips-detail-refresh"
+      ],
+      "responsibility": "Preserves the original awaited display command, reusable resource URL, zero detail requests and zero saves in PreviewSuite.DisplayPreviewValidUrlSkipsDetailRefreshAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-refreshes-cached-voice-and-plays-latest-url",
+      "successorIds": [
+        "preview.ownership/display-preview-refreshes-cached-voice-and-plays-latest-url"
+      ],
+      "responsibility": "Preserves the original awaited metadata refresh/playback chain, exact request ID/headers/timeout, all persisted and visible refreshed fields, single save, current sample and playback-state assertions in PreviewSuite.DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-offline-preflight-stops-before-refresh",
+      "successorIds": [
+        "preview.ownership/display-preview-offline-preflight-stops-before-refresh"
+      ],
+      "responsibility": "Preserves the original offline display-preflight error, zero detail requests, zero player calls and stopped state in PreviewSuite.DisplayPreviewOfflinePreflightStopsBeforeRefreshAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-rechecks-network-before-playback",
+      "successorIds": [
+        "preview.ownership/display-preview-rechecks-network-before-playback"
+      ],
+      "responsibility": "Preserves the original network change at the save callback, awaited display command, persisted/visible refreshed metadata and no-playback/network-message assertions in PreviewSuite.DisplayPreviewRechecksNetworkBeforePlaybackAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-uses-list-url-without-detail-refresh",
+      "successorIds": [
+        "preview.ownership/search-preview-uses-list-url-without-detail-refresh"
+      ],
+      "responsibility": "Preserves the original awaited search command, visible item, direct list resource URL, zero detail requests and single fake-player start in PreviewSuite.SearchPreviewUsesListUrlWithoutDetailRefresh. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-expired-url-refreshes-visible-metadata",
+      "successorIds": [
+        "preview.ownership/search-preview-expired-url-refreshes-visible-metadata"
+      ],
+      "responsibility": "Preserves the original awaited expired-search refresh, clicked Voice ID, every visible metadata field and PropertyChanged observation, no search-only save and refreshed resource URL in PreviewSuite.SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-expired-refresh-failure-does-not-fallback",
+      "successorIds": [
+        "preview.ownership/search-preview-expired-refresh-failure-does-not-fallback"
+      ],
+      "responsibility": "Preserves the original awaited timeout failure, localized error, retained search metadata/old URL, safe logging and no fallback playback in PreviewSuite.SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-second-click-stops-without-network",
+      "successorIds": [
+        "preview.ownership/search-preview-second-click-stops-without-network"
+      ],
+      "responsibility": "Preserves both original awaited clicks on the same search item, intervening network loss, exact immediate player stop and idle/no-error assertions in PreviewSuite.SearchPreviewSecondClickStopsWithoutNetwork. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-expired-refresh-failure-shows-error",
+      "successorIds": [
+        "preview.ownership/display-preview-expired-refresh-failure-shows-error"
+      ],
+      "responsibility": "Preserves the original awaited expired-display refresh failure, localized error, original cache reference, zero saves, unopened old URL, zero player calls and safe-log assertions in PreviewSuite.DisplayPreviewExpiredRefreshFailureShowsErrorAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-not-found-shows-refresh-error",
+      "successorIds": [
+        "preview.ownership/display-preview-not-found-shows-refresh-error"
+      ],
+      "responsibility": "Preserves the original awaited HTTP 404 display-refresh failure, one detail request, localized error, original cache reference, zero saves, unopened expired URL, zero playback and safe-log assertions in PreviewSuite.DisplayPreviewNotFoundShowsRefreshErrorAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-latest-voice-without-sample-shows-unavailable",
+      "successorIds": [
+        "preview.ownership/display-preview-latest-voice-without-sample-shows-unavailable"
+      ],
+      "responsibility": "Preserves the original awaited authoritative refresh without samples, all persisted/visible metadata updates, single save, removed obsolete sample, no fallback playback and unavailable message in PreviewSuite.DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-refresh-returning-expired-url-does-not-play",
+      "successorIds": [
+        "preview.ownership/display-preview-refresh-returning-expired-url-does-not-play"
+      ],
+      "responsibility": "Preserves the original awaited refresh whose returned sample remains expired, retained authoritative metadata/sample, single save, failure message and zero playback in PreviewSuite.DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-second-click-stops-without-network",
+      "successorIds": [
+        "preview.ownership/display-preview-second-click-stops-without-network"
+      ],
+      "responsibility": "Preserves both original awaited display clicks, first reusable-URL playback, intervening network loss, zero detail requests and exact stop/idle/no-error assertions in PreviewSuite.DisplayPreviewSecondClickStopsWithoutNetworkAsync. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "preview.ownership/preview-playback-failure-uses-network-aware-message",
+      "successorIds": [
+        "preview.ownership/preview-playback-failure-uses-network-aware-message"
+      ],
+      "responsibility": "Preserves both original awaited search starts and fake-player failure events, intervening network loss and distinct online/network-unavailable message and stopped-state assertions in PreviewSuite.PreviewPlaybackFailureUsesNetworkAwareMessage. Adds using ownership of the existing VM to retire player/buffer/progress-timer resources after the original awaited commands; this fixture ownership correction is not a byte-equivalent method-body transfer. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-uses-existing-file",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-uses-existing-file"
+      ],
+      "responsibility": "Preserves the original existing-file cache fixture, local URI, no CacheTask and no duplicate download assertions, with its original Temp cleanup in CoverImageCacheSuite.CoverImageCacheUsesExistingFile. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-clears-only-cover-images-and-formats-size",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-clears-only-cover-images-and-formats-size"
+      ],
+      "responsibility": "Preserves the original cover-only deletion, unrelated-file retention, rescanned size and all original byte-format assertions, with the same Temp owner in CoverImageCacheSuite.CoverImageCacheClearsOnlyCoverImagesAndFormatsSize. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-size-scans-cover-images-directory",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-size-scans-cover-images-directory"
+      ],
+      "responsibility": "Preserves the original external file create/delete chain, live directory size scans and Temp cleanup in CoverImageCacheSuite.CoverImageCacheSizeScansCoverImagesDirectory. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "voice.cover-cache/clear-cache-button-uses-localized-text-and-busy-spinner",
+      "successorIds": [
+        "voice.cover-cache/clear-cache-button-uses-localized-text-and-busy-spinner"
+      ],
+      "responsibility": "Preserves the original snapshot-bound SettingsView.xaml lookup, command binding, localized text, rotating busy indicator and composed-content/non-icon-only assertions in CoverImageCacheSuite.ClearCacheButtonUsesLocalizedTextAndBusySpinner. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/waveout-provides-200ms-in-four-50ms-buffers",
+      "successorIds": [
+        "playback.streaming/waveout-provides-200ms-in-four-50ms-buffers"
+      ],
+      "responsibility": "Retains the complete WaveOut configuration, 200ms/four-buffer/50ms sizing, stopped-state and caller SynchronizationContext restoration assertions. The original scenario never calls Init on the real WaveOut instance. NUnitCases.Playback.StreamingPlaybackTests.WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers directly invokes only StreamingPlaybackSuite.WaveOutProvidesTwoHundredMillisecondsInFourFiftyMillisecondBuffers through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/short-pcm-starts-after-100ms-with-blocked-input",
+      "successorIds": [
+        "playback.streaming/short-pcm-starts-after-100ms-with-blocked-input"
+      ],
+      "responsibility": "Retains the original blocked-next-chunk source, exact 100ms short-PCM startup boundary, output notification and cancellation/cleanup chain. NUnitCases.Playback.StreamingPlaybackTests.StartsShortPcmAfter100MillisecondsWhileNextChunkBlocksAsync directly invokes only StreamingPlaybackSuite.StartsShortPcmAfter100MillisecondsWhileNextChunkBlocksAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/starts-at-250ms-without-timer",
+      "successorIds": [
+        "playback.streaming/starts-at-250ms-without-timer"
+      ],
+      "responsibility": "Retains the original 250ms buffered-PCM startup without waiting for the timer and its complete output/input lifetime. NUnitCases.Playback.StreamingPlaybackTests.StartsAt250MillisecondsWithoutWaitingForTimerAsync directly invokes only StreamingPlaybackSuite.StartsAt250MillisecondsWithoutWaitingForTimerAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/pcm-byte-carry-and-odd-tail",
+      "successorIds": [
+        "playback.streaming/pcm-byte-carry-and-odd-tail"
+      ],
+      "responsibility": "Retains the original single-byte PCM carry, aligned output and odd final tail rejection scenarios. NUnitCases.Playback.StreamingPlaybackTests.CarriesSinglePcmBytesAndRejectsOddTailAsync directly invokes only StreamingPlaybackSuite.CarriesSinglePcmBytesAndRejectsOddTailAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/device-position-drain-including-underrun-silence",
+      "successorIds": [
+        "playback.streaming/device-position-drain-including-underrun-silence"
+      ],
+      "responsibility": "Retains the original actual device-position drain and underrun-silence distinction through the same output/input owner. NUnitCases.Playback.StreamingPlaybackTests.DrainsActualDevicePositionIncludingUnderrunSilenceAsync directly invokes only StreamingPlaybackSuite.DrainsActualDevicePositionIncludingUnderrunSilenceAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/large-pcm-bounds-and-low-water-resume",
+      "successorIds": [
+        "playback.streaming/large-pcm-bounds-and-low-water-resume"
+      ],
+      "responsibility": "Retains the original large-PCM bounded capacity, producer backpressure and exact low-water resume assertions. NUnitCases.Playback.StreamingPlaybackTests.BoundsLargePcmAndResumesOnlyAtLowWaterAsync directly invokes only StreamingPlaybackSuite.BoundsLargePcmAndResumesOnlyAtLowWaterAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/device-failure-interrupts-waiting-phases",
+      "successorIds": [
+        "playback.streaming/device-failure-interrupts-waiting-phases"
+      ],
+      "responsibility": "Retains every original device-failure waiting-phase variant and its interruption, failure and cleanup assertions. NUnitCases.Playback.StreamingPlaybackTests.DeviceFailureInterruptsAllWaitingPhasesAsync directly invokes only StreamingPlaybackSuite.DeviceFailureInterruptsAllWaitingPhasesAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/cancellation-and-disposal-interrupt-waiting-phases",
+      "successorIds": [
+        "playback.streaming/cancellation-and-disposal-interrupt-waiting-phases"
+      ],
+      "responsibility": "Retains every original cancellation/disposal waiting-phase variant and its complete resource cleanup. NUnitCases.Playback.StreamingPlaybackTests.CancellationAndDisposalInterruptAllWaitingPhasesAsync directly invokes only StreamingPlaybackSuite.CancellationAndDisposalInterruptAllWaitingPhasesAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/startup-failures-never-notify",
+      "successorIds": [
+        "playback.streaming/startup-failures-never-notify"
+      ],
+      "responsibility": "Retains both original Init/Play startup failures and all zero-started-notification assertions. NUnitCases.Playback.StreamingPlaybackTests.StartupFailuresNeverNotifyAsync directly invokes only StreamingPlaybackSuite.StartupFailuresNeverNotifyAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/stalled-real-data-and-idle-input",
+      "successorIds": [
+        "playback.streaming/stalled-real-data-and-idle-input"
+      ],
+      "responsibility": "Retains the original manual-clock real-data stall failure and separate idle-input non-timeout workflow. NUnitCases.Playback.StreamingPlaybackTests.DetectsStalledRealDataWithoutTimingOutIdleInputAsync directly invokes only StreamingPlaybackSuite.DetectsStalledRealDataWithoutTimingOutIdleInputAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/waveout-position-wrap-and-unexpected-stops",
+      "successorIds": [
+        "playback.streaming/waveout-position-wrap-and-unexpected-stops"
+      ],
+      "responsibility": "Retains the original fake wave-player 32-bit position wrap, unexpected-stop failure and intentional-stop quietness assertions. NUnitCases.Playback.StreamingPlaybackTests.WaveOutTracks32BitPositionWrapAndUnexpectedStops directly invokes only StreamingPlaybackSuite.WaveOutTracks32BitPositionWrapAndUnexpectedStops through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/mp3-split-frames-and-vbr-metadata",
+      "successorIds": [
+        "playback.streaming/mp3-split-frames-and-vbr-metadata"
+      ],
+      "responsibility": "Retains the original byte-split VBR MP3 fixture, one persistent fake decompressor, frame/PCM counts and lazy decode iterator assertions. NUnitCases.Playback.StreamingPlaybackTests.Mp3DecodesSplitFramesAndVbrMetadataIncrementally directly invokes only StreamingPlaybackSuite.Mp3DecodesSplitFramesAndVbrMetadataIncrementally through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/mp3-truncation-and-oversized-metadata",
+      "successorIds": [
+        "playback.streaming/mp3-truncation-and-oversized-metadata"
+      ],
+      "responsibility": "Retains the original truncated MP3 finish failure and oversized ID3 rejection before declared allocation. NUnitCases.Playback.StreamingPlaybackTests.Mp3RejectsTruncationAndOversizedMetadata directly invokes only StreamingPlaybackSuite.Mp3RejectsTruncationAndOversizedMetadata through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/mp3-frame-backpressure",
+      "successorIds": [
+        "playback.streaming/mp3-frame-backpressure"
+      ],
+      "responsibility": "Retains the original large encoded event, frame-level PCM backpressure, bounded capacity, cancellation and decompressor disposal assertions. NUnitCases.Playback.StreamingPlaybackTests.StopsDecodingLargeMp3EventAtPcmBackpressureAsync directly invokes only StreamingPlaybackSuite.StopsDecodingLargeMp3EventAtPcmBackpressureAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/uncooperative-input-interruption",
+      "successorIds": [
+        "playback.streaming/uncooperative-input-interruption"
+      ],
+      "responsibility": "Retains all original cancel/dispose/device variants against the uncooperative input, including the existing finally release of its pending MoveNext. NUnitCases.Playback.StreamingPlaybackTests.CancellationInterruptsUncooperativeInputAsync directly invokes only StreamingPlaybackSuite.CancellationInterruptsUncooperativeInputAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/pcm-ring-cap-and-wraparound",
+      "successorIds": [
+        "playback.streaming/pcm-ring-cap-and-wraparound"
+      ],
+      "responsibility": "Retains the original five-second PCM cap, aligned capacity, byte-exact wraparound, underrun silence and real-data tail assertions. NUnitCases.Playback.StreamingPlaybackTests.PcmRingCapsFiveSecondsAndTracksWraparound directly invokes only StreamingPlaybackSuite.PcmRingCapsFiveSecondsAndTracksWraparound through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/cancellation-during-play-never-notifies",
+      "successorIds": [
+        "playback.streaming/cancellation-during-play-never-notifies"
+      ],
+      "responsibility": "Retains cancellation inside the original Play callback and the zero-started-notification assertion. NUnitCases.Playback.StreamingPlaybackTests.CancellationDuringPlayNeverPublishesStartedAsync directly invokes only StreamingPlaybackSuite.CancellationDuringPlayNeverPublishesStartedAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/cleanup-preserves-primary-and-attempts-all-resources",
+      "successorIds": [
+        "playback.streaming/cleanup-preserves-primary-and-attempts-all-resources"
+      ],
+      "responsibility": "Retains every original play/decode/device/cancel primary-failure variant and exact attempts to stop/dispose output and decoder despite secondary failures. NUnitCases.Playback.StreamingPlaybackTests.CleanupPreservesOriginalFailureAndAttemptsEveryResourceAsync directly invokes only StreamingPlaybackSuite.CleanupPreservesOriginalFailureAndAttemptsEveryResourceAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/cleanup-failure-after-success",
+      "successorIds": [
+        "playback.streaming/cleanup-failure-after-success"
+      ],
+      "responsibility": "Retains both original successful-playback cleanup-failure variants, first-cleanup exception identity and every resource attempt. NUnitCases.Playback.StreamingPlaybackTests.CleanupFailureSurfacesWhenPlaybackSucceedsAsync directly invokes only StreamingPlaybackSuite.CleanupFailureSurfacesWhenPlaybackSucceedsAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/input-cleanup-preserves-decoder-failure",
+      "successorIds": [
+        "playback.streaming/input-cleanup-preserves-decoder-failure"
+      ],
+      "responsibility": "Retains the original decoder failure identity despite throwing input disposal and exact input/output/decoder cleanup counts. NUnitCases.Playback.StreamingPlaybackTests.InputCleanupCannotReplaceDecoderFailureAsync directly invokes only StreamingPlaybackSuite.InputCleanupCannotReplaceDecoderFailureAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/synchronous-large-input-starts-before-further-production",
+      "successorIds": [
+        "playback.streaming/synchronous-large-input-starts-before-further-production"
+      ],
+      "responsibility": "Retains the original synchronously buffered large-input workflow and output start before further source production. NUnitCases.Playback.StreamingPlaybackTests.SynchronousLargeInputStartsBeforeFurtherProductionAsync directly invokes only StreamingPlaybackSuite.SynchronousLargeInputStartsBeforeFurtherProductionAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "playback.streaming/cancellation-callback-preserves-playback-failure",
+      "successorIds": [
+        "playback.streaming/cancellation-callback-preserves-playback-failure"
+      ],
+      "responsibility": "Retains the original throwing input-cancellation callback, exact cleanup attempts and original Play IOException identity. NUnitCases.Playback.StreamingPlaybackTests.CancellationCallbackCannotReplacePlaybackFailureAsync directly invokes only StreamingPlaybackSuite.CancellationCallbackCannotReplacePlaybackFailureAsync through the unchanged RunOwnedAsync wrapper, preserving the original action root through all assertions and cleanup. The original suite, scenario body, CreateCases and RunAllAsync remain unchanged for transitional diagnostics. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.activity/operation-activity-counter-linearizes-state-transitions",
+      "successorIds": [
+        "lifecycle.activity/operation-activity-counter-linearizes-state-transitions"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.OperationActivityCounterLinearizesStateTransitions body, including overlapping Begin/End counts, unmatched End protection and delayed-old-notification/newer-Begin state assertions. The original body and assertion order remain unchanged. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.activity/operation-activity-counter-publishes-outside-gate-across-threads",
+      "successorIds": [
+        "lifecycle.activity/operation-activity-counter-publishes-outside-gate-across-threads"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.OperationActivityCounterPublishesOutsideGateAcrossThreads body, including both original background workers, CountdownEvent ownership, waits inside the setter callback, worker joins, shared-gate publication assertions and final End sequence. All nested callbacks, waits, cleanup guards and assertions remain unchanged. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.activity/operation-activity-counter-recovery-failure-leaves-publisher-reusable",
+      "successorIds": [
+        "lifecycle.activity/operation-activity-counter-recovery-failure-leaves-publisher-reusable"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.OperationActivityCounterRecoveryFailureLeavesPublisherReusable body, including the original reentrant worker and join, initial/recovery exception identities and AggregateException order, pending active count and later publisher-reuse sequence. All nested callbacks, waits, cleanup guards and assertions remain unchanged. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.activity/operation-activity-counter-publishes-pending-state-before-rethrowing-publication-failure",
+      "successorIds": [
+        "lifecycle.activity/operation-activity-counter-publishes-pending-state-before-rethrowing-publication-failure"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.OperationActivityCounterPublishesPendingStateBeforeRethrowingPublicationFailure body, including the original reentrant worker and join, publication before rethrow, exact original exception identity and complete follow-up Begin/End sequence. All nested callbacks, waits, cleanup guards and assertions remain unchanged. Requires NonParallelizable execution."
+    },
+    {
+      "originalId": "lifecycle.activity/api-key-operation-counter-handles-property-changing-reentrancy",
+      "successorIds": [
+        "lifecycle.activity/api-key-operation-counter-handles-property-changing-reentrancy"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangingReentrancy body on the same original SettingsViewModel, including its PropertyChanging callback, reentrant Begin during the old End and final unlock assertions. The original body, VM construction and callback/assertion order remain unchanged. Requires NonParallelizable execution and a fresh test host with SettingsViewModel.UiThreadInvokerOverride initially null; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "lifecycle.activity/api-key-operation-counter-handles-property-changed-reentrancy",
+      "successorIds": [
+        "lifecycle.activity/api-key-operation-counter-handles-property-changed-reentrancy"
+      ],
+      "responsibility": "Preserves the complete OperationActivitySuite.ApiKeyOperationCounterHandlesPropertyChangedReentrancyAsync body on the same original SettingsViewModel, including its PropertyChanged callback, the original awaited Task.Run End operation and timeout guard, reentrant active-state assertions and final unlock. The original body, VM construction and callback/assertion order remain unchanged. Requires NonParallelizable execution and a fresh test host with SettingsViewModel.UiThreadInvokerOverride initially null; arbitrary outer override nesting is not established."
+    },
+    {
+      "originalId": "runner.hooks/validator-failure",
+      "successorIds": [
+        "runner.hooks/validator-failure"
+      ],
+      "responsibility": "Retains rejection of a signed commit whose staged snapshot makes validation fail, the exact failed snapshot identity, failed validator outcome and absence of HEAD. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed validator-failure scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1567 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/partial-stage",
+      "successorIds": [
+        "runner.hooks/partial-stage"
+      ],
+      "responsibility": "Retains staged-bad/unstaged-good rejection, the same-path repair under a new staged tree, fresh successful validation and consumed receipt, and byte-for-byte preservation of the original failed evidence. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed partial-stage scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1568 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/staged-success",
+      "successorIds": [
+        "runner.hooks/staged-success"
+      ],
+      "responsibility": "Retains acceptance of the good staged snapshot despite a bad unstaged working file, successful independent snapshot verification, the exact committed tree and preservation of the unstaged change. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed staged-success scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1569 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/alternate-index",
+      "successorIds": [
+        "runner.hooks/alternate-index"
+      ],
+      "responsibility": "Retains the distinct alternate-index commit, snapshot and committed-tree checks, and proof that the default index remains unchanged. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed alternate-index scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1570 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/missing-hook",
+      "successorIds": [
+        "runner.hooks/missing-hook"
+      ],
+      "responsibility": "Retains failure of installation checks before installation and after deletion of the effective pre-commit hook, with the original install/check sequence. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed missing-hook scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1571 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/fresh-checkout",
+      "successorIds": [
+        "runner.hooks/fresh-checkout"
+      ],
+      "responsibility": "Retains the independent clone, rejection of an uninstalled checkout, explicit installation/check and successful checkout-local signed commit bound to its own staged tree. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed fresh-checkout scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1572 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/linked-worktree",
+      "successorIds": [
+        "runner.hooks/linked-worktree"
+      ],
+      "responsibility": "Retains the linked-worktree fixture, installation/check, successful signed commit and exact linked staged tree, together with the original checkout HEAD remaining unchanged. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed linked-worktree scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1573 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/previous-hook-order",
+      "successorIds": [
+        "runner.hooks/previous-hook-order"
+      ],
+      "responsibility": "Retains the prior pre-commit hook's staged repair and marker, proving the installed gate validates the tree after that hook runs. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed previous-hook-order scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1574 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/previous-hook-failure",
+      "successorIds": [
+        "runner.hooks/previous-hook-failure"
+      ],
+      "responsibility": "Retains prior-hook rejection before any validator invocation, absence of HEAD, and direct installed-entry verification that the original exit code 23 is preserved. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed previous-hook-failure scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1575 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/untracked-output",
+      "successorIds": [
+        "runner.hooks/untracked-output"
+      ],
+      "responsibility": "Retains exclusion of untracked source and stale package output from materialized validation inputs and snapshot context while the signed commit succeeds. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed untracked-output scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1576 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/raw-bytes",
+      "successorIds": [
+        "runner.hooks/raw-bytes"
+      ],
+      "responsibility": "Retains the exact mixed raw evidence bytes under the original .gitattributes/core.autocrlf fixture, successful signed commit, byte identity and snapshot inventory hash assertions. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed raw-bytes scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1577 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/index-mutation",
+      "successorIds": [
+        "runner.hooks/index-mutation"
+      ],
+      "responsibility": "Retains deliberate mutation of the fixture index during otherwise successful snapshot validation, rejection of the signed commit, absence of HEAD and proof that the fixture index actually changed. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed index-mutation scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1578 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/verifier-rejects-report",
+      "successorIds": [
+        "runner.hooks/verifier-rejects-report"
+      ],
+      "responsibility": "Retains the wrong-case legacy report after successful build validation, independent verifier rejection for the same tree, failed signed commit and absence of HEAD. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed verifier-rejects-report scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1579 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "runner.hooks/late-commit-message-mutation",
+      "successorIds": [
+        "runner.hooks/late-commit-message-mutation"
+      ],
+      "responsibility": "Retains the previous commit-msg hook's staged mutation after successful build and independent verification, its invocation marker, final receipt-guard rejection, absence of HEAD and proof of index mutation. HookAcceptanceSuite.InstalledHookScenarioAsync passes the fixed late-commit-message-mutation scenario directly to the unchanged RunAsync body. RegressionFixtureOwner retains the original action root through process exit, both output drains, report validation and failure cleanup. All original script helpers, signed-commit verification, exit codes and receipt checks remain unchanged. OriginalOrdinal 1580 is row provenance rather than an execution-order dependency. Requires NonParallelizable execution for the machine's real Git, PowerShell, signing and build-process resources."
+    },
+    {
+      "originalId": "cards.creation-date/run-all",
+      "successorIds": [
+        "cards.creation-date/provider-date-is-optional-and-property-scoped",
+        "cards.creation-date/settings-migration-copies-leases-and-rollback",
+        "cards.creation-date/local-presentation-preserves-full-instant"
+      ],
+      "responsibility": "Transfers original ordinal 525 to three independent NUnit leaves through direct local wrappers. ProviderDateIsOptionalAndPropertyScopedCase retains the complete original provider-date UTC/precision, malformed nested-value consumption, absent-date, truncated-JSON and property-scoped tolerance assertions. SettingsMigrationCopiesLeasesAndRollbackCase retains the complete original metadata/snapshot/output isolation, selected placeholder, schema-2 migration and round-trip, future/duplicate read-only schema, and same-owner leased failure rollback, successful save and conditional-update rollback chain. LocalPresentationPreservesFullInstantCase retains the complete original explicit west/east calendar-day, full tooltip precision/offset, missing-date and invariant local converter assertions. All three original method declarations and bodies, the shared readonly Date value, and the diagnostic RunAllAsync direct call sequence remain byte-identical. NonParallelizable retains serial ownership of the settings persistence gate, ViewModel disposal and ambient presentation resources; no test wraps RunAllAsync and no execution-order dependency is introduced."
+    },
+    {
+      "originalId": "voice.language/run-all",
+      "successorIds": [
+        "voice.language/search-selection-persists-provider-languages",
+        "voice.language/by-id-and-favorite-refresh-preserve-and-clear-languages",
+        "voice.language/settings-and-cache-detach-and-normalize-languages",
+        "voice.language/startup-and-selected-preview-replace-languages",
+        "voice.language/direct-preview-refresh-assigns-languages"
+      ],
+      "responsibility": "Transfers original ordinal 524 to five independent NUnit leaves through direct local wrappers. SearchSelectionPersistsProviderLanguagesAsyncCase retains the original search/provider-date mapping, selection/facade persistence and normalized provider-order language serialization assertions. ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsyncCase retains the complete same-owner By-ID, selected facade, favorite cache-hit/update/authoritative-clear, selection-clear and credential-change placeholder/detail-miss chain with all original inputs, assertion messages and action order. Its fixture now releases the same held reply and joins the actual page task captured immediately after SwitchToFavorites, then separately attempts ViewModel disposal and safe deletion of its owned GUID directory; the original body failure takes priority, otherwise the first cleanup failure remains a failure. A secondary Directory.Delete exception is observed only on an explicitly injected test-callback failure, best effort, without normal assertion Exception.Data dependence. SettingsAndCacheDetachAndNormalizeLanguagesCase retains all original constructor/cache/snapshot/output isolation, leased commit, malformed/missing/duplicate schema-2 language fields and canonical round-trip assertions. StartupAndSelectedPreviewReplaceLanguagesAsyncCase retains both original startup lifetimes sharing their settings and the selected-preview authoritative-empty chain. DirectPreviewRefreshAssignsLanguagesAsyncCase retains the original same-card/coordinator direct metadata publication, notification and later null-language/date clearing chain. The other four complete original methods and diagnostic RunAllAsync sequence remain byte-identical. NonParallelizable retains serial ownership of process-global network overrides and presentation resources; no test wraps RunAllAsync, no action deadline or first-use behavior is changed, and the two new ordinary cleanup-fault rows are not historical successors."
+    },
+    {
+      "originalId": "preview.ownership/preview-audio-rejects-invalid-search-url-without-starting-playback",
+      "successorIds": [
+        "preview.ownership/preview-audio-rejects-invalid-search-url-without-starting-playback"
+      ],
+      "responsibility": "Transfers original ordinal 236 to its direct NUnit method with the same canonical ID. The original network-available scope, logger, settings, lazy player factory, Voice ID, rejected file URI, SearchResults assignment, Execute call and all three assertion expressions/messages remain in their original order. The fixture now captures that command's actual ExecutionTask immediately after Execute, awaits that same task and independently disposes its ViewModel before returning; the original body failure has priority, otherwise the first cleanup failure remains a failure. This preflight path already completes before its first await and never acquires a player, so this is fixture ownership cleanup rather than a pending-response or playback-leak fix. NonParallelizable and the original ordinal retain the scoped process-global network ownership; no JSON, native input, audio device, replacement task or new execution budget is introduced. The separate ordinary ownership-fault row is not a historical successor."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-offline-preflight-stops-before-playback",
+      "successorIds": [
+        "preview.ownership/search-preview-offline-preflight-stops-before-playback"
+      ],
+      "responsibility": "Transfers original ordinal 241 to its direct NUnit method with the same canonical ID. The original offline scope, snackbar, fake HTTP service, settings, lazy player factory, Voice ID, allowed sample URI, SearchResults insertion, Execute call and all four assertion expressions/messages remain in their original order. The fixture now captures that command's actual ExecutionTask immediately after Execute, awaits that same task and independently disposes its ViewModel before returning; the original body failure has priority, otherwise the first cleanup failure remains a failure. This preflight path already completes before its first await and never acquires a player, so cleanup does not invent or dispose a player from the unused factory. NonParallelizable and the original ordinal retain the scoped process-global network ownership; no JSON, held response, replacement task or new execution budget is introduced. The separate ordinary ownership-fault row is not a historical successor."
+    },
+    {
+      "originalId": "lifecycle.initialization/same-settings-instance-separates-old-and-new-view-model-write-leases",
+      "successorIds": [
+        "lifecycle.initialization/same-settings-instance-separates-old-and-new-view-model-write-leases"
+      ],
+      "responsibility": "Transfers original ordinal 126 to its direct NUnit method with the same canonical ID. The same host Settings and Context, both detached runtime Settings loads and actual write leases, both live ViewModels, the first Retire boundary, old and replacement API Key inputs, and all four assertion expressions/messages remain in their original order. The old ViewModel stays live through its rejected mutation, preserving the retired-lease oracle rather than replacing it with disposed-facade behavior. After the complete continuous chain, or a body failure, fixture cleanup independently retires each still-active acquired runtime settings/lease pair and disposes each returned ViewModel once; it does not retire the host Settings object. Original primary dispatch information takes priority, otherwise the first cleanup failure remains a failure. NonParallelizable retains serial ownership without a new Dispatcher, Main lifetime, command task, player, timer, shared ViewModel, execution budget or discovery-time fixture construction. The two separate ordinary body/load-failure ownership tests are not historical successors."
     }
   ]
 }

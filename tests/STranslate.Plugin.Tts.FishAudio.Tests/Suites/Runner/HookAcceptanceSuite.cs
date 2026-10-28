@@ -1,17 +1,74 @@
 using System.Diagnostics;
 using System.Text.Json;
+using NUnit.Framework;
 
-internal static class HookAcceptanceSuite
+[TestFixture]
+[NonParallelizable]
+public sealed class HookAcceptanceSuite
 {
-    // Temporary executable-runner integration. These descriptors migrate to a
-    // local NUnit TestCaseSource with the rest of the suite, not a second catalog.
-    internal static IReadOnlyList<RegressionCase> CreateCases() => new[]
+    [TestCaseSource(nameof(Cases))]
+    public Task InstalledHookScenarioAsync(string scenario) => RunAsync(scenario);
+
+    // Pure discovery metadata. OriginalOrdinal records provenance, not scheduling.
+    private static IEnumerable<TestCaseData> Cases()
     {
-        "validator-failure", "partial-stage", "staged-success", "alternate-index",
-        "missing-hook", "fresh-checkout", "linked-worktree", "previous-hook-order",
-        "previous-hook-failure", "untracked-output", "raw-bytes", "index-mutation",
-        "verifier-rejects-report", "late-commit-message-mutation"
-    }.Select(scenario => new RegressionCase("runner.hooks/" + scenario, "core", () => RunAsync(scenario))).ToArray();
+        yield return new TestCaseData("validator-failure")
+            .SetName("InstalledHook_ValidatorFailure")
+            .SetProperty("FishAudioCaseId", "runner.hooks/validator-failure")
+            .SetProperty("OriginalOrdinal", 1567);
+        yield return new TestCaseData("partial-stage")
+            .SetName("InstalledHook_PartialStage")
+            .SetProperty("FishAudioCaseId", "runner.hooks/partial-stage")
+            .SetProperty("OriginalOrdinal", 1568);
+        yield return new TestCaseData("staged-success")
+            .SetName("InstalledHook_StagedSuccess")
+            .SetProperty("FishAudioCaseId", "runner.hooks/staged-success")
+            .SetProperty("OriginalOrdinal", 1569);
+        yield return new TestCaseData("alternate-index")
+            .SetName("InstalledHook_AlternateIndex")
+            .SetProperty("FishAudioCaseId", "runner.hooks/alternate-index")
+            .SetProperty("OriginalOrdinal", 1570);
+        yield return new TestCaseData("missing-hook")
+            .SetName("InstalledHook_MissingHook")
+            .SetProperty("FishAudioCaseId", "runner.hooks/missing-hook")
+            .SetProperty("OriginalOrdinal", 1571);
+        yield return new TestCaseData("fresh-checkout")
+            .SetName("InstalledHook_FreshCheckout")
+            .SetProperty("FishAudioCaseId", "runner.hooks/fresh-checkout")
+            .SetProperty("OriginalOrdinal", 1572);
+        yield return new TestCaseData("linked-worktree")
+            .SetName("InstalledHook_LinkedWorktree")
+            .SetProperty("FishAudioCaseId", "runner.hooks/linked-worktree")
+            .SetProperty("OriginalOrdinal", 1573);
+        yield return new TestCaseData("previous-hook-order")
+            .SetName("InstalledHook_PreviousHookOrder")
+            .SetProperty("FishAudioCaseId", "runner.hooks/previous-hook-order")
+            .SetProperty("OriginalOrdinal", 1574);
+        yield return new TestCaseData("previous-hook-failure")
+            .SetName("InstalledHook_PreviousHookFailure")
+            .SetProperty("FishAudioCaseId", "runner.hooks/previous-hook-failure")
+            .SetProperty("OriginalOrdinal", 1575);
+        yield return new TestCaseData("untracked-output")
+            .SetName("InstalledHook_UntrackedOutput")
+            .SetProperty("FishAudioCaseId", "runner.hooks/untracked-output")
+            .SetProperty("OriginalOrdinal", 1576);
+        yield return new TestCaseData("raw-bytes")
+            .SetName("InstalledHook_RawBytes")
+            .SetProperty("FishAudioCaseId", "runner.hooks/raw-bytes")
+            .SetProperty("OriginalOrdinal", 1577);
+        yield return new TestCaseData("index-mutation")
+            .SetName("InstalledHook_IndexMutation")
+            .SetProperty("FishAudioCaseId", "runner.hooks/index-mutation")
+            .SetProperty("OriginalOrdinal", 1578);
+        yield return new TestCaseData("verifier-rejects-report")
+            .SetName("InstalledHook_VerifierRejectsReport")
+            .SetProperty("FishAudioCaseId", "runner.hooks/verifier-rejects-report")
+            .SetProperty("OriginalOrdinal", 1579);
+        yield return new TestCaseData("late-commit-message-mutation")
+            .SetName("InstalledHook_LateCommitMessageMutation")
+            .SetProperty("FishAudioCaseId", "runner.hooks/late-commit-message-mutation")
+            .SetProperty("OriginalOrdinal", 1580);
+    }
 
     internal static Task RunAsync(string scenario)
     {

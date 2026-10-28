@@ -1,8 +1,11 @@
+using NUnit.Framework;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class BuildScriptSuite
 {
     private const string ProjectName = "STranslate.Plugin.Tts.FishAudio";
@@ -20,7 +23,10 @@ internal static class BuildScriptSuite
         Path.Combine("tests", TestProjectName, "bin"),
     ];
 
-    internal static void ConfigurationParameterIsRejected()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/configuration-parameter-is-rejected")]
+    [Order(67)]
+    public static void ConfigurationParameterIsRejected()
     {
         using var repository = BuildScriptTestRepository.Create();
 
@@ -36,7 +42,10 @@ internal static class BuildScriptSuite
             "A rejected -Configuration parameter should stop before dotnet is invoked");
     }
 
-    internal static void TestSelectionArgumentsReachRunner()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/test-selection-arguments-reach-runner")]
+    [Order(76)]
+    public static void TestSelectionArgumentsReachRunner()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuild("-Release", "-Test", "-TestGroup", "settings.storage",
@@ -51,7 +60,10 @@ internal static class BuildScriptSuite
             "Full legacy validation explicitly selects the legacy entry before forwarding selectors");
     }
 
-    internal static void TestSelectionWithoutTestIsRejected()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/test-selection-without-test-is-rejected")]
+    [Order(77)]
+    public static void TestSelectionWithoutTestIsRejected()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuild("-TestGroup", "settings.storage");
@@ -59,7 +71,10 @@ internal static class BuildScriptSuite
         AssertEqual(false, repository.DotnetWasInvoked(), "Invalid selection stops before build or cleanup work");
     }
 
-    internal static void FailedSelectedTestsKeepExitCode()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/failed-selected-tests-keep-exit-code")]
+    [Order(78)]
+    public static void FailedSelectedTestsKeepExitCode()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithFailedTests("-Release", "-Test", "-Clean", "-TestGroup", "settings.storage");
@@ -68,7 +83,10 @@ internal static class BuildScriptSuite
         AssertEqual(true, ArtifactDirectories.All(path => !repository.ArtifactDirectoryExists(path)), "Cleanup still runs after selected failure");
     }
 
-    internal static void ReleaseSwitchSelectsReleaseWithoutDebugPackaging()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/release-switch-selects-release-without-debug-packaging")]
+    [Order(68)]
+    public static void ReleaseSwitchSelectsReleaseWithoutDebugPackaging()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedDebugOnlyArtifact();
@@ -91,7 +109,10 @@ internal static class BuildScriptSuite
             "-Release should discover and copy only the isolated Release package");
     }
 
-    internal static void PackageMissingAudioRuntimeDependencyFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-audio-runtime-dependency-fails")]
+    [Order(69)]
+    public static void PackageMissingAudioRuntimeDependencyFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutAudioDependency();
@@ -101,7 +122,10 @@ internal static class BuildScriptSuite
             "The failure should identify the missing runtime dependency");
     }
 
-    internal static void PackageMissingStreamingRuntimeDependencyFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-streaming-runtime-dependency-fails")]
+    [Order(72)]
+    public static void PackageMissingStreamingRuntimeDependencyFails()
     {
         string[] dependencies = ["MessagePack.dll", "MessagePack.Annotations.dll", "Microsoft.NET.StringTools.dll"];
         foreach (var dependency in dependencies)
@@ -115,9 +139,15 @@ internal static class BuildScriptSuite
         }
     }
 
-    internal static void PackageMissingRussianXamlFails() => PackageMissingLocaleFails("Languages/ru.xaml");
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-russian-xaml-fails")]
+    [Order(65)]
+    public static void PackageMissingRussianXamlFails() => PackageMissingLocaleFails("Languages/ru.xaml");
 
-    internal static void PackageMissingTurkishMetadataFails() => PackageMissingLocaleFails("Languages/tr.json");
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-turkish-metadata-fails")]
+    [Order(66)]
+    public static void PackageMissingTurkishMetadataFails() => PackageMissingLocaleFails("Languages/tr.json");
 
     private static void PackageMissingLocaleFails(string resource)
     {
@@ -128,7 +158,10 @@ internal static class BuildScriptSuite
             "The package failure must identify the omitted locale resource");
     }
 
-    internal static void PackageMissingOcticonsNoticeFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-octicons-notice-fails")]
+    [Order(70)]
+    public static void PackageMissingOcticonsNoticeFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutOcticonsNotice();
@@ -136,7 +169,10 @@ internal static class BuildScriptSuite
         AssertEqual(true, result.Output.Contains("Octicons.LICENSE.txt", StringComparison.Ordinal), "Package rejection must identify the missing icon license");
     }
 
-    internal static void PackageMissingFlagIconsNoticeFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-flag-icons-notice-fails")]
+    [Order(71)]
+    public static void PackageMissingFlagIconsNoticeFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutFlagIconsNotice();
@@ -144,7 +180,10 @@ internal static class BuildScriptSuite
         AssertEqual(true, result.Output.Contains("flag-icons.LICENSE.txt", StringComparison.Ordinal), "Package rejection identifies the missing flag license");
     }
 
-    internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/ordinary-build-cleans-every-artifact-directory-before-building")]
+    [Order(73)]
+    public static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();
@@ -175,7 +214,10 @@ internal static class BuildScriptSuite
             "Ordinary build should retain the copied root package");
     }
 
-    internal static void CleanBuildCleansEveryArtifactDirectoryAfterBuilding()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/clean-build-cleans-every-artifact-directory-after-building")]
+    [Order(74)]
+    public static void CleanBuildCleansEveryArtifactDirectoryAfterBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();
@@ -197,7 +239,10 @@ internal static class BuildScriptSuite
             "-Clean should retain the copied root package");
     }
 
-    internal static void CleanBuildCleansAfterFailedRegressionTests()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/clean-build-cleans-after-failed-regression-tests")]
+    [Order(75)]
+    public static void CleanBuildCleansAfterFailedRegressionTests()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();

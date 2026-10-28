@@ -513,6 +513,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         _creditRefreshCoordinator.EndApiKeyOperation();
     }
 
+    internal Task? PendingStartupCreditObserverTask => _creditRefreshCoordinator.PendingStartupCreditObserverTask;
+
     internal void AttachStartupCreditRefresh(StartupCreditRefreshCycle startupCreditRefreshCycle)
     {
         _creditRefreshCoordinator.AttachStartupCreditRefresh(startupCreditRefreshCycle);

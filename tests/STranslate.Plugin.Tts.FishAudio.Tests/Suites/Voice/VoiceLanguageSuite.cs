@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -9,8 +10,40 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using static ContextProxy;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class VoiceLanguageSuite
 {
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.language/search-selection-persists-provider-languages")]
+    [NUnit.Framework.Property("OriginalOrdinal", 524)]
+    public static Task SearchSelectionPersistsProviderLanguagesAsyncCase() =>
+        SearchSelectionPersistsProviderLanguagesAsync();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.language/by-id-and-favorite-refresh-preserve-and-clear-languages")]
+    [NUnit.Framework.Property("OriginalOrdinal", 524)]
+    public static Task ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsyncCase() =>
+        ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.language/settings-and-cache-detach-and-normalize-languages")]
+    [NUnit.Framework.Property("OriginalOrdinal", 524)]
+    public static void SettingsAndCacheDetachAndNormalizeLanguagesCase() =>
+        SettingsAndCacheDetachAndNormalizeLanguages();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.language/startup-and-selected-preview-replace-languages")]
+    [NUnit.Framework.Property("OriginalOrdinal", 524)]
+    public static Task StartupAndSelectedPreviewReplaceLanguagesAsyncCase() =>
+        StartupAndSelectedPreviewReplaceLanguagesAsync();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.language/direct-preview-refresh-assigns-languages")]
+    [NUnit.Framework.Property("OriginalOrdinal", 524)]
+    public static Task DirectPreviewRefreshAssignsLanguagesAsyncCase() =>
+        DirectPreviewRefreshAssignsLanguagesAsync();
+
     internal static async Task SearchSelectionPersistsProviderLanguagesAsync()
     {
         var settings = new Settings();
@@ -39,52 +72,126 @@ internal static class VoiceLanguageSuite
         await DirectPreviewRefreshAssignsLanguagesAsync();
     }
 
-    internal static async Task ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync()
+    internal static Task ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync() =>
+        RunByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync(null);
+
+    internal static Task ByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync(
+        Action<TaskCompletionSource<string>, Task, string> beforePlaceholderAssertions) =>
+        RunByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync(beforePlaceholderAssertions);
+
+    private static async Task RunByIdAndFavoriteRefreshPreserveAndClearLanguagesAsync(
+        Action<TaskCompletionSource<string>, Task, string>? beforePlaceholderAssertions)
     {
         var settings = new Settings();
         var cache = new VoiceMetadataCache();
         var directory = CreateTempDirectory();
-        var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"_id":"22222222222222222222222222222222","title":"By ID","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["FR","de","tr","ru"]}""";
-        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service,
-            pluginSettingsDirectoryPath: directory), settings, null, null, voiceMetadataCache: cache);
-        view.VoiceIdInput = "22222222222222222222222222222222";
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        var card = view.ByIdResults.Single();
-        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), card.CreatedAt, "By-ID maps creation date");
-        AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, card.Languages, "Independent By-ID HTTP result retains every normalized language");
-        view.SelectVoiceCommand.Execute(card);
-        AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.CachedVoiceLanguages, "Selected facade follows applied card metadata");
-        view.ToggleFavoriteCommand.Execute(card);
-        view.SwitchToFavoritesCommand.Execute(null);
-        AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.FavoriteResults.Single().Languages, "Favorite cache hit retains languages");
-        AssertEqual(card.CreatedAt, view.FavoriteResults.Single().CreatedAt, "Favorite cache hit preserves creation date");
-        cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "Refresh", Languages = new[] { "JA" }, CreatedAt = VoiceCreationDateSuite.Date.AddDays(1) }));
-        AssertEqual(VoiceCreationDateSuite.Date.AddDays(1).ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Cache refresh replaces favorite creation date");
-        AssertEnumerableEqual(new[] { "ja" }, view.FavoriteResults.Single().Languages, "Cache update replaces favorite languages");
-        cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "No languages" }));
-        AssertEqual(0, card.Languages.Count, "Authoritative empty metadata clears a By-ID card's former languages");
-        AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "Authoritative empty metadata clears favorite languages");
-        AssertEqual<DateTimeOffset?>(null, card.CreatedAt, "Absent authoritative date clears By-ID date");
-        AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Absent authoritative date clears favorite date");
-        view.ClearVoiceCommand.Execute(null);
-        AssertEqual<DateTimeOffset?>(null, view.CachedVoiceCreatedAt, "Clearing selected voice clears creation date");
-        AssertEqual(0, view.CachedVoiceLanguages.Count, "Explicit selection clearing clears selected language metadata");
-        AssertEqual<CachedVoiceInfo?>(null, settings.CachedVoice, "Clearing selection removes the saved snapshot");
+        SettingsViewModel? view = null;
+        TaskCompletionSource<string>? pending = null;
+        Task? ownedFavoriteTask = null;
+        ExceptionDispatchInfo? primaryFailure = null;
+        ExceptionDispatchInfo? cleanupFailure = null;
+        Exception? testCallbackFailure = null;
+        Exception? directoryCleanupFailure = null;
+        try
+        {
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = """{"_id":"22222222222222222222222222222222","title":"By ID","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["FR","de","tr","ru"]}""";
+            view = new SettingsViewModel(CreateContext(settings: settings, httpService: service,
+                pluginSettingsDirectoryPath: directory), settings, null, null, voiceMetadataCache: cache);
+            view.VoiceIdInput = "22222222222222222222222222222222";
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            var card = view.ByIdResults.Single();
+            AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), card.CreatedAt, "By-ID maps creation date");
+            AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, card.Languages, "Independent By-ID HTTP result retains every normalized language");
+            view.SelectVoiceCommand.Execute(card);
+            AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.CachedVoiceLanguages, "Selected facade follows applied card metadata");
+            view.ToggleFavoriteCommand.Execute(card);
+            view.SwitchToFavoritesCommand.Execute(null);
+            AssertEnumerableEqual(new[] { "fr", "de", "tr", "ru" }, view.FavoriteResults.Single().Languages, "Favorite cache hit retains languages");
+            AssertEqual(card.CreatedAt, view.FavoriteResults.Single().CreatedAt, "Favorite cache hit preserves creation date");
+            cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "Refresh", Languages = new[] { "JA" }, CreatedAt = VoiceCreationDateSuite.Date.AddDays(1) }));
+            AssertEqual(VoiceCreationDateSuite.Date.AddDays(1).ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Cache refresh replaces favorite creation date");
+            AssertEnumerableEqual(new[] { "ja" }, view.FavoriteResults.Single().Languages, "Cache update replaces favorite languages");
+            cache.Put(VoiceMetadata.FromCachedVoice(card.Id, new() { Title = "No languages" }));
+            AssertEqual(0, card.Languages.Count, "Authoritative empty metadata clears a By-ID card's former languages");
+            AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "Authoritative empty metadata clears favorite languages");
+            AssertEqual<DateTimeOffset?>(null, card.CreatedAt, "Absent authoritative date clears By-ID date");
+            AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Absent authoritative date clears favorite date");
+            view.ClearVoiceCommand.Execute(null);
+            AssertEqual<DateTimeOffset?>(null, view.CachedVoiceCreatedAt, "Clearing selected voice clears creation date");
+            AssertEqual(0, view.CachedVoiceLanguages.Count, "Explicit selection clearing clears selected language metadata");
+            AssertEqual<CachedVoiceInfo?>(null, settings.CachedVoice, "Clearing selection removes the saved snapshot");
 
-        // A new credential has no cache entry. Refreshing the page first resets the reused card.
-        view.ApiKey = "another-account";
-        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) => pending.Task;
-        view.FavoriteResults.Single().Languages = new[] { "stale" };
-        view.FavoriteResults.Single().CreatedAt = VoiceCreationDateSuite.Date;
-        view.SwitchToFavoritesCommand.Execute(null);
-        AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "A reused favorite placeholder clears old language tags");
-        AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Favorite placeholder reset clears former date");
-        pending.SetResult("""{"title":"Fresh favorite","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["KO","en"]}""");
-        await view.PendingFavoriteMetadataTask;
-        AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Favorite detail miss maps creation date");
-        AssertEnumerableEqual(new[] { "ko", "en" }, view.FavoriteResults.Single().Languages, "A favorite detail miss maps provider languages");
+            // A new credential has no cache entry. Refreshing the page first resets the reused card.
+            view.ApiKey = "another-account";
+            pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            http.GetAsyncHandler = (_, _, _) => pending.Task;
+            view.FavoriteResults.Single().Languages = new[] { "stale" };
+            view.FavoriteResults.Single().CreatedAt = VoiceCreationDateSuite.Date;
+            try
+            {
+                view.SwitchToFavoritesCommand.Execute(null);
+            }
+            finally
+            {
+                ownedFavoriteTask = view.PendingFavoriteMetadataTask;
+            }
+            try { beforePlaceholderAssertions?.Invoke(pending, ownedFavoriteTask!, directory); }
+            catch (Exception error)
+            {
+                testCallbackFailure = error;
+                throw;
+            }
+            AssertEqual(0, view.FavoriteResults.Single().Languages.Count, "A reused favorite placeholder clears old language tags");
+            AssertEqual<DateTimeOffset?>(null, view.FavoriteResults.Single().CreatedAt, "Favorite placeholder reset clears former date");
+            pending.SetResult("""{"title":"Fresh favorite","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["KO","en"]}""");
+            await ownedFavoriteTask!;
+            AssertEqual(VoiceCreationDateSuite.Date.ToUniversalTime(), view.FavoriteResults.Single().CreatedAt, "Favorite detail miss maps creation date");
+            AssertEnumerableEqual(new[] { "ko", "en" }, view.FavoriteResults.Single().Languages, "A favorite detail miss maps provider languages");
+        }
+        catch (Exception error) { primaryFailure = ExceptionDispatchInfo.Capture(error); }
+        finally
+        {
+            try { pending?.TrySetResult("""{"title":"Fresh favorite","created_at":"2026-09-18T01:02:03.1234567+08:00","languages":["KO","en"]}"""); }
+            catch (Exception error) { cleanupFailure ??= ExceptionDispatchInfo.Capture(error); }
+            try
+            {
+                if (ownedFavoriteTask is not null) await ownedFavoriteTask;
+            }
+            catch (Exception error) { cleanupFailure ??= ExceptionDispatchInfo.Capture(error); }
+            try { view?.Dispose(); }
+            catch (Exception error) { cleanupFailure ??= ExceptionDispatchInfo.Capture(error); }
+            try
+            {
+                var ownedDirectory = GetOwnedFavoriteDirectoryPath(directory);
+                if (Directory.Exists(ownedDirectory))
+                {
+                    try { Directory.Delete(ownedDirectory, recursive: true); }
+                    catch (Exception error) { directoryCleanupFailure = error; throw; }
+                }
+            }
+            catch (Exception error) { cleanupFailure ??= ExceptionDispatchInfo.Capture(error); }
+        }
+        if (primaryFailure is not null)
+        {
+            // Only the explicitly injected test callback owns this local observation.
+            // Normal assertions never depend on arbitrary Exception.Data implementations.
+            if (ReferenceEquals(primaryFailure.SourceException, testCallbackFailure) && directoryCleanupFailure is not null)
+                try { testCallbackFailure!.Data["VoiceLanguageSuite.CleanupFailure"] = directoryCleanupFailure; }
+                catch { /* Secondary observation cannot replace the original callback failure. */ }
+            primaryFailure.Throw();
+        }
+        cleanupFailure?.Throw();
+    }
+
+    private static string GetOwnedFavoriteDirectoryPath(string directory)
+    {
+        var expectedParent = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "FishAudioTests"));
+        var owned = Path.GetFullPath(directory);
+        if (!string.Equals(Path.GetDirectoryName(owned), expectedParent, StringComparison.OrdinalIgnoreCase)
+            || !Guid.TryParseExact(Path.GetFileName(owned), "N", out _))
+            throw new InvalidOperationException("favorite-cleanup-directory-is-outside-the-owned-test-root");
+        return owned;
     }
 
     internal static void SettingsAndCacheDetachAndNormalizeLanguages()

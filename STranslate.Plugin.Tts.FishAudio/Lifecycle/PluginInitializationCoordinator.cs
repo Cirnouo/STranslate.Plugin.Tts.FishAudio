@@ -51,6 +51,15 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         }
     }
 
+    internal InitializationWorkCapture? CaptureInitializationWork()
+    {
+        lock (_stateGate)
+        {
+            var state = _initializationState;
+            return state is null ? null : new InitializationWorkCapture(state.Work, state.ViewModel);
+        }
+    }
+
     internal Control GetSettingUI()
     {
         while (true)
@@ -181,7 +190,8 @@ internal sealed class PluginInitializationCoordinator : IDisposable
                         ViewModel: null,
                         cancellationTokenSource,
                         startupCreditRefreshCycle,
-                        pendingStartupTask);
+                        pendingStartupTask,
+                        new InitializationWorkHandle(pendingStartupTask));
 
                     if (shouldRecreateViewModel)
                         preparedState = preparedState with { ViewModel = CreateSettingsViewModel(preparedState) };
@@ -662,10 +672,37 @@ internal sealed class PluginInitializationCoordinator : IDisposable
             }
             finally
             {
-                _ = state.PendingStartupTask.ContinueWith(
+                state.Work.RecordRetirement(state.PendingStartupTask.ContinueWith(
                     _ => state.StartupRefreshCancellationTokenSource.Dispose(),
-                    TaskScheduler.Default);
+                    TaskScheduler.Default));
             }
+        }
+    }
+
+    internal sealed record InitializationWorkCapture(
+        InitializationWorkHandle Work,
+        SettingsViewModel? ViewModel);
+
+    internal sealed class InitializationWorkHandle(Task startupTask)
+    {
+        private readonly object _retirementGate = new();
+        private List<Task>? _retirementTasks;
+
+        internal Task StartupTask { get; } = startupTask;
+
+        internal IReadOnlyList<Task> RetirementTasks
+        {
+            get
+            {
+                lock (_retirementGate)
+                    return _retirementTasks?.ToArray() ?? [];
+            }
+        }
+
+        internal void RecordRetirement(Task task)
+        {
+            lock (_retirementGate)
+                (_retirementTasks ??= []).Add(task);
         }
     }
 
@@ -687,5 +724,6 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         SettingsViewModel? ViewModel,
         CancellationTokenSource StartupRefreshCancellationTokenSource,
         StartupCreditRefreshCycle StartupCreditRefreshCycle,
-        Task PendingStartupTask);
+        Task PendingStartupTask,
+        InitializationWorkHandle Work);
 }

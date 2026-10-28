@@ -15,6 +15,8 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class InitializationLifecycleSuite
 {
     internal static Task ReinitializedSettingsViewUsesNewContextAndSettingsAsync() =>
@@ -257,41 +259,61 @@ internal static class InitializationLifecycleSuite
         AssertEqual(1, replacementContextProxy.SaveCount, "Replacement normalization should canonical-save exactly once");
     }
 
-    internal static void SameSettingsInstanceSeparatesOldAndNewViewModelWriteLeases()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/same-settings-instance-separates-old-and-new-view-model-write-leases")]
+    [NUnit.Framework.Property("OriginalOrdinal", 126)]
+    [NUnit.Framework.Order(126)]
+    public static void SameSettingsInstanceSeparatesOldAndNewViewModelWriteLeases()
     {
         var settings = new Settings { ApiKey = AppliedKey };
         var context = CreateContext(settings: settings);
         var contextProxy = (ContextProxy)(object)context;
-        var firstSettings = SettingsStore.Load(
-            context,
-            FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1),
-            out var firstWriteLease);
-        var oldViewModel = new SettingsViewModel(
-            context,
-            firstSettings,
-            clearCoverImageCacheAsync: null,
-            clearCoverImageCacheTimeout: null,
-            settingsWriteLease: firstWriteLease);
+        Settings? firstSettings = null;
+        Settings? secondSettings = null;
+        SettingsWriteLease firstWriteLease = default;
+        SettingsWriteLease secondWriteLease = default;
+        SettingsViewModel? oldViewModel = null;
+        SettingsViewModel? newViewModel = null;
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? primaryFailure = null;
+        try
+        {
+            firstSettings = SettingsStore.Load(
+                context,
+                FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1),
+                out firstWriteLease);
+            oldViewModel = new SettingsViewModel(
+                context,
+                firstSettings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                settingsWriteLease: firstWriteLease);
 
-        SettingsStore.Retire(firstSettings, firstWriteLease);
-        var secondSettings = SettingsStore.Load(
-            context,
-            FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1),
-            out var secondWriteLease);
-        var newViewModel = new SettingsViewModel(
-            context,
-            secondSettings,
-            clearCoverImageCacheAsync: null,
-            clearCoverImageCacheTimeout: null,
-            settingsWriteLease: secondWriteLease);
+            SettingsStore.Retire(firstSettings, firstWriteLease);
+            secondSettings = SettingsStore.Load(
+                context,
+                FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1),
+                out secondWriteLease);
+            newViewModel = new SettingsViewModel(
+                context,
+                secondSettings,
+                clearCoverImageCacheAsync: null,
+                clearCoverImageCacheTimeout: null,
+                settingsWriteLease: secondWriteLease);
 
-        oldViewModel.ApiKey = "ffffffffffffffffffffffffffffffff";
-        AssertEqual(0, contextProxy.SaveCount, "An old ViewModel lease should not save after the same Settings instance receives a new lease");
-        AssertEqual(AppliedKey, settings.ApiKey, "An old ViewModel lease should not mutate a Settings instance now owned by the replacement lease");
+            oldViewModel.ApiKey = "ffffffffffffffffffffffffffffffff";
+            AssertEqual(0, contextProxy.SaveCount, "An old ViewModel lease should not save after the same Settings instance receives a new lease");
+            AssertEqual(AppliedKey, settings.ApiKey, "An old ViewModel lease should not mutate a Settings instance now owned by the replacement lease");
 
-        newViewModel.ApiKey = DraftKey;
-        AssertEqual(1, contextProxy.SaveCount, "The replacement ViewModel lease should save the reused Settings instance");
-        AssertEqual(DraftKey, settings.ApiKey, "The current ViewModel should retain write ownership of a reused Settings instance");
+            newViewModel.ApiKey = DraftKey;
+            AssertEqual(1, contextProxy.SaveCount, "The replacement ViewModel lease should save the reused Settings instance");
+            AssertEqual(DraftKey, settings.ApiKey, "The current ViewModel should retain write ownership of a reused Settings instance");
+        }
+        catch (Exception error) { primaryFailure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        finally
+        {
+            FinishWriteLeaseOwners(firstSettings, firstWriteLease, oldViewModel,
+                secondSettings, secondWriteLease, newViewModel, primaryFailure);
+        }
     }
 
     internal static async Task FailedReinitializationRestoresOldViewModelWriteLeaseAsync()
@@ -598,7 +620,10 @@ internal static class InitializationLifecycleSuite
         }
     }
 
-    internal static async Task StartupMetadataRejectsChangedCredentialsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/startup-metadata-rejects-changed-credentials")]
+    [NUnit.Framework.Order(136)]
+    public static async Task StartupMetadataRejectsChangedCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var returnToOriginal in new[] { false, true })
@@ -1391,10 +1416,11 @@ internal static class InitializationLifecycleSuite
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
         await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
+        var startupTask = plugin.PendingStartupTask;
         plugin.Dispose();
 
         await requestCanceled.Task.WaitAsync(RegressionExecution.Timeout);
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await startupTask.WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Keep", settings.CachedVoice?.Title, "Canceled startup refresh should preserve cached voice");
         AssertEqual(0, proxy.SaveCount, "Canceled startup refresh should not save settings");
@@ -1412,6 +1438,7 @@ internal static class InitializationLifecycleSuite
         var (httpService, http) = TestHttpServiceProxy.Create();
         var plugin = new Main();
         var disposeBeforeModelResponse = true;
+        var startupTaskBeforeDispose = new TaskCompletionSource<Task>(TaskCreationOptions.RunContinuationsAsynchronously);
         var logger = new TestLogger();
         var context = CreateContext(settings: settings, httpService: httpService, logger: logger);
         var proxy = (ContextProxy)(object)context;
@@ -1424,12 +1451,13 @@ internal static class InitializationLifecycleSuite
                 return Task.FromResult("{\"dateTime\":\"2026-06-27T00:00:00Z\"}");
             }
 
+            startupTaskBeforeDispose.SetResult(plugin.PendingStartupTask);
             plugin.Dispose();
             return Task.FromResult("{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Should Not Apply\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
         };
 
         plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+        await startupTaskBeforeDispose.Task.Unwrap().WaitAsync(RegressionExecution.Timeout);
 
         AssertEqual("Keep", settings.CachedVoice?.Title, "Startup cancellation after model response should skip cached voice side effects");
         AssertEqual(0, proxy.SaveCount, "Startup cancellation after model response should not save settings");
@@ -1472,5 +1500,35 @@ internal static class InitializationLifecycleSuite
         AssertEqual("New Keep", newSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate new settings after reinitialization");
         AssertEqual(0, oldProxy.SaveCount, "Canceled old startup refresh should not save old context after reinitialization");
         AssertEqual(0, newProxy.SaveCount, "Canceled old startup refresh should not save new context after reinitialization");
+    }
+
+    internal static void FinishWriteLeaseOwners(
+        Settings? firstSettings, SettingsWriteLease firstWriteLease, SettingsViewModel? oldViewModel,
+        Settings? secondSettings, SettingsWriteLease secondWriteLease, SettingsViewModel? newViewModel,
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? primaryFailure)
+    {
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? cleanupFailure = null;
+        try
+        {
+            if (secondSettings is not null && secondWriteLease.IsValid
+                && secondSettings.ActiveWriteLease == secondWriteLease.Value)
+                SettingsStore.Retire(secondSettings, secondWriteLease);
+        }
+        catch (Exception error) { cleanupFailure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        try { newViewModel?.Dispose(); }
+        catch (Exception error) { cleanupFailure ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        try
+        {
+            // The original scenario already retires the first lease before its
+            // second Load. Only a failure before that boundary leaves it active.
+            if (firstSettings is not null && firstWriteLease.IsValid
+                && firstSettings.ActiveWriteLease == firstWriteLease.Value)
+                SettingsStore.Retire(firstSettings, firstWriteLease);
+        }
+        catch (Exception error) { cleanupFailure ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        try { oldViewModel?.Dispose(); }
+        catch (Exception error) { cleanupFailure ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        primaryFailure?.Throw();
+        cleanupFailure?.Throw();
     }
 }
