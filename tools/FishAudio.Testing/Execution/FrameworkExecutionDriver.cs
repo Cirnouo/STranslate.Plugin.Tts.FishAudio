@@ -46,10 +46,12 @@ public static class FrameworkExecutionDriver
             var requestInput = OpenInput(absoluteRequestPath);
             guards.Add(requestInput);
             Require(requestInput.Length is > 0 and <= 16 * 1024 * 1024, "framework-request-size");
+            var requestSha256 = Convert.ToHexStringLower(SHA256.HashData(requestInput));
+            requestInput.Position = 0;
             var request = await JsonSerializer.DeserializeAsync<FrameworkRunRequest>(requestInput, JsonOptions)
                 ?? throw new InvalidDataException("framework-request-empty");
             var catalog = ValidateRequest(request, guards);
-            return await ExecuteAsync(request, catalog, guards, () => executionOwnsInputs = true, finalizationFault);
+            return await ExecuteAsync(request, requestSha256, catalog, guards, () => executionOwnsInputs = true, finalizationFault);
         }
         finally
         {
@@ -157,7 +159,8 @@ public static class FrameworkExecutionDriver
             launch.VstestConsoleAssembly, request.TestAssembly, results[0], results[2], results[1]];
     }
 
-    private static async Task<int> ExecuteAsync(FrameworkRunRequest request, IReadOnlyList<DiscoveredNUnitCase> catalog,
+    private static async Task<int> ExecuteAsync(FrameworkRunRequest request, string requestSha256,
+        IReadOnlyList<DiscoveredNUnitCase> catalog,
         List<FileStream> inputGuards, Action takeInputOwnership, string? finalizationFault)
     {
         Directory.CreateDirectory(request.OutputDirectory);
@@ -421,7 +424,8 @@ public static class FrameworkExecutionDriver
         var report = new
         {
             schemaVersion = 1, kind = "framework-execution", request.RunId, request.SourceTree, request.SourceFingerprint,
-            request.TestAssemblySha256,
+            request.TestAssemblySha256, requestSha256,
+            policy = new { request.MaximumConcurrency, request.RequireOrder },
             launch = new { kind = request.ProfiledLaunch is null ? "vstest" : "dotcover-sdk-vstest",
                 sessionId = request.ProfiledLaunch?.SessionId, invocationSha256,
                 toolSha256 = request.ProfiledLaunch?.ToolSha256,
