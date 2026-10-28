@@ -12,7 +12,13 @@ public sealed record FrameworkRunRequest(int SchemaVersion, string RunId, string
     string TestAssembly, string TestAssemblySha256, string RunSettings, string DiscoveryPath,
     string ResultXmlPath, string TrxPath, string OutputDirectory,
     IReadOnlyList<FrameworkCaseBinding> Cases, int MaximumConcurrency = 1, bool RequireOrder = false,
-    IReadOnlyDictionary<string, string>? Environment = null, string? SourceFingerprint = null);
+    IReadOnlyDictionary<string, string>? Environment = null, string? SourceFingerprint = null,
+    DotCoverSdkVstestLaunch? ProfiledLaunch = null);
+
+// The only profiled route is the pinned CLI around the SDK's VSTest console.
+// It does not accept an arbitrary executable or replacement test arguments.
+public sealed record DotCoverSdkVstestLaunch(string SessionId, string ToolAssembly, string ToolSha256,
+    string VstestConsoleAssembly, string VstestConsoleSha256, string SnapshotPath, string LogPath);
 
 /// <summary>
 /// Owns the process and evidence envelope of one standard VSTest invocation.
@@ -84,6 +90,7 @@ public static class FrameworkExecutionDriver
         RequireDirectory(Path.GetDirectoryName(output)!);
         foreach (var path in new[] { request.ResultXmlPath, request.TrxPath })
             Require(Within(Absolute(path), output) && !File.Exists(path) && !Directory.Exists(path), "framework-result-not-fresh");
+        ValidateProfiledLaunch(request, output, guards);
         if (request.Environment is not null)
             foreach (var item in request.Environment)
                 Require(Identity(item.Key) && !item.Key.Contains('=') && item.Value is not null &&
@@ -110,12 +117,57 @@ public static class FrameworkExecutionDriver
         return catalog;
     }
 
+    private static void ValidateProfiledLaunch(FrameworkRunRequest request, string output, List<FileStream> guards)
+    {
+        if (request.ProfiledLaunch is not { } launch) return;
+        Require(Guid.TryParseExact(launch.SessionId, "N", out var session) && session != Guid.Empty &&
+            session.ToString("N") == launch.SessionId && Hash(launch.ToolSha256, 64) &&
+            Hash(launch.VstestConsoleSha256, 64) && request.Cases.Count == 1 && request.MaximumConcurrency == 1,
+            "framework-profiled-request-identity");
+        guards.Add(OpenInput(launch.ToolAssembly));
+        Require(Digest(launch.ToolAssembly) == launch.ToolSha256, "framework-profiled-tool-mismatch");
+        guards.Add(OpenInput(launch.VstestConsoleAssembly));
+        Require(Digest(launch.VstestConsoleAssembly) == launch.VstestConsoleSha256, "framework-profiled-vstest-mismatch");
+        Require(Path.GetFileName(launch.ToolAssembly).Equals("dotCover.dll", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetFileName(launch.VstestConsoleAssembly).Equals("vstest.console.dll", StringComparison.OrdinalIgnoreCase),
+            "framework-profiled-input-kind");
+        var ownedFiles = new List<string>();
+        foreach (var name in new[] { "control-context.json", "invocation.json", "stdout.bin", "stderr.bin",
+            "supervisor.json.pending", "supervisor.json", "finalization-write-entered.json" })
+            ownedFiles.Add(Path.Combine(output, name));
+        foreach (var value in new[] { request.ResultXmlPath, request.TrxPath, launch.SnapshotPath, launch.LogPath })
+        {
+            var path = Absolute(value);
+            Require(Within(path, output) && !File.Exists(path) && !Directory.Exists(path) &&
+                ownedFiles.All(other => !Same(path, other) && !Within(path, other) && !Within(other, path)),
+                "framework-profiled-output-not-fresh");
+            ownedFiles.Add(path);
+        }
+    }
+
+    private static string[] TargetArguments(FrameworkRunRequest request)
+    {
+        var results = new[] { "--Settings:" + request.RunSettings,
+            "--ResultsDirectory:" + Path.GetDirectoryName(request.TrxPath),
+            "--logger:trx;LogFileName=" + Path.GetFileName(request.TrxPath) };
+        if (request.ProfiledLaunch is not { } launch)
+            return ["vstest", request.TestAssembly, .. results];
+        return [launch.ToolAssembly, "cover", "--target-executable", request.DotnetExecutable,
+            "--snapshot-output", launch.SnapshotPath, "--log-file", launch.LogPath, "--", "exec",
+            launch.VstestConsoleAssembly, request.TestAssembly, results[0], results[2], results[1]];
+    }
+
     private static async Task<int> ExecuteAsync(FrameworkRunRequest request, IReadOnlyList<DiscoveredNUnitCase> catalog,
         List<FileStream> inputGuards, Action takeInputOwnership, string? finalizationFault)
     {
         Directory.CreateDirectory(request.OutputDirectory);
         Directory.CreateDirectory(Path.GetDirectoryName(request.ResultXmlPath)!);
         Directory.CreateDirectory(Path.GetDirectoryName(request.TrxPath)!);
+        if (request.ProfiledLaunch is { } profiled)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(profiled.SnapshotPath)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(profiled.LogPath)!);
+        }
         var nonce = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
         var pipeId = Guid.NewGuid().ToString("N");
         var hostPipe = "fa-fw-" + pipeId + "-host";
@@ -126,15 +178,22 @@ public static class FrameworkExecutionDriver
         var targetEnvironment = request.Environment?.ToDictionary(item => item.Key, item => item.Value,
             StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         targetEnvironment.Add("FISHAUDIO_FRAMEWORK_CONTROL_CONTEXT", contextPath);
-        var arguments = new[] { "vstest", request.TestAssembly, "--Settings:" + request.RunSettings,
-            "--ResultsDirectory:" + Path.GetDirectoryName(request.TrxPath), "--logger:trx;LogFileName=" + Path.GetFileName(request.TrxPath) };
+        var arguments = TargetArguments(request);
         var invocationPath = Path.Combine(request.OutputDirectory, "invocation.json");
-        await WriteNewAsync(invocationPath, new
+        var invocation = new Dictionary<string, object?>
         {
-            schemaVersion = 1, executable = request.DotnetExecutable, workingDirectory = request.WorkingDirectory,
-            arguments, environment = targetEnvironment,
-            driverControl = new { pipeName = launcherPipe, nonce, runId = request.RunId, sourceTree = request.SourceTree },
-        });
+            ["schemaVersion"] = 1, ["executable"] = request.DotnetExecutable, ["workingDirectory"] = request.WorkingDirectory,
+            ["arguments"] = arguments, ["environment"] = targetEnvironment,
+            ["driverControl"] = new { pipeName = launcherPipe, nonce, runId = request.RunId, sourceTree = request.SourceTree },
+        };
+        if (request.ProfiledLaunch is { } coverage)
+        {
+            invocation.Add("sessionRunId", coverage.SessionId);
+            invocation.Add("canonicalCaseId", request.Cases[0].CanonicalId);
+        }
+        await WriteNewAsync(invocationPath, invocation);
+        inputGuards.Add(OpenInput(invocationPath));
+        var invocationSha256 = Digest(invocationPath);
         using var owner = new WindowsJobOwner();
         using var cancellation = new CancellationTokenSource();
         using var process = new Process { StartInfo = new(request.ShellExecutable)
@@ -363,6 +422,10 @@ public static class FrameworkExecutionDriver
         {
             schemaVersion = 1, kind = "framework-execution", request.RunId, request.SourceTree, request.SourceFingerprint,
             request.TestAssemblySha256,
+            launch = new { kind = request.ProfiledLaunch is null ? "vstest" : "dotcover-sdk-vstest",
+                sessionId = request.ProfiledLaunch?.SessionId, invocationSha256,
+                toolSha256 = request.ProfiledLaunch?.ToolSha256,
+                vstestConsoleSha256 = request.ProfiledLaunch?.VstestConsoleSha256 },
             selectedIds = request.Cases.Select(item => item.CanonicalId).ToArray(), state = watchdog.State,
             target = new { started = targetStarted, pid = targetPid, exitCode = targetExitCode },
             process = new { launcherPid = launched ? process.Id : (int?)null, launcherExited,

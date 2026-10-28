@@ -46,6 +46,15 @@ $observedSdkVersion = $null
 $observedDotCoverVersion = $null
 $toolSha256 = $null
 $caseMetadata = $null
+$frameworkDirectory = $null
+$frameworkRequest = $null
+$frameworkRecord = $null
+$frameworkEnvelope = $null
+$snapshotRelative = 'coverage.dcvr'
+$coverLogRelative = 'cover.log'
+$coverErrorLog = $null
+$nunitRelative = 'nunit.xml'
+$trxRelative = 'trx/results.trx'
 $shell = (Get-Process -Id $PID).Path
 
 function Require-Coverage([bool]$Condition, [string]$Code) {
@@ -370,6 +379,14 @@ function Add-Artifact([string]$Kind, [string]$RelativePath) {
         length = $item.Length; lastWriteUtc = [DateTimeOffset]::new($item.LastWriteTimeUtc) })
 }
 
+function Seal-FrameworkFile([string]$Path) {
+    Require-RegularFile $Path $runRoot
+    $locks.Add([IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    $file = Get-Item -LiteralPath $Path
+    return [ordered]@{ relativePath = [IO.Path]::GetRelativePath($runRoot, $Path).Replace('\','/')
+        sha256 = Get-Digest $Path; length = $file.Length; lastWriteUtc = [DateTimeOffset]::new($file.LastWriteTimeUtc) }
+}
+
 try {
     Require-Coverage $IsWindows 'coverage-collector-windows-required'
     $parsedRun = [Guid]::Empty
@@ -491,19 +508,58 @@ try {
     $selection = Join-Path $runRoot 'selection.json'
     Write-NewJson $selection @{ schemaVersion = 1; ids = @($CaseId) }
     $executionSettings = Join-Path $runRoot 'execution.runsettings'
-    Write-CoverageSettings $executionSettings (Join-Path $runRoot 'result-xml') $selected[0].fullName
+    $frameworkDirectory = Join-Path $runRoot 'framework-cover'
+    $nunitRelative = 'framework-cover/result-xml/' + [IO.Path]::GetFileNameWithoutExtension($TestAssembly) + '.xml'
+    $trxRelative = 'framework-cover/trx/results.trx'
+    $snapshotRelative = 'framework-cover/coverage.dcvr'
+    $coverLogRelative = 'framework-cover/cover.log'
+    Write-CoverageSettings $executionSettings (Join-Path $frameworkDirectory 'result-xml') $selected[0].fullName
     $stage = 'cover'
-    $snapshotPath = Join-Path $runRoot 'coverage.dcvr'
-    $coverLog = Join-Path $runRoot 'cover.log'
-    [void](Invoke-CoveragePhase 'cover' $dotnet @($DotCoverToolFile, 'cover', '--target-executable', $dotnet,
-        '--snapshot-output', $snapshotPath, '--log-file', $coverLog, '--', 'exec', $vstest, $TestAssembly,
-        ('--Settings:' + $executionSettings), '--logger:trx;LogFileName=results.trx', ('--ResultsDirectory:' + (Join-Path $runRoot 'trx'))))
+    $snapshotPath = Join-Path $runRoot $snapshotRelative
+    $coverLog = Join-Path $runRoot $coverLogRelative
+    $coverErrorLog = Join-Path $frameworkDirectory 'cover.err.log'
+    $frameworkRequest = Join-Path $runRoot 'framework-cover-request.json'
+    Write-NewJson $frameworkRequest ([ordered]@{
+        schemaVersion = 1; runId = $RunId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
+        workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet
+        launcherScript = Join-Path $PSScriptRoot 'Invoke-TestProcess.ps1'
+        testAssembly = $TestAssembly; testAssemblySha256 = Get-Digest $TestAssembly
+        runSettings = $executionSettings; discoveryPath = Join-Path $runRoot 'discovery.dump'
+        resultXmlPath = Join-Path $runRoot $nunitRelative; trxPath = Join-Path $runRoot $trxRelative
+        outputDirectory = $frameworkDirectory; cases = @(@{ canonicalId = $CaseId; fullName = $selected[0].fullName })
+        maximumConcurrency = 1; requireOrder = $true
+        environment = @{
+            DOTNET_CLI_UI_LANGUAGE = 'en'; VSLANG = '1033'; FISHAUDIO_COMPAT_PARALLEL_PROOF = '0'
+            FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence; FISHAUDIO_TEST_REPOSITORY_ROOT = $root
+            FISHAUDIO_PWSH_EXECUTABLE = $shell; FISHAUDIO_DOTNET_EXECUTABLE = $dotnet
+            FISHAUDIO_COVERAGE_SESSION_ID = $sessionId; FISHAUDIO_COVERAGE_RUN_ID = $RunId
+            FISHAUDIO_COVERAGE_CASE_ID = $CaseId; FISHAUDIO_COVERAGE_SOURCE_TREE = $source.tree
+            FISHAUDIO_COVERAGE_EVIDENCE_ROOT = $runtimeEvidence
+        }
+        profiledLaunch = @{ sessionId = $sessionId; toolAssembly = $DotCoverToolFile; toolSha256 = $toolSha256
+            vstestConsoleAssembly = $vstest; vstestConsoleSha256 = Get-Digest $vstest
+            snapshotPath = $snapshotPath; logPath = $coverLog }
+    })
+    [void](Invoke-CoveragePhase 'cover' $dotnet @($metadataTool, 'framework-run', '--request', $frameworkRequest))
+    $stage = 'framework-supervision-verification'
+    $nunitPath = Join-Path $runRoot $nunitRelative
+    $trxPath = Join-Path $runRoot $trxRelative
+    & (Join-Path $PSScriptRoot 'Assert-FrameworkSupervisor.ps1') -Path (Join-Path $frameworkDirectory 'supervisor.json') `
+        -RunId $RunId -SourceTree $source.tree -SourceFingerprint $source.fingerprint `
+        -AssemblySha256 (Get-Digest $TestAssembly) -CaseIds @($CaseId) `
+        -ResultXmlSha256 (Get-Digest $nunitPath) -TrxSha256 (Get-Digest $trxPath)
+    $frameworkRecord = [IO.File]::ReadAllText((Join-Path $frameworkDirectory 'supervisor.json')) | ConvertFrom-Json
+    Require-Coverage ($frameworkRecord.launch.kind -ceq 'dotcover-sdk-vstest' -and
+        $frameworkRecord.launch.sessionId -ceq $sessionId -and
+        $frameworkRecord.launch.invocationSha256 -ceq (Get-Digest (Join-Path $frameworkDirectory 'invocation.json')) -and
+        $frameworkRecord.launch.toolSha256 -ceq $toolSha256 -and
+        $frameworkRecord.launch.vstestConsoleSha256 -ceq (Get-Digest $vstest)) 'coverage-collector-framework-launch-mismatch'
     $stage = 'test-verification'
-    $xml = @(Get-ChildItem -LiteralPath (Join-Path $runRoot 'result-xml') -File -Filter '*.xml')
+    $xml = @(Get-ChildItem -LiteralPath (Join-Path $frameworkDirectory 'result-xml') -File -Filter '*.xml')
     Require-Coverage ($xml.Count -eq 1 -and [IO.File]::Exists($snapshotPath) -and [IO.File]::Exists($coverLog)) 'coverage-collector-cover-output-missing'
-    [IO.File]::Copy($xml[0].FullName, (Join-Path $runRoot 'nunit.xml'), $false)
+    Require-Coverage (Same-Path $xml[0].FullName $nunitPath) 'coverage-collector-result-path-mismatch'
     [void](Invoke-CoveragePhase 'test-verification' $dotnet @($metadataTool, 'evidence-verify', '--catalog', $catalogPath,
-        '--selection', $selection, '--result', (Join-Path $runRoot 'nunit.xml'), '--trx', (Join-Path $runRoot 'trx/results.trx'), '--output', (Join-Path $runRoot 'terminal.json')) 120000)
+        '--selection', $selection, '--result', $nunitPath, '--trx', $trxPath, '--output', (Join-Path $runRoot 'terminal.json')) 120000)
     $terminal = [IO.File]::ReadAllText((Join-Path $runRoot 'terminal.json')) | ConvertFrom-Json
     Require-Coverage ($terminal.complete -eq $true -and $terminal.passedCount -eq 1 -and @($terminal.cases).Count -eq 1 -and $terminal.cases[0].canonicalId -ceq $CaseId) 'coverage-collector-test-result-not-one-passed-leaf'
     $testingVerified = $true
@@ -529,6 +585,23 @@ try {
     Require-Coverage ($hostDocument.complete -eq $true -and $hostDocument.kind -ceq 'coverage-host-envelope' -and
         $hostDocument.value.processId -gt 0) 'coverage-collector-host-evidence-rejected'
     $hostLifecycle = $hostDocument.value
+    $frameworkHosts = @($frameworkRecord.events | Where-Object role -CEQ 'nunit-host' | ForEach-Object pid | Sort-Object -Unique)
+    Require-Coverage ($frameworkHosts.Count -eq 1 -and $frameworkHosts[0] -eq $hostLifecycle.processId) 'coverage-collector-framework-host-mismatch'
+    $coverPhaseRoot = Join-Path $runRoot $coverPhase[0].directory
+    $frameworkEnvelope = [ordered]@{
+        schemaVersion = 1
+        driverInvocation = Seal-FrameworkFile (Join-Path $coverPhaseRoot 'argv.json')
+        driverStdout = Seal-FrameworkFile (Join-Path $coverPhaseRoot 'stdout.log')
+        driverStderr = Seal-FrameworkFile (Join-Path $coverPhaseRoot 'stderr.log')
+        executionRequest = Seal-FrameworkFile $frameworkRequest
+        runSettings = Seal-FrameworkFile $executionSettings
+        controlContext = Seal-FrameworkFile (Join-Path $frameworkDirectory 'control-context.json')
+        supervisor = Seal-FrameworkFile (Join-Path $frameworkDirectory 'supervisor.json')
+        hostStart = Seal-FrameworkFile $hostStart[0].FullName
+        hostEnd = Seal-FrameworkFile $hostEnd[0].FullName
+        driverAssemblyRelativePath = [IO.Path]::GetRelativePath($root, $metadataTool).Replace('\','/')
+        driverAssemblySha256 = Get-Digest $metadataTool
+    }
     $stage = 'export'
     [void](Invoke-CoveragePhase 'export' $dotnet @($DotCoverToolFile, 'report', '--snapshot-source', $snapshotPath,
         '--json-report-output', (Join-Path $runRoot 'coverage.json'), '--xml-report-output', (Join-Path $runRoot 'coverage.xml'), '--log-file', (Join-Path $runRoot 'export.log')) 120000)
@@ -549,14 +622,21 @@ try {
     # No cleanup removes the snapshot, reports, logs or fixture evidence here.
     if ($runRoot) {
         try {
-            foreach ($pair in @(@('Discovery','discovery.dump'), @('NUnitXml','nunit.xml'), @('Trx','trx/results.trx'),
-                @('Snapshot','coverage.dcvr'), @('AggregateJson','coverage.json'), @('CoverLog','cover.log'), @('ExportLog','export.log'))) { Add-Artifact $pair[0] $pair[1] }
+            foreach ($pair in @(@('Discovery','discovery.dump'), @('NUnitXml',$nunitRelative), @('Trx',$trxRelative),
+                @('Snapshot',$snapshotRelative), @('AggregateJson','coverage.json'), @('CoverLog',$coverLogRelative), @('ExportLog','export.log'))) { Add-Artifact $pair[0] $pair[1] }
             foreach ($phaseName in @('cover','export')) {
                 $phase = @($phases | Where-Object name -CEQ $phaseName)
                 if ($phase.Count -eq 1) {
                     $prefix = $(if ($phaseName -ceq 'cover') { 'Cover' } else { 'Export' })
                     foreach ($pair in @(@('Invocation','argv.json'), @('Process','process.json'), @('Stdout','stdout.log'), @('Stderr','stderr.log'))) {
-                        Add-Artifact ($prefix + $pair[0]) ($phase[0].directory + '/' + $pair[1])
+                        if ($phaseName -ceq 'cover' -and $pair[0] -cne 'Process') {
+                            $file = switch -CaseSensitive ($pair[0]) {
+                                'Invocation' { 'invocation.json' }
+                                'Stdout' { 'stdout.bin' }
+                                'Stderr' { 'stderr.bin' }
+                            }
+                            Add-Artifact ($prefix + $pair[0]) ('framework-cover/' + $file)
+                        } else { Add-Artifact ($prefix + $pair[0]) ($phase[0].directory + '/' + $pair[1]) }
                     }
                 }
             }
@@ -574,7 +654,7 @@ try {
                 startedUtc = $startedUtc; sealedUtc = [DateTimeOffset]::UtcNow; source = $source; binaries = $binaries
                 tool = @{ requiredVersion = '2026.2.3.1'; version = $observedDotCoverVersion; file = $DotCoverToolFile; sha256 = $toolSha256 }
                 sdk = @{ requiredVersion = '10.0.403'; version = $observedSdkVersion }
-                hostLifecycle = $hostLifecycle
+                hostLifecycle = $hostLifecycle; frameworkEnvelope = $frameworkEnvelope
                 statuses = $status; phases = $phases.ToArray(); artifacts = $artifacts.ToArray(); emptyProduct = $null
                 failure = $(if ($null -ne $failure -or -not $collectionComplete) { @{ stage = $stage; reason = $failureCode; exceptionType = $(if ($failure) { $failure.Exception.GetType().Name } else { $null }) } } else { $null })
                 supervisorBoundary = 'job-tree-and-original-pipes-observed; individual-child-exit-records-not-collected'
@@ -637,9 +717,14 @@ try {
     foreach ($file in $binaryFiles) { Lock-AdmissionInput $file.path $file.sha256 }
     foreach ($artifact in $artifacts) { Lock-AdmissionInput (Join-Path $runRoot $artifact.relativePath) $artifact.sha256 }
     foreach ($artifact in $hostLifecycle.evidence) { Lock-AdmissionInput $artifact.path $artifact.sha256 }
+    Require-Coverage ($null -ne $frameworkEnvelope) 'coverage-admission-framework-envelope-required'
+    foreach ($name in @('driverInvocation','driverStdout','driverStderr','executionRequest','runSettings','controlContext','supervisor','hostStart','hostEnd')) {
+        $pin = $frameworkEnvelope[$name]
+        Lock-AdmissionInput (Join-Path $runRoot $pin.relativePath) $pin.sha256
+    }
     $sdkEngine = Join-Path ([IO.Path]::GetDirectoryName($vstest)) 'Microsoft.TestPlatform.CrossPlatEngine.dll'
     $hostEngine = Join-Path ([IO.Path]::GetDirectoryName($TestAssembly)) 'Microsoft.TestPlatform.CrossPlatEngine.dll'
-    foreach ($path in @((Join-Path $runRoot 'cover.err.log'), (Join-Path $runRoot 'export.err.log'), $sdkEngine, $hostEngine)) {
+    foreach ($path in @($coverErrorLog, (Join-Path $runRoot 'export.err.log'), $sdkEngine, $hostEngine)) {
         Lock-AdmissionInput $path (Get-Digest $path)
     }
     $coverProcess = @($phases | Where-Object name -CEQ 'cover')[0].process
@@ -676,12 +761,12 @@ try {
     }
     $stage = 'admission-cover-diagnostics'
     $coverRequest = Join-Path $runRoot 'cover-review-request.json'
-    Write-NewJson $coverRequest @{ schemaVersion = 1; log = (Join-Path $runRoot 'cover.log'); errorLog = (Join-Path $runRoot 'cover.err.log')
+    Write-NewJson $coverRequest @{ schemaVersion = 1; log = $coverLog; errorLog = $coverErrorLog
         requiredProfiledProcessIds = $requiredPids; dotCoverVersion = $observedDotCoverVersion }
     $coverOutput = Join-Path $runRoot 'cover-review.json'
     [void](Invoke-CoveragePhase 'cover-diagnostic-review' $dotnet @($metadataTool, 'coverage-review-cover', '--input', $coverRequest, '--output', $coverOutput) 120000)
     $coverDocument = [IO.File]::ReadAllText($coverOutput) | ConvertFrom-Json
-    Assert-ReviewedInputs $coverDocument 'coverage-review-cover' @((Join-Path $runRoot 'cover.log'), (Join-Path $runRoot 'cover.err.log'))
+    Assert-ReviewedInputs $coverDocument 'coverage-review-cover' @($coverLog, $coverErrorLog)
     $coverReview = $coverDocument.value
     $stage = 'admission-export-diagnostics'
     $exportRequest = Join-Path $runRoot 'export-review-request.json'
@@ -725,7 +810,7 @@ try {
     }
     $diagnosticKinds = @('CoverLog','CoverStdout','CoverStderr','ExportLog','ExportStdout','ExportStderr')
     $supervisor = [ordered]@{ schemaVersion = 1; identity = $identity; startedUtc = $startedUtc; sealedUtc = [DateTimeOffset]::UtcNow
-        cover = $completion.cover; export = $completion.export; artifacts = $artifacts.ToArray()
+        cover = $completion.cover; export = $completion.export; artifacts = $artifacts.ToArray(); frameworkEnvelope = $frameworkEnvelope
         diagnostics = @{ disposition = $(if ($exportReview.reviewedWarningCount -gt 0) { 'ReviewedWarnings' } else { 'Clean' })
             ruleId = $coverReview.ruleId + ';' + $exportReview.ruleId + ';' + $consoleReview.ruleId; ruleSourceSha256 = $ruleSha256
             evidence = @($artifacts | Where-Object kind -CIn $diagnosticKinds | ForEach-Object { @{ kind = $_.kind; sha256 = $_.sha256 } }) } }
@@ -748,7 +833,8 @@ try {
         binaries = @($binaries | ForEach-Object { @{ role = $_.role; dllRelativePath = $_.dllRelativePath
             pdbRelativePath = $_.pdbRelativePath; expectedIdentity = $_.identity } })
         discoverySha256 = ($artifacts | Where-Object kind -CEQ 'Discovery').sha256; dotCoverVersion = $observedDotCoverVersion
-        toolFile = $DotCoverToolFile; toolSha256 = $toolSha256; requireOwnedAppHost = $requiresOwnedChild; supervisor = $supervisor }
+        toolFile = $DotCoverToolFile; toolSha256 = $toolSha256; requireOwnedAppHost = $requiresOwnedChild
+        requireFrameworkSupervision = $true; supervisor = $supervisor }
     $stage = 'admission-import'
     $caseCoveragePath = Join-Path $runRoot 'case-coverage.json'
     [void](Invoke-CoveragePhase 'case-admission' $dotnet @($metadataTool, 'coverage-import', '--input', $inputPath, '--expectation', $expectationPath, '--output', $caseCoveragePath) 120000)

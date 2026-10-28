@@ -136,7 +136,7 @@ public static class PortablePdbSource
         }
     }
 
-    private static Dictionary<string, string> ReadInventory(IReadOnlyList<PortablePdbSourceFile> entries)
+    internal static Dictionary<string, string> ReadInventory(IReadOnlyList<PortablePdbSourceFile> entries)
     {
         Require(entries is not null && entries.Count <= MaximumInventoryEntries, "portable-pdb-source-inventory");
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -150,7 +150,7 @@ public static class PortablePdbSource
         return result;
     }
 
-    private static PortablePdbDocumentMap[] ReadMaps(IReadOnlyList<PortablePdbDocumentMap> entries)
+    internal static PortablePdbDocumentMap[] ReadMaps(IReadOnlyList<PortablePdbDocumentMap> entries)
     {
         Require(entries is not null && entries.Count is > 0 and <= 128, "portable-pdb-source-document-map");
         var result = entries.ToArray();
@@ -169,7 +169,7 @@ public static class PortablePdbSource
         return result;
     }
 
-    private static string MapDocument(string name, PortablePdbDocumentMap[] maps)
+    internal static string MapDocument(string name, PortablePdbDocumentMap[] maps)
     {
         var matching = maps.Where(map => name.StartsWith(map.DocumentPrefix, StringComparison.Ordinal)).Take(2).ToArray();
         Require(matching.Length == 1, "portable-pdb-source-document-path");
@@ -259,13 +259,13 @@ public static class PortablePdbSource
         return (ns.Length == 0 ? "" : ns + ".") + string.Join("+", names);
     }
 
-    private static string AbsolutePath(string path)
+    internal static string AbsolutePath(string path)
     {
         Require(Text(path, MaximumPathCharacters) && Path.IsPathFullyQualified(path), "portable-pdb-source-path-must-be-absolute");
         return Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
     }
 
-    private static string ResolveSource(string root, string relative)
+    internal static string ResolveSource(string root, string relative)
     {
         var full = Path.GetFullPath(Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar)));
         var prefix = Path.EndsInDirectorySeparator(root) ? root : root + Path.DirectorySeparatorChar;
@@ -273,7 +273,7 @@ public static class PortablePdbSource
         return full;
     }
 
-    private static FileStream OpenRead(string path, long maximumBytes, bool allowEmpty = false)
+    internal static FileStream OpenRead(string path, long maximumBytes, bool allowEmpty = false)
     {
         RequireNoReparseAncestors(path, directory: false);
         var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -291,7 +291,7 @@ public static class PortablePdbSource
         }
     }
 
-    private static void RequireNoReparseAncestors(string path, bool directory)
+    internal static void RequireNoReparseAncestors(string path, bool directory)
     {
         var attributes = File.GetAttributes(path);
         Require(((attributes & FileAttributes.Directory) != 0) == directory &&
@@ -304,13 +304,17 @@ public static class PortablePdbSource
         }
     }
 
-    private static bool RelativePath(string path)
+    internal static bool RelativePath(string path)
     {
         if (!Text(path, MaximumPathCharacters) || Path.IsPathRooted(path) || path.Contains('\\')) return false;
         foreach (var part in path.Split('/'))
         {
             if (part.Length == 0 || part is "." or ".." || part.EndsWith('.') || part.EndsWith(' ') ||
                 part.IndexOfAny(['<', '>', ':', '"', '|', '?', '*']) >= 0) return false;
+            // Match the snapshot owner's conservative DOS-alias syntax rule;
+            // ordinary tildes and non-ASCII digits are not this alias pattern.
+            for (var index = 0; index + 1 < part.Length; index++)
+                if (part[index] == '~' && part[index + 1] is >= '0' and <= '9') return false;
             var stem = part.Split('.')[0].ToUpperInvariant();
             if (stem is "CON" or "PRN" or "AUX" or "NUL" ||
                 stem.Length == 4 && (stem.StartsWith("COM", StringComparison.Ordinal) || stem.StartsWith("LPT", StringComparison.Ordinal)) &&

@@ -47,6 +47,12 @@ function Measure-CollectedCase([string]$Directory) {
     $hostFinish = [DateTimeOffset]$admission.hostLifecycle.finishedUtc
     $allBytes = [long]0
     foreach ($file in Get-ChildItem -LiteralPath $Directory -File -Recurse) { $allBytes += $file.Length }
+    $snapshots = @($case.artifacts | Where-Object kind -CEQ 'Snapshot')
+    Require-Compatibility ($snapshots.Count -eq 1) 'compatibility-snapshot-artifact-invalid'
+    $snapshotPath = [IO.Path]::GetFullPath((Join-Path $Directory $snapshots[0].relativePath))
+    Require-Compatibility ($snapshotPath.StartsWith([IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($Directory)) +
+        [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -and
+        [IO.File]::Exists($snapshotPath) -and (Digest $snapshotPath) -ceq $snapshots[0].sha256) 'compatibility-snapshot-artifact-invalid'
     $coveredMethods = @($case.aggregate.members | Where-Object { $_.kind -ceq 'Method' -and $_.coveredStatements -gt 0 } | ForEach-Object {
         $owner = @($_.symbolSegments | Where-Object kind -CIn @('Namespace', 'Type') | ForEach-Object name) -join '.'
         $owner + '::' + $_.name
@@ -87,7 +93,7 @@ function Measure-CollectedCase([string]$Directory) {
         hostEndToCoverCompletionMilliseconds = ($coverFinish - $hostFinish).TotalMilliseconds
         exportMilliseconds = ([DateTimeOffset]$export.finishedUtc - [DateTimeOffset]$export.startedUtc).TotalMilliseconds
         supervisedPhaseMilliseconds = [double](($admission.phases | ForEach-Object { $_.process.elapsedMilliseconds } | Measure-Object -Sum).Sum)
-        snapshotBytes = (Get-Item -LiteralPath (Join-Path $Directory 'coverage.dcvr')).Length
+        snapshotBytes = (Get-Item -LiteralPath $snapshotPath).Length
         aggregateBytes = (Get-Item -LiteralPath (Join-Path $Directory 'coverage.json')).Length
         allRetainedArtifactBytes = $allBytes; validCaseCoverage = $true; completeBaseline = $false
         coveredProductReportMethods = $coveredMethods
