@@ -3,6 +3,7 @@
 param(
     [string]$Mode = 'Full',
     [string[]]$CaseId = @(),
+    [string]$SelectionPath,
     [ValidateRange(0, 4)][int]$Workers = 4,
     [string]$ResultsDirectory,
     [switch]$NoBuild,
@@ -14,6 +15,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($Mode -ceq 'Compatibility') {
+    if ($PSBoundParameters.ContainsKey('SelectionPath')) {
+        [Console]::Error.WriteLine('test-driver: file selection requires Full mode.'); exit 2
+    }
     if ($PSBoundParameters.ContainsKey('NoBuild') -or $PSBoundParameters.ContainsKey('Workers')) {
         [Console]::Error.WriteLine('test-driver: parameters do not apply to compatibility mode.')
         exit 2
@@ -45,6 +49,8 @@ $locks = [Collections.Generic.List[IO.FileStream]]::new()
 $source = $null
 $failureCode = 'test-driver-failed'
 $phaseOrdinal = 0
+$selectionInput = $null
+$hasExplicitSelection = $PSBoundParameters.ContainsKey('CaseId') -or $PSBoundParameters.ContainsKey('SelectionPath')
 $shell = (Get-Process -Id $PID).Path
 $dotnet = $null
 $git = $null
@@ -102,6 +108,39 @@ function Require-ExactFrameworkIds($Actual, [string[]]$Expected, [string]$Code) 
     }
 }
 
+function Read-FileSelection([string]$Path) {
+    $previousFailureCode = $script:failureCode
+    $script:failureCode = 'test-driver-invalid-selection-input'
+    $inputPath = Lock-FrameworkEvidence $Path
+    $stream = $locks[$locks.Count - 1]
+    Require-Condition ($stream.Length -gt 0 -and $stream.Length -le 67108864) 'test-driver-selection-input-size'
+    $options = [System.Text.Json.JsonDocumentOptions]::new()
+    $options.MaxDepth = 4
+    $document = [System.Text.Json.JsonDocument]::Parse($stream, $options)
+    try {
+        $element = $document.RootElement
+        Require-Condition ($element.ValueKind -eq [System.Text.Json.JsonValueKind]::Object) 'test-driver-selection-input-object'
+        $names = @($element.EnumerateObject() | ForEach-Object Name)
+        Require-Condition ($names.Count -eq 2 -and @($names | Where-Object { $_ -ceq 'schemaVersion' }).Count -eq 1 -and
+            @($names | Where-Object { $_ -ceq 'ids' }).Count -eq 1) 'test-driver-selection-input-properties'
+        Require-Condition ($element.GetProperty('schemaVersion').GetInt32() -eq 1) 'test-driver-selection-input-version'
+        $items = $element.GetProperty('ids')
+        Require-Condition ($items.ValueKind -eq [System.Text.Json.JsonValueKind]::Array -and
+            $items.GetArrayLength() -gt 0 -and $items.GetArrayLength() -le 100000) 'test-driver-empty-or-invalid-selection'
+        $ids = [Collections.Generic.List[string]]::new()
+        $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        foreach ($item in $items.EnumerateArray()) {
+            Require-Condition ($item.ValueKind -eq [System.Text.Json.JsonValueKind]::String) 'test-driver-selection-input-id-type'
+            $id = $item.GetString()
+            Require-Condition (-not [string]::IsNullOrWhiteSpace($id) -and $id.Length -le 16384 -and
+                @($id.ToCharArray() | Where-Object { [char]::IsControl($_) }).Count -eq 0 -and $seen.Add($id)) 'test-driver-invalid-or-duplicate-case-id'
+            $ids.Add($id)
+        }
+        $result = [pscustomobject]@{ path = $inputPath; sha256 = Get-Digest $inputPath; ids = $ids.ToArray() }
+        $script:failureCode = $previousFailureCode
+        return $result
+    } finally { $document.Dispose() }
+}
 function Initialize-ProcessOwner {
     if ('FishAudio.Testing.Driver.JobOwner' -as [type]) { return }
     Add-Type -TypeDefinition @'
@@ -487,6 +526,11 @@ function Invoke-AssemblyPhase {
 
 try {
     Require-Condition ($Mode -cin @('Discover', 'DiscoverCoverage', 'Full')) 'test-driver-unsupported-mode'
+    if ($PSBoundParameters.ContainsKey('SelectionPath')) {
+        Require-Condition ($Mode -ceq 'Full' -and -not $PSBoundParameters.ContainsKey('CaseId')) 'test-driver-conflicting-selection-input'
+        $selectionInput = Read-FileSelection $SelectionPath
+        $CaseId = [string[]]$selectionInput.ids
+    }
     Require-Condition $IsWindows 'test-driver-windows-required'
     foreach ($name in @('COR_ENABLE_PROFILING', 'CORECLR_ENABLE_PROFILING')) {
         $value = [Environment]::GetEnvironmentVariable($name)
@@ -504,6 +548,7 @@ try {
     [IO.Directory]::CreateDirectory($candidate) | Out-Null
     $runRoot = $candidate
     Write-NewJson (Join-Path $runRoot 'owner.json') @{ schemaVersion = 1; runId = $runId }
+    if ($null -ne $selectionInput) { [IO.File]::Copy($selectionInput.path, (Join-Path $runRoot 'selection-input.json'), $false) }
     [IO.Directory]::CreateDirectory((Join-Path $runRoot 'phases')) | Out-Null
     $runtimeEvidence = Join-Path $runRoot 'runtime-evidence'
     [IO.Directory]::CreateDirectory($runtimeEvidence) | Out-Null
@@ -588,7 +633,7 @@ try {
         }
     }
     $requested = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    if ($PSBoundParameters.ContainsKey('CaseId')) {
+    if ($hasExplicitSelection) {
         Require-Condition ($CaseId.Count -gt 0) 'test-driver-empty-selection'
         foreach ($id in $CaseId) {
             Require-Condition (-not [string]::IsNullOrWhiteSpace($id) -and $requested.Add($id)) 'test-driver-invalid-or-duplicate-case-id'
@@ -789,6 +834,7 @@ try {
         schemaVersion = $(if ($Mode -ceq 'Full') { 2 } else { 1 }); kind = 'unified-test-session'; runId = $runId; mode = $Mode; complete = $true
         platform = 'VSTest'; configuration = 'Release'; workers = $Workers; baselineClaim = $false
         selection = $(if ($requested.Count -eq 0) { 'all-discovered' } else { 'focused' })
+        selectionInput = $(if ($null -ne $selectionInput) { @{ path = 'selection-input.json'; sha256 = $selectionInput.sha256 } } else { $null })
         source = $source; toolSha256 = $toolDigest; assemblies = $records; phases = $phases.ToArray()
         finishedUtc = [DateTimeOffset]::UtcNow
     })

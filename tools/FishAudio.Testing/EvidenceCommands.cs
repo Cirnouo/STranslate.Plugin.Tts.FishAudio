@@ -15,7 +15,7 @@ internal static class EvidenceCommands
 
     internal static bool IsInvocation(string[] args)
         => args.Length != 0 && args[0] is "evidence-catalog" or "evidence-verify" or "evidence-binary"
-            or "evidence-execution-metadata" or "evidence-execution-plan";
+            or "evidence-execution-metadata" or "evidence-execution-plan" or "evidence-hybrid-plan";
 
     internal static int Run(string[] args)
     {
@@ -46,6 +46,12 @@ internal static class EvidenceCommands
                 result = new { schemaVersion = 1, kind = "nunit-execution-plan", complete = true,
                     plan = NUnitExecutionPlan.ReadValidated(options["--discovery"], request.Ids, request.MaximumConcurrency) };
             }
+            else if (args[0] == "evidence-hybrid-plan")
+            {
+                RequireKeys(options, "--reference", "--legacy", "--discoveries", "--migrations", "--output");
+                result = HybridExecutionSlotInput.ReadValidated(options["--reference"], options["--legacy"],
+                    options["--discoveries"], options["--migrations"]);
+            }
             else if (args[0] == "evidence-binary")
             {
                 RequireKeys(options, "--assembly", "--pdb", "--output");
@@ -71,6 +77,11 @@ internal static class EvidenceCommands
             JsonSerializer.Serialize(output, result, Json);
             Console.WriteLine(args[0] + ": passed.");
             return 0;
+        }
+        catch (HybridExecutionSlotPlanException error)
+        {
+            Console.Error.WriteLine("hybrid-slot-evidence: " + error.Code);
+            return 1;
         }
         catch (NUnitExecutionMetadataException error)
         {
