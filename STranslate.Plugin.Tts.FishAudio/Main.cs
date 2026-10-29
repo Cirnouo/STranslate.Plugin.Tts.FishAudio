@@ -59,6 +59,11 @@ public class Main : ITtsPlugin
     internal void Init(IPluginContext context, DateTimeOffset nowUtc) =>
         _initializationCoordinator.Init(context, nowUtc);
 
+    internal void Init(
+        IPluginContext context, DateTimeOffset nowUtc,
+        out PluginInitializationCoordinator.InitializationWorkCapture? preparedWork) =>
+        _initializationCoordinator.Init(context, nowUtc, out preparedWork);
+
     public void Dispose()
     {
         ActivePlayback? active;

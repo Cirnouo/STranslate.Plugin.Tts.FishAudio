@@ -15,7 +15,8 @@ $ErrorActionPreference = 'Stop'
 $sourceRoot = [IO.Path]::GetFullPath($RepositoryRoot)
 $signingSource = 'tools/FishAudio.Testing/Fixtures/GitFixtureSigning.cs'
 $scriptPaths = @('tools/Install-TestHooks.ps1', 'tools/TestGate.ps1', 'tools/Assert-FrameworkSupervisor.ps1',
-    'tools/Assert-FrameworkExecutionPlan.ps1', $signingSource, '.githooks/pre-commit', '.githooks/commit-msg')
+    'tools/Assert-FrameworkExecutionPlan.ps1', 'tools/HybridReceipt.ps1', 'tools/HybridSession.Common.ps1',
+    'tools/TestProcessOwner.ps1', 'tools/Invoke-TestProcess.ps1', $signingSource, '.githooks/pre-commit', '.githooks/commit-msg')
 $scenarioNames = @(
     'validator-failure',
     'partial-stage',
@@ -34,7 +35,12 @@ $scenarioNames = @(
     'platform-command-failure',
     'platform-missing-terminal',
     'platform-wrong-case',
-    'late-framework-evidence-mutation'
+    'late-framework-evidence-mutation',
+    'late-hybrid-generation',
+    'late-hybrid-attempt',
+    'installed-receipt-helper-mutation',
+    'atomic-install-copy-failure',
+    'protocol-upgrade'
 )
 $utf8 = [Text.UTF8Encoding]::new($false)
 $shellPath = (Get-Process -Id $PID).Path
@@ -205,6 +211,10 @@ function Invoke-FixtureInstaller {
     param($Owner, [string]$Root, [ValidateSet('Install', 'Check')][string]$Mode, [switch]$AllowFailure)
     $result = Invoke-OwnedProcess $Owner $shellPath @('-NoLogo', '-NoProfile', '-File', (Join-Path $Root 'tools/Install-TestHooks.ps1'), ('-' + $Mode), '-RepositoryRoot', $Root) $Root ('installer-' + $Mode.ToLowerInvariant())
     if (-not $AllowFailure) { Assert-Condition ($result.ExitCode -eq 0) 'installer-failed' }
+    if($result.ExitCode -eq 0){
+        $hooks=(Invoke-FixtureGit $Owner $Root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        foreach($metadata in $Owner.GitMetadata.Values){if($metadata.Root -ceq $Root){$metadata.Hooks=$hooks}}
+    }
     return $result
 }
 
@@ -344,7 +354,7 @@ function Assert-HybridSuccess {
         $requiredArtifacts.Add('framework-terminal-' + $key + '-phase-0001.json')
     }
     foreach ($relative in $requiredArtifacts) {
-        $pins = @($gate.platformArtifacts | Where-Object path -CEQ $relative)
+        $pins = @($gate.hybridArtifacts | Where-Object path -CEQ $relative)
         Assert-Condition ($pins.Count -eq 1 -and
             (Get-FileHash -LiteralPath (Join-Path $run $relative) -Algorithm SHA256).Hash.ToLowerInvariant() -ceq $pins[0].sha256) 'platform-phase-artifact-not-receipted'
     }
@@ -379,7 +389,7 @@ function Assert-NoCommit {
 function Assert-Snapshot {
     param($Invocation, [string]$Root, [string]$Tree, [string]$Value = 'good')
     Assert-Condition ($Invocation.value -ceq $Value) 'wrong-snapshot-value'
-    Assert-Condition ($Invocation.release -and $Invocation.test) 'wrong-build-arguments'
+    Assert-Condition ($Invocation.release -and -not $Invocation.test) 'package-build-must-not-run-legacy-before-hybrid'
     Assert-Condition ($Invocation.context.schemaVersion -eq 1) 'wrong-context-schema'
     Assert-Condition ($Invocation.context.tree -ceq $Tree) 'wrong-snapshot-tree'
     Assert-Condition ($Invocation.rootMatchesContext) 'context-root-mismatch'
@@ -397,6 +407,7 @@ $ErrorActionPreference = 'Stop'
 $encoding = [Text.UTF8Encoding]::new($false)
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 $context = [IO.File]::ReadAllText($env:FISHAUDIO_SNAPSHOT_CONTEXT) | ConvertFrom-Json
+if([string]::IsNullOrEmpty($TestResults)){$TestResults=Join-Path ([IO.Path]::GetDirectoryName($env:FISHAUDIO_SNAPSHOT_CONTEXT)) 'regression.json'}
 $value = [IO.File]::ReadAllText((Join-Path $root 'value.txt')).Trim()
 function Test-Under([string]$path, [string]$parent) {
     $prefix = [IO.Path]::GetFullPath($parent).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
@@ -422,11 +433,15 @@ if ([IO.File]::Exists($rawPath)) {
     $expected = [IO.File]::ReadAllText((Join-Path $root 'raw.expected.sha256')).Trim()
     $rawMatches = $rawSha256 -ceq $expected
 }
-$passed = $Release -and $Test -and $rootMatches -and $externalResults -and $value -ceq 'good' -and
+$passed = $Release -and -not $Test -and $rootMatches -and $externalResults -and $value -ceq 'good' -and
     -not $unexpectedSource -and -not $unexpectedOutput -and $rawMatches
 $verifierProject = Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'
 & dotnet build $verifierProject --configuration Release --nologo --verbosity quiet --ignore-failed-sources --disable-build-servers
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+# Both tiny projects have the same empty dependency graph. Preserve the real
+# SDK-generated lock bytes for the standard locked preparation below.
+$lock=Join-Path ([IO.Path]::GetDirectoryName($verifierProject)) 'packages.lock.json'
+[IO.File]::Copy($lock,(Join-Path $root 'tests/FishAudio.Testing.Tests/packages.lock.json'),$false)
 # One compiled boundary control supplies the legacy verifier and the independent
 # platform metadata commands. These copied binaries do not contain NUnit tests.
 $binaryBase = Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests'
@@ -472,6 +487,8 @@ $evidence = Join-Path $env:FISHAUDIO_ACCEPTANCE_EVIDENCE ('invocation-' + [Guid]
 [IO.File]::WriteAllText($evidence, ($invocation | ConvertTo-Json -Depth 15), $encoding)
 $report = [ordered]@{
     schemaVersion = 1
+    runId = [Guid]::NewGuid().ToString('N')
+    generation = 1
     complete = $true
     configuration = 'Release'
     source = [ordered]@{ tree = $context.tree; available = $true; snapshot = $true }
@@ -483,6 +500,14 @@ if ([IO.File]::Exists($reportMode) -and [IO.File]::ReadAllText($reportMode).Trim
 }
 [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($TestResults))) | Out-Null
 [IO.File]::WriteAllText($TestResults, ($report | ConvertTo-Json -Depth 10), $encoding)
+$generationRoot=$TestResults+'.generations/'+$report.runId
+[IO.Directory]::CreateDirectory($generationRoot)|Out-Null
+[IO.File]::Copy($TestResults,(Join-Path $generationRoot '00000000000000000001.json'),$false)
+$initial=$report|ConvertTo-Json -Depth 10|ConvertFrom-Json
+$initial.generation=0;$initial.complete=$false
+foreach($item in $initial.cases){$item.outcome='not-run'}
+[IO.File]::WriteAllText((Join-Path $generationRoot '00000000000000000000.json'),($initial|ConvertTo-Json -Depth 10),$encoding)
+[IO.File]::WriteAllText((Join-Path $root 'STranslate.Plugin.Tts.FishAudio.spkg'),'synthetic-hook-package-boundary',$encoding)
 if (-not $passed) { exit 17 }
 '@
 
@@ -493,6 +518,7 @@ $fixtureVerifierProject = @'
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 </Project>
 '@
@@ -987,7 +1013,7 @@ function Register-FixtureRepository {
         Assert-Condition (Test-ContainedPath $gitDir $Owner.FixtureRoot) 'foreign-fixture-git-directory'
         Assert-Condition (Test-ContainedPath $commonDir $Owner.FixtureRoot) 'foreign-fixture-common-directory'
         $Owner.GitStateRoots.Add($state)
-        $Owner.GitMetadata.Add($state, [pscustomobject]@{ GitDir = $gitDir; CommonDir = $commonDir })
+        $Owner.GitMetadata.Add($state, [pscustomobject]@{ GitDir = $gitDir; CommonDir = $commonDir; Root = $Root; Hooks = $null })
     }
 }
 
@@ -1004,10 +1030,14 @@ function New-FixtureRepository {
     }
     Write-FixtureText (Join-Path $root 'build.ps1') $fixtureBuild
     Write-FixtureText (Join-Path $root 'tools/Test.ps1') $fixturePlatformDriver
+    Write-FixtureText (Join-Path $root 'tools/TestHybrid.ps1') ([IO.File]::ReadAllText((Join-Path $sourceRoot 'tools/tests/fixtures/HookHybridProducer.ps1')))
+    Write-FixtureText (Join-Path $root 'tools/Assert-HybridSession.ps1') ([IO.File]::ReadAllText((Join-Path $sourceRoot 'tools/tests/fixtures/HookHybridConsumer.ps1')))
     Write-FixtureText (Join-Path $root 'tests/Migration/legacy-catalog.json') '{"schemaVersion":1,"referenceKind":"synthetic-hook-fixture","cases":[{"id":"fixture/pass","partition":"core"}]}'
     Write-FixtureText (Join-Path $root 'tests/Migration/migrated-cases.json') '{"schemaVersion":1,"migrations":[]}'
     Write-FixtureText (Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj') $fixtureVerifierProject
     Write-FixtureText (Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/Program.cs') $fixtureVerifierProgram
+    Write-FixtureText (Join-Path $root 'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj') $fixtureVerifierProject
+    Write-FixtureText (Join-Path $root 'tests/FishAudio.Testing.Tests/Program.cs') $fixtureVerifierProgram
     Write-FixtureText (Join-Path $root 'value.txt') ($Value + "`n")
     Write-FixtureText (Join-Path $root '.gitignore') "stale-output/`n"
     Invoke-FixtureGit $Owner $root @('add', '--', '.') | Out-Null
@@ -1053,8 +1083,12 @@ function Invoke-PlatformFailureScenario {
     $build = Get-NewInvocation $Owner $beforeBuild
     Assert-Snapshot $build $root $tree
     Assert-Condition $build.passed 'platform-failure-did-not-pass-legacy-build'
-    $legacy = Get-NewVerifierInvocation $Owner $beforeLegacyVerifier
-    Assert-Condition ($legacy.valid -and $legacy.tree -ceq $tree) 'platform-failure-did-not-pass-legacy-verifier'
+    if($Fault -ceq 'command-failure'){
+        Assert-Condition (@(Get-VerifierPaths $Owner | Where-Object {$beforeLegacyVerifier -cnotcontains $_}).Count -eq 0) 'failed-producer-reached-authoritative-admission'
+    }else{
+        $legacy = Get-NewVerifierInvocation $Owner $beforeLegacyVerifier
+        Assert-Condition ($legacy.valid -and $legacy.tree -ceq $tree) 'platform-failure-did-not-pass-legacy-verifier'
+    }
     $platform = Get-NewPlatformInvocation $Owner $beforePlatform
     Assert-Condition ($platform.syntheticBoundaryControl -and $platform.fault -ceq $Fault -and
         $platform.context.tree -ceq $tree -and $platform.rootMatchesContext -and $platform.externalResults) 'platform-failure-boundary-not-reached'
@@ -1100,6 +1134,90 @@ function Invoke-PlatformFailureScenario {
         }
     }
 }
+
+function Invoke-LateHybridMutationScenario($Owner,[string]$Mode){
+    $root=New-FixtureRepository $Owner -WithoutInstall
+    $oldMessageHook=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks/commit-msg')).Output.Trim()
+    Write-FixtureText (Join-Path $root 'late-hybrid.ps1') @'
+param([string]$Mode)
+$ErrorActionPreference='Stop'
+$state=(git rev-parse --path-format=absolute --git-path fish-audio-testing).Trim()
+if($LASTEXITCODE -ne 0){exit 29}
+$receipt=Get-Content -LiteralPath (Join-Path $state 'commit-receipt.json') -Raw|ConvertFrom-Json
+$run=Join-Path $state ('runs/'+$receipt.runId)
+$gate=Get-Content -LiteralPath (Join-Path $run 'gate.json') -Raw|ConvertFrom-Json
+$sessionRoot=Join-Path $run $gate.hybrid.session
+$session=Get-Content -LiteralPath (Join-Path $sessionRoot 'manifest.json') -Raw|ConvertFrom-Json
+$slot=@($session.slots|Where-Object owner -CEQ 'legacy')[0]
+if($Mode -ceq 'generation'){
+    $report=Join-Path $sessionRoot ('slots/'+$slot.id+'/attempt-0001/legacy.json')
+    $next=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+    $next.generation=[long]$next.generation+1;$next.complete=$false;$next.cases[0].outcome='failed'
+    $path=Join-Path ($report+'.generations/'+$next.runId) ($next.generation.ToString('D20')+'.json')
+    $stream=[IO.FileStream]::new($path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+    try{$bytes=[Text.UTF8Encoding]::new($false).GetBytes(($next|ConvertTo-Json -Depth 32));$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+}else{
+    $directory=Join-Path $sessionRoot ('slots/'+$slot.id+'/attempt-0002')
+    [IO.Directory]::CreateDirectory($directory)|Out-Null
+    [IO.File]::WriteAllText((Join-Path $directory 'attempt.json'),(@{ordinal=2;complete=$false;exitCode=1}|ConvertTo-Json),[Text.UTF8Encoding]::new($false))
+}
+foreach($artifact in $gate.hybridArtifacts){
+    if((Get-FileHash -LiteralPath (Join-Path $run $artifact.path) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $artifact.sha256){throw 'fixture-old-artifact-unexpectedly-changed'}
+}
+[IO.File]::WriteAllText('late-hybrid.marker',$Mode,[Text.UTF8Encoding]::new($false))
+exit 0
+'@
+    Write-FixtureText $oldMessageHook ("#!/bin/sh`nexec pwsh -NoLogo -NoProfile -File ./late-hybrid.ps1 -Mode "+$Mode+"`n")
+    Invoke-FixtureInstaller $Owner $root Install|Out-Null
+    $tree=(Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim()
+    $commit=Invoke-FixtureCommit $Owner $root
+    Assert-Condition ($commit.ExitCode -ne 0) 'new-unlisted-hybrid-evidence-allowed-commit'
+    Assert-NoCommit $Owner $root
+    Assert-Condition ([IO.File]::Exists((Join-Path $root 'late-hybrid.marker'))) 'late-hybrid-mutation-not-reached'
+    Assert-Condition ((Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim() -ceq $tree) 'late-hybrid-fixture-changed-index'
+}
+function Invoke-HybridInstallScenario($Owner,[string]$Mode){
+    if($Mode -ceq 'upgrade'){
+        $root=New-FixtureRepository $Owner -WithoutInstall
+        $previous=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        Write-FixtureText (Join-Path $previous 'pre-commit') "#!/bin/sh`nprintf 'original-chain\n' > upgrade-prior.marker`nexit 0`n"
+        $state=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','fish-audio-testing')).Output.Trim()
+        $old=Join-Path $state 'hooks'
+        Write-FixtureText (Join-Path $old 'TestGate.ps1') "throw 'old-protocol-entry-must-not-run'"
+        Write-FixtureText (Join-Path $old 'pre-commit') "#!/bin/sh`nexit 21`n"
+        $oldBytes=[IO.File]::ReadAllBytes((Join-Path $old 'TestGate.ps1'))
+        $common=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-common-dir')).Output.Trim()
+        Write-FixtureText (Join-Path $old 'installation.json') (@{schemaVersion=1;gateProtocolVersion=2;repositoryRoot=$root;commonGitDirectory=$common;previousHooks=$previous;digests=@{}}|ConvertTo-Json)
+        Invoke-FixtureGit $Owner $root @('config','--local','core.hooksPath',$old)|Out-Null
+        Invoke-FixtureInstaller $Owner $root Install|Out-Null
+        Invoke-FixtureInstaller $Owner $root Check|Out-Null
+        $effective=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        $descriptor=[IO.File]::ReadAllText((Join-Path $effective 'installation.json'))|ConvertFrom-Json
+        Assert-Condition ($descriptor.schemaVersion -eq 2 -and $descriptor.gateProtocolVersion -eq 3 -and $descriptor.previousHooks -ceq $previous) 'protocol-upgrade-lost-original-chain'
+        Assert-Condition ([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $old 'TestGate.ps1'))) -ceq [Convert]::ToBase64String($oldBytes)) 'protocol-upgrade-mutated-old-bundle'
+        Assert-Condition (-not [IO.File]::Exists((Join-Path $effective 'pre-push'))) 'protocol-upgrade-added-prepush-test'
+        Assert-Condition ((Invoke-FixtureCommit $Owner $root).ExitCode -eq 0 -and [IO.File]::Exists((Join-Path $root 'upgrade-prior.marker'))) 'protocol-upgrade-chain-not-executed'
+        return
+    }
+    $root=New-FixtureRepository $Owner
+    $effective=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+    if($Mode -ceq 'helper'){
+        [IO.File]::AppendAllText((Join-Path $effective 'HybridReceipt.ps1'),"`n ")
+        [IO.File]::Copy((Join-Path $effective 'HybridReceipt.ps1'),(Join-Path $Owner.Evidence 'mutated-installed-receipt.ps1'),$false)
+        Assert-Condition ((Invoke-FixtureInstaller $Owner $root Check -AllowFailure).ExitCode -ne 0) 'changed-installed-receipt-helper-passed-check'
+        $before=@(Get-InvocationPaths $Owner)
+        Assert-Condition ((Invoke-FixtureCommit $Owner $root).ExitCode -ne 0) 'changed-installed-receipt-helper-allowed-commit'
+        Assert-NoCommit $Owner $root
+        Assert-NoNewInvocation $Owner $before
+    }else{
+        $oldDescriptor=[Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $effective 'installation.json')))
+        [IO.File]::Move((Join-Path $root 'tools/HybridReceipt.ps1'),(Join-Path $root 'saved-receipt-helper.txt'))
+        Assert-Condition ((Invoke-FixtureInstaller $Owner $root Install -AllowFailure).ExitCode -ne 0) 'incomplete-bundle-install-passed'
+        Assert-Condition ((Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim() -ceq $effective) 'failed-copy-switched-hooks-path'
+        Assert-Condition ([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $effective 'installation.json'))) -ceq $oldDescriptor) 'failed-copy-mutated-prior-installation'
+    }
+}
+
 
 function Invoke-AcceptanceScenario {
     param($Owner, [string]$Name)
@@ -1365,7 +1483,7 @@ $receipt = Get-Content -LiteralPath (Join-Path $state 'commit-receipt.json') -Ra
 $runRoot = Join-Path $state ('runs/' + $receipt.runId)
 $gatePath = Join-Path $runRoot 'gate.json'
 $gate = Get-Content -LiteralPath $gatePath -Raw | ConvertFrom-Json
-$terminalPins = @($gate.platformArtifacts | Where-Object path -CEQ 'platform/plugin/execution/phase-0001/terminal.json')
+$terminalPins = @($gate.hybridArtifacts | Where-Object path -CEQ 'platform/plugin/execution/phase-0001/terminal.json')
 if ($terminalPins.Count -ne 1) { throw 'fixture-phase-terminal-receipt-missing' }
 $artifact = $terminalPins[0]
 $path = Join-Path $runRoot $artifact.path
@@ -1386,6 +1504,11 @@ exit 0
             Assert-Snapshot (Get-NewInvocation $Owner $before) $root $tree
             Assert-Condition ((Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim() -ceq $tree) 'evidence-fixture-changed-index'
         }
+        'late-hybrid-generation' {Invoke-LateHybridMutationScenario $Owner 'generation'}
+        'late-hybrid-attempt' {Invoke-LateHybridMutationScenario $Owner 'attempt'}
+        'installed-receipt-helper-mutation' {Invoke-HybridInstallScenario $Owner 'helper'}
+        'atomic-install-copy-failure' {Invoke-HybridInstallScenario $Owner 'copy'}
+        'protocol-upgrade' {Invoke-HybridInstallScenario $Owner 'upgrade'}
         default { throw 'hook-acceptance-unknown-scenario' }
     }
 }
@@ -1420,7 +1543,8 @@ function Copy-FixtureGateEvidence {
         [IO.Directory]::CreateDirectory($stateDestination) | Out-Null
         $metadata = $Owner.GitMetadata[$state]
         $privateFiles = [ordered]@{
-            'installation.json' = Join-Path $state 'hooks/installation.json'
+            'commit-receipt.json' = Join-Path $state 'commit-receipt.json'
+            'installation.json' = $(if($metadata.Hooks){Join-Path $metadata.Hooks 'installation.json'}else{Join-Path $state 'hooks/installation.json'})
             'git-dir.config' = Join-Path $metadata.GitDir 'config'
             'git-dir.config.worktree' = Join-Path $metadata.GitDir 'config.worktree'
             'git-common.config' = Join-Path $metadata.CommonDir 'config'
@@ -1453,7 +1577,7 @@ function Copy-FixtureGateEvidence {
             if ([IO.Directory]::Exists($platform)) {
                 Copy-OwnedEvidenceDirectory $Owner $platform (Join-Path $destination 'platform')
             }
-            foreach ($pattern in @('framework-*', 'migration-conservation')) {
+            foreach ($pattern in @('framework-*','migration-conservation','hybrid','hybrid-admission','build-package','build-plugin','build-testing-tool','hybrid-command','hybrid-admission-command','legacy-verifier')) {
                 foreach ($phase in [IO.Directory]::GetDirectories($run, $pattern)) {
                     Copy-OwnedEvidenceDirectory $Owner $phase (Join-Path $destination ([IO.Path]::GetFileName($phase)))
                 }

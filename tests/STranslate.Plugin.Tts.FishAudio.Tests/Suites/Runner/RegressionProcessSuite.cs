@@ -7,33 +7,8 @@ using static TestAssertions;
 
 internal static class RegressionProcessSuite
 {
-    internal static async Task RunAsync()
-    {
-        await PlaybackTimeoutAssertionsCannotAcceptTheirOwnGuardAsync();
-        await PlaybackStallClockRequiresTheOutstandingDataBaselineAsync();
-        await PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync();
-        WarningAndHardDeadlineUseTheOriginalQueuedClock();
-        SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline();
-        await ActionContextSurvivesAwaitAndNestedOffStaDispatchAsync();
-        StrictEvidenceRejectsForeignIncompleteAndReorderedManifests();
-        AtomicEvidenceReplacementPreservesAnOpenReaderSnapshot();
-        await ConcurrentImmutableSnapshotsNeverCompeteWithTheWriterAsync();
-        await ChildCompletionNeverReplacesAnActiveManifestAsync();
-        await ChildPublicationFailurePreservesTheOwnedFailureAsync();
-        await FakeTransportStopsOnlyTheFailedPartitionAsync();
-        await FakeTransportCannotRehabilitateTheSameLateActionAsync();
-        await FakeTransportRejectsUnconfirmedPassesAsync();
-        await ExitCannotSkipCompletionFramesQueuedByTheFinalDrainAsync();
-        await PipeCleanupCannotReplaceADurableCaseFailureAsync();
-        await ProgressCleanupJoinsAnUnstartedConsumerAfterFailureAsync();
-        await BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync();
-        await ListingNeverStartsAProcessAsync();
-        await RealChildrenDrainBothPipesAndRequireFinalEvidenceAsync();
-        await RealChildHardExpiryKillsItsDescendantAsync();
-        await LegacyRequestsRetainPrivateArgumentsAndUseTheSameHostAsync();
-    }
 
-    private static void WarningAndHardDeadlineUseTheOriginalQueuedClock()
+    internal static void WarningAndHardDeadlineUseTheOriginalQueuedClock()
     {
         var request = Request(["runner.probe/action"]);
         var clock = new ManualStreamingTimeProvider();
@@ -63,7 +38,7 @@ internal static class RegressionProcessSuite
         AssertEqual("action", watchdog.FailureStage, "A finite late callback and its cleanup remain failed");
     }
 
-    private static async Task PlaybackTimeoutAssertionsCannotAcceptTheirOwnGuardAsync()
+    internal static async Task PlaybackTimeoutAssertionsCannotAcceptTheirOwnGuardAsync()
     {
         foreach (var lateFault in new[] { false, true })
         {
@@ -105,7 +80,7 @@ internal static class RegressionProcessSuite
         AssertEqual(true, ReferenceEquals(different, propagated), "A different owned error keeps its original exception identity");
     }
 
-    private static async Task PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync()
+    internal static async Task PureOwnersUseIndependentDeadlinesAndPreserveOriginalErrorsAsync()
     {
         foreach (var durations in new[] { new[] { 70, 70 }, new[] { 121 } })
         {
@@ -158,7 +133,7 @@ internal static class RegressionProcessSuite
         AssertEqual(true, ReferenceEquals(original, failure), "Completion publication failure cannot replace the original pure-owner exception instance");
     }
 
-    private static async Task PlaybackStallClockRequiresTheOutstandingDataBaselineAsync()
+    internal static async Task PlaybackStallClockRequiresTheOutstandingDataBaselineAsync()
     {
         foreach (var oldReadiness in new[] { true, false })
         {
@@ -220,7 +195,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static void SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline()
+    internal static void SeparateRootsAndStartupDoNotBecomeAnAggregateDeadline()
     {
         var request = Request(["runner.probe/aggregate"]);
         var clock = new ManualStreamingTimeProvider();
@@ -263,7 +238,7 @@ internal static class RegressionProcessSuite
         AssertEqual<string?>(null, core.FailureStage, "The warning does not fail a finite 21-second core case");
     }
 
-    private static async Task ActionContextSurvivesAwaitAndNestedOffStaDispatchAsync()
+    internal static async Task ActionContextSurvivesAwaitAndNestedOffStaDispatchAsync()
     {
         var events = new List<RegressionActionEvent>();
         using var owner = RegressionActionScope.BeginCase("runner.probe/context", events.Add);
@@ -298,7 +273,7 @@ internal static class RegressionProcessSuite
         finally { Console.SetOut(oldOutput); }
     }
 
-    private static void StrictEvidenceRejectsForeignIncompleteAndReorderedManifests()
+    internal static void StrictEvidenceRejectsForeignIncompleteAndReorderedManifests()
     {
         var request = Request(["runner.probe/first", "runner.probe/second"]);
         foreach (var mutate in new Action<RegressionChildManifest>[]
@@ -325,7 +300,7 @@ internal static class RegressionProcessSuite
         AssertEqual(true, valid.Complete, "Exact ordered complete evidence remains valid");
     }
 
-    private static async Task ChildCompletionNeverReplacesAnActiveManifestAsync()
+    internal static async Task ChildCompletionNeverReplacesAnActiveManifestAsync()
     {
         using var fixture = new ProcessFixture();
         var request = Request(["runner.probe/first", "runner.probe/second"]);
@@ -370,7 +345,7 @@ internal static class RegressionProcessSuite
         finally { canonicalReader?.Dispose(); completedReader?.Dispose(); }
     }
 
-    private static async Task FakeTransportStopsOnlyTheFailedPartitionAsync()
+    internal static async Task FakeTransportStopsOnlyTheFailedPartitionAsync()
     {
         using var fixture = new ProcessFixture();
         var cases = new[]
@@ -411,7 +386,7 @@ internal static class RegressionProcessSuite
         AssertEqual(false, children.Any(item => item.Killed), "Ordinary fixture failures never trigger the hard kill policy");
     }
 
-    private static async Task ChildPublicationFailurePreservesTheOwnedFailureAsync()
+    internal static async Task ChildPublicationFailurePreservesTheOwnedFailureAsync()
     {
         foreach (var scenario in new[] { "completion-event", "final-publication", "untyped-pass" })
         {
@@ -459,7 +434,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static void AtomicEvidenceReplacementPreservesAnOpenReaderSnapshot()
+    internal static void AtomicEvidenceReplacementPreservesAnOpenReaderSnapshot()
     {
         using var fixture = new ProcessFixture();
         var request = Request(["runner.probe/replacement"]);
@@ -476,7 +451,7 @@ internal static class RegressionProcessSuite
         AssertEqual(true, current.Complete, "Even a reader without share-delete cannot prevent a separately owned next snapshot");
     }
 
-    private static async Task ConcurrentImmutableSnapshotsNeverCompeteWithTheWriterAsync()
+    internal static async Task ConcurrentImmutableSnapshotsNeverCompeteWithTheWriterAsync()
     {
         ProcessFixture fixture = null!;
         RegressionChildRequest request = null!;
@@ -509,7 +484,7 @@ internal static class RegressionProcessSuite
             () => { fixture?.Dispose(); return Task.CompletedTask; });
     }
 
-    private static async Task ListingNeverStartsAProcessAsync()
+    internal static async Task ListingNeverStartsAProcessAsync()
     {
         var executed = 0;
         using var output = new StringWriter();
@@ -525,7 +500,7 @@ internal static class RegressionProcessSuite
         finally { Console.SetOut(old); }
     }
 
-    private static async Task FakeTransportCannotRehabilitateTheSameLateActionAsync()
+    internal static async Task FakeTransportCannotRehabilitateTheSameLateActionAsync()
     {
         foreach (var scenario in new[] { "late-pass", "malformed-protocol", "stderr-fault", "late-owned-fault", "late-owned-snapshot" })
             await VerifyLateActionAsync(scenario);
@@ -596,7 +571,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static async Task PipeCleanupCannotReplaceADurableCaseFailureAsync()
+    internal static async Task PipeCleanupCannotReplaceADurableCaseFailureAsync()
     {
         using var fixture = new ProcessFixture();
         RegressionCase[] cases = [new("runner.probe/original-failure", "core", () => Task.CompletedTask)];
@@ -618,7 +593,7 @@ internal static class RegressionProcessSuite
         AssertEqual(typeof(InvalidDataException).FullName, report.Cases[0].SecondaryExceptionType, "Secondary protocol failure stays distinguishable without replacing the original");
     }
 
-    private static async Task ExitCannotSkipCompletionFramesQueuedByTheFinalDrainAsync()
+    internal static async Task ExitCannotSkipCompletionFramesQueuedByTheFinalDrainAsync()
     {
         using var fixture = new ProcessFixture();
         RegressionCase[] cases = [new("runner.probe/exit-drain-tail", "core", () => Task.CompletedTask)];
@@ -643,7 +618,7 @@ internal static class RegressionProcessSuite
         AssertEqual("passed", report.Cases[0].Outcome, "Exit and EOF cannot skip newly queued completion frames and their immutable evidence");
     }
 
-    private static async Task FakeTransportRejectsUnconfirmedPassesAsync()
+    internal static async Task FakeTransportRejectsUnconfirmedPassesAsync()
     {
         foreach (var scenario in new[] { "missing-root-completion", "missing-case-events", "malformed-active", "failed-incomplete-root" })
         {
@@ -711,7 +686,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static async Task ProgressCleanupJoinsAnUnstartedConsumerAfterFailureAsync()
+    internal static async Task ProgressCleanupJoinsAnUnstartedConsumerAfterFailureAsync()
     {
         var primary = new IOException("private-before-progress-publication");
         BlockingWriter? writer = null;
@@ -746,7 +721,7 @@ internal static class RegressionProcessSuite
         AssertEqual(false, writer!.Exited.Task.IsCompleted, "Cleanup does not wait for an exit signal from a callback that never started");
     }
 
-    private static async Task BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync()
+    internal static async Task BlockedProgressCannotBlockSupervisionAndRetiresQueuedWritesAsync()
     {
         ProcessFixture? fixture = null;
         BlockingWriter? writer = null;
@@ -788,7 +763,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static async Task RealChildrenDrainBothPipesAndRequireFinalEvidenceAsync()
+    internal static async Task RealChildrenDrainBothPipesAndRequireFinalEvidenceAsync()
     {
         var source = await CaptureSourceAsync();
         foreach (var probe in new[] { "pipes", "missing", "truncated", "foreign", "owned-timeout" })
@@ -807,7 +782,7 @@ internal static class RegressionProcessSuite
         }
     }
 
-    private static async Task RealChildHardExpiryKillsItsDescendantAsync()
+    internal static async Task RealChildHardExpiryKillsItsDescendantAsync()
     {
         using var fixture = new ProcessFixture();
         var report = fixture.Report([new("runner.probe/hang", "core", () => Task.CompletedTask)], await CaptureSourceAsync());
@@ -828,7 +803,7 @@ internal static class RegressionProcessSuite
         AssertEqual(false, alive, "Hard expiry kills the descendant and leaves no orphan");
     }
 
-    private static async Task LegacyRequestsRetainPrivateArgumentsAndUseTheSameHostAsync()
+    internal static async Task LegacyRequestsRetainPrivateArgumentsAndUseTheSameHostAsync()
     {
         using var fixture = new ProcessFixture();
         var id = RegressionProcessProtocol.LegacyId("--favorite-order-tests");

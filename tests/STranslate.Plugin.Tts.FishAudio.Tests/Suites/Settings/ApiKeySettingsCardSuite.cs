@@ -44,7 +44,7 @@ internal static class ApiKeySettingsCardSuite
         }
     }
 
-    private static void WidthMatrix(string draft, double? passwordFontSize = null, bool requireWrappedSaturation = false)
+    internal static void WidthMatrix(string draft, double? passwordFontSize = null, bool requireWrappedSaturation = false)
     {
         using var fixture = new Fixture(draft);
         if (passwordFontSize is { } fontSize)
@@ -104,7 +104,7 @@ internal static class ApiKeySettingsCardSuite
         Console.WriteLine($"[api-key-layout] draft length {draft.Length}, font {fixture.Password.FontSize:F2}: native natural width {natural:F2}, saturation at {saturation:F2} DIP, quarter-DIP grow/shrink samples passed (Right constrained={constrainedSamples}, natural={naturalSamples}; wrapped={wrappedSamples}).");
     }
 
-    private static void LocalizedHeaders(string locale)
+    internal static void LocalizedHeaders(string locale)
     {
         using var fixture = new Fixture(Drafts[2], locale);
         foreach (var fontSize in new[] { fixture.Header.FontSize, 20d })
@@ -119,7 +119,7 @@ internal static class ApiKeySettingsCardSuite
         }
     }
 
-    private static void TemplateLifecycle(double width)
+    internal static void TemplateLifecycle(double width)
     {
         using var first = new Fixture(Drafts[2], initialWidth: width);
         using var second = new Fixture(Drafts[1], initialWidth: width);

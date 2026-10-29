@@ -1,250 +1,150 @@
 #requires -Version 7.0
 [CmdletBinding()]
-param(
-    [Parameter(Mandatory)][string]$RepositoryRoot,
-    [string]$CheckNonce,
-    [int]$CheckExitCode,
-    [switch]$FinalizeCommit,
-    [string]$MessagePath
-)
-
+param([Parameter(Mandatory)][string]$RepositoryRoot,[string]$CheckNonce,[int]$CheckExitCode,[switch]$FinalizeCommit,[string]$MessagePath)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $encoding = [Text.UTF8Encoding]::new($false)
-$root = [IO.Path]::GetFullPath($RepositoryRoot)
-
-function Invoke-GateGit {
-    param([string[]]$Arguments)
+$root = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($RepositoryRoot))
+function Invoke-GateGit([string[]]$Arguments) {
     $output = & git -C $root @Arguments
     if ($LASTEXITCODE -ne 0) { throw 'gate-git-failed' }
     return ($output -join "`n").Trim()
 }
-
-$state = Invoke-GateGit @('rev-parse', '--path-format=absolute', '--git-path', 'fish-audio-testing')
-$installedRoot = Join-Path $state 'hooks'
-if (-not [IO.Path]::GetFullPath($PSScriptRoot).Equals([IO.Path]::GetFullPath($installedRoot), [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'gate-requires-installed-entry'
+function Get-GateDigest([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+$state = Invoke-GateGit @('rev-parse','--path-format=absolute','--git-path','fish-audio-testing')
+$installedRoot = [IO.Path]::GetFullPath($PSScriptRoot)
+$installationPath = Join-Path $installedRoot 'installation.json'
+$installation = [IO.File]::ReadAllText($installationPath) | ConvertFrom-Json
+function Assert-GateInstallation {
+    $effective = [IO.Path]::GetFullPath((Invoke-GateGit @('rev-parse','--path-format=absolute','--git-path','hooks')))
+    $expected = [IO.Path]::GetFullPath((Join-Path $state ('hooks/bundles/'+$installation.bundleId)))
+    if ($installation.schemaVersion -ne 2 -or $installation.gateProtocolVersion -ne 3 -or
+        $installation.bundleId -cnotmatch '^[a-f0-9]{32}$' -or
+        -not $root.Equals($installation.repositoryRoot,[StringComparison]::OrdinalIgnoreCase) -or
+        -not $effective.Equals($installedRoot,[StringComparison]::OrdinalIgnoreCase) -or
+        -not $expected.Equals($installedRoot,[StringComparison]::OrdinalIgnoreCase) -or
+        -not $installedRoot.Equals($installation.installedRoot,[StringComparison]::OrdinalIgnoreCase)) { throw 'gate-installation-owner-mismatch' }
 }
-$installation = [IO.File]::ReadAllText((Join-Path $installedRoot 'installation.json')) | ConvertFrom-Json
-if ($installation.schemaVersion -ne 1 -or $installation.gateProtocolVersion -ne 2 -or
-    -not $root.Equals($installation.repositoryRoot, [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'gate-installation-owner-mismatch'
-}
-
-# Git does not pass arguments to pre-commit during a commit. Only the installer
-# supplies this one-use challenge through `git hook run ... -- <arguments>`.
-if ($CheckNonce) {
-    $challengePath = Join-Path $installedRoot 'check.json'
-    $challenge = [IO.File]::ReadAllText($challengePath) | ConvertFrom-Json
-    if ($CheckNonce -cnotmatch '^[a-f0-9]{32}$' -or $challenge.nonce -cne $CheckNonce -or
-        $challenge.exitCode -ne $CheckExitCode -or
-        ([DateTimeOffset]::UtcNow - [DateTimeOffset]::Parse($challenge.createdUtc)).TotalSeconds -lt 0 -or
-        ([DateTimeOffset]::UtcNow - [DateTimeOffset]::Parse($challenge.createdUtc)).TotalSeconds -gt 60) {
-        throw 'gate-invalid-installation-challenge'
-    }
-    [IO.File]::Delete($challengePath)
-    [IO.File]::WriteAllText((Join-Path $installedRoot 'check-ack'), $CheckNonce, $encoding)
-    exit $CheckExitCode
-}
-
-$receiptPath = Join-Path $state 'commit-receipt.json'
-if ($FinalizeCommit) {
-    if ($installation.previousHooks -and (Test-Path -LiteralPath (Join-Path $installation.previousHooks 'commit-msg') -PathType Leaf)) {
-        & git -C $root -c ('core.hooksPath=' + $installation.previousHooks) hook run commit-msg -- $MessagePath
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    }
-    $receipt = [IO.File]::ReadAllText($receiptPath) | ConvertFrom-Json
-    if ($receipt.runId -cnotmatch '^[a-f0-9]{32}$') { throw 'gate-invalid-commit-receipt' }
-    $completedGateBytes = [IO.File]::ReadAllBytes((Join-Path $state ('runs/' + $receipt.runId + '/gate.json')))
-    if ($receipt.gateSha256 -cnotmatch '^[a-f0-9]{64}$' -or
-        [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($completedGateBytes)).ToLowerInvariant() -cne $receipt.gateSha256) {
-        throw 'gate-completed-manifest-changed-after-pre-commit'
-    }
-    $completedGate = $encoding.GetString($completedGateBytes) | ConvertFrom-Json
-    $finalTree = Invoke-GateGit @('write-tree')
-    $finalIndex = Invoke-GateGit @('rev-parse', '--path-format=absolute', '--git-path', 'index')
-    if ($env:GIT_INDEX_FILE) { $finalIndex = [IO.Path]::GetFullPath($env:GIT_INDEX_FILE, $root) }
-    if ($receipt.gateProtocolVersion -ne 2 -or $completedGate.gateProtocolVersion -ne 2 -or
-        $completedGate.mode -cne 'bootstrap/full/hybrid' -or -not $completedGate.platformVerified -or
-        -not $completedGate.complete -or $completedGate.exitCode -ne 0 -or $completedGate.snapshotTree -cne $receipt.tree -or
-        $finalTree -cne $receipt.tree -or -not $finalIndex.Equals($receipt.indexPath, [StringComparison]::OrdinalIgnoreCase) -or
-        (Get-FileHash -LiteralPath $finalIndex -Algorithm SHA256).Hash -cne $receipt.indexHash) {
-        throw 'gate-index-changed-after-pre-commit'
-    }
-    $evidenceRoot = [IO.Path]::GetFullPath((Join-Path $state ('runs/' + $receipt.runId)))
-    if (@($completedGate.platformArtifacts).Count -eq 0) { throw 'gate-missing-platform-receipt' }
-    foreach ($artifact in $completedGate.platformArtifacts) {
-        $path = [IO.Path]::GetFullPath((Join-Path $evidenceRoot $artifact.path))
-        if ([IO.Path]::IsPathRooted($artifact.path) -or
-            -not $path.StartsWith($evidenceRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
-            (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $artifact.sha256) {
-            throw 'gate-platform-evidence-changed-after-pre-commit'
-        }
-    }
-    [IO.File]::Move($receiptPath, (Join-Path $state ('runs/' + $receipt.runId + '/commit-final.json')))
-    exit 0
-}
-
-$gateLock = [IO.File]::Open((Join-Path $state 'gate.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
-$exitCode = 1
-$manifest = $null
-$legacyCatalogGuard = $null
-$runRoot = $null
-$snapshotRoot = $null
-$snapshotOwned = $false
-$runId = $null
-$snapshotParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
-$stage = 'prior-hook'
-function Remove-GateSnapshot {
-    if (-not $snapshotOwned -or -not $snapshotRoot -or -not [IO.Directory]::Exists($snapshotRoot)) { return }
-    $resolved = (Resolve-Path -LiteralPath $snapshotRoot).ProviderPath
-    if ($runId -cnotmatch '^[a-f0-9]{32}$' -or
-        ((Get-Item -LiteralPath $resolved -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
-        [IO.Path]::GetFileName($resolved) -cne ('fa-s-' + $runId) -or
-        -not [IO.Path]::GetDirectoryName($resolved).Equals([IO.Path]::TrimEndingDirectorySeparator($snapshotParent), [StringComparison]::OrdinalIgnoreCase)) {
-        throw 'gate-unsafe-snapshot-cleanup'
-    }
-    Remove-Item -LiteralPath $resolved -Recurse -Force
-    $script:snapshotOwned = $false
-}
-
-function Invoke-GatePhase {
-    param([string]$Name, [string]$Executable, [string[]]$Arguments, [int]$TimeoutMilliseconds = 0)
-    $directory = Join-Path $runRoot $Name
-    [IO.Directory]::CreateDirectory($directory) | Out-Null
-    [IO.File]::WriteAllText((Join-Path $directory 'argv.json'), (@{
-        executable = $Executable; arguments = $Arguments; workingDirectory = $snapshotRoot
-    } | ConvertTo-Json -Depth 8), $encoding)
-    $start = [Diagnostics.ProcessStartInfo]::new($Executable)
-    $start.WorkingDirectory = $snapshotRoot
-    $start.UseShellExecute = $false
-    $start.CreateNoWindow = $true
-    $start.RedirectStandardOutput = $true
-    $start.RedirectStandardError = $true
-    foreach ($argument in $Arguments) { $start.ArgumentList.Add($argument) }
-    foreach ($key in @('GIT_INDEX_FILE','GIT_DIR','GIT_WORK_TREE','GIT_COMMON_DIR','GIT_PREFIX','FISHAUDIO_EXPECTED_TREE')) {
-        [void]$start.Environment.Remove($key)
-    }
-    $start.Environment['FISHAUDIO_SNAPSHOT_CONTEXT'] = $contextPath
-    $process = [Diagnostics.Process]::new()
-    $process.StartInfo = $start
-    $stdout = $null; $stderr = $null; $outDrain = $null; $errDrain = $null
-    $started = $false; $complete = $false; $observedExit = $null; $primary = $null
-    $clock = [Diagnostics.Stopwatch]::StartNew()
-    try {
-        $stdout = [IO.File]::Open((Join-Path $directory 'stdout.log'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
-        $stderr = [IO.File]::Open((Join-Path $directory 'stderr.log'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
-        $started = $process.Start()
-        if (-not $started) { throw 'gate-platform-process-start' }
-        $outDrain = $process.StandardOutput.BaseStream.CopyToAsync($stdout)
-        $errDrain = $process.StandardError.BaseStream.CopyToAsync($stderr)
-        while (-not $process.WaitForExit(1000)) {
-            if ($TimeoutMilliseconds -gt 0 -and $clock.ElapsedMilliseconds -ge $TimeoutMilliseconds) { throw 'gate-platform-metadata-timeout' }
-            if ([int]$clock.Elapsed.TotalSeconds % 20 -eq 0) { Write-Host ('[gate] ' + $Name + '; elapsed=' + [int]$clock.Elapsed.TotalSeconds + 's') }
-        }
-        $observedExit = $process.ExitCode
-        if ($TimeoutMilliseconds -gt 0 -and $clock.ElapsedMilliseconds -ge $TimeoutMilliseconds) { throw 'gate-platform-metadata-timeout' }
-        if (-not [Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($outDrain, $errDrain)).Wait(10000)) { throw 'gate-platform-output-incomplete' }
-        if ($observedExit -ne 0) { throw 'gate-platform-command-failed' }
-        $complete = $true
-    } catch { $primary = $_; throw }
-    finally {
-        $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
-        try {
-            if ($started -and -not $process.HasExited) { $process.Kill($true) }
-            if ($started) {
-                $remaining = [Math]::Max(0, 10000 - [int]$cleanupClock.ElapsedMilliseconds)
-                if (-not $process.WaitForExit($remaining)) { throw 'gate-platform-cleanup-incomplete' }
-                $observedExit = $process.ExitCode
-            }
-            if ($null -ne $outDrain -and $null -ne $errDrain) {
-                $remaining = [Math]::Max(0, 10000 - [int]$cleanupClock.ElapsedMilliseconds)
-                if (-not [Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($outDrain, $errDrain)).Wait($remaining)) { throw 'gate-platform-cleanup-incomplete' }
-            }
-        } catch { if ($null -eq $primary) { throw } }
-        finally {
-            if ($null -ne $stdout) { $stdout.Dispose() }; if ($null -ne $stderr) { $stderr.Dispose() }
-            $process.Dispose()
-            [IO.File]::WriteAllText((Join-Path $directory 'process.json'), (@{
-                complete = $complete; exitCode = $observedExit; elapsedMilliseconds = $clock.Elapsed.TotalMilliseconds
-            } | ConvertTo-Json), $encoding)
-        }
-    }
-}
-
-function Resolve-GateArtifact {
-    param([string]$Parent, [string]$Relative, [string]$Digest)
-    if ([string]::IsNullOrWhiteSpace($Relative) -or [IO.Path]::IsPathRooted($Relative) -or
-        $Relative.Contains('\') -or @($Relative.Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -ne 0 -or
-        $Digest -cnotmatch '^[a-f0-9]{64}$') { throw 'gate-platform-invalid-artifact' }
-    $parentPath = [IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath($Parent))
-    $path = [IO.Path]::GetFullPath((Join-Path $parentPath $Relative))
-    if (-not $path.StartsWith($parentPath + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
-        -not [IO.File]::Exists($path)) { throw 'gate-platform-artifact-mismatch' }
-    $current = Get-Item -LiteralPath $path -Force
-    if ($current.PSIsContainer) { throw 'gate-platform-artifact-mismatch' }
-    while ($null -ne $current) {
-        if (($current.Attributes -band ([IO.FileAttributes]::ReparsePoint -bor [IO.FileAttributes]::Device)) -ne 0) {
-            throw 'gate-platform-artifact-mismatch'
-        }
-        if ($current.FullName.Equals($parentPath, [StringComparison]::OrdinalIgnoreCase)) { break }
-        $current = $(if ($current -is [IO.DirectoryInfo]) { $current.Parent } else { $current.Directory })
-    }
-    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $Digest) {
-        throw 'gate-platform-artifact-mismatch'
-    }
-    return $path
-}
-
-function Assert-GateCaseSet {
-    param([object[]]$Actual, [object[]]$Expected)
-    $set = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    foreach ($id in $Actual) {
-        if ([string]::IsNullOrWhiteSpace($id) -or -not $set.Add([string]$id)) { throw 'gate-platform-invalid-case-set' }
-    }
-    if ($set.Count -eq 0 -or $set.Count -ne $Expected.Count -or -not $set.SetEquals([string[]]$Expected)) { throw 'gate-platform-case-set-mismatch' }
-}
+Assert-GateInstallation
+$installationGuards = [Collections.Generic.List[IO.FileStream]]::new()
 try {
-    [IO.File]::Delete($receiptPath)
-    if ($installation.previousHooks) {
-        $priorHook = Join-Path $installation.previousHooks 'pre-commit'
-        if (Test-Path -LiteralPath $priorHook -PathType Leaf) {
-            & git -C $root -c ('core.hooksPath=' + $installation.previousHooks) hook run pre-commit
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    # Pin the installed code and its exact installation descriptor before the
+    # final guard loads any consumer. No snapshot/build fallback is possible.
+    $installationGuards.Add([IO.File]::Open($installationPath,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read))
+    foreach($name in @('pre-commit','commit-msg','TestGate.ps1','HybridReceipt.ps1')) {
+        $path=Join-Path $installedRoot $name
+        $installationGuards.Add([IO.File]::Open($path,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read))
+        if ($installation.digests.$name -cnotmatch '^[a-f0-9]{64}$' -or (Get-GateDigest $path) -cne $installation.digests.$name) { throw 'gate-installed-consumer-digest' }
+    }
+    if ($CheckNonce) {
+        $challengePath=Join-Path $installedRoot 'check.json'
+        $challenge=[IO.File]::ReadAllText($challengePath)|ConvertFrom-Json
+        $age=([DateTimeOffset]::UtcNow-[DateTimeOffset]::Parse($challenge.createdUtc)).TotalSeconds
+        if ($CheckNonce -cnotmatch '^[a-f0-9]{32}$' -or $challenge.nonce -cne $CheckNonce -or $challenge.exitCode -ne $CheckExitCode -or $age -lt 0 -or $age -gt 60) { throw 'gate-invalid-installation-challenge' }
+        [IO.File]::Delete($challengePath)
+        [IO.File]::WriteAllText((Join-Path $installedRoot 'check-ack'),$CheckNonce,$encoding)
+        exit $CheckExitCode
+    }
+    $gateLock=[IO.File]::Open((Join-Path $state 'gate.lock'),[IO.FileMode]::OpenOrCreate,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None)
+    try {
+        Assert-GateInstallation
+        $receiptPath=Join-Path $state 'commit-receipt.json'
+        if ($FinalizeCommit) {
+            if ($installation.previousHooks -and [IO.File]::Exists((Join-Path $installation.previousHooks 'commit-msg'))) {
+                & git -C $root -c ('core.hooksPath='+$installation.previousHooks) hook run commit-msg -- $MessagePath
+                if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            }
+            . (Join-Path $installedRoot 'HybridReceipt.ps1')
+            try {
+                [void](Lock-HybridFile $receiptPath)
+                $receipt=Read-HybridJson $receiptPath
+                if ($receipt.runId -cnotmatch '^[a-f0-9]{32}$' -or $receipt.gateProtocolVersion -ne 3) { throw 'gate-invalid-commit-receipt' }
+                $evidenceRoot=Join-Path $state ('runs/'+$receipt.runId)
+                $completedGatePath=Join-Path $evidenceRoot 'gate.json'
+                [void](Lock-HybridFile $completedGatePath ([string]$receipt.gateSha256))
+                $completedGate=Read-HybridJson $completedGatePath
+                if ($completedGate.installationSha256 -cne (Get-GateDigest $installationPath) -or
+                    $completedGate.receiptConsumerSha256 -cne $installation.digests.'HybridReceipt.ps1') { throw 'gate-final-consumer-changed' }
+                Assert-GateHybridReceipt $evidenceRoot $completedGate
+                $finalTree=Invoke-GateGit @('write-tree')
+                $finalIndex=Invoke-GateGit @('rev-parse','--path-format=absolute','--git-path','index')
+                if ($env:GIT_INDEX_FILE) { $finalIndex=[IO.Path]::GetFullPath($env:GIT_INDEX_FILE,$root) }
+                [void](Lock-HybridFile $finalIndex)
+                if ($completedGate.snapshotTree -cne $receipt.tree -or $finalTree -cne $receipt.tree -or
+                    -not $finalIndex.Equals($receipt.indexPath,[StringComparison]::OrdinalIgnoreCase) -or
+                    (Get-GateDigest $finalIndex) -cne $receipt.indexHash) { throw 'gate-index-changed-after-pre-commit' }
+                # Repeat exact directory inventories immediately before consume;
+                # new unlisted physical attempts/generations cannot borrow pass.
+                Assert-GateHybridReceipt $evidenceRoot $completedGate
+                # Release only the consumed receipt path for its own rename;
+                # index, manifest, consumer and raw evidence remain held.
+                for($i=$script:HybridLocks.Count-1;$i -ge 0;$i--) {
+                    if(Test-HybridSamePath $script:HybridLocks[$i].Name $receiptPath) {
+                        $script:HybridLocks[$i].Dispose();$script:HybridLocks.RemoveAt($i)
+                    }
+                }
+                [IO.File]::Move($receiptPath,(Join-Path $evidenceRoot 'commit-final.json'))
+                exit 0
+            } finally { Close-HybridLocks }
         }
-    }
-    $stage = 'freeze-index'
-    if (Invoke-GateGit @('ls-files', '--unmerged')) { throw 'gate-unmerged-index' }
-    $tree = Invoke-GateGit @('write-tree')
-    if ($tree -cnotmatch '^[a-f0-9]{40}([a-f0-9]{24})?$') { throw 'gate-invalid-tree' }
-    if ($env:FISHAUDIO_EXPECTED_TREE -and $env:FISHAUDIO_EXPECTED_TREE -cne $tree) { throw 'gate-unexpected-index-tree' }
-    $indexPath = Invoke-GateGit @('rev-parse', '--path-format=absolute', '--git-path', 'index')
-    if ($env:GIT_INDEX_FILE) { $indexPath = [IO.Path]::GetFullPath($env:GIT_INDEX_FILE, $root) }
-    $indexHash = (Get-FileHash -LiteralPath $indexPath -Algorithm SHA256).Hash
-    $head = & git -C $root rev-parse --verify HEAD 2>$null
-    $sourceCommit = if ($LASTEXITCODE -eq 0) { ($head -join '').Trim() } else { $null }
-    $runId = [Guid]::NewGuid().ToString('N')
-    $runRoot = Join-Path $state ('runs/' + $runId)
-    [IO.Directory]::CreateDirectory($runRoot) | Out-Null
-    # Windows apphost startup still has path-length limits even when filesystem
-    # APIs can read longer paths. Evidence stays in Git-private state; sources
-    # use a short independently owned temporary directory.
-    $snapshotRoot = Join-Path $snapshotParent ('fa-s-' + $runId)
-    if ([IO.Directory]::Exists($snapshotRoot)) { throw 'gate-snapshot-already-exists' }
-    if ((Join-Path $snapshotRoot 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.exe').Length -ge 260) {
-        throw 'gate-snapshot-path-too-long'
-    }
-    [IO.Directory]::CreateDirectory($snapshotRoot) | Out-Null
-    $snapshotOwned = $true
-    $manifest = [ordered]@{
-        schemaVersion = 1; gateProtocolVersion = 2; mode = 'bootstrap/full/hybrid'; runId = $runId
-        snapshotTree = $tree; sourceCommit = $sourceCommit; complete = $false; exitCode = 1
-        startedUtc = [DateTimeOffset]::UtcNow.ToString('O'); finishedUtc = $null
-        validation = @{ report = 'regression.json'; stdout = 'build.stdout.log'; stderr = 'build.stderr.log' }
-        platformVerified = $false; platformArtifacts = @(); failure = $null
-    }
-    [IO.File]::WriteAllText((Join-Path $runRoot 'gate.json'), ($manifest | ConvertTo-Json -Depth 12), $encoding)
-    Write-Host ('[gate] bootstrap/full/hybrid; S=' + $tree + '; run=' + $runId)
+        $exitCode=1;$manifest=$null;$runRoot=$null;$snapshotRoot=$null;$snapshotOwned=$false;$runId=$null
+        $snapshotParent=[IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+        $stage='prior-hook';$primary=$null
+        function Remove-GateSnapshot {
+            if (-not $snapshotOwned -or -not $snapshotRoot -or -not [IO.Directory]::Exists($snapshotRoot)) { return }
+            $resolved=(Resolve-Path -LiteralPath $snapshotRoot).ProviderPath
+            if ($runId -cnotmatch '^[a-f0-9]{32}$' -or
+                ((Get-Item -LiteralPath $resolved -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
+                [IO.Path]::GetFileName($resolved) -cne ('fa-s-'+$runId) -or
+                -not [IO.Path]::GetDirectoryName($resolved).Equals([IO.Path]::TrimEndingDirectorySeparator($snapshotParent),[StringComparison]::OrdinalIgnoreCase)) { throw 'gate-unsafe-snapshot-cleanup' }
+            Remove-Item -LiteralPath $resolved -Recurse -Force
+            $script:snapshotOwned=$false
+        }
+        function Invoke-GatePhase([string]$Name,[string]$Executable,[string[]]$Arguments,[int]$MetadataTimeoutMilliseconds=0) {
+            $savedContext=$env:FISHAUDIO_SNAPSHOT_CONTEXT
+            try {
+                $env:FISHAUDIO_SNAPSHOT_CONTEXT=$contextPath
+                $code=Invoke-HybridProcess $Executable $Arguments (Join-Path $runRoot $Name) $snapshotRoot $MetadataTimeoutMilliseconds
+                if ($code -ne 0) { throw 'gate-validation-command-failed' }
+            } finally {
+                $env:FISHAUDIO_SNAPSHOT_CONTEXT=$savedContext
+                if($Name -ceq 'build-package'){
+                    foreach($pair in @(@('stdout.bin','build.stdout.log'),@('stderr.bin','build.stderr.log'))){
+                        $raw=Join-Path (Join-Path $runRoot $Name) $pair[0]
+                        if([IO.File]::Exists($raw)){[IO.File]::Copy($raw,(Join-Path $runRoot $pair[1]),$false)}
+                    }
+                }
+            }
+        }
+        try {
+            [IO.File]::Delete($receiptPath)
+            if ($installation.previousHooks -and [IO.File]::Exists((Join-Path $installation.previousHooks 'pre-commit'))) {
+                & git -C $root -c ('core.hooksPath='+$installation.previousHooks) hook run pre-commit
+                if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            }
+            $stage='freeze-index'
+            if (Invoke-GateGit @('ls-files','--unmerged')) { throw 'gate-unmerged-index' }
+            $tree=Invoke-GateGit @('write-tree')
+            if ($tree -cnotmatch '^[a-f0-9]{40}([a-f0-9]{24})?$') { throw 'gate-invalid-tree' }
+            if ($env:FISHAUDIO_EXPECTED_TREE -and $env:FISHAUDIO_EXPECTED_TREE -cne $tree) { throw 'gate-unexpected-index-tree' }
+            $indexPath=Invoke-GateGit @('rev-parse','--path-format=absolute','--git-path','index')
+            if ($env:GIT_INDEX_FILE) { $indexPath=[IO.Path]::GetFullPath($env:GIT_INDEX_FILE,$root) }
+            $indexHash=Get-GateDigest $indexPath
+            $head=& git -C $root rev-parse --verify HEAD 2>$null
+            $sourceCommit=if($LASTEXITCODE -eq 0){($head -join '').Trim()}else{$null}
+            $runId=[Guid]::NewGuid().ToString('N');$runRoot=Join-Path $state ('runs/'+$runId)
+            [IO.Directory]::CreateDirectory($runRoot)|Out-Null
+            $snapshotRoot=Join-Path $snapshotParent ('fa-s-'+$runId)
+            if ([IO.Directory]::Exists($snapshotRoot)) { throw 'gate-snapshot-already-exists' }
+            if ((Join-Path $snapshotRoot 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.exe').Length -ge 260) { throw 'gate-snapshot-path-too-long' }
+            [IO.Directory]::CreateDirectory($snapshotRoot)|Out-Null;$snapshotOwned=$true
+            $manifest=[ordered]@{schemaVersion=1;gateProtocolVersion=3;mode='bootstrap/full/hybrid';runId=$runId
+                snapshotTree=$tree;sourceCommit=$sourceCommit;complete=$false;exitCode=1;startedUtc=[DateTimeOffset]::UtcNow.ToString('O');finishedUtc=$null
+                installationSha256=(Get-GateDigest $installationPath);receiptConsumerSha256=$installation.digests.'HybridReceipt.ps1'
+                validation=@{package='build-package/process.json';session='hybrid/manifest.json';admission='hybrid-admission/admission.json'}
+                hybridVerified=$false;hybridArtifacts=@();hybrid=$null;failure=$null}
+            [IO.File]::WriteAllText((Join-Path $runRoot 'gate.json'),($manifest|ConvertTo-Json -Depth 12),$encoding)
+            Write-Host ('[gate] bootstrap/full/hybrid protocol3; S='+$tree+'; run='+$runId)
 
     $stage = 'materialize-snapshot'
     Add-Type -TypeDefinition @'
@@ -310,334 +210,108 @@ public static class FishAudioGitSnapshot
     $contextPath = Join-Path $runRoot 'snapshot.json'
     $context = @{ schemaVersion = 1; root = $snapshotRoot; tree = $tree; sourceCommit = $sourceCommit; files = $files.ToArray() }
     [IO.File]::WriteAllText($contextPath, ($context | ConvertTo-Json -Depth 12), $encoding)
-    $reportPath = Join-Path $runRoot 'regression.json'
-    $start = [Diagnostics.ProcessStartInfo]::new((Get-Process -Id $PID).Path)
-    $start.WorkingDirectory = $snapshotRoot
-    $start.UseShellExecute = $false
-    $start.CreateNoWindow = $true
-    $start.RedirectStandardOutput = $true
-    $start.RedirectStandardError = $true
-    foreach ($argument in @('-NoLogo', '-NoProfile', '-File', (Join-Path $snapshotRoot 'build.ps1'), '-Release', '-Test', '-LegacyOnly', '-TestResults', $reportPath)) {
-        $start.ArgumentList.Add($argument)
-    }
-    foreach ($key in @($start.Environment.Keys)) {
-        if ($key -in @('GIT_INDEX_FILE','GIT_DIR','GIT_WORK_TREE','GIT_COMMON_DIR','GIT_PREFIX','FISHAUDIO_EXPECTED_TREE')) {
-            $start.Environment.Remove($key) | Out-Null
-        }
-    }
-    $start.Environment['FISHAUDIO_SNAPSHOT_CONTEXT'] = $contextPath
-    $stage = 'build-package-and-tests'
-    $process = [Diagnostics.Process]::new()
-    $process.StartInfo = $start
-    $stdout = [IO.File]::Open((Join-Path $runRoot 'build.stdout.log'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
-    $stderr = [IO.File]::Open((Join-Path $runRoot 'build.stderr.log'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
-    $clock = [Diagnostics.Stopwatch]::StartNew()
-    $outputDrain = $null
-    $errorDrain = $null
-    $processStarted = $false
-    $primaryFailure = $null
-    try {
-        $processStarted = $process.Start()
-        if (-not $processStarted) { throw 'gate-build-start' }
-        $outputDrain = $process.StandardOutput.BaseStream.CopyToAsync($stdout)
-        $errorDrain = $process.StandardError.BaseStream.CopyToAsync($stderr)
-        while (-not $process.WaitForExit(20000)) {
-            Write-Host ('[gate] validating S=' + $tree + '; elapsed=' + [int]$clock.Elapsed.TotalSeconds + 's')
-        }
-        if (-not [Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($outputDrain, $errorDrain)).Wait(10000)) { throw 'gate-build-output-incomplete' }
-        if ($process.ExitCode -ne 0) { $exitCode = $process.ExitCode; throw 'gate-build-or-tests-failed' }
-    } catch { $primaryFailure = $_; throw }
-    finally {
-        try {
-            if ($processStarted -and -not $process.HasExited) { $process.Kill($true); [void]$process.WaitForExit(10000) }
-            $stdout.Dispose(); $stderr.Dispose(); $process.Dispose()
-        } catch { if ($null -eq $primaryFailure) { throw } }
-    }
-    $stage = 'verify-results'
-    $report = [IO.File]::ReadAllText($reportPath) | ConvertFrom-Json
-    # This requested JSON can be a stale readable projection. Only the runner's
-    # generation-aware metadata verifier below decides the authoritative result.
-    $stage = 'verify-complete-catalog'
-    $runner = Join-Path $snapshotRoot 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
-    $verifiedLegacyCatalog = Join-Path $runRoot 'verified-legacy-catalog.json'
-    $verify = [Diagnostics.ProcessStartInfo]::new('dotnet')
-    $verify.WorkingDirectory = $snapshotRoot
-    $verify.UseShellExecute = $false
-    $verify.CreateNoWindow = $true
-    $verify.RedirectStandardOutput = $true
-    $verify.RedirectStandardError = $true
-    foreach ($argument in @($runner, '--verify-snapshot-report', $reportPath, $tree,
-        '--catalog-output', $verifiedLegacyCatalog)) { $verify.ArgumentList.Add($argument) }
-    foreach ($key in @($verify.Environment.Keys)) {
-        if ($key -in @('GIT_INDEX_FILE','GIT_DIR','GIT_WORK_TREE','GIT_COMMON_DIR','GIT_PREFIX','FISHAUDIO_EXPECTED_TREE')) {
-            $verify.Environment.Remove($key) | Out-Null
-        }
-    }
-    $verify.Environment['FISHAUDIO_SNAPSHOT_CONTEXT'] = $contextPath
-    $verification = [Diagnostics.Process]::new()
-    $verification.StartInfo = $verify
-    $verificationStarted = $false
-    try {
-        $verificationStarted = $verification.Start()
-        if (-not $verificationStarted) { throw 'gate-verifier-start-failed' }
-        $verificationOutput = $verification.StandardOutput.ReadToEndAsync()
-        $verificationError = $verification.StandardError.ReadToEndAsync()
-        if (-not $verification.WaitForExit(120000)) { throw 'gate-verifier-timeout' }
-        if (-not [Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($verificationOutput, $verificationError)).Wait(10000)) { throw 'gate-verifier-output-incomplete' }
-        [IO.File]::WriteAllText((Join-Path $runRoot 'verify.stdout.log'), $verificationOutput.Result, $encoding)
-        [IO.File]::WriteAllText((Join-Path $runRoot 'verify.stderr.log'), $verificationError.Result, $encoding)
-        if ($verification.ExitCode -ne 0) { throw 'gate-incomplete-catalog-evidence' }
-    } finally {
-        if ($verificationStarted -and -not $verification.HasExited) { $verification.Kill($true); [void]$verification.WaitForExit(10000) }
-        $verification.Dispose()
-    }
-    $legacyCatalogGuard = [IO.File]::Open($verifiedLegacyCatalog, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
 
-    # Transitional full hybrid: the old catalog and the framework-discovered
-    # leaves are both obligations. A new selector cannot exempt its own changes.
-    $stage = 'framework-full'
-    $platformRoot = Join-Path $runRoot 'platform'
-    Invoke-GatePhase 'framework-command' (Get-Process -Id $PID).Path @('-NoLogo', '-NoProfile', '-File',
-        (Join-Path $snapshotRoot 'tools/Test.ps1'), '-Mode', 'Full', '-ResultsDirectory', $platformRoot)
-    $stage = 'verify-framework-evidence'
-    $platformManifestPath = Join-Path $platformRoot 'manifest.json'
-    $platform = [IO.File]::ReadAllText($platformManifestPath) | ConvertFrom-Json
-    $contextDigest = (Get-FileHash -LiteralPath $contextPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    if ($platform.schemaVersion -ne 2 -or $platform.kind -cne 'unified-test-session' -or
-        $platform.mode -cne 'Full' -or $platform.platform -cne 'VSTest' -or $platform.configuration -cne 'Release' -or
-        $platform.selection -cne 'all-discovered' -or -not $platform.complete -or $platform.baselineClaim -ne $false -or
-        -not $platform.source.snapshot -or -not $platform.source.snapshotRootValidated -or
-        $platform.source.tree -cne $tree -or $platform.source.sourceCommit -cne $sourceCommit -or
-        $platform.source.contextSha256 -cne $contextDigest -or @($platform.assemblies).Count -ne 2) {
-        throw 'gate-platform-session-mismatch'
-    }
-    $tool = Join-Path $snapshotRoot 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll'
-    if ((Get-FileHash -LiteralPath $tool -Algorithm SHA256).Hash.ToLowerInvariant() -cne $platform.toolSha256) { throw 'gate-platform-tool-mismatch' }
-    $artifacts = [Collections.Generic.List[object]]::new()
-    $artifacts.Add(@{ path = 'platform/manifest.json'; sha256 = (Get-FileHash -LiteralPath $platformManifestPath -Algorithm SHA256).Hash.ToLowerInvariant() })
-    $assemblyKeys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    $globalIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    $migrationDiscoveries = [Collections.Generic.List[string]]::new()
-    $expectedAssemblies = @{
-        'plugin' = 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
-        'testing-tool' = 'tests/FishAudio.Testing.Tests/bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll'
-    }
-    foreach ($phase in $platform.phases) {
-        if (-not $phase.complete -or $phase.exitCode -ne 0) { throw 'gate-platform-incomplete-phase' }
-    }
-    foreach ($assembly in $platform.assemblies) {
-        $key = [string]$assembly.key
-        if (-not $expectedAssemblies.ContainsKey($key) -or -not $assemblyKeys.Add($key) -or
-            $assembly.assembly -cne $expectedAssemblies[$key] -or -not $assembly.executed -or
-            $assembly.discoveredCount -le 0 -or $assembly.discoveredCount -ne $assembly.selectedCount -or
-            $assembly.passedCount -ne $assembly.selectedCount) { throw 'gate-platform-assembly-mismatch' }
-        [void](Resolve-GateArtifact $snapshotRoot $assembly.assembly $assembly.sha256)
-        $paths = @{}
-        foreach ($name in @('catalog','selection','requestedSelection','executionPlan')) {
-            $relative = [string]$assembly.$name
-            $digest = [string]$assembly.($name + 'Sha256')
-            $paths[$name] = Resolve-GateArtifact $platformRoot $relative $digest
-            $artifacts.Add(@{ path = 'platform/' + $relative; sha256 = $digest })
-        }
-        $catalog = [IO.File]::ReadAllText($paths.catalog) | ConvertFrom-Json
-        $selection = [IO.File]::ReadAllText($paths.selection) | ConvertFrom-Json
-        $requestedSelection = [IO.File]::ReadAllText($paths.requestedSelection) | ConvertFrom-Json
-        if ($catalog.schemaVersion -ne 1 -or $catalog.kind -cne 'nunit-catalog' -or -not $catalog.complete -or
-            $selection.schemaVersion -ne 1 -or $requestedSelection.schemaVersion -ne 1 -or
-            @($catalog.cases).Count -ne $assembly.discoveredCount) { throw 'gate-platform-invalid-catalog' }
-        if (($platform.workers -isnot [int] -and $platform.workers -isnot [long]) -or $platform.workers -lt 0 -or $platform.workers -gt 4 -or
-            ($requestedSelection.maximumConcurrency -isnot [int] -and $requestedSelection.maximumConcurrency -isnot [long]) -or
-            $requestedSelection.maximumConcurrency -ne [Math]::Max(1, $platform.workers)) { throw 'gate-platform-invalid-workers' }
-        $ids = @($catalog.cases | ForEach-Object canonicalId)
-        Assert-GateCaseSet @($assembly.selectedIds) $ids
-        Assert-GateCaseSet @($selection.ids) $ids
-        Assert-GateCaseSet @($requestedSelection.ids) $ids
-        if ((@($requestedSelection.ids) -join "`n") -cne ($ids -join "`n")) { throw 'gate-platform-request-order' }
-        foreach ($case in $catalog.cases) {
-            if (-not $globalIds.Add([string]$case.canonicalId)) { throw 'gate-platform-ambiguous-canonical-id' }
-        }
-        foreach ($name in @('discover','catalog','plan')) {
-            $matching = @($platform.phases | Where-Object name -CEQ ($name + '-' + $key))
-            if ($matching.Count -ne 1) { throw 'gate-platform-missing-required-phase' }
-        }
-        $discovery = @($platform.phases | Where-Object name -CEQ ('discover-' + $key))[0]
-        $dump = Join-Path $platformRoot ($discovery.directory + '/discovery.dump')
-        $migrationDiscoveries.Add($dump)
-        $dumpDigest = (Get-FileHash -LiteralPath $dump -Algorithm SHA256).Hash.ToLowerInvariant()
-        $dumpRelative = [IO.Path]::GetRelativePath($platformRoot, $dump).Replace('\', '/')
-        [void](Resolve-GateArtifact $platformRoot $dumpRelative $dumpDigest)
-        $artifacts.Add(@{ path = 'platform/' + $dumpRelative; sha256 = $dumpDigest })
-        $verifiedCatalogPath = Join-Path $runRoot ('framework-catalog-' + $key + '.json')
-        Invoke-GatePhase ('framework-catalog-' + $key) 'dotnet' @($tool, 'evidence-catalog', '--discovery', $dump, '--output', $verifiedCatalogPath) 120000
-        $verifiedCatalog = [IO.File]::ReadAllText($verifiedCatalogPath) | ConvertFrom-Json
-        Assert-GateCaseSet @($verifiedCatalog.cases | ForEach-Object canonicalId) $ids
-        $currentNames = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
-        foreach ($case in $catalog.cases) {
-            $other = @($verifiedCatalog.cases | Where-Object canonicalId -CEQ $case.canonicalId)
-            if ($other.Count -ne 1 -or $other[0].fullName -cne $case.fullName -or
-                $other[0].className -cne $case.className -or $other[0].methodName -cne $case.methodName) { throw 'gate-platform-discovery-mismatch' }
-            $currentNames.Add([string]$case.canonicalId, [string]$other[0].fullName)
-        }
-        $expectedSelectionPath = Join-Path $runRoot ('framework-requested-' + $key + '.json')
-        [IO.File]::WriteAllText($expectedSelectionPath, (@{ schemaVersion = 1; ids = $ids;
-            maximumConcurrency = [Math]::Max(1, $platform.workers) } | ConvertTo-Json -Depth 4), $encoding)
-        $expectedPlanPath = Join-Path $runRoot ('framework-plan-' + $key + '.json')
-        Invoke-GatePhase ('framework-plan-' + $key) 'dotnet' @($tool, 'evidence-execution-plan', '--discovery', $dump,
-            '--selection', $expectedSelectionPath, '--output', $expectedPlanPath) 120000
-        & (Join-Path $snapshotRoot 'tools/Assert-FrameworkExecutionPlan.ps1') -PlanPath $paths.executionPlan -ExpectedPlanPath $expectedPlanPath `
-            -RawDiscoverySha256 $dumpDigest -RequestedIds $ids -SelectionIds ([string[]]$selection.ids) -PhaseRecords ([object[]]$assembly.executionPhases)
-        $passed = [Collections.Generic.List[string]]::new()
-        foreach ($group in $assembly.executionPhases) {
-            $prefix = $key + '/execution/' + $group.id + '/'
-            if ($group.runtimeEvidence -cne ($prefix + 'runtime-evidence')) { throw 'gate-platform-phase-directory' }
-            $phasePaths = @{}
-            foreach ($name in @('selection','request','runSettings','terminal','resultXml','trx','supervisor')) {
-                if ($group.$name -isnot [string] -or -not $group.$name.StartsWith($prefix, [StringComparison]::Ordinal)) { throw 'gate-platform-phase-directory' }
-                $relative = [string]$group.$name; $digest = [string]$group.($name + 'Sha256')
-                $phasePaths[$name] = Resolve-GateArtifact $platformRoot $relative $digest
-                $artifacts.Add(@{ path = 'platform/' + $relative; sha256 = $digest })
+            foreach($relative in @('tools/TestHybrid.ps1','tools/Assert-HybridSession.ps1','tools/HybridSession.Common.ps1','tools/TestProcessOwner.ps1','tools/Invoke-TestProcess.ps1')) {
+                if(-not [IO.File]::Exists((Join-Path $snapshotRoot $relative))){throw 'gate-snapshot-missing-hybrid-input'}
             }
-            foreach ($name in @('execute','verify')) {
-                if (@($platform.phases | Where-Object name -CEQ ($name + '-' + $key + '-' + $group.id)).Count -ne 1) {
-                    throw 'gate-platform-missing-execution-phase'
+            . (Join-Path $snapshotRoot 'tools/HybridSession.Common.ps1')
+            $shell=(Get-Process -Id $PID).Path
+            $dotnet=(Get-Command dotnet -CommandType Application -ErrorAction Stop|Select-Object -First 1).Source
+            $stage='build-release-package'
+            Invoke-GatePhase 'build-package' $shell @('-NoLogo','-NoProfile','-NonInteractive','-File',(Join-Path $snapshotRoot 'build.ps1'),'-Release')
+            # Build the same two Release projects with the standard driver flags;
+            # this preparation neither discovers nor executes a scenario.
+            foreach($definition in @(
+                @('plugin','tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'),
+                @('testing-tool','tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj'))) {
+                $stage='build-'+$definition[0]
+                Invoke-GatePhase ('build-'+$definition[0]) $dotnet @('build',(Join-Path $snapshotRoot $definition[1]),'--configuration','Release',
+                    '--disable-build-servers','-p:RestoreLockedMode=true','-p:FishAudioCoverage=false','-p:UseSharedCompilation=false','-nodeReuse:false')
+            }
+            $stage='hybrid-full'
+            $hybridRoot=Join-Path $runRoot 'hybrid'
+            Invoke-GatePhase 'hybrid-command' $shell @('-NoLogo','-NoProfile','-NonInteractive','-File',
+                (Join-Path $snapshotRoot 'tools/TestHybrid.ps1'),'-RepositoryRoot',$snapshotRoot,'-ResultsDirectory',$hybridRoot,'-NoBuild','-Workers','4')
+            $stage='hybrid-independent-admission'
+            $admissionRoot=Join-Path $runRoot 'hybrid-admission'
+            Invoke-GatePhase 'hybrid-admission-command' $shell @('-NoLogo','-NoProfile','-NonInteractive','-File',
+                (Join-Path $snapshotRoot 'tools/Assert-HybridSession.ps1'),'-RepositoryRoot',$snapshotRoot,'-SessionDirectory',$hybridRoot,'-OutputDirectory',$admissionRoot)
+            # Use the installed, independently digest-bound minimal consumer for
+            # receipt sealing and final commit-msg. No build DLL is imported.
+            . (Join-Path $installedRoot 'HybridReceipt.ps1')
+            $admissionPath=Join-Path $admissionRoot 'admission.json'
+            $admission=Read-HybridJson $admissionPath
+            $artifacts=[Collections.Generic.Dictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)
+            function Add-GateArtifact([string]$Path,[string]$Digest) {
+                if (-not (Test-HybridContained $Path $runRoot)) { throw 'gate-artifact-outside-retained-run' }
+                $relative=[IO.Path]::GetRelativePath($runRoot,$Path).Replace('\','/')
+                [void](Assert-GateReceiptPath $runRoot $relative)
+                [void](Lock-HybridFile $Path $Digest -Retained)
+                if($artifacts.ContainsKey($relative)) {
+                    if($artifacts[$relative] -cne $Digest){throw 'gate-artifact-digest-conflict'}
+                } else { $artifacts.Add($relative,$Digest) }
+            }
+            foreach($artifact in $admission.receiptArtifacts) { Add-GateArtifact ([string]$artifact.path) ([string]$artifact.sha256) }
+            Add-GateArtifact $admissionPath (Get-GateDigest $admissionPath)
+            Add-GateArtifact $contextPath (Get-GateDigest $contextPath)
+            foreach($name in @('build.stdout.log','build.stderr.log')){$path=Join-Path $runRoot $name;Add-GateArtifact $path (Get-GateDigest $path)}
+            foreach($directory in @('build-package','build-plugin','build-testing-tool','hybrid-command','hybrid-admission-command')) {
+                foreach($file in Get-ChildItem -LiteralPath (Join-Path $runRoot $directory) -Recurse -File -Force) { Add-GateArtifact $file.FullName (Get-GateDigest $file.FullName) }
+            }
+            $package=Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg'
+            if(-not [IO.File]::Exists($package)){throw 'gate-current-package-missing'}
+            [IO.File]::Copy($package,(Join-Path $runRoot 'package.spkg'),$false)
+            $manifest['packageSha256']=Get-GateDigest (Join-Path $runRoot 'package.spkg')
+            Add-GateArtifact (Join-Path $runRoot 'package.spkg') $manifest.packageSha256
+            $manifest.hybrid=@{session='hybrid';admission='hybrid-admission/admission.json';admissionSha256=(Get-GateDigest $admissionPath)}
+            $manifest.hybridArtifacts=@($artifacts.GetEnumerator()|Sort-Object Key|ForEach-Object{@{path=$_.Key;sha256=$_.Value}})
+            $manifest.hybridVerified=$true
+            $session=Read-HybridJson (Join-Path $hybridRoot 'manifest.json')
+            $manifest['legacyCaseCount']=[int](($session.slots|Where-Object owner -CEQ 'legacy'|ForEach-Object{@($_.selectedIds).Count}|Measure-Object -Sum).Sum)
+            $manifest['frameworkCaseCount']=[int](($session.slots|Where-Object owner -CEQ 'framework'|ForEach-Object{@($_.selectedIds).Count}|Measure-Object -Sum).Sum)
+            $stage='verify-final-index'
+            if ((Invoke-GateGit @('write-tree')) -cne $tree -or (Get-GateDigest $indexPath) -cne $indexHash) { throw 'gate-index-changed-during-validation' }
+            [void](Lock-HybridFile $indexPath $indexHash)
+            $manifest.complete=$true;$manifest.exitCode=0
+            Assert-GateHybridReceipt $runRoot ([pscustomobject]$manifest)
+            $stage='snapshot-cleanup'
+            Remove-GateSnapshot
+            Assert-GateHybridReceipt $runRoot ([pscustomobject]$manifest)
+            if((Get-GateDigest $indexPath) -cne $indexHash){throw 'gate-index-changed-during-validation'}
+            $exitCode=0
+        } catch {
+            $primary=$_
+            if($manifest){$manifest.complete=$false;$manifest.failure=@{stage=$stage;exceptionType=$_.Exception.GetType().FullName;scriptLine=$_.InvocationInfo.ScriptLineNumber
+                reason=$(if($_.Exception.Message -cmatch '^gate-[a-z-]+$'){$_.Exception.Message}else{'gate-operation-failed'})}}
+            Write-Host ('[gate] rejected at '+$stage+' ('+$_.Exception.GetType().Name+'); inspect private gate evidence.')
+        } finally {
+            $cleanupFailure=$null
+            try {
+                if($manifest -and $snapshotRoot -and [IO.File]::Exists((Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg')) -and -not [IO.File]::Exists((Join-Path $runRoot 'package.spkg'))) {
+                    [IO.File]::Copy((Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg'),(Join-Path $runRoot 'package.spkg'),$false)
+                    $manifest['packageSha256']=Get-GateDigest (Join-Path $runRoot 'package.spkg')
+                }
+            } catch {$cleanupFailure=$_}
+            try {Remove-GateSnapshot} catch {if($null -eq $cleanupFailure){$cleanupFailure=$_}}
+            if($null -ne $cleanupFailure){if($manifest){$manifest.complete=$false;$manifest['cleanupFailure']=$cleanupFailure.Exception.GetType().FullName};if($exitCode -eq 0){$exitCode=1}}
+            if($manifest){
+                $manifest.exitCode=$exitCode;$manifest.finishedUtc=[DateTimeOffset]::UtcNow.ToString('O')
+                $completedGatePath=Join-Path $runRoot 'gate.json'
+                if($exitCode -eq 0 -and $manifest.complete){
+                    # The consumer and the artifact/directory inventories remain
+                    # held while publishing the separate immutable list digest.
+                    try {Assert-GateHybridReceipt $runRoot ([pscustomobject]$manifest)}
+                    catch {$exitCode=1;$manifest.exitCode=1;$manifest.complete=$false;$manifest.failure=@{stage='final-receipt';exceptionType=$_.Exception.GetType().FullName;reason='gate-final-receipt-rejected'}}
+                }
+                [IO.File]::WriteAllText($completedGatePath,($manifest|ConvertTo-Json -Depth 12),$encoding)
+                if($exitCode -eq 0 -and $manifest.complete){
+                    $receipt=@{gateProtocolVersion=3;runId=$runId;tree=$tree;indexPath=$indexPath;indexHash=$indexHash;gateSha256=(Get-GateDigest $completedGatePath)}
+                    [IO.File]::WriteAllText($receiptPath,($receipt|ConvertTo-Json),$encoding)
+                    Write-Host ('[gate] passed legacy='+$manifest.legacyCaseCount+'; NUnit='+$manifest.frameworkCaseCount+'; S='+$tree+'; run='+$runId)
                 }
             }
-            $phaseSelection = [IO.File]::ReadAllText($phasePaths.selection) | ConvertFrom-Json
-            $terminal = [IO.File]::ReadAllText($phasePaths.terminal) | ConvertFrom-Json
-            $phaseIds = [string[]]$group.selectedIds
-            $phaseRequest = [IO.File]::ReadAllText($phasePaths.request) | ConvertFrom-Json
-            if ($phaseRequest.cases -isnot [Array] -or $phaseRequest.cases.Count -ne $phaseIds.Count) {
-                throw 'gate-platform-phase-request-binding'
-            }
-            for ($index = 0; $index -lt $phaseIds.Count; $index++) {
-                $binding = $phaseRequest.cases[$index]
-                if (-not $currentNames.ContainsKey($phaseIds[$index]) -or
-                    $binding.canonicalId -isnot [string] -or $binding.fullName -isnot [string] -or
-                    -not $binding.canonicalId.Equals($phaseIds[$index], [StringComparison]::Ordinal) -or
-                    -not $binding.fullName.Equals($currentNames[$phaseIds[$index]], [StringComparison]::Ordinal)) {
-                    throw 'gate-platform-phase-request-binding'
-                }
-            }
-            if ($phaseSelection.schemaVersion -ne 1 -or $terminal.schemaVersion -ne 1 -or $terminal.kind -cne 'nunit-terminal' -or
-                -not $terminal.complete -or $terminal.passedCount -ne $phaseIds.Count) { throw 'gate-platform-invalid-phase-terminal' }
-            Assert-GateCaseSet @($phaseSelection.ids) $phaseIds
-            if ((@($phaseSelection.ids) -join "`n") -cne ($phaseIds -join "`n")) { throw 'gate-platform-phase-selection-order' }
-            Assert-GateCaseSet @($terminal.cases | ForEach-Object canonicalId) $phaseIds
-            & (Join-Path $snapshotRoot 'tools/Assert-FrameworkSupervisor.ps1') -Path $phasePaths.supervisor -RunId $platform.runId `
-                -SourceTree $platform.source.tree -SourceFingerprint $platform.source.fingerprint -AssemblySha256 $assembly.sha256 `
-                -CaseIds $phaseIds -ResultXmlSha256 $group.resultXmlSha256 -TrxSha256 $group.trxSha256 `
-                -ExecutionRequestPath $phasePaths.request -ExecutionRequestSha256 $group.requestSha256 `
-                -ExpectedMaximumConcurrency $group.maximumConcurrency -ExpectedRequireOrder $group.requireOrder
-            $verifiedPath = Join-Path $runRoot ('framework-terminal-' + $key + '-' + $group.id + '.json')
-            Invoke-GatePhase ('framework-verify-' + $key + '-' + $group.id) 'dotnet' @($tool, 'evidence-verify', '--catalog', $verifiedCatalogPath,
-                '--selection', $phasePaths.selection, '--result', $phasePaths.resultXml, '--trx', $phasePaths.trx, '--output', $verifiedPath) 120000
-            $verified = [IO.File]::ReadAllText($verifiedPath) | ConvertFrom-Json
-            if ($verified.schemaVersion -ne 1 -or $verified.kind -cne 'nunit-terminal' -or -not $verified.complete -or
-                $verified.passedCount -ne $phaseIds.Count) { throw 'gate-platform-unverified-phase-results' }
-            Assert-GateCaseSet @($verified.cases | ForEach-Object canonicalId) $phaseIds
-            $markerRequired = $key -ceq 'plugin' -and @($catalog.cases | Where-Object {
-                $_.className -ceq 'NUnitCompatibility.CompatibilityCases' -and $_.canonicalId -cin $phaseIds
-            }).Count -gt 0
-            if ($group.markerRequired -ne $markerRequired -or ($markerRequired -and $group.markerObserved -ne $true)) {
-                throw 'gate-platform-execution-marker'
-            }
-            if ($markerRequired) {
-                $markers = @(Get-ChildItem -LiteralPath (Join-Path $platformRoot $group.runtimeEvidence) -File -Filter 'fixture-created-*.txt')
-                if ($markers.Count -ne 1 -or $markers[0].Name -cnotmatch '^fixture-created-[1-9][0-9]*\.txt$' -or
-                    [IO.File]::ReadAllText($markers[0].FullName) -cne 'constructed') { throw 'gate-platform-execution-marker' }
-                $relative = $group.runtimeEvidence + '/' + $markers[0].Name
-                $digest = (Get-FileHash -LiteralPath $markers[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-                [void](Resolve-GateArtifact $platformRoot $relative $digest)
-                $artifacts.Add(@{ path = 'platform/' + $relative; sha256 = $digest })
-            }
-            foreach ($id in $phaseIds) { $passed.Add($id) }
-            $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $verifiedPath).Replace('\', '/');
-                sha256 = (Get-FileHash -LiteralPath $verifiedPath -Algorithm SHA256).Hash.ToLowerInvariant() })
+            if(Get-Command Close-HybridLocks -CommandType Function -ErrorAction SilentlyContinue){Close-HybridLocks}
         }
-        Assert-GateCaseSet $passed.ToArray() $ids
-        foreach ($name in @($verifiedCatalogPath, $expectedSelectionPath, $expectedPlanPath)) {
-            $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $name).Replace('\', '/');
-                sha256 = (Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash.ToLowerInvariant() })
-        }
-    }
-    # A retired legacy descriptor must have an independently discovered NUnit
-    # successor. The pinned historical bytes cannot be rewritten to hide a loss.
-    # This is migration identity conservation, not a new test registry or proof
-    # that a moved assertion body retained its meaning.
-    $stage = 'verify-migration-conservation'
-    $migrationInputs = Join-Path $runRoot 'migration-discoveries.json'
-    [IO.File]::WriteAllText($migrationInputs, (@{ schemaVersion = 1; paths = $migrationDiscoveries.ToArray() } |
-        ConvertTo-Json -Depth 4), $encoding)
-    $migrationOutput = Join-Path $runRoot 'migration-conservation.json'
-    Invoke-GatePhase 'migration-conservation' 'dotnet' @($tool, 'evidence-migration',
-        '--reference', (Join-Path $snapshotRoot 'tests/Migration/legacy-catalog.json'),
-        '--legacy', $verifiedLegacyCatalog, '--discoveries', $migrationInputs,
-        '--migrations', (Join-Path $snapshotRoot 'tests/Migration/migrated-cases.json'), '--output', $migrationOutput) 120000
-    $migrationEvidence = [IO.File]::ReadAllText($migrationOutput) | ConvertFrom-Json
-    if ($migrationEvidence.schemaVersion -ne 1 -or $migrationEvidence.kind -cne 'migration-conservation' -or
-        -not $migrationEvidence.complete -or $migrationEvidence.baselineClaim -ne $false -or
-        $migrationEvidence.legacyCount -ne @($migrationEvidence.evidence.checkedOwners | Where-Object owner -EQ 0).Count) {
-        throw 'gate-migration-conservation-invalid'
-    }
-    foreach ($name in @($verifiedLegacyCatalog, $migrationInputs, $migrationOutput)) {
-        $artifacts.Add(@{ path = [IO.Path]::GetRelativePath($runRoot, $name).Replace('\', '/');
-            sha256 = (Get-FileHash -LiteralPath $name -Algorithm SHA256).Hash.ToLowerInvariant() })
-    }
-    foreach ($artifact in $artifacts) { [void](Resolve-GateArtifact $runRoot $artifact.path $artifact.sha256) }
-    $manifest.platformArtifacts = $artifacts.ToArray()
-    $manifest.platformVerified = $true
-    $manifest['frameworkCaseCount'] = $globalIds.Count
-    $stage = 'verify-final-index'
-    if ((Invoke-GateGit @('write-tree')) -cne $tree -or (Get-FileHash -LiteralPath $indexPath -Algorithm SHA256).Hash -cne $indexHash) {
-        throw 'gate-index-changed-during-validation'
-    }
-    $package = Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg'
-    if ([IO.File]::Exists($package)) {
-        [IO.File]::Copy($package, (Join-Path $runRoot 'package.spkg'), $false)
-        $manifest['packageSha256'] = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
-    }
-    $stage = 'snapshot-cleanup'
-    Remove-GateSnapshot
-    $manifest.complete = $true
-    $exitCode = 0
-} catch {
-    # Public diagnostics contain fixed stage/type tokens, never source text,
-    # credentials, temporary machine paths or arbitrary subprocess messages.
-    if ($manifest) { $manifest.failure = @{ stage = $stage; exceptionType = $_.Exception.GetType().FullName; scriptLine = $_.InvocationInfo.ScriptLineNumber;
-        reason = $(if ($_.Exception.Message -cmatch '^gate-[a-z-]+$') { $_.Exception.Message } else { 'gate-operation-failed' }) } }
-    Write-Host ('[gate] rejected at ' + $stage + ' (' + $_.Exception.GetType().Name + '); inspect private gate evidence.')
-} finally {
-    $cleanupFailure = $null
-    try {
-        if ($manifest -and $snapshotRoot -and [IO.File]::Exists((Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg')) -and
-            -not [IO.File]::Exists((Join-Path $runRoot 'package.spkg'))) {
-            [IO.File]::Copy((Join-Path $snapshotRoot 'STranslate.Plugin.Tts.FishAudio.spkg'), (Join-Path $runRoot 'package.spkg'), $false)
-            $manifest['packageSha256'] = (Get-FileHash -LiteralPath (Join-Path $runRoot 'package.spkg') -Algorithm SHA256).Hash.ToLowerInvariant()
-        }
-    }
-    catch { $cleanupFailure = $_ }
-    try { Remove-GateSnapshot }
-    catch { if ($null -eq $cleanupFailure) { $cleanupFailure = $_ } }
-    try { if ($null -ne $legacyCatalogGuard) { $legacyCatalogGuard.Dispose() } }
-    catch { if ($null -eq $cleanupFailure) { $cleanupFailure = $_ } }
-    if ($null -ne $cleanupFailure) {
-        if ($manifest) { $manifest['cleanupFailure'] = $cleanupFailure.Exception.GetType().FullName }
-        if ($exitCode -eq 0) { $exitCode = 1; if ($manifest) { $manifest.complete = $false } }
-    }
-    if ($manifest) {
-        $manifest.exitCode = $exitCode
-        $manifest.finishedUtc = [DateTimeOffset]::UtcNow.ToString('O')
-        $completedGatePath = Join-Path $runRoot 'gate.json'
-        [IO.File]::WriteAllText($completedGatePath, ($manifest | ConvertTo-Json -Depth 12), $encoding)
-        if ($exitCode -eq 0 -and $manifest.complete) {
-            # Freeze the complete manifest, including its admitted artifact list,
-            # independently of that mutable list before message hooks run.
-            $receipt = @{ gateProtocolVersion = 2; runId = $runId; tree = $tree; indexPath = $indexPath; indexHash = $indexHash;
-                gateSha256 = (Get-FileHash -LiteralPath $completedGatePath -Algorithm SHA256).Hash.ToLowerInvariant() }
-            [IO.File]::WriteAllText($receiptPath, ($receipt | ConvertTo-Json), $encoding)
-            Write-Host ('[gate] passed legacy=' + @($report.cases).Count + '; NUnit=' + $globalIds.Count + '; S=' + $tree + '; run=' + $runId)
-        }
-    }
-    $gateLock.Dispose()
-}
-exit $exitCode
+        exit $exitCode
+    } finally {$gateLock.Dispose()}
+} finally {foreach($guard in $installationGuards){$guard.Dispose()}}

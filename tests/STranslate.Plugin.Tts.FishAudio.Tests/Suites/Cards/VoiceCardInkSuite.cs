@@ -41,7 +41,7 @@ internal static class VoiceCardInkSuite
         return cases;
     }
 
-    private static void CheckRenderedCards(double dpi, TextFormattingMode format, VoiceBrowseMode mode, bool capturedRegression, string? proofDirectory)
+    internal static void CheckRenderedCards(double dpi, TextFormattingMode format, VoiceBrowseMode mode, bool capturedRegression, string? proofDirectory)
     {
         const string id = "0123456789abcdef0123456789abcdef";
         const string sample = "https://example.invalid/sample.mp3";

@@ -4,51 +4,8 @@ using System.Runtime.ExceptionServices;
 
 internal static class RunnerContractSuite
 {
-    internal static async Task RunAsync()
-    {
-        RunStage("snapshot-input-boundary", SnapshotContextSuite.Run);
-        RunStage("snapshot-full-catalog-evidence", SnapshotContextSuite.VerifierRequiresCompleteCatalog);
-        await RunStageAsync("safe-failure-evidence", RegressionFailureEvidenceSuite.RunAsync);
-        await RunStageAsync("source-checkout-process-budget", GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync);
-        await RunStageAsync("source-checkout-cleanup", SourceCheckoutOwnerPreservesFailuresAndOneRootAsync);
-        await RunStageAsync("native-owner-aliases", NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync);
-        await RunStageAsync("streaming-owner-aliases", HistoricalStreamingDescriptorAliasRulesAsync);
-        await RunStageAsync("safe-final-failures", FinalFailureSummaryIncludesEveryFailedOwnerAsync);
-        await RunStageAsync("durable-report-generations", RegressionReportSuite.RunAsync);
-        await RunStageAsync("selection-union", SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync);
-        await RunStageAsync("invalid-selection", InvalidAndEmptySelectionsCannotExecuteAsync);
-        await RunStageAsync("metadata-list", ListingNeverExecutesAsync);
-        RunStage("clean-source-identity", CleanSourceIdentityConsistencyDoesNotDependOnCallerState);
-        await RunStageAsync("durable-replay", FailureIsDurableAndReplayDoesNotRewriteItAsync);
-        await RunStageAsync("fixture-expired-entry", ExpiredFixtureEntriesDoNotPreventDeletionAsync);
-        await RunStageAsync("fixture-cleanup-priority", FixtureCleanupRetainsItsPrimaryFailureAsync);
-        await RunStageAsync("incremental-results", IncrementalResultsPrecedeDelegatesAsync);
-        RunStage("shared-impact", ImpactSelectionKeepsSharedAndUnknownDependenciesConservative);
-        RunStage("leaf-impact", LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion);
-        RunStage("scoped-recovery", RecoveryMapsCleanRepairsAndRetainsRevertedDirtyScope);
-        RunStage("direct-consumers", ProviderAndPreviewLeafRulesRetainDirectConsumers);
-        await RunStageAsync("source-checkout-owner", SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync);
-    }
 
-    private static async Task RunStageAsync(string stage, Func<Task> run)
-    {
-        try { await run(); }
-        catch { ReportFailedStage(stage); throw; }
-    }
-
-    private static void RunStage(string stage, Action run)
-    {
-        try { run(); }
-        catch { ReportFailedStage(stage); throw; }
-    }
-
-    private static void ReportFailedStage(string stage)
-    {
-        try { Console.Error.WriteLine($"Runner contract stage failed: {stage}."); }
-        catch { /* Failure-only safe metadata cannot replace the original exception. */ }
-    }
-
-    private static async Task SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync()
+    internal static async Task SelectionUnionsInCatalogOrderAndConstrainsPartitionsAsync()
     {
         using var fixture = new RunnerFixture();
         var calls = new List<string>();
@@ -64,7 +21,7 @@ internal static class RunnerContractSuite
         Require(await fixture.RunAsync([], cases) == 0 && calls.Count == 3, "No arguments retain the complete default run.");
     }
 
-    private static async Task NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync()
+    internal static async Task NativeOwnerAliasesPreserveBoundariesAndRecoveryAsync()
     {
         using var fixture = new RunnerFixture();
         var calls = new List<string>();
@@ -209,7 +166,7 @@ internal static class RunnerContractSuite
             "Failed-report replay also preserves an explicitly registered current exact case instead of expanding its alias.");
     }
 
-    private static async Task FinalFailureSummaryIncludesEveryFailedOwnerAsync()
+    internal static async Task FinalFailureSummaryIncludesEveryFailedOwnerAsync()
     {
         using var fixture = new RunnerFixture();
         var calls = new List<string>();
@@ -242,7 +199,7 @@ internal static class RunnerContractSuite
         finally { Console.SetOut(output); Console.SetError(error); }
     }
 
-    private static async Task InvalidAndEmptySelectionsCannotExecuteAsync()
+    internal static async Task InvalidAndEmptySelectionsCannotExecuteAsync()
     {
         foreach (var args in new string[][]
         {
@@ -258,7 +215,7 @@ internal static class RunnerContractSuite
         }
     }
 
-    private static async Task ListingNeverExecutesAsync()
+    internal static async Task ListingNeverExecutesAsync()
     {
         using var fixture = new RunnerFixture();
         var calls = new List<string>();
@@ -268,7 +225,7 @@ internal static class RunnerContractSuite
         Require(!File.Exists(fixture.ReportPath), "Listing does not create a misleading execution report.");
     }
 
-    private static async Task FailureIsDurableAndReplayDoesNotRewriteItAsync()
+    internal static async Task FailureIsDurableAndReplayDoesNotRewriteItAsync()
     {
         using var fixture = new RunnerFixture();
         var calls = new List<string>();
@@ -312,7 +269,7 @@ internal static class RunnerContractSuite
         Require(calls.Count == 3, "A source mismatch cannot silently reuse a prior success.");
     }
 
-    private static Task IncrementalResultsPrecedeDelegatesAsync() => RunFixtureAsync(async fixture =>
+    internal static Task IncrementalResultsPrecedeDelegatesAsync() => RunFixtureAsync(async fixture =>
     {
         var remainingCalled = false;
         RegressionCase[] registry =
@@ -336,7 +293,7 @@ internal static class RunnerContractSuite
         Require(await fixture.RunAsync(["--rerun-failed", fixture.ReportPath, "--results", Path.Combine(fixture.DirectoryPath, "timeout-replay.json")], replay) == 0 && recovered.Count == 2, "Timeout recovery includes the original timed-out and not-run IDs.");
     });
 
-    private static async Task ExpiredFixtureEntriesDoNotPreventDeletionAsync()
+    internal static async Task ExpiredFixtureEntriesDoNotPreventDeletionAsync()
     {
         var directory = "";
         await RunFixtureAsync(fixture =>
@@ -365,7 +322,7 @@ internal static class RunnerContractSuite
         Require(!Directory.Exists(directory), "Actual fixture disposal still deletes the owned directory and remaining read-only file.");
     }
 
-    private static async Task FixtureCleanupRetainsItsPrimaryFailureAsync()
+    internal static async Task FixtureCleanupRetainsItsPrimaryFailureAsync()
     {
         foreach (var bodyFails in new[] { true, false })
         {
@@ -420,7 +377,7 @@ internal static class RunnerContractSuite
         }
     }
 
-    private static void ImpactSelectionKeepsSharedAndUnknownDependenciesConservative()
+    internal static void ImpactSelectionKeepsSharedAndUnknownDependenciesConservative()
     {
         var registry = new[]
         {
@@ -441,7 +398,7 @@ internal static class RunnerContractSuite
         Require(staleMap.ConservativeFallback && staleMap.Ids.Count == 3, "A matched documentation path cannot hide an unmatched later rule category.");
     }
 
-    private static void LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion()
+    internal static void LeafImpactRulesAvoidUnrelatedLayoutAndExplainSharedExpansion()
     {
         var ids = new[] { "preview.ownership/failure", "preview.search-retention/selection", "preview.accepted-continuity/owner", "cards.avatar/ring", "cards.layout/header", "cards.description/text", "popup.direction/placement", "input.cursor/hand", "numeric.bottom/value" };
         var registry = ids.Select(id => new RegressionCase(id, "core", () => Task.CompletedTask)).ToArray();
@@ -456,7 +413,7 @@ internal static class RunnerContractSuite
         Require(shared.Ids.Count == ids.Length && shared.RuleIds.SequenceEqual(["shared-input"]), "The shared compiled settings root conservatively expands to all partitions.");
     }
 
-    private static void RecoveryMapsCleanRepairsAndRetainsRevertedDirtyScope()
+    internal static void RecoveryMapsCleanRepairsAndRetainsRevertedDirtyScope()
     {
         var registry = new[]
         {
@@ -478,7 +435,7 @@ internal static class RunnerContractSuite
         Require(RegressionImpact.Recover(registry, dirty, []).ConservativeFallback, "Old dirty reports without scope metadata fall back to all coverage.");
     }
 
-    private static void CleanSourceIdentityConsistencyDoesNotDependOnCallerState()
+    internal static void CleanSourceIdentityConsistencyDoesNotDependOnCallerState()
     {
         var registry = Registry([]);
         var consistent = CleanSourceFixture();
@@ -498,7 +455,7 @@ internal static class RunnerContractSuite
         Fingerprint = "63bdfe090637cf9ff5d40017247b9958fa898fc5c95978a0d28594eb745d27a5"
     };
 
-    private static void ProviderAndPreviewLeafRulesRetainDirectConsumers()
+    internal static void ProviderAndPreviewLeafRulesRetainDirectConsumers()
     {
         // These are the actual catalog owners of direct PreviewRefreshCoordinator/GetCredit/PostTts consumers.
         var ids = new[]
@@ -518,7 +475,7 @@ internal static class RunnerContractSuite
         Require(provider.Ids.Contains("numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads"), "Provider changes include direct PostTts numeric compatibility.");
     }
 
-    private static async Task GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync()
+    internal static async Task GitFixtureWaitsForTheSameProcessBeyondFiveSecondsAsync()
     {
         var process = new Process
         {
@@ -564,7 +521,7 @@ internal static class RunnerContractSuite
         }
     }
 
-    private static async Task SourceCheckoutOwnerPreservesFailuresAndOneRootAsync()
+    internal static async Task SourceCheckoutOwnerPreservesFailuresAndOneRootAsync()
     {
         foreach (var hasPrimary in new[] { true, false })
         {
@@ -613,7 +570,7 @@ internal static class RunnerContractSuite
         }
     }
 
-    private static async Task SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync()
+    internal static async Task SourceIdentityAndAffectedScopeIgnoreForeignWorkingDirectoryAsync()
     {
         var fixture = new RunnerFixture();
         var originalDirectory = Environment.CurrentDirectory;

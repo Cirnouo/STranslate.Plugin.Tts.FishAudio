@@ -130,8 +130,14 @@ internal sealed class PluginInitializationCoordinator : IDisposable
         Init(context, FishAudioClock.LocalUtcNow());
     }
 
-    internal void Init(IPluginContext context, DateTimeOffset nowUtc)
+    internal void Init(IPluginContext context, DateTimeOffset nowUtc) =>
+        Init(context, nowUtc, out _);
+
+    internal void Init(
+        IPluginContext context, DateTimeOffset nowUtc,
+        out InitializationWorkCapture? preparedWork)
     {
+        preparedWork = null;
         long generation;
         lock (_stateGate)
             generation = ++_initializationGeneration;
@@ -280,6 +286,13 @@ internal sealed class PluginInitializationCoordinator : IDisposable
             }
 
             throw;
+        }
+        finally
+        {
+            // Return this exact local state even when preparation failed before
+            // publication. No observer delegate runs under either state gate.
+            if (preparedState is not null)
+                preparedWork = new InitializationWorkCapture(preparedState.Work, preparedState.ViewModel);
         }
     }
 

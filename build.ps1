@@ -28,12 +28,12 @@
     uses Debug.
 
 .PARAMETER Test
-    Run regressions after building and verifying the package. An unfiltered
-    Release run also executes all framework-discovered NUnit cases.
+    Verify the complete hybrid owner union after inspecting the package for an
+    unfiltered Release run. Explicit legacy selectors remain diagnostic only.
 
 .PARAMETER LegacyOnly
-    Transitional orchestration option: run only the legacy part of -Test.
-    The commit gate owns the separate complete framework run and evidence check.
+    Explicit legacy diagnostic mode. This does not establish complete hybrid
+    validation and is not used by the commit gate.
 
 .PARAMETER TestGroup
     Select logical regression groups. Requires -Test.
@@ -102,7 +102,7 @@ if ($Test -and -not (Test-Path $TestCsprojPath)) {
 
 # ── Resolve OutputPath from MSBuild ──
 function Get-ResolvedOutputPath {
-    $raw = & dotnet msbuild $CsprojPath -getProperty:OutputPath "-p:Configuration=$Configuration" 2>$null
+    $raw = & dotnet msbuild $CsprojPath -getProperty:OutputPath "-p:Configuration=$Configuration" -nodeReuse:false 2>$null
     if (-not $raw) { return $null }
     $raw = $raw.Trim()
     if (-not $raw) { return $null }
@@ -159,7 +159,7 @@ if ($CleanOnly) {
 # ── Build ──
 try {
 Write-Host "[build] dotnet build -c $Configuration" -ForegroundColor Cyan
-dotnet build $CsprojPath -c $Configuration
+dotnet build $CsprojPath -c $Configuration --disable-build-servers -p:UseSharedCompilation=false -nodeReuse:false
 
 if ($LASTEXITCODE -ne 0) {
     $buildExitCode = $LASTEXITCODE
@@ -171,7 +171,7 @@ if ($LASTEXITCODE -ne 0) {
 # ── Pack (Debug only — Release uses EnableAutoPackage) ──
 if ($Configuration -eq 'Debug') {
     Write-Host '[pack] Invoking PackageAsSpkg target for Debug build...' -ForegroundColor Cyan
-    dotnet build $CsprojPath -c $Configuration -t:PackageAsSpkg
+    dotnet build $CsprojPath -c $Configuration --disable-build-servers -p:UseSharedCompilation=false -nodeReuse:false -t:PackageAsSpkg
     if ($LASTEXITCODE -ne 0) {
         $packageExitCode = $LASTEXITCODE
         $operationExitCode = $packageExitCode
@@ -258,33 +258,43 @@ finally {
 
 if ($Test) {
     Write-Host ''
-    $testArguments = [System.Collections.Generic.List[string]]::new()
-    $testArguments.Add('--legacy')
-    foreach ($group in $TestGroup) { $testArguments.Add('--group'); $testArguments.Add($group) }
-    foreach ($case in $TestCase) { $testArguments.Add('--case'); $testArguments.Add($case) }
-    if ($TestPartition) { $testArguments.Add('--partition'); $testArguments.Add($TestPartition) }
-    if ($TestResults) { $testArguments.Add('--results'); $testArguments.Add($TestResults) }
-    if ($RerunFailed) { $testArguments.Add('--rerun-failed'); $testArguments.Add($RerunFailed) }
-    if ($Affected) { $testArguments.Add('--affected') }
-    if ($TestBase) { $testArguments.Add('--base'); $testArguments.Add($TestBase) }
-    Write-Host '[test] Build and execute the selected regression contracts.' -ForegroundColor Cyan
-    dotnet run --project $TestCsprojPath -c $Configuration -- @testArguments
-    if ($LASTEXITCODE -ne 0) {
-        $testExitCode = $LASTEXITCODE
-        $operationExitCode = $testExitCode
-        Write-Error "Tests failed with exit code $testExitCode" -ErrorAction Continue
-        exit $testExitCode
-    }
-
-    if ($Release -and -not $LegacyOnly -and $TestGroup.Count -eq 0 -and $TestCase.Count -eq 0 -and
-        -not $TestPartition -and -not $RerunFailed -and -not $Affected) {
-        Write-Host '[test] Execute the complete framework-discovered NUnit catalogs.' -ForegroundColor Cyan
-        $frameworkShell = (Get-Command pwsh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
-        & $frameworkShell -NoLogo -NoProfile -File (Join-Path $RepoRoot 'tools/Test.ps1') -Mode Full
+    $fullHybrid = $Release -and -not $LegacyOnly -and $TestGroup.Count -eq 0 -and $TestCase.Count -eq 0 -and
+        -not $TestPartition -and -not $TestResults -and -not $RerunFailed -and -not $Affected
+    if ($fullHybrid) {
+        # One shared route owns all fixed slots plus the disjoint framework tail.
+        # The producer's standard Discover phase builds both Release test projects.
+        $hybridShell = (Get-Command pwsh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+        $hybridEvidence = Join-Path ([IO.Path]::GetTempPath()) ('fa-build-hybrid-' + [Guid]::NewGuid().ToString('N'))
+        [IO.Directory]::CreateDirectory($hybridEvidence) | Out-Null
+        $hybridSession = Join-Path $hybridEvidence 'session'
+        $hybridAdmission = Join-Path $hybridEvidence 'admission'
+        Write-Host '[test] Execute every current hybrid owner once and independently admit its raw evidence.' -ForegroundColor Cyan
+        & $hybridShell -NoLogo -NoProfile -NonInteractive -File (Join-Path $RepoRoot 'tools/TestHybrid.ps1') -RepositoryRoot $RepoRoot -ResultsDirectory $hybridSession -Workers 4
         if ($LASTEXITCODE -ne 0) { $operationExitCode = $LASTEXITCODE; exit $operationExitCode }
+        & $hybridShell -NoLogo -NoProfile -NonInteractive -File (Join-Path $RepoRoot 'tools/Assert-HybridSession.ps1') -RepositoryRoot $RepoRoot -SessionDirectory $hybridSession -OutputDirectory $hybridAdmission
+        if ($LASTEXITCODE -ne 0) { $operationExitCode = $LASTEXITCODE; exit $operationExitCode }
+        Write-Host '[test] Complete hybrid validation passed; private source and raw evidence retained.' -ForegroundColor Green
+    } else {
+        Write-Host '[test] Explicit legacy diagnostic selection; complete hybrid validation is not claimed.' -ForegroundColor Yellow
+        $testArguments = [System.Collections.Generic.List[string]]::new()
+        $testArguments.Add('--legacy')
+        foreach ($group in $TestGroup) { $testArguments.Add('--group'); $testArguments.Add($group) }
+        foreach ($case in $TestCase) { $testArguments.Add('--case'); $testArguments.Add($case) }
+        if ($TestPartition) { $testArguments.Add('--partition'); $testArguments.Add($TestPartition) }
+        if ($TestResults) { $testArguments.Add('--results'); $testArguments.Add($TestResults) }
+        if ($RerunFailed) { $testArguments.Add('--rerun-failed'); $testArguments.Add($RerunFailed) }
+        if ($Affected) { $testArguments.Add('--affected') }
+        if ($TestBase) { $testArguments.Add('--base'); $testArguments.Add($TestBase) }
+        Write-Host '[test] Build and execute the selected regression contracts.' -ForegroundColor Cyan
+        dotnet run --project $TestCsprojPath -c $Configuration -- @testArguments
+        if ($LASTEXITCODE -ne 0) {
+            $testExitCode = $LASTEXITCODE
+            $operationExitCode = $testExitCode
+            Write-Error "Tests failed with exit code $testExitCode" -ErrorAction Continue
+            exit $testExitCode
+        }
+        Write-Host '[test] Selected legacy diagnostics passed.' -ForegroundColor Green
     }
-
-    Write-Host '[test] Tests passed.' -ForegroundColor Green
 }
 }
 catch {

@@ -5,26 +5,8 @@ using System.Text.Json.Nodes;
 
 internal static class RegressionCiSuite
 {
-    internal static async Task RunAsync()
-    {
-        EvidenceSnapshotsIgnoreTemporaryReplacementFiles();
-        CachedJobViewsRetainTheirActualExecutionOwners();
-        UnauthenticatedCachedViewsCannotBorrowOldSuccess();
-        AttemptFencesMustDescribeTheCompleteHistory();
-        AmbiguousNewAttemptCannotBorrowAnEarlierPass();
-        LatestMissingAttemptCannotBorrowAnOlderPass();
-        CompactReportsRetainExactCoverageWithoutExecutingDelegates();
-        SelectiveRecoveryUsesEachLatestAttemptAndPreservesOldEvidence();
-        GateOnlyRerunRetainsOlderCompletedSiblings();
-        CoverageMustMatchRegistryRatherThanCounts();
-        SelectedReportsRequirePhysicalIdentityAndFinalOutcomes();
-        DuplicateIdentityPropertiesCannotUseLastValueWins();
-        ParentAndChildEvidenceCannotDisagree();
-        JobAndArtifactOwnersMustBeUnambiguous();
-        await CliRejectsUnknownArgumentsWithoutPrintingPrivateValuesAsync();
-    }
 
-    private static void EvidenceSnapshotsIgnoreTemporaryReplacementFiles()
+    internal static void EvidenceSnapshotsIgnoreTemporaryReplacementFiles()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -40,7 +22,7 @@ internal static class RegressionCiSuite
         Reject(() => fixture.Bytes(), "An unreadable committed evidence file still fails; snapshotting must not swallow arbitrary I/O errors.");
     }
 
-    private static void CachedJobViewsRetainTheirActualExecutionOwners()
+    internal static void CachedJobViewsRetainTheirActualExecutionOwners()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -64,7 +46,7 @@ internal static class RegressionCiSuite
         Reject(() => fixture.Verify(), "An artifact advertised as a new attempt cannot borrow an old actual job owner.");
     }
 
-    private static void UnauthenticatedCachedViewsCannotBorrowOldSuccess()
+    internal static void UnauthenticatedCachedViewsCannotBorrowOldSuccess()
     {
         foreach (var mutation in new[] { "runner", "runner-name", "head", "name", "step", "missing-steps", "missing-start", "non-utc", "reversed", "overlap", "equal-fence", "failed", "cancelled", "skipped", "in-progress", "missing-prior" })
         {
@@ -98,7 +80,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void AttemptFencesMustDescribeTheCompleteHistory()
+    internal static void AttemptFencesMustDescribeTheCompleteHistory()
     {
         foreach (var mutation in new[] { "missing", "duplicate", "invalid", "non-utc", "non-increasing" })
         {
@@ -120,7 +102,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void AmbiguousNewAttemptCannotBorrowAnEarlierPass()
+    internal static void AmbiguousNewAttemptCannotBorrowAnEarlierPass()
     {
         foreach (var name in new[] { "Other Regression (native-popups) extra", "Other Regression (native-popups)", "Regression (core) / Regression (native-popups)" })
         {
@@ -135,7 +117,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void LatestMissingAttemptCannotBorrowAnOlderPass()
+    internal static void LatestMissingAttemptCannotBorrowAnOlderPass()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -149,7 +131,7 @@ internal static class RegressionCiSuite
             "Only the missing partition needs a new complete attempt.");
     }
 
-    private static void CompactReportsRetainExactCoverageWithoutExecutingDelegates()
+    internal static void CompactReportsRetainExactCoverageWithoutExecutingDelegates()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -161,7 +143,7 @@ internal static class RegressionCiSuite
         fixture.Unchanged(before);
     }
 
-    private static void SelectiveRecoveryUsesEachLatestAttemptAndPreservesOldEvidence()
+    internal static void SelectiveRecoveryUsesEachLatestAttemptAndPreservesOldEvidence()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -181,7 +163,7 @@ internal static class RegressionCiSuite
         Require(fixture.Verify().Single(item => item.Partition == "native-popups").Attempt == 3, "D3 alone repairs the outstanding partition.");
     }
 
-    private static void GateOnlyRerunRetainsOlderCompletedSiblings()
+    internal static void GateOnlyRerunRetainsOlderCompletedSiblings()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -192,7 +174,7 @@ internal static class RegressionCiSuite
             "Gate attempt three reuses the latest five completed producers; a runtime patch change does not invalidate them.");
     }
 
-    private static void CoverageMustMatchRegistryRatherThanCounts()
+    internal static void CoverageMustMatchRegistryRatherThanCounts()
     {
         foreach (var mutation in new[] { "removed", "added", "partition", "duplicate", "order" })
         {
@@ -208,7 +190,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void SelectedReportsRequirePhysicalIdentityAndFinalOutcomes()
+    internal static void SelectedReportsRequirePhysicalIdentityAndFinalOutcomes()
     {
         foreach (var field in new[] { "schemaVersion", "generation", "runId", "startedUtc", "source", "configuration", "sdk", "ci", "complete", "cases" })
         {
@@ -267,7 +249,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void ParentAndChildEvidenceCannotDisagree()
+    internal static void ParentAndChildEvidenceCannotDisagree()
     {
         foreach (var mutation in new[] { "missing", "missing-final", "extra-child", "source", "sdk", "configuration", "ci", "request", "case", "order", "elapsed", "outcome", "final", "canonical-tamper", "later-malformed", "missing-source-field" })
         {
@@ -302,7 +284,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static void DuplicateIdentityPropertiesCannotUseLastValueWins()
+    internal static void DuplicateIdentityPropertiesCannotUseLastValueWins()
     {
         using var fixture = new CiFixture();
         fixture.AddAll();
@@ -317,7 +299,7 @@ internal static class RegressionCiSuite
         Reject(() => fixture.Verify(), "Duplicate critical identity fields cannot silently authorize the final JSON value.");
     }
 
-    private static void JobAndArtifactOwnersMustBeUnambiguous()
+    internal static void JobAndArtifactOwnersMustBeUnambiguous()
     {
         foreach (var mutation in new[] { "total", "duplicate-id", "duplicate-owner", "future", "wrong-run", "repository", "filter", "failed", "cancelled", "skipped", "in-progress", "ambiguous-name", "artifact-future", "artifact-without-job", "artifact-wrong-run", "extra-directory" })
         {
@@ -345,7 +327,7 @@ internal static class RegressionCiSuite
         }
     }
 
-    private static async Task CliRejectsUnknownArgumentsWithoutPrintingPrivateValuesAsync()
+    internal static async Task CliRejectsUnknownArgumentsWithoutPrintingPrivateValuesAsync()
     {
         var original = Console.Error;
         using var output = new StringWriter();

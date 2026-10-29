@@ -18,11 +18,29 @@ internal static class RegressionCaseAliases
         ["preview.accepted-continuity/run-all"] = "preview.accepted-continuity/",
     };
 
-    internal static bool Contains(string id) => Prefixes.ContainsKey(id);
+    // Exact retired identities are selection compatibility, not registrations.
+    // Retained synthetic/current exact descriptors still win in Resolve.
+    internal static bool Contains(string id) => Prefixes.ContainsKey(id) || IsRetiredNativeSettingsOwner(id);
+
+    private static bool IsRetiredNativeSettingsOwner(string id) =>
+        id.StartsWith("cards.ink/", StringComparison.Ordinal) ||
+        id.StartsWith("numeric.geometry/compact/", StringComparison.Ordinal) ||
+        id.StartsWith("numeric.bottom/", StringComparison.Ordinal) ||
+        id is "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread"
+            or "lifecycle.activity-dispatcher/queued-retirement-cannot-unlock-new-ui-operation"
+            or "settings.binding/api-key-password-input-persists-before-focus-leaves"
+            or "settings.api-key-card/run-all"
+            or "settings.layout/compiled-view-audio-network-and-fold-interactions"
+            or "settings.alignment/run-all"
+            or "numeric.glyph/equivalent-native-run-grouping"
+            or "numeric.lifecycle/run"
+            or "input.clear/run";
 
     internal static string[] Resolve(string id, IReadOnlyList<RegressionCase> registry, string unknownCode = "unknown-case")
     {
         if (registry.Any(item => item.Id == id)) return [id];
+        if (IsRetiredNativeSettingsOwner(id) && !Prefixes.ContainsKey(id))
+            throw new RegressionSelectionException("retired-case");
         if (!Prefixes.TryGetValue(id, out var prefix))
             throw new RegressionSelectionException(unknownCode);
         var leaves = registry.Where(item => item.Id != id && item.Id.StartsWith(prefix, StringComparison.Ordinal)).Select(item => item.Id).ToArray();

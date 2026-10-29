@@ -489,122 +489,152 @@ internal static class VoiceDiscoverySuite
             "Successful non-404 lookup responses that deserialize to null should be treated as response errors");
     }
 
-    internal static async Task VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync()
-    {
-        var settings = new Settings();
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
-        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseSecond = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var calls = 0;
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/voice-lookup-requests-cancel-previous-and-dispose-work")]
+    [NUnit.Framework.Order(210)]
+    public static Task VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync() => RunVoiceLookupRequestsCancelPreviousAndDisposeWorkAsync();
 
-        http.GetAsyncHandler = (_, _, ct) =>
+    internal static Task RunVoiceLookupRequestsCancelPreviousAndDisposeWorkAsync(Action<DiscoveryRemainderFixtureOwner, string>? onHeldWork = null)
+    {
+        var owned = new DiscoveryRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
         {
-            calls++;
-            if (calls == 1)
+            var settings = new Settings();
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
+            owned.Track(viewModel);
+            var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseSecond = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(releaseSecond, "{\"total\":0,\"items\":[]}");
+            var calls = 0;
+
+            http.GetAsyncHandler = (_, _, ct) =>
             {
-                firstStarted.SetResult();
-                return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+                calls++;
+                if (calls == 1)
+                {
+                    firstStarted.SetResult();
+                    var request = Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+                    {
+                        if (task.IsCanceled)
+                            throw new OperationCanceledException(ct);
+                        return "{\"total\":0,\"items\":[]}";
+                    }, CancellationToken.None);
+                    return owned.TrackRequest(request, ct);
+                }
+
+                return releaseSecond.Task;
+            };
+
+            var firstSearch = owned.TrackOperation(viewModel.SearchVoicesCommand.ExecuteAsync(null));
+            await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onHeldWork?.Invoke(owned, "first-search-held");
+            var secondSearch = owned.TrackOperation(viewModel.SearchVoicesCommand.ExecuteAsync(null));
+            releaseSecond.SetResult("{\"total\":0,\"items\":[]}");
+
+            await secondSearch.WaitAsync(RegressionExecution.Timeout);
+            await firstSearch.WaitAsync(RegressionExecution.Timeout);
+
+            AssertEqual(2, calls, "A new voice search should start even when a previous search is still pending");
+            AssertEqual(false, viewModel.IsSearching, "Search busy state should recover after replacing a pending search");
+
+            var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            http.GetAsyncHandler = (_, _, ct) =>
+            {
+                byIdStarted.SetResult();
+                var request = Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
                 {
                     if (task.IsCanceled)
                         throw new OperationCanceledException(ct);
-                    return "{\"total\":0,\"items\":[]}";
+                    return "{\"_id\":\"33333333333333333333333333333333\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
                 }, CancellationToken.None);
-            }
+                return owned.TrackRequest(request, ct);
+            };
 
-            return releaseSecond.Task;
-        };
+            viewModel.VoiceIdInput = "33333333333333333333333333333333";
+            var submitTask = owned.TrackOperation(viewModel.SubmitVoiceIdCommand.ExecuteAsync(null));
+            await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onHeldWork?.Invoke(owned, "by-id-held");
+            viewModel.Dispose();
+            await submitTask.WaitAsync(RegressionExecution.Timeout);
 
-        var firstSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await firstStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        var secondSearch = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        releaseSecond.SetResult("{\"total\":0,\"items\":[]}");
-
-        await secondSearch.WaitAsync(RegressionExecution.Timeout);
-        await firstSearch.WaitAsync(RegressionExecution.Timeout);
-
-        AssertEqual(2, calls, "A new voice search should start even when a previous search is still pending");
-        AssertEqual(false, viewModel.IsSearching, "Search busy state should recover after replacing a pending search");
-
-        var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, ct) =>
-        {
-            byIdStarted.SetResult();
-            return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
-            {
-                if (task.IsCanceled)
-                    throw new OperationCanceledException(ct);
-                return "{\"_id\":\"33333333333333333333333333333333\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}";
-            }, CancellationToken.None);
-        };
-
-        viewModel.VoiceIdInput = "33333333333333333333333333333333";
-        var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        viewModel.Dispose();
-        await submitTask.WaitAsync(RegressionExecution.Timeout);
-
-        AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing the view model should cancel by-ID lookup and restore busy state");
+            AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing the view model should cancel by-ID lookup and restore busy state");
+        });
     }
 
-    internal static async Task VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/voice-lookup-completions-after-dispose-do-not-mutate-state")]
+    [NUnit.Framework.Order(211)]
+    public static Task VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync() => RunVoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync();
+
+    internal static Task RunVoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync(Action<DiscoveryRemainderFixtureOwner, string>? onHeldWork = null)
     {
-        var settings = new Settings();
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+        var owned = new DiscoveryRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
         {
-            SearchQuery = "late",
-        };
-        var searchStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseSearch = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) =>
-        {
-            searchStarted.SetResult();
-            return releaseSearch.Task;
-        };
+            var settings = new Settings();
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings)
+            {
+                SearchQuery = "late",
+            };
+            owned.Track(viewModel);
+            var searchStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseSearch = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(releaseSearch, "{\"total\":1,\"items\":[{\"_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"title\":\"Late Search\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}");
+            http.GetAsyncHandler = (_, _, _) =>
+            {
+                searchStarted.SetResult();
+                return releaseSearch.Task;
+            };
 
-        var searchTask = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        viewModel.Dispose();
-        releaseSearch.SetResult("{\"total\":1,\"items\":[{\"_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"title\":\"Late Search\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}");
-        await searchTask.WaitAsync(RegressionExecution.Timeout);
+            var searchTask = owned.TrackOperation(viewModel.SearchVoicesCommand.ExecuteAsync(null));
+            await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onHeldWork?.Invoke(owned, "search-held");
+            viewModel.Dispose();
+            releaseSearch.SetResult("{\"total\":1,\"items\":[{\"_id\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"title\":\"Late Search\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":1}]}");
+            await searchTask.WaitAsync(RegressionExecution.Timeout);
 
-        AssertEqual(false, viewModel.IsSearching, "Disposing during search should restore search busy state");
-        AssertEqual(false, viewModel.HasSearched, "Search completion after dispose should not mark search as completed");
-        AssertEqual(0, viewModel.SearchResults.Count, "Search completion after dispose should not apply stale results");
+            AssertEqual(false, viewModel.IsSearching, "Disposing during search should restore search busy state");
+            AssertEqual(false, viewModel.HasSearched, "Search completion after dispose should not mark search as completed");
+            AssertEqual(0, viewModel.SearchResults.Count, "Search completion after dispose should not apply stale results");
 
-        const string originalVoiceId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-        settings = new Settings
-        {
-            VoiceId = originalVoiceId,
-            CachedVoice = new CachedVoiceInfo { Title = "Existing Voice" },
-        };
-        (httpService, http) = TestHttpServiceProxy.Create();
-        var context = CreateContext(settings: settings, httpService: httpService);
-        var proxy = (ContextProxy)(object)context;
-        viewModel = new SettingsViewModel(context, settings)
-        {
-            VoiceIdInput = "cccccccccccccccccccccccccccccccc",
-        };
-        var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseById = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) =>
-        {
-            byIdStarted.SetResult();
-            return releaseById.Task;
-        };
+            const string originalVoiceId = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            settings = new Settings
+            {
+                VoiceId = originalVoiceId,
+                CachedVoice = new CachedVoiceInfo { Title = "Existing Voice" },
+            };
+            (httpService, http) = TestHttpServiceProxy.Create();
+            var context = CreateContext(settings: settings, httpService: httpService);
+            var proxy = (ContextProxy)(object)context;
+            viewModel = new SettingsViewModel(context, settings)
+            {
+                VoiceIdInput = "cccccccccccccccccccccccccccccccc",
+            };
+            owned.Track(viewModel);
+            var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseById = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(releaseById, "{\"_id\":\"cccccccccccccccccccccccccccccccc\",\"title\":\"Late Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            http.GetAsyncHandler = (_, _, _) =>
+            {
+                byIdStarted.SetResult();
+                return releaseById.Task;
+            };
 
-        var submitTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        viewModel.Dispose();
-        releaseById.SetResult("{\"_id\":\"cccccccccccccccccccccccccccccccc\",\"title\":\"Late Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await submitTask.WaitAsync(RegressionExecution.Timeout);
+            var submitTask = owned.TrackOperation(viewModel.SubmitVoiceIdCommand.ExecuteAsync(null));
+            await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onHeldWork?.Invoke(owned, "by-id-held");
+            viewModel.Dispose();
+            releaseById.SetResult("{\"_id\":\"cccccccccccccccccccccccccccccccc\",\"title\":\"Late Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            await submitTask.WaitAsync(RegressionExecution.Timeout);
 
-        AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
-        AssertEqual(0, viewModel.ByIdResults.Count, "By-ID completion after disposal must not publish an Apply card");
-        AssertEqual(originalVoiceId, settings.VoiceId, "By-ID completion after dispose should not update saved voice ID");
-        AssertEqual("Existing Voice", settings.CachedVoice?.Title, "By-ID completion after dispose should not update cached voice");
-        AssertEqual(0, proxy.SaveCount, "Dispose and late by-ID completion should not issue redundant or stale saves");
+            AssertEqual(false, viewModel.IsSubmittingVoiceId, "Disposing during by-ID lookup should restore submit busy state");
+            AssertEqual(0, viewModel.ByIdResults.Count, "By-ID completion after disposal must not publish an Apply card");
+            AssertEqual(originalVoiceId, settings.VoiceId, "By-ID completion after dispose should not update saved voice ID");
+            AssertEqual("Existing Voice", settings.CachedVoice?.Title, "By-ID completion after dispose should not update cached voice");
+            AssertEqual(0, proxy.SaveCount, "Dispose and late by-ID completion should not issue redundant or stale saves");
+        });
     }
 
     [NUnit.Framework.Test]
@@ -994,72 +1024,85 @@ internal static class VoiceDiscoverySuite
             "Search publishes its complete metadata/navigation snapshot before resolving result covers");
     }
 
-    internal static async Task DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.discovery/dispose-restores-discovery-busy-state-before-cancel-callbacks")]
+    [NUnit.Framework.Order(222)]
+    public static Task DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync() => RunDisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync();
+
+    internal static Task RunDisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync(Action<DiscoveryRemainderFixtureOwner, string>? onHeldWork = null)
     {
-        var settings = new Settings();
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        var searchStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseSearch = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseById = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        SettingsViewModel? viewModel = null;
-        var cancellationCallbackInvoked = false;
-        var observedIsSearching = true;
-        var observedIsSubmittingVoiceId = true;
-        http.GetAsyncHandler = (url, _, ct) =>
+        var owned = new DiscoveryRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
         {
-            if (url.Contains("/model?", StringComparison.Ordinal))
+            var settings = new Settings();
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            var searchStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var byIdStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseSearch = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseById = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(releaseSearch, "{\"total\":0,\"items\":[]}");
+            owned.Track(releaseById, "{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            SettingsViewModel? viewModel = null;
+            var cancellationCallbackInvoked = false;
+            var observedIsSearching = true;
+            var observedIsSubmittingVoiceId = true;
+            http.GetAsyncHandler = (url, _, ct) =>
             {
-                searchStarted.SetResult();
-                ct.Register(() =>
+                if (url.Contains("/model?", StringComparison.Ordinal))
                 {
-                    cancellationCallbackInvoked = true;
-                    observedIsSearching = viewModel!.IsSearching;
-                    observedIsSubmittingVoiceId = viewModel.IsSubmittingVoiceId;
-                    throw new InvalidOperationException("Cancellation callback failure.");
-                });
-                return releaseSearch.Task;
+                    searchStarted.SetResult();
+                    owned.Track(ct.Register(() =>
+                    {
+                        cancellationCallbackInvoked = true;
+                        observedIsSearching = viewModel!.IsSearching;
+                        observedIsSubmittingVoiceId = viewModel.IsSubmittingVoiceId;
+                        throw new InvalidOperationException("Cancellation callback failure.");
+                    }));
+                    return releaseSearch.Task;
+                }
+
+                byIdStarted.SetResult();
+                return releaseById.Task;
+            };
+            viewModel = new SettingsViewModel(
+                CreateContext(settings: settings, httpService: httpService),
+                settings)
+            {
+                SearchQuery = "voice",
+                VoiceIdInput = "11111111111111111111111111111111",
+            };
+            owned.Track(viewModel);
+
+            var searchTask = owned.TrackOperation(viewModel.SearchVoicesCommand.ExecuteAsync(null));
+            var byIdTask = owned.TrackOperation(viewModel.SubmitVoiceIdCommand.ExecuteAsync(null));
+            await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(true, viewModel.IsSearching, "Search should be busy before disposal");
+            AssertEqual(true, viewModel.IsSubmittingVoiceId, "By-ID lookup should be busy before disposal");
+            onHeldWork?.Invoke(owned, "both-lookups-held");
+
+            Exception? disposeException = null;
+            try
+            {
+                viewModel.Dispose();
+            }
+            catch (Exception ex)
+            {
+                disposeException = ex;
             }
 
-            byIdStarted.SetResult();
-            return releaseById.Task;
-        };
-        viewModel = new SettingsViewModel(
-            CreateContext(settings: settings, httpService: httpService),
-            settings)
-        {
-            SearchQuery = "voice",
-            VoiceIdInput = "11111111111111111111111111111111",
-        };
+            AssertNotNull(disposeException, "The throwing cancellation callback should propagate from disposal");
+            AssertEqual(true, cancellationCallbackInvoked, "Disposal should cancel the active search request");
+            AssertEqual(false, observedIsSearching, "Cancellation callbacks should observe restored search busy state");
+            AssertEqual(false, observedIsSubmittingVoiceId, "Cancellation callbacks should observe restored by-ID busy state");
+            AssertEqual(false, viewModel.IsSearching, "Search busy state should remain restored when cancellation throws");
+            AssertEqual(false, viewModel.IsSubmittingVoiceId, "By-ID busy state should remain restored when cancellation throws");
 
-        var searchTask = viewModel.SearchVoicesCommand.ExecuteAsync(null);
-        var byIdTask = viewModel.SubmitVoiceIdCommand.ExecuteAsync(null);
-        await searchStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        await byIdStarted.Task.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(true, viewModel.IsSearching, "Search should be busy before disposal");
-        AssertEqual(true, viewModel.IsSubmittingVoiceId, "By-ID lookup should be busy before disposal");
-
-        Exception? disposeException = null;
-        try
-        {
+            releaseSearch.SetResult("{\"total\":0,\"items\":[]}");
+            releaseById.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            await searchTask.WaitAsync(RegressionExecution.Timeout);
+            await byIdTask.WaitAsync(RegressionExecution.Timeout);
             viewModel.Dispose();
-        }
-        catch (Exception ex)
-        {
-            disposeException = ex;
-        }
-
-        AssertNotNull(disposeException, "The throwing cancellation callback should propagate from disposal");
-        AssertEqual(true, cancellationCallbackInvoked, "Disposal should cancel the active search request");
-        AssertEqual(false, observedIsSearching, "Cancellation callbacks should observe restored search busy state");
-        AssertEqual(false, observedIsSubmittingVoiceId, "Cancellation callbacks should observe restored by-ID busy state");
-        AssertEqual(false, viewModel.IsSearching, "Search busy state should remain restored when cancellation throws");
-        AssertEqual(false, viewModel.IsSubmittingVoiceId, "By-ID busy state should remain restored when cancellation throws");
-
-        releaseSearch.SetResult("{\"total\":0,\"items\":[]}");
-        releaseById.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Voice\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await searchTask.WaitAsync(RegressionExecution.Timeout);
-        await byIdTask.WaitAsync(RegressionExecution.Timeout);
-        viewModel.Dispose();
+        });
     }
 }

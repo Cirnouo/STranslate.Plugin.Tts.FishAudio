@@ -514,6 +514,8 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     }
 
     internal Task? PendingStartupCreditObserverTask => _creditRefreshCoordinator.PendingStartupCreditObserverTask;
+    internal Task? LastResolvedCoverCacheTask => _coverImageCacheDisplay.LastResolvedCacheTask;
+    internal Task? TimedOutCoverCacheContinuationTask => _coverImageCacheDisplay.TimedOutClearContinuationTask;
 
     internal void AttachStartupCreditRefresh(StartupCreditRefreshCycle startupCreditRefreshCycle)
     {

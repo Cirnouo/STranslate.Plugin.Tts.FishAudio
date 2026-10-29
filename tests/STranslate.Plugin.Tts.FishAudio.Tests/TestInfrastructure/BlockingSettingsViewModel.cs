@@ -18,7 +18,8 @@ internal sealed class BlockingSettingsViewModel : SettingsViewModel
         SettingsWriteLease settingsWriteLease,
         StartupCreditRefreshCycle startupCreditRefreshCycle,
         TaskCompletionSource constructionSnapshotCaptured,
-        TaskCompletionSource releaseConstruction)
+        TaskCompletionSource releaseConstruction,
+        Action<SettingsViewModel>? onConstructed = null)
         : base(
             context,
             settings,
@@ -28,6 +29,7 @@ internal sealed class BlockingSettingsViewModel : SettingsViewModel
             startupCreditRefreshCycle: startupCreditRefreshCycle,
             settingsWriteLease: settingsWriteLease)
     {
+        onConstructed?.Invoke(this);
         constructionSnapshotCaptured.TrySetResult();
         releaseConstruction.Task.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult();
     }

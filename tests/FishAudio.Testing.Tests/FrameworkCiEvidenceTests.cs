@@ -15,7 +15,7 @@ namespace FishAudio.Testing.Tests;
 
 [TestFixture]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-public sealed class FrameworkCiEvidenceTests
+public sealed partial class FrameworkCiEvidenceTests
 {
     // These fixtures admit CI evidence. They execute the real parser and helper,
     // but their two declared cases do not claim execution of product scenarios.

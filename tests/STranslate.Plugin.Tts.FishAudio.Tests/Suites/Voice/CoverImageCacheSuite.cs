@@ -187,11 +187,18 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    internal static async Task CoverImageCacheDownloadsThroughBoundedStreamAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-downloads-through-bounded-stream")]
+    [NUnit.Framework.Order(270)]
+    public static Task CoverImageCacheDownloadsThroughBoundedStreamAsync() => RunCoverImageCacheDownloadsThroughBoundedStreamAsync();
+
+    internal static Task RunCoverImageCacheDownloadsThroughBoundedStreamAsync()
     {
-        var root = CreateTempDirectory();
-        try
+        var owned = new CoverRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
         {
+            var root = CreateTempDirectory();
+            owned.Root = root;
             var settings = new Settings
             {
                 ApiKey = "configured-cover-key",
@@ -204,6 +211,9 @@ internal static class CoverImageCacheSuite
             var viewModel = new SettingsViewModel(
                 CreateContext(settings: settings, httpService: httpService, pluginCacheDirectoryPath: root),
                 settings);
+            owned.Track(viewModel);
+            owned.CacheTask = viewModel.LastResolvedCoverCacheTask
+                ?? throw new InvalidOperationException("bounded-cover-original-cache-task-unavailable");
 
             AssertEqual(
                 "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/streamed",
@@ -231,11 +241,7 @@ internal static class CoverImageCacheSuite
                 "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/streamed",
                 viewModel.CachedVoiceCoverUrl,
                 "Rejected streamed cover image should keep remote fallback URL");
-        }
-        finally
-        {
-            Directory.Delete(root, recursive: true);
-        }
+        });
     }
 
     [NUnit.Framework.Test]
@@ -301,80 +307,127 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    internal static async Task ClearCoverImageCacheCommandTracksBusyStateAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/clear-cover-image-cache-command-tracks-busy-state")]
+    [NUnit.Framework.Order(273)]
+    public static Task ClearCoverImageCacheCommandTracksBusyStateAsync() => RunClearCoverImageCacheCommandTracksBusyStateAsync();
+
+    internal static Task RunClearCoverImageCacheCommandTracksBusyStateAsync(Action<CoverRemainderFixtureOwner>? onHeldWork = null)
     {
-        var clearStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var viewModel = new SettingsViewModel(
-            CreateContext(),
-            new Settings(),
-            () =>
-            {
-                clearStarted.SetResult();
-                return releaseClear.Task;
-            },
-            TimeSpan.FromSeconds(5));
+        var owned = new CoverRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
+        {
+            var clearStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var releaseClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(releaseClear);
+            var viewModel = new SettingsViewModel(
+                CreateContext(),
+                new Settings(),
+                () =>
+                {
+                    clearStarted.SetResult();
+                    return releaseClear.Task;
+                },
+                TimeSpan.FromSeconds(5));
+            owned.Track(viewModel);
 
-        var commandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
-        await clearStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            var commandTask = owned.TrackOperation(viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null));
+            await clearStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onHeldWork?.Invoke(owned);
 
-        AssertEqual(true, viewModel.IsClearingCoverImageCache, "Clear cache command should enter busy state while cleanup is running");
-        AssertEqual(false, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be disabled while cleanup is running");
+            AssertEqual(true, viewModel.IsClearingCoverImageCache, "Clear cache command should enter busy state while cleanup is running");
+            AssertEqual(false, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be disabled while cleanup is running");
 
-        releaseClear.SetResult();
-        await commandTask.WaitAsync(RegressionExecution.Timeout);
+            releaseClear.SetResult();
+            await commandTask.WaitAsync(RegressionExecution.Timeout);
+            owned.CaptureTimeoutContinuations();
 
-        AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache command should leave busy state after cleanup completes");
-        AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be enabled after cleanup completes");
+            AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache command should leave busy state after cleanup completes");
+            AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache command should be enabled after cleanup completes");
+        });
     }
 
-    internal static async Task ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/clear-cover-image-cache-command-times-out-and-restores-button")]
+    [NUnit.Framework.Order(274)]
+    public static Task ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync() => RunClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync();
+
+    internal static Task RunClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync(Action<CoverRemainderFixtureOwner>? onHeldWork = null)
     {
-        var snackbar = new TestSnackbar();
-        var blockedClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var viewModel = new SettingsViewModel(
-            CreateContext(snackbar),
-            new Settings(),
-            () => blockedClear.Task,
-            TimeSpan.FromMilliseconds(30));
+        var owned = new CoverRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
+        {
+            var snackbar = new TestSnackbar();
+            var blockedClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(blockedClear);
+            var viewModel = new SettingsViewModel(
+                CreateContext(snackbar),
+                new Settings(),
+                () => blockedClear.Task,
+                TimeSpan.FromMilliseconds(30));
+            owned.Track(viewModel);
 
-        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(RegressionExecution.Timeout);
+            var commandTask = owned.TrackOperation(viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null));
+            await commandTask.WaitAsync(RegressionExecution.Timeout);
+            owned.CaptureTimeoutContinuations();
+            onHeldWork?.Invoke(owned);
 
-        AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache timeout should leave busy state");
-        AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache timeout should re-enable the command");
-        AssertEqual(
-            "STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout",
-            snackbar.LastError,
-            "Clear cache timeout should show a localized error message");
+            AssertEqual(false, viewModel.IsClearingCoverImageCache, "Clear cache timeout should leave busy state");
+            AssertEqual(true, viewModel.ClearCoverImageCacheCommand.CanExecute(null), "Clear cache timeout should re-enable the command");
+            AssertEqual(
+                "STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout",
+                snackbar.LastError,
+                "Clear cache timeout should show a localized error message");
 
-        blockedClear.SetResult();
-        await Task.Delay(30);
+            blockedClear.SetResult();
+            await Task.Delay(30);
+        });
     }
 
-    internal static async Task LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/late-clear-cover-image-cache-task-does-not-unlock-new-operation")]
+    [NUnit.Framework.Order(275)]
+    public static Task LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync() => RunLateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync();
+
+    internal static Task RunLateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync(
+        Action<CoverRemainderFixtureOwner>? onHeldWork = null,
+        Func<CoverRemainderFixtureOwner, Task>? onHeldWorkAsync = null)
     {
-        var clearCall = 0;
-        var firstClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var secondClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var viewModel = new SettingsViewModel(
-            CreateContext(),
-            new Settings(),
-            () => ++clearCall == 1 ? firstClear.Task : secondClear.Task,
-            TimeSpan.FromMilliseconds(150));
+        var owned = new CoverRemainderFixtureOwner();
+        return owned.RunAsync(async () =>
+        {
+            var clearCall = 0;
+            var firstClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var secondClear = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owned.Track(firstClear);
+            owned.Track(secondClear);
+            var viewModel = new SettingsViewModel(
+                CreateContext(),
+                new Settings(),
+                () => ++clearCall == 1 ? firstClear.Task : secondClear.Task,
+                TimeSpan.FromMilliseconds(150));
+            owned.Track(viewModel);
 
-        await viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null).WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(false, viewModel.IsClearingCoverImageCache, "First clear cache timeout should restore the button");
+            var firstCommandTask = owned.TrackOperation(viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null));
+            await firstCommandTask.WaitAsync(RegressionExecution.Timeout);
+            owned.CaptureTimeoutContinuations();
+            AssertEqual(false, viewModel.IsClearingCoverImageCache, "First clear cache timeout should restore the button");
 
-        var secondCommandTask = viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null);
-        AssertEqual(true, viewModel.IsClearingCoverImageCache, "Second clear cache operation should enter busy state");
+            var secondCommandTask = owned.TrackOperation(viewModel.ClearCoverImageCacheCommand.ExecuteAsync(null));
+            AssertEqual(true, viewModel.IsClearingCoverImageCache, "Second clear cache operation should enter busy state");
+            onHeldWork?.Invoke(owned);
+            if (onHeldWorkAsync is not null)
+                await onHeldWorkAsync(owned);
 
-        firstClear.SetResult();
-        await Task.Delay(30);
-        AssertEqual(true, viewModel.IsClearingCoverImageCache, "Late first clear task should not unlock the second operation");
+            firstClear.SetResult();
+            await Task.Delay(30);
+            AssertEqual(true, viewModel.IsClearingCoverImageCache, "Late first clear task should not unlock the second operation");
 
-        secondClear.SetResult();
-        await secondCommandTask.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(false, viewModel.IsClearingCoverImageCache, "Second clear cache operation should leave busy state after completion");
+            secondClear.SetResult();
+            await secondCommandTask.WaitAsync(RegressionExecution.Timeout);
+            owned.CaptureTimeoutContinuations();
+            AssertEqual(false, viewModel.IsClearingCoverImageCache, "Second clear cache operation should leave busy state after completion");
+        });
     }
 
     [NUnit.Framework.Test]
@@ -449,7 +502,7 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    private static async Task CompleteCacheTasksAndDeleteOwnedRootAsync(
+    internal static async Task CompleteCacheTasksAndDeleteOwnedRootAsync(
         string root,
         Exception? primaryFailure,
         params Task?[] cacheTasks)

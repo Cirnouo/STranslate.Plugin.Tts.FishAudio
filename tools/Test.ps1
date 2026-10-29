@@ -141,110 +141,7 @@ function Read-FileSelection([string]$Path) {
         return $result
     } finally { $document.Dispose() }
 }
-function Initialize-ProcessOwner {
-    if ('FishAudio.Testing.Driver.JobOwner' -as [type]) { return }
-    Add-Type -TypeDefinition @'
-#nullable enable
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
-
-namespace FishAudio.Testing.Driver;
-
-public sealed class JobOwner : IDisposable
-{
-    private readonly SafeFileHandle _job;
-
-    public JobOwner()
-    {
-        _job = CreateJobObjectW(IntPtr.Zero, null);
-        if (_job.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
-        var limits = new ExtendedLimits();
-        limits.Basic.LimitFlags = 0x00002000; // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
-        if (!SetInformationJobObject(_job, 9, ref limits, Marshal.SizeOf<ExtendedLimits>()))
-        {
-            var error = Marshal.GetLastWin32Error();
-            _job.Dispose();
-            throw new Win32Exception(error);
-        }
-    }
-
-    public void Assign(IntPtr processHandle)
-    {
-        if (!AssignProcessToJobObject(_job, processHandle))
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-    }
-
-    public uint ActiveProcesses
-    {
-        get
-        {
-            if (!QueryInformationJobObject(_job, 1, out Accounting value,
-                Marshal.SizeOf<Accounting>(), IntPtr.Zero))
-                throw new Win32Exception(Marshal.GetLastWin32Error());
-            return value.ActiveProcesses;
-        }
-    }
-
-    public void Terminate()
-    {
-        if (!TerminateJobObject(_job, 1))
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-    }
-
-    public void Dispose() => _job.Dispose();
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct BasicLimits
-    {
-        public long PerProcessUserTimeLimit, PerJobUserTimeLimit;
-        public uint LimitFlags;
-        public UIntPtr MinimumWorkingSetSize, MaximumWorkingSetSize;
-        public uint ActiveProcessLimit;
-        public UIntPtr Affinity;
-        public uint PriorityClass, SchedulingClass;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct IoCounters
-    {
-        public ulong ReadOperations, WriteOperations, OtherOperations;
-        public ulong ReadBytes, WriteBytes, OtherBytes;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct ExtendedLimits
-    {
-        public BasicLimits Basic;
-        public IoCounters Io;
-        public UIntPtr ProcessMemoryLimit, JobMemoryLimit, PeakProcessMemoryUsed, PeakJobMemoryUsed;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Accounting
-    {
-        public long TotalUserTime, TotalKernelTime, PeriodUserTime, PeriodKernelTime;
-        public uint PageFaults, TotalProcesses, ActiveProcesses, TerminatedProcesses;
-    }
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern SafeFileHandle CreateJobObjectW(IntPtr attributes, string? name);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool SetInformationJobObject(SafeFileHandle job, int kind, ref ExtendedLimits value, int size);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool AssignProcessToJobObject(SafeFileHandle job, IntPtr process);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool QueryInformationJobObject(SafeFileHandle job, int kind, out Accounting value, int size, IntPtr returned);
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool TerminateJobObject(SafeFileHandle job, uint exitCode);
-}
-'@
-}
+. (Join-Path $PSScriptRoot 'TestProcessOwner.ps1')
 
 function Invoke-OwnedPhase {
     param([string]$Label, [string]$Executable, [string[]]$Arguments, [hashtable]$Environment = @{},
@@ -558,6 +455,7 @@ try {
     $stage = 'source-identity'
     $source = Get-SourceIdentity
     Write-NewJson (Join-Path $runRoot 'source.json') $source
+    [void](Lock-FrameworkEvidence (Join-Path $runRoot 'source.json'))
     $definitions = @(
         @{ key = 'plugin'; project = 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'; name = 'STranslate.Plugin.Tts.FishAudio.Tests' },
         @{ key = 'testing-tool'; project = 'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj'; name = 'FishAudio.Testing.Tests' }
@@ -624,6 +522,38 @@ try {
         [void](Lock-FrameworkEvidence $catalogPath)
         Require-Condition ($assembly.catalog.schemaVersion -eq 1 -and $assembly.catalog.kind -ceq 'nunit-catalog' -and
             $assembly.catalog.complete -and @($assembly.catalog.cases).Count -gt 0) 'test-driver-invalid-catalog'
+    }
+    # Test-only, read-only input capability. It neither selects nor registers
+    # cases. All bytes stay in the existing digest-bound raw request/invocation.
+    # Missing optional PDBs do not change ordinary NoBuild preflight; the one
+    # source/PDB contract that consumes this capability requires actual PDBs.
+    $runnerMetadataJson = $null
+    if ($Mode -ceq 'Full') {
+        $metadataAssemblies = @(foreach ($assembly in $assemblies) {
+            $pdb = [IO.Path]::ChangeExtension($assembly.dll, '.pdb')
+            if ([IO.File]::Exists($pdb)) { [void](Lock-FrameworkEvidence $pdb) }
+            [ordered]@{
+                key = $assembly.key; assembly = $assembly.dll; assemblySha256 = $assembly.sha256
+                pdb = $pdb; pdbSha256 = $(if ([IO.File]::Exists($pdb)) { Get-Digest $pdb } else { $null })
+                discovery = $assembly.discovery; discoverySha256 = Get-Digest $assembly.discovery
+                catalog = Join-Path (Join-Path $runRoot $assembly.key) 'catalog.json'
+                catalogSha256 = Get-Digest (Join-Path (Join-Path $runRoot $assembly.key) 'catalog.json')
+            }
+        })
+        $metadataToolPdb = [IO.Path]::ChangeExtension($toolDll, '.pdb')
+        if ([IO.File]::Exists($metadataToolPdb)) { [void](Lock-FrameworkEvidence $metadataToolPdb) }
+        $runnerMetadataJson = ([ordered]@{
+            schemaVersion = 1; kind = 'runner-readonly-metadata'; runId = $runId
+            repositoryRoot = $root; sessionDirectory = $runRoot
+            sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
+            sourcePath = Join-Path $runRoot 'source.json'; sourceSha256 = Get-Digest (Join-Path $runRoot 'source.json')
+            snapshotContextPath = $(if ($env:FISHAUDIO_SNAPSHOT_CONTEXT) { $env:FISHAUDIO_SNAPSHOT_CONTEXT } else { $null })
+            snapshotContextSha256 = $(if ($env:FISHAUDIO_SNAPSHOT_CONTEXT) { Get-Digest $env:FISHAUDIO_SNAPSHOT_CONTEXT } else { $null })
+            assemblies = $metadataAssemblies
+            tool = [ordered]@{ assembly = $toolDll; assemblySha256 = $toolDigest; pdb = $metadataToolPdb
+                pdbSha256 = $(if ([IO.File]::Exists($metadataToolPdb)) { Get-Digest $metadataToolPdb } else { $null }) }
+        } | ConvertTo-Json -Depth 8 -Compress)
+        Require-Condition ($runnerMetadataJson.Length -le 32767) 'test-driver-runner-metadata-environment-limit'
     }
     $stage = 'selection'
     $allCases = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::Ordinal)
@@ -715,6 +645,21 @@ try {
                     DOTNET_CLI_UI_LANGUAGE = 'en'; VSLANG = '1033'
                 }
                 $requestPath = Join-Path $phaseDirectory 'execution-request.json'
+                $executionEnvironment['FISHAUDIO_RUNNER_METADATA_JSON'] = $runnerMetadataJson
+                $executionEnvironment['FISHAUDIO_RUNNER_REQUEST_PATH'] = $requestPath
+                # Bound the effective inherited + explicit Unicode block without
+                # serializing inherited credentials or diagnostics into evidence.
+                $metadataEnvironment = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::OrdinalIgnoreCase)
+                foreach ($entry in [Environment]::GetEnvironmentVariables().GetEnumerator()) {
+                    $metadataEnvironment[[string]$entry.Key] = [string]$entry.Value
+                }
+                foreach ($name in $executionEnvironment.Keys) { $metadataEnvironment[$name] = [string]$executionEnvironment[$name] }
+                $metadataEnvironment['FISHAUDIO_FRAMEWORK_CONTROL_CONTEXT'] = Join-Path $supervised 'control-context.json'
+                $metadataEnvironmentCharacters = 1
+                foreach ($entry in $metadataEnvironment.GetEnumerator()) {
+                    $metadataEnvironmentCharacters += $entry.Key.Length + $entry.Value.Length + 2
+                }
+                Require-Condition ($metadataEnvironmentCharacters -le 32767) 'test-driver-runner-metadata-environment-limit'
                 Write-NewJson $requestPath ([ordered]@{
                     schemaVersion = 1; runId = $runId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
                     workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet

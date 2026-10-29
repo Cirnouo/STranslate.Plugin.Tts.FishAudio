@@ -26,5 +26,20 @@ public sealed class FrameworkHookAdmissionCases
         yield return new TestCaseData("late-framework-evidence-mutation")
             .SetName("InstalledHook_LateFrameworkEvidenceMutation")
             .SetProperty("FishAudioCaseId", "runner.hooks/late-framework-evidence-mutation");
+        yield return new TestCaseData("late-hybrid-generation")
+            .SetName("InstalledHook_LateHybridGeneration")
+            .SetProperty("FishAudioCaseId", "runner.hooks/late-hybrid-generation");
+        yield return new TestCaseData("late-hybrid-attempt")
+            .SetName("InstalledHook_LateHybridAttempt")
+            .SetProperty("FishAudioCaseId", "runner.hooks/late-hybrid-attempt");
+        yield return new TestCaseData("installed-receipt-helper-mutation")
+            .SetName("InstalledHook_InstalledReceiptHelperMutation")
+            .SetProperty("FishAudioCaseId", "runner.hooks/installed-receipt-helper-mutation");
+        yield return new TestCaseData("atomic-install-copy-failure")
+            .SetName("InstalledHook_AtomicInstallCopyFailure")
+            .SetProperty("FishAudioCaseId", "runner.hooks/atomic-install-copy-failure");
+        yield return new TestCaseData("protocol-upgrade")
+            .SetName("InstalledHook_ProtocolUpgrade")
+            .SetProperty("FishAudioCaseId", "runner.hooks/protocol-upgrade");
     }
 }

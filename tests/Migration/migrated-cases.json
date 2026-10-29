@@ -1798,6 +1798,1065 @@
         "lifecycle.initialization/startup-refresh-selected-voice-metadata"
       ],
       "responsibility": "Preserve the single original three-key foreach case and its online/offline inputs, assertions and WaitAsync sequence. For each key, finish original first Main's existing published owner before network.Set(false), settings/service/plugin reassignment, then finish second Main's owner before the next iteration. Retain all six original lifetimes in one case with one outer RegressionFixtureOwner root; do not create six cases/budgets or a new clock/network setup. Capture actual Work only; no VM/observer is fabricated."
+    },
+    {
+      "originalId": "voice.discovery/voice-lookup-requests-cancel-previous-and-dispose-work",
+      "successorIds": [
+        "voice.discovery/voice-lookup-requests-cancel-previous-and-dispose-work"
+      ],
+      "responsibility": "Preserves all 3 original assertions in VoiceDiscoverySuite.VoiceLookupRequestsCancelPreviousAndDisposeWorkAsync / RunVoiceLookupRequestsCancelPreviousAndDisposeWorkAsync. Retains all original same-object transitions, response payloads, assertion messages and their order, original waits and functional delay/timeout values. Typed fixture cleanup retains and joins the exact started command and request/response tasks, retires original ViewModels and cancellation registrations, and preserves primary failure identity."
+    },
+    {
+      "originalId": "voice.discovery/voice-lookup-completions-after-dispose-do-not-mutate-state",
+      "successorIds": [
+        "voice.discovery/voice-lookup-completions-after-dispose-do-not-mutate-state"
+      ],
+      "responsibility": "Preserves all 8 original assertions in VoiceDiscoverySuite.VoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync / RunVoiceLookupCompletionsAfterDisposeDoNotMutateStateAsync. Retains all original same-object transitions, response payloads, assertion messages and their order, original waits and functional delay/timeout values. Typed fixture cleanup retains and joins the exact started command and request/response tasks, retires original ViewModels and cancellation registrations, and preserves primary failure identity."
+    },
+    {
+      "originalId": "voice.discovery/dispose-restores-discovery-busy-state-before-cancel-callbacks",
+      "successorIds": [
+        "voice.discovery/dispose-restores-discovery-busy-state-before-cancel-callbacks"
+      ],
+      "responsibility": "Preserves all 8 original assertions in VoiceDiscoverySuite.DisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync / RunDisposeRestoresDiscoveryBusyStateBeforeCancelCallbacksAsync. Retains all original same-object transitions, response payloads, assertion messages and their order, original waits and functional delay/timeout values. Typed fixture cleanup retains and joins the exact started command and request/response tasks, retires original ViewModels and cancellation registrations, and preserves primary failure identity."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-downloads-through-bounded-stream",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-downloads-through-bounded-stream"
+      ],
+      "responsibility": "Preserves all 9 original assertions in CoverImageCacheSuite.CoverImageCacheDownloadsThroughBoundedStreamAsync / RunCoverImageCacheDownloadsThroughBoundedStreamAsync. Retains the original synchronous LimitGuardStream, stream-return/disposal waits, all bounded byte/request/header/file/fallback assertions; captures the actual cache task returned by the existing display manager, joins it through pending-entry retirement, disposes the original ViewModel and deletes the owned root afterward. There is no manufactured held-work fault row for this owner."
+    },
+    {
+      "originalId": "voice.cover-cache/clear-cover-image-cache-command-tracks-busy-state",
+      "successorIds": [
+        "voice.cover-cache/clear-cover-image-cache-command-tracks-busy-state"
+      ],
+      "responsibility": "Preserves all 4 original assertions in CoverImageCacheSuite.ClearCoverImageCacheCommandTracksBusyStateAsync / RunClearCoverImageCacheCommandTracksBusyStateAsync. Retains all original busy/command/error/generation assertions, their order, original functional timeout and 30 ms dwell values. Typed fixture cleanup releases and joins original clear tasks and commands, joins the actual timeout continuation before retiring the original ViewModel, and preserves primary failure identity."
+    },
+    {
+      "originalId": "voice.cover-cache/clear-cover-image-cache-command-times-out-and-restores-button",
+      "successorIds": [
+        "voice.cover-cache/clear-cover-image-cache-command-times-out-and-restores-button"
+      ],
+      "responsibility": "Preserves all 3 original assertions in CoverImageCacheSuite.ClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync / RunClearCoverImageCacheCommandTimesOutAndRestoresButtonAsync. Retains all original busy/command/error/generation assertions, their order, original functional timeout and 30 ms dwell values. Typed fixture cleanup releases and joins original clear tasks and commands, joins the actual timeout continuation before retiring the original ViewModel, and preserves primary failure identity."
+    },
+    {
+      "originalId": "voice.cover-cache/late-clear-cover-image-cache-task-does-not-unlock-new-operation",
+      "successorIds": [
+        "voice.cover-cache/late-clear-cover-image-cache-task-does-not-unlock-new-operation"
+      ],
+      "responsibility": "Preserves all 4 original assertions in CoverImageCacheSuite.LateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync / RunLateClearCoverImageCacheTaskDoesNotUnlockNewOperationAsync. Retains all original busy/command/error/generation assertions, their order, original functional timeout and 30 ms dwell values. Typed fixture cleanup releases and joins original clear tasks and commands, joins the actual timeout continuation before retiring the original ViewModel, and preserves primary failure identity."
+    },
+    {
+      "originalId": "lifecycle.initialization/reinitialized-settings-view-uses-new-context-and-settings",
+      "successorIds": [
+        "lifecycle.initialization/reinitialized-settings-view-uses-new-context-and-settings"
+      ],
+      "responsibility": "Preserves all 9 original assertions and messages, in their original order, in InitializationLifecycleSuite.ReinitializedSettingsViewUsesNewContextAndSettingsAsync / RunReinitializedSettingsViewUsesNewContextAndSettingsAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. Retains the original shared-STA compiled SettingsView reuse, old/new DataContext and pending-credit lifetime chain."
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-settings-save-wins-before-failed-replacement-transition",
+      "successorIds": [
+        "lifecycle.initialization/startup-settings-save-wins-before-failed-replacement-transition"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupSettingsSaveWinsBeforeFailedReplacementTransitionAsync / RunStartupSettingsSaveWinsBeforeFailedReplacementTransitionAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/failed-same-instance-normalization-restores-old-state-and-backing-store",
+      "successorIds": [
+        "lifecycle.initialization/failed-same-instance-normalization-restores-old-state-and-backing-store"
+      ],
+      "responsibility": "Preserves all 5 original assertions and messages, in their original order, in InitializationLifecycleSuite.FailedSameInstanceNormalizationRestoresOldStateAndBackingStoreNUnitAsync / RunFailedSameInstanceNormalizationRestoresOldStateAndBackingStoreAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/settings-view-model-creation-waits-for-replacement-commit",
+      "successorIds": [
+        "lifecycle.initialization/settings-view-model-creation-waits-for-replacement-commit"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.SettingsViewModelCreationWaitsForReplacementCommitAsync / RunSettingsViewModelCreationWaitsForReplacementCommitAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/failed-reinitialization-restores-old-view-model-write-lease",
+      "successorIds": [
+        "lifecycle.initialization/failed-reinitialization-restores-old-view-model-write-lease"
+      ],
+      "responsibility": "Preserves all 5 original assertions and messages, in their original order, in InitializationLifecycleSuite.FailedReinitializationRestoresOldViewModelWriteLeaseAsync / RunFailedReinitializationRestoresOldViewModelWriteLeaseAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/overtaken-initialization-skips-settings-load",
+      "successorIds": [
+        "lifecycle.initialization/overtaken-initialization-skips-settings-load"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.OvertakenInitializationSkipsSettingsLoadAsync / RunOvertakenInitializationSkipsSettingsLoadAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/reinitialization-waits-for-in-flight-view-model-save",
+      "successorIds": [
+        "lifecycle.initialization/reinitialization-waits-for-in-flight-view-model-save"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.ReinitializationWaitsForInFlightViewModelSaveAsync / RunReinitializationWaitsForInFlightViewModelSaveAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-voice-ui-apply-rechecks-expected-voice-id",
+      "successorIds": [
+        "lifecycle.initialization/startup-voice-ui-apply-rechecks-expected-voice-id"
+      ],
+      "responsibility": "Preserves all 7 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupVoiceUiApplyRechecksExpectedVoiceIdAsync / RunStartupVoiceUiApplyRechecksExpectedVoiceIdAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/delayed-startup-voice-refresh-does-not-restore-cleared-voice",
+      "successorIds": [
+        "lifecycle.initialization/delayed-startup-voice-refresh-does-not-restore-cleared-voice"
+      ],
+      "responsibility": "Preserves all 9 original assertions and messages, in their original order, in InitializationLifecycleSuite.DelayedStartupVoiceRefreshDoesNotRestoreClearedVoiceAsync / RunDelayedStartupVoiceRefreshDoesNotRestoreClearedVoiceAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/delayed-startup-voice-refresh-does-not-overwrite-new-selection",
+      "successorIds": [
+        "lifecycle.initialization/delayed-startup-voice-refresh-does-not-overwrite-new-selection"
+      ],
+      "responsibility": "Preserves all 9 original assertions and messages, in their original order, in InitializationLifecycleSuite.DelayedStartupVoiceRefreshDoesNotOverwriteNewSelectionAsync / RunDelayedStartupVoiceRefreshDoesNotOverwriteNewSelectionAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/concurrent-paid-model-selection-still-publishes-post-cutoff-policy",
+      "successorIds": [
+        "lifecycle.initialization/concurrent-paid-model-selection-still-publishes-post-cutoff-policy"
+      ],
+      "responsibility": "Preserves all 13 original assertions and messages, in their original order, in InitializationLifecycleSuite.ConcurrentPaidModelSelectionStillPublishesPostCutoffPolicyAsync / RunConcurrentPaidModelSelectionStillPublishesPostCutoffPolicyAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-model-save-failure-rolls-back-runtime-and-storage",
+      "successorIds": [
+        "lifecycle.initialization/startup-model-save-failure-rolls-back-runtime-and-storage"
+      ],
+      "responsibility": "Preserves all 7 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupModelSaveFailureRollsBackRuntimeAndStorageAsync / RunStartupModelSaveFailureRollsBackRuntimeAndStorageAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-voice-save-failure-rolls-back-runtime-and-storage",
+      "successorIds": [
+        "lifecycle.initialization/startup-voice-save-failure-rolls-back-runtime-and-storage"
+      ],
+      "responsibility": "Preserves all 8 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupVoiceSaveFailureRollsBackRuntimeAndStorageAsync / RunStartupVoiceSaveFailureRollsBackRuntimeAndStorageAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-model-normalization-invalidates-speculative-settings-view-model",
+      "successorIds": [
+        "lifecycle.initialization/startup-model-normalization-invalidates-speculative-settings-view-model"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupModelNormalizationInvalidatesSpeculativeSettingsViewModelAsync / RunStartupModelNormalizationInvalidatesSpeculativeSettingsViewModelAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/committed-startup-settings-invalidates-post-reservation-view-model-candidate",
+      "successorIds": [
+        "lifecycle.initialization/committed-startup-settings-invalidates-post-reservation-view-model-candidate"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.CommittedStartupSettingsInvalidatesPostReservationViewModelCandidateAsync / RunCommittedStartupSettingsInvalidatesPostReservationViewModelCandidateAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-voice-refresh-invalidates-speculative-settings-view-model",
+      "successorIds": [
+        "lifecycle.initialization/startup-voice-refresh-invalidates-speculative-settings-view-model"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupVoiceRefreshInvalidatesSpeculativeSettingsViewModelAsync / RunStartupVoiceRefreshInvalidatesSpeculativeSettingsViewModelAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-settings-save-skips-after-new-initialization-request",
+      "successorIds": [
+        "lifecycle.initialization/startup-settings-save-skips-after-new-initialization-request"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupSettingsSaveSkipsAfterNewInitializationRequestAsync / RunStartupSettingsSaveSkipsAfterNewInitializationRequestAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/initialization-load-waits-for-authorized-startup-settings-save",
+      "successorIds": [
+        "lifecycle.initialization/initialization-load-waits-for-authorized-startup-settings-save"
+      ],
+      "responsibility": "Preserves all 2 original assertions and messages, in their original order, in InitializationLifecycleSuite.InitializationLoadWaitsForAuthorizedStartupSettingsSaveAsync / RunInitializationLoadWaitsForAuthorizedStartupSettingsSaveAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/failed-reinitialization-restores-startup-settings-save-authorization",
+      "successorIds": [
+        "lifecycle.initialization/failed-reinitialization-restores-startup-settings-save-authorization"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.FailedReinitializationRestoresStartupSettingsSaveAuthorizationAsync / RunFailedReinitializationRestoresStartupSettingsSaveAuthorizationAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-refresh-cancellation-after-response-skips-side-effects",
+      "successorIds": [
+        "lifecycle.initialization/startup-refresh-cancellation-after-response-skips-side-effects"
+      ],
+      "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync / RunStartupRefreshCancellationAfterResponseSkipsSideEffectsAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
+    }
+  ,
+    {
+      "originalId": "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread",
+      "successorIds": [
+        "lifecycle.activity-dispatcher/playback-timeout-retires-bound-commands-on-ui-thread",
+        "lifecycle.activity-dispatcher/playback-cancellation-retires-bound-commands-on-ui-thread"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 0..1. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "lifecycle.activity-dispatcher/queued-retirement-cannot-unlock-new-ui-operation",
+      "successorIds": [
+        "lifecycle.activity-dispatcher/queued-retirement-cannot-unlock-new-ui-operation"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 2..2. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "settings.binding/api-key-password-input-persists-before-focus-leaves",
+      "successorIds": [
+        "settings.binding/api-key-password-input-persists-before-focus-leaves"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 3..3. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "settings.api-key-card/run-all",
+      "successorIds": [
+        "settings.api-key-card/width-saturation/empty",
+        "settings.api-key-card/width-saturation/legacy32",
+        "settings.api-key-card/width-saturation/prefixed51",
+        "settings.api-key-card/width-saturation/overlong1000",
+        "settings.api-key-card/controlled-password-metrics/legacy32-font10",
+        "settings.api-key-card/controlled-password-metrics/prefixed51-font16",
+        "settings.api-key-card/localized-header/en",
+        "settings.api-key-card/localized-header/zh-cn",
+        "settings.api-key-card/localized-header/zh-tw",
+        "settings.api-key-card/localized-header/ja",
+        "settings.api-key-card/localized-header/ko",
+        "settings.api-key-card/localized-header/ru",
+        "settings.api-key-card/localized-header/tr",
+        "settings.api-key-card/template-lifecycle/width-400",
+        "settings.api-key-card/template-lifecycle/width-476",
+        "settings.api-key-card/template-lifecycle/width-800"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 4..19. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "settings.layout/compiled-view-audio-network-and-fold-interactions",
+      "successorIds": [
+        "settings.layout/pcm-bitrate-card-restoration",
+        "settings.layout/reading-network-settings-absent",
+        "settings.layout/favorite-tabs-match-peers",
+        "settings.layout/selected-heart-shares-state",
+        "settings.layout/paste-buttons-reserve-input-space",
+        "settings.layout/selection-and-paging-bare-icons",
+        "settings.layout/loudness/model-disabled",
+        "settings.layout/loudness/model-enabled",
+        "settings.layout/top-p-minimum-slider-track-alignment",
+        "settings.layout/result-toggle-independent-state",
+        "settings.layout/shared-voice-card-metadata-state",
+        "numeric.interaction/compiled/en/culture-en-us",
+        "numeric.interaction/compiled/zh-cn/culture-zh-cn",
+        "numeric.interaction/compiled/zh-tw/culture-zh-tw",
+        "numeric.interaction/compiled/ja/culture-ja-jp",
+        "numeric.interaction/compiled/ko/culture-ko-kr",
+        "numeric.interaction/compiled/ru/culture-ru-ru",
+        "numeric.interaction/compiled/tr/culture-tr-tr",
+        "numeric.interaction/compiled/en/culture-de-de"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 20..38. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "settings.alignment/run-all",
+      "successorIds": [
+        "settings.alignment/browse-tab-positions/en",
+        "settings.alignment/browse-tab-positions/zh-cn",
+        "settings.alignment/browse-tab-positions/zh-tw",
+        "settings.alignment/browse-tab-positions/ja",
+        "settings.alignment/browse-tab-positions/ko",
+        "settings.alignment/browse-tab-positions/ru",
+        "settings.alignment/browse-tab-positions/tr",
+        "settings.alignment/slider-native-content-anchor",
+        "settings.alignment/empty-browse-model-position",
+        "settings.alignment/visible-card-icon-center/width-400",
+        "settings.alignment/visible-card-icon-center/width-600",
+        "settings.alignment/input-viewport-width",
+        "settings.alignment/voice-id-composition-and-paste-validation"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 39..51. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/captured-display125-search",
+      "successorIds": [
+        "cards.ink/captured-display125-search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 52..52. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/ideal/search",
+      "successorIds": [
+        "cards.ink/dpi-1/ideal/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 53..53. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/ideal/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1/ideal/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 54..54. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/ideal/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1/ideal/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 55..55. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/display/search",
+      "successorIds": [
+        "cards.ink/dpi-1/display/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 56..56. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/display/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1/display/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 57..57. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1/display/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1/display/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 58..58. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/ideal/search",
+      "successorIds": [
+        "cards.ink/dpi-1-25/ideal/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 59..59. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/ideal/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1-25/ideal/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 60..60. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/ideal/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1-25/ideal/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 61..61. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/display/search",
+      "successorIds": [
+        "cards.ink/dpi-1-25/display/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 62..62. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/display/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1-25/display/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 63..63. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-25/display/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1-25/display/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 64..64. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/ideal/search",
+      "successorIds": [
+        "cards.ink/dpi-1-5/ideal/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 65..65. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/ideal/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1-5/ideal/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 66..66. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/ideal/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1-5/ideal/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 67..67. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/display/search",
+      "successorIds": [
+        "cards.ink/dpi-1-5/display/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 68..68. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/display/by-id",
+      "successorIds": [
+        "cards.ink/dpi-1-5/display/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 69..69. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-1-5/display/favorites",
+      "successorIds": [
+        "cards.ink/dpi-1-5/display/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 70..70. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/ideal/search",
+      "successorIds": [
+        "cards.ink/dpi-2/ideal/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 71..71. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/ideal/by-id",
+      "successorIds": [
+        "cards.ink/dpi-2/ideal/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 72..72. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/ideal/favorites",
+      "successorIds": [
+        "cards.ink/dpi-2/ideal/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 73..73. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/display/search",
+      "successorIds": [
+        "cards.ink/dpi-2/display/search"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 74..74. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/display/by-id",
+      "successorIds": [
+        "cards.ink/dpi-2/display/by-id"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 75..75. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "cards.ink/dpi-2/display/favorites",
+      "successorIds": [
+        "cards.ink/dpi-2/display/favorites"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 76..76. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.glyph/equivalent-native-run-grouping",
+      "successorIds": [
+        "numeric.glyph/equivalent-native-run-grouping"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 77..77. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 78..78. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 79..79. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 80..80. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 81..81. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 82..82. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 83..83. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 84..84. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 85..85. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 86..86. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 87..87. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 88..88. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 89..89. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 90..90. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 91..91. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 92..92. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 93..93. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 94..94. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 95..95. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 96..96. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 97..97. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 98..98. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 99..99. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 100..100. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 101..101. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 102..102. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 103..103. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 104..104. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 105..105. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 106..106. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 107..107. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 108..108. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 109..109. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 110..110. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 111..111. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 112..112. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 113..113. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 114..114. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 115..115. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 116..116. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 117..117. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 118..118. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 119..119. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/light/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 120..120. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/light/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 121..121. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/light/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 122..122. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 123..123. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 124..124. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 125..125. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/light/dpi-1",
+      "successorIds": [
+        "numeric.bottom/en-us/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 126..126. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/light/dpi-1-25",
+      "successorIds": [
+        "numeric.bottom/en-us/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 127..127. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/light/dpi-1-5",
+      "successorIds": [
+        "numeric.bottom/en-us/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 128..128. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/dark/dpi-1",
+      "successorIds": [
+        "numeric.bottom/en-us/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 129..129. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.bottom/en-us/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 130..130. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/en-us/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.bottom/en-us/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 131..131. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/light/dpi-1",
+      "successorIds": [
+        "numeric.bottom/de-de/light/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 132..132. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/light/dpi-1-25",
+      "successorIds": [
+        "numeric.bottom/de-de/light/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 133..133. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/light/dpi-1-5",
+      "successorIds": [
+        "numeric.bottom/de-de/light/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 134..134. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/dark/dpi-1",
+      "successorIds": [
+        "numeric.bottom/de-de/dark/dpi-1"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 135..135. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/dark/dpi-1-25",
+      "successorIds": [
+        "numeric.bottom/de-de/dark/dpi-1-25"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 136..136. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.bottom/de-de/dark/dpi-1-5",
+      "successorIds": [
+        "numeric.bottom/de-de/dark/dpi-1-5"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 137..137. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "numeric.lifecycle/run",
+      "successorIds": [
+        "numeric.lifecycle/run"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 138..138. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "input.clear/run",
+      "successorIds": [
+        "input.clear/construction",
+        "input.clear/geometry/en/light/wide",
+        "input.clear/geometry/en/light/narrow",
+        "input.clear/geometry/en/dark/wide",
+        "input.clear/geometry/en/dark/narrow",
+        "input.clear/geometry/zh-cn/light/wide",
+        "input.clear/geometry/zh-cn/light/narrow",
+        "input.clear/geometry/zh-cn/dark/wide",
+        "input.clear/geometry/zh-cn/dark/narrow",
+        "input.clear/geometry/zh-tw/light/wide",
+        "input.clear/geometry/zh-tw/light/narrow",
+        "input.clear/geometry/zh-tw/dark/wide",
+        "input.clear/geometry/zh-tw/dark/narrow",
+        "input.clear/geometry/ja/light/wide",
+        "input.clear/geometry/ja/light/narrow",
+        "input.clear/geometry/ja/dark/wide",
+        "input.clear/geometry/ja/dark/narrow",
+        "input.clear/geometry/ko/light/wide",
+        "input.clear/geometry/ko/light/narrow",
+        "input.clear/geometry/ko/dark/wide",
+        "input.clear/geometry/ko/dark/narrow",
+        "input.clear/geometry/ru/light/wide",
+        "input.clear/geometry/ru/light/narrow",
+        "input.clear/geometry/ru/dark/wide",
+        "input.clear/geometry/ru/dark/narrow",
+        "input.clear/geometry/tr/light/wide",
+        "input.clear/geometry/tr/light/narrow",
+        "input.clear/geometry/tr/dark/wide",
+        "input.clear/geometry/tr/dark/narrow",
+        "input.clear/activation/apikey",
+        "input.clear/activation/searchquery",
+        "input.clear/activation/voiceidinput",
+        "input.clear/password-compatibility/visible",
+        "input.clear/password-compatibility/peek"
+      ],
+      "responsibility": "Preserves the original complete native-settings scene bodies and same-owner transition chains through suite-local typed calls in profile ordinals 139..172. Source candidate only; no runtime conservation or retirement authorization. See typed-bindings.json."
+    },
+    {
+      "originalId": "runner.contracts/selection",
+      "successorIds": [
+        "infra.runner/selection/snapshot-input-boundary",
+        "infra.runner/selection/verifier-requires-complete-catalog",
+        "infra.runner/selection/captures-the-owned-throw-and-caller-frames",
+        "infra.runner/selection/omits-framework-frames-and-bounds-owned-recursion",
+        "infra.runner/selection/serializes-only-approved-fields-without-private-exception-content",
+        "infra.runner/selection/retains-only-the-bounded-native-fixture-grammar",
+        "infra.runner/selection/handles-missing-physical-stack-without-using-remote-stack-text",
+        "infra.runner/selection/leaves-the-primary-exception-and-its-cleanup-evidence-unchanged",
+        "infra.runner/selection/sidecars-remain-secondary-to-the-original-outcome",
+        "infra.runner/selection/reader-drain-cannot-replace-the-writer-failure",
+        "infra.runner/selection/observed-reader-failure-cannot-authorize-writer",
+        "infra.runner/selection/terminal-readers-cannot-wait-for-unpublished-readiness",
+        "infra.runner/selection/reader-fixture-cleanup-preserves-primary-and-attempts-every-release",
+        "infra.runner/selection/reader-fixture-root-includes-setup-and-every-cleanup",
+        "infra.runner/selection/held-canonical-cannot-fail-durable-updates-or-repeat-actions",
+        "infra.runner/selection/initial-ownership-and-authoritative-failures-remain-strict",
+        "infra.runner/selection/concurrent-readers-cannot-block-immutable-updates",
+        "infra.runner/selection/stale-projection-replays-only-latest-incomplete-coverage",
+        "infra.runner/selection/canonical-and-latest-generation-tampering-cannot-authorize-reuse",
+        "infra.runner/selection/unreadable-or-missing-canonical-recovery-is-conservative",
+        "infra.runner/selection/bare-schema-one-reports-remain-compatible",
+        "infra.runner/selection/git-fixture-waits-for-the-same-process-beyond-five-seconds",
+        "infra.runner/selection/source-checkout-owner-preserves-failures-and-one-root",
+        "infra.runner/selection/native-owner-aliases-preserve-boundaries-and-recovery",
+        "infra.runner/historical-streaming-descriptor-alias-rules",
+        "infra.runner/selection/final-failure-summary-includes-every-failed-owner",
+        "infra.runner/selection/selection-unions-in-catalog-order-and-constrains-partitions",
+        "infra.runner/selection/invalid-and-empty-selections-cannot-execute",
+        "infra.runner/selection/listing-never-executes",
+        "infra.runner/selection/clean-source-identity-consistency-does-not-depend-on-caller-state",
+        "infra.runner/selection/failure-is-durable-and-replay-does-not-rewrite-it",
+        "infra.runner/selection/expired-fixture-entries-do-not-prevent-deletion",
+        "infra.runner/selection/fixture-cleanup-retains-its-primary-failure",
+        "infra.runner/selection/incremental-results-precede-delegates",
+        "infra.runner/selection/impact-selection-keeps-shared-and-unknown-dependencies-conservative",
+        "infra.runner/selection/leaf-impact-rules-avoid-unrelated-layout-and-explain-shared-expansion",
+        "infra.runner/selection/recovery-maps-clean-repairs-and-retains-reverted-dirty-scope",
+        "infra.runner/selection/provider-and-preview-leaf-rules-retain-direct-consumers",
+        "infra.runner/selection/source-identity-and-affected-scope-ignore-foreign-working-directory"
+      ],
+      "responsibility": "Transfers every independent original selection callback, including seven failure-evidence and twelve immutable-report workflows, while preserving continuous source/report/replay fixture ownership. Retains snapshot input confinement, exact alias union/order/exclusion, unknown and empty rejection, failed/not-run/source-drift replay and original generation bytes, current-directory-independent source identity, signed Git fixture verification, root deadlines and primary-cleanup failure identity. The existing historical-streaming descriptor NUnit case remains the explicit successor for that already-separated responsibility."
+    },
+    {
+      "originalId": "runner.process/run-all",
+      "successorIds": [
+        "infra.runner/process/playback-timeout-assertions-cannot-accept-their-own-guard",
+        "infra.runner/process/playback-stall-clock-requires-the-outstanding-data-baseline",
+        "infra.runner/process/pure-owners-use-independent-deadlines-and-preserve-original-errors",
+        "infra.runner/process/warning-and-hard-deadline-use-the-original-queued-clock",
+        "infra.runner/process/separate-roots-and-startup-do-not-become-an-aggregate-deadline",
+        "infra.runner/process/action-context-survives-await-and-nested-off-sta-dispatch",
+        "infra.runner/process/strict-evidence-rejects-foreign-incomplete-and-reordered-manifests",
+        "infra.runner/process/atomic-evidence-replacement-preserves-an-open-reader-snapshot",
+        "infra.runner/process/concurrent-immutable-snapshots-never-compete-with-the-writer",
+        "infra.runner/process/child-completion-never-replaces-an-active-manifest",
+        "infra.runner/process/child-publication-failure-preserves-the-owned-failure",
+        "infra.runner/process/fake-transport-stops-only-the-failed-partition",
+        "infra.runner/process/fake-transport-cannot-rehabilitate-the-same-late-action",
+        "infra.runner/process/fake-transport-rejects-unconfirmed-passes",
+        "infra.runner/process/exit-cannot-skip-completion-frames-queued-by-the-final-drain",
+        "infra.runner/process/pipe-cleanup-cannot-replace-adurable-case-failure",
+        "infra.runner/process/progress-cleanup-joins-an-unstarted-consumer-after-failure",
+        "infra.runner/process/blocked-progress-cannot-block-supervision-and-retires-queued-writes",
+        "infra.runner/process/listing-never-starts-aprocess",
+        "infra.runner/process/real-children-drain-both-pipes-and-require-final-evidence",
+        "infra.runner/process/real-child-hard-expiry-kills-its-descendant",
+        "infra.runner/process/legacy-requests-retain-private-arguments-and-use-the-same-host"
+      ],
+      "responsibility": "Transfers all22 independent original process/watchdog scenarios without changing their complete bodies. Preserves queued20s/120s and separate startup guards, same-root await/nested context, independent action budgets, causal product-timeout assertions, immutable manifest/readers, failed-partition isolation with continued independent partitions, unconfirmed/late-result rejection, progress ownership, actual child/descendant exit, both original drains, final evidence and primary failure through cleanup. Synthetic five-partition fixtures remain legacy protocol controls."
+    },
+    {
+      "originalId": "runner.ci/verification",
+      "successorIds": [
+        "infra.runner/ci-verification/evidence-snapshots-ignore-temporary-replacement-files",
+        "infra.runner/ci-verification/cached-job-views-retain-their-actual-execution-owners",
+        "infra.runner/ci-verification/unauthenticated-cached-views-cannot-borrow-old-success",
+        "infra.runner/ci-verification/attempt-fences-must-describe-the-complete-history",
+        "infra.runner/ci-verification/ambiguous-new-attempt-cannot-borrow-an-earlier-pass",
+        "infra.runner/ci-verification/latest-missing-attempt-cannot-borrow-an-older-pass",
+        "infra.runner/ci-verification/compact-reports-retain-exact-coverage-without-executing-delegates",
+        "infra.runner/ci-verification/selective-recovery-uses-each-latest-attempt-and-preserves-old-evidence",
+        "infra.runner/ci-verification/gate-only-rerun-retains-older-completed-siblings",
+        "infra.runner/ci-verification/coverage-must-match-registry-rather-than-counts",
+        "infra.runner/ci-verification/selected-reports-require-physical-identity-and-final-outcomes",
+        "infra.runner/ci-verification/duplicate-identity-properties-cannot-use-last-value-wins",
+        "infra.runner/ci-verification/parent-and-child-evidence-cannot-disagree",
+        "infra.runner/ci-verification/job-and-artifact-owners-must-be-unambiguous",
+        "infra.runner/ci-verification/cli-rejects-unknown-arguments-without-printing-private-values"
+      ],
+      "responsibility": "Transfers all15 independent original legacy CI evidence scenarios without changing their complete bodies. Retains committed-generation snapshots, complete history/fences and cached execution witnesses, newest failure/missing/ambiguous owner rejection, exact physical catalog/source/build/outcome coverage, selective recovery with unchanged older evidence, parent/child and duplicate identity rejection, unambiguous job/artifact ownership and controlled CLI privacy diagnostics. Current whole-hybrid CI admission remains independently tested by its own consumers."
+    },
+    {
+      "originalId": "runner.ci/infrastructure",
+      "successorIds": [
+        "infra.runner/ci-infrastructure/capture-uses-only-the-explicit-producer-environment",
+        "infra.runner/ci-infrastructure/runner-and-child-forward-the-same-immutable-owner",
+        "infra.runner/ci-infrastructure/real-power-shell-helpers-preserve-evidence-and-complete-pagination"
+      ],
+      "responsibility": "Transfers all3 independent original CI infrastructure workflows without changing their complete bodies. Retains explicit producer-only identity capture, immutable parent/request/child/report owner serialization, unmarked fake-run isolation and the actual PowerShell collection/pagination fixture with authoritative generations, preserved evidence, process exit, both drains, original shared root deadline and cleanup ownership."
+    },
+    {
+      "originalId": "runner.execution/run",
+      "successorIds": [
+        "infra.runner/execution/invalid-guards-do-not-dispatch-or-warm-sta",
+        "infra.runner/execution/original-deadline-and-late-completion-keep-the-same-task/nongeneric",
+        "infra.runner/execution/original-deadline-and-late-completion-keep-the-same-task/generic",
+        "infra.runner/execution/warning-retires-without-renewing-the-deadline/nongeneric",
+        "infra.runner/execution/warning-retires-without-renewing-the-deadline/generic",
+        "infra.runner/execution/warning-failure-cannot-replace-the-deadline",
+        "infra.runner/execution/completed-fault-retains-its-original-exception/nongeneric",
+        "infra.runner/execution/completed-fault-retains-its-original-exception/generic",
+        "infra.runner/execution/guard-follows-the-original-task-across-await"
+      ],
+      "responsibility": "Transfers the original pure execution contract into nine explicit NUnit paths. Preserves invalid/positive guard checks before STA dispatch, generic and nongeneric original-task identity, exact 20s warning and 120000ms expiry, late-completion failure identity, warning faults, owned exceptions and completion across await. Each path retains the no-STA-warmup observation in its fresh host."
+    },
+    {
+      "originalId": "runner.contracts/catalog",
+      "successorIds": [
+        "infra.runner/catalog/remaining-legacy-ids-and-partitions-are-complete",
+        "infra.runner/catalog/static-card-contexts-keep-every-original-boundary",
+        "infra.runner/catalog/dynamic-card-behaviors-keep-every-original-boundary",
+        "infra.runner/catalog/remaining-native-aliases-keep-their-exact-ordered-owners",
+        "infra.runner/catalog/offline-dispatcher-and-input-requests-remain-core",
+        "infra.runner/catalog/original-legacy-argument-shapes-remain-valid",
+        "infra.runner/catalog/invalid-legacy-argument-combinations-reject-before-fixture",
+        "infra.runner/catalog/current-native-settings-ownership"
+      ],
+      "responsibility": "Retains complete current legacy card matrices, remaining native aliases and catalog order, strict legacy argument shapes and offline request/dispatcher ownership. Replaces the historical legacy-only native-settings assumptions with actual current raw discovery and the typed identity/metadata/execution/HybridExecutionSlotPlan readers: all94 original owners and173 successors, exact ordered profile ordinals, one plugin assembly, desktop exclusion and maximum concurrency1. Preserves the full cold listener/password prefix and ink25/glyph1/compact48/bottom12/continuous-lifecycle1/InputClear34 anchors. Identity admission does not independently prove assertion or lifecycle conservation."
     }
   ]
 }
