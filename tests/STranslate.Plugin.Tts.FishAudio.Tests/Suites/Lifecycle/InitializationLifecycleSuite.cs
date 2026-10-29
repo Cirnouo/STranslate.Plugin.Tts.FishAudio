@@ -69,42 +69,60 @@ internal static class InitializationLifecycleSuite
         AssertEqual(1, newContextProxy.SaveCount, "Replacement ViewModel edits should save through the second Context");
     });
 
-    internal static async Task ReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/reinitialization-retires-old-view-model-without-saving-shared-backing-store")]
+    [NUnit.Framework.Property("OriginalOrdinal", 122)]
+    [NUnit.Framework.Order(122)]
+    public static Task ReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync() =>
+        RunReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync();
+
+    internal static async Task RunReinitializationRetiresOldViewModelWithoutSavingSharedBackingStoreAsync(
+        Action<NUnitCompatibility.PublishedInitializationObservation>? onAcquired = null)
     {
         using var network = OverrideNetworkAvailability(false);
-        var backingStore = new SharedSettingsBackingStore(new Settings
+        var owner = new PublishedInitializationFixtureOwner();
+        await owner.RunAsync(async () =>
         {
-            ApiKey = AppliedKey,
-            SelectedModel = FishAudioModelPolicy.S2ProModel,
+            var backingStore = new SharedSettingsBackingStore(new Settings
+            {
+                ApiKey = AppliedKey,
+                SelectedModel = FishAudioModelPolicy.S2ProModel,
+            });
+            var oldContext = CreateContext();
+            var oldContextProxy = (ContextProxy)(object)oldContext;
+            oldContextProxy.LoadSettings = backingStore.Load;
+            oldContextProxy.SaveSettings = backingStore.Save;
+            var plugin = new Main();
+            owner.Plugin = plugin;
+
+            plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            owner.CapturePublishedWork();
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+            _ = plugin.GetOrCreateSettingsViewModel();
+            owner.CapturePublishedWork();
+
+            backingStore.Replace(new Settings
+            {
+                ApiKey = DraftKey,
+                SelectedModel = FishAudioModelPolicy.S1Model,
+            });
+            var newContext = CreateContext();
+            var newContextProxy = (ContextProxy)(object)newContext;
+            newContextProxy.LoadSettings = backingStore.Load;
+            newContextProxy.SaveSettings = backingStore.Save;
+
+            plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            owner.CapturePublishedWork();
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+            var newViewModel = plugin.GetOrCreateSettingsViewModel();
+            owner.CapturePublishedWork();
+            var finalSnapshot = backingStore.Load();
+            onAcquired?.Invoke(owner.Observe());
+
+            AssertEqual(DraftKey, newViewModel.ApiKey, "The replacement ViewModel should use the latest shared backing-store settings");
+            AssertEqual(DraftKey, finalSnapshot.ApiKey, "Retiring the old ViewModel should not overwrite the replacement backing-store snapshot");
+            AssertEqual(0, oldContextProxy.SaveCount, "Retiring an already auto-saved ViewModel should not issue a redundant host save");
         });
-        var oldContext = CreateContext();
-        var oldContextProxy = (ContextProxy)(object)oldContext;
-        oldContextProxy.LoadSettings = backingStore.Load;
-        oldContextProxy.SaveSettings = backingStore.Save;
-        var plugin = new Main();
-
-        plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-        _ = plugin.GetOrCreateSettingsViewModel();
-
-        backingStore.Replace(new Settings
-        {
-            ApiKey = DraftKey,
-            SelectedModel = FishAudioModelPolicy.S1Model,
-        });
-        var newContext = CreateContext();
-        var newContextProxy = (ContextProxy)(object)newContext;
-        newContextProxy.LoadSettings = backingStore.Load;
-        newContextProxy.SaveSettings = backingStore.Save;
-
-        plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-        var newViewModel = plugin.GetOrCreateSettingsViewModel();
-        var finalSnapshot = backingStore.Load();
-
-        AssertEqual(DraftKey, newViewModel.ApiKey, "The replacement ViewModel should use the latest shared backing-store settings");
-        AssertEqual(DraftKey, finalSnapshot.ApiKey, "Retiring the old ViewModel should not overwrite the replacement backing-store snapshot");
-        AssertEqual(0, oldContextProxy.SaveCount, "Retiring an already auto-saved ViewModel should not issue a redundant host save");
     }
 
     internal static async Task StartupSettingsSaveWinsBeforeFailedReplacementTransitionAsync()
@@ -383,29 +401,46 @@ internal static class InitializationLifecycleSuite
         AssertEqual(1, factoryContextProxy.SaveCount, "A failed replacement ViewModel construction should restore the old write lease");
     }
 
-    internal static void DisposeRetiresSettingsWriteLease()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/dispose-retires-settings-write-lease")]
+    [NUnit.Framework.Property("OriginalOrdinal", 128)]
+    [NUnit.Framework.Order(128)]
+    public static Task DisposeRetiresSettingsWriteLease() =>
+        RunDisposeRetiresSettingsWriteLeaseAsync();
+
+    internal static async Task RunDisposeRetiresSettingsWriteLeaseAsync(
+        Action<NUnitCompatibility.PublishedInitializationObservation>? onAcquired = null)
     {
         using var network = OverrideNetworkAvailability(false);
-        Settings? runtimeSettings = null;
-        var plugin = new Main((context, settings, settingsWriteLease, startupCreditRefreshCycle) =>
+        var owner = new PublishedInitializationFixtureOwner();
+        await owner.RunAsync(() =>
         {
-            runtimeSettings = settings;
-            return new SettingsViewModel(
-                context,
-                settings,
-                clearCoverImageCacheAsync: null,
-                clearCoverImageCacheTimeout: null,
-                startupCreditRefreshCycle: startupCreditRefreshCycle,
-                settingsWriteLease: settingsWriteLease);
-        });
-        plugin.Init(
-            CreateContext(settings: new Settings { ApiKey = AppliedKey }),
-            FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        _ = plugin.GetOrCreateSettingsViewModel();
+            Settings? runtimeSettings = null;
+            var plugin = new Main((context, settings, settingsWriteLease, startupCreditRefreshCycle) =>
+            {
+                runtimeSettings = settings;
+                return new SettingsViewModel(
+                    context,
+                    settings,
+                    clearCoverImageCacheAsync: null,
+                    clearCoverImageCacheTimeout: null,
+                    startupCreditRefreshCycle: startupCreditRefreshCycle,
+                    settingsWriteLease: settingsWriteLease);
+            });
+            owner.Plugin = plugin;
+            plugin.Init(
+                CreateContext(settings: new Settings { ApiKey = AppliedKey }),
+                FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            owner.CapturePublishedWork();
+            _ = plugin.GetOrCreateSettingsViewModel();
+            owner.CapturePublishedWork();
 
-        AssertEqual(true, runtimeSettings?.ActiveWriteLease != 0, "Initialization should grant the detached runtime Settings a write lease");
-        plugin.Dispose();
-        AssertEqual(0L, runtimeSettings?.ActiveWriteLease, "Dispose should retire the detached runtime Settings write lease");
+            AssertEqual(true, runtimeSettings?.ActiveWriteLease != 0, "Initialization should grant the detached runtime Settings a write lease");
+            onAcquired?.Invoke(owner.Observe(runtimeSettings: runtimeSettings));
+            plugin.Dispose();
+            AssertEqual(0L, runtimeSettings?.ActiveWriteLease, "Dispose should retire the detached runtime Settings write lease");
+            return Task.CompletedTask;
+        });
     }
 
     internal static async Task OvertakenInitializationSkipsSettingsLoadAsync()
@@ -495,130 +530,177 @@ internal static class InitializationLifecycleSuite
         AssertEqual(DraftKey, backingStore.Load().ApiKey, "The serialized old save and replacement Load should leave backing storage consistent");
     }
 
-    internal static void ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport()
-    {
-        var expectedCutoff = new DateTimeOffset(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
-        var lastFreeInstant = expectedCutoff.AddTicks(-1);
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/model-policy-uses-cutoff-defaults-and-normalize-loudness-support")]
+    [NUnit.Framework.Property("OriginalOrdinal", 132)]
+    [NUnit.Framework.Order(132)]
+    public static Task ModelPolicyUsesCutoffDefaultsAndNormalizeLoudnessSupport() =>
+        RegressionFixtureOwner.RunAsync(async () =>
+        {
+            var expectedCutoff = new DateTimeOffset(2026, 12, 1, 0, 0, 0, TimeSpan.Zero);
+            var lastFreeInstant = expectedCutoff.AddTicks(-1);
 
-        AssertEqual(expectedCutoff, FishAudioModelPolicy.FreeModelCutoffUtc, "Free model cutoff should be December 1, 2026 UTC");
+            AssertEqual(expectedCutoff, FishAudioModelPolicy.FreeModelCutoffUtc, "Free model cutoff should be December 1, 2026 UTC");
 
-        AssertEnumerableEqual(
-            new[]
+            AssertEnumerableEqual(
+                new[]
+                {
+                    FishAudioModelPolicy.S21ProFreeModel,
+                    FishAudioModelPolicy.Drama3Model,
+                    FishAudioModelPolicy.S21ProModel,
+                    FishAudioModelPolicy.S2ProModel,
+                    FishAudioModelPolicy.S1Model,
+                },
+                FishAudioModelPolicy.GetAvailableModels(lastFreeInstant),
+                "Free model should remain available through the last tick of November 30 UTC");
+            AssertEqual(FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of November 30 UTC");
+
+            AssertEnumerableEqual(
+                new[] { FishAudioModelPolicy.Drama3Model, FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel, FishAudioModelPolicy.S1Model },
+                FishAudioModelPolicy.GetAvailableModels(expectedCutoff),
+                "Free model should be unavailable at December 1 UTC");
+            AssertEqual(FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at December 1 UTC");
+
+            AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProFreeModel), "s2.1-pro-free should support normalize_loudness");
+            AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProModel), "s2.1-pro should support normalize_loudness");
+            AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S2ProModel), "s2-pro should support normalize_loudness");
+            AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S1Model), "s1 should not support normalize_loudness");
+
+            using (OverrideLocalUtcNow(lastFreeInstant))
             {
-                FishAudioModelPolicy.S21ProFreeModel,
-                FishAudioModelPolicy.Drama3Model,
-                FishAudioModelPolicy.S21ProModel,
-                FishAudioModelPolicy.S2ProModel,
-                FishAudioModelPolicy.S1Model,
-            },
-            FishAudioModelPolicy.GetAvailableModels(lastFreeInstant),
-            "Free model should remain available through the last tick of November 30 UTC");
-        AssertEqual(FishAudioModelPolicy.S21ProFreeModel, FishAudioModelPolicy.GetDefaultModel(lastFreeInstant), "Free model should remain the default through the last tick of November 30 UTC");
+                var owner = new PublishedInitializationFixtureOwner();
+                await owner.RunAsync(() =>
+                {
+                    var settings = new Settings();
+                    var plugin = new Main();
+                    owner.Plugin = plugin;
+                    plugin.Init(CreateContext(settings: settings), lastFreeInstant);
+                    owner.CapturePublishedWork();
+                    AssertEqual(FishAudioModelPolicy.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default through the last tick of November 30 UTC");
+                    return Task.CompletedTask;
+                });
+            }
 
-        AssertEnumerableEqual(
-            new[] { FishAudioModelPolicy.Drama3Model, FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.S2ProModel, FishAudioModelPolicy.S1Model },
-            FishAudioModelPolicy.GetAvailableModels(expectedCutoff),
-            "Free model should be unavailable at December 1 UTC");
-        AssertEqual(FishAudioModelPolicy.S21ProModel, FishAudioModelPolicy.GetDefaultModel(expectedCutoff), "s2.1-pro should be the default at December 1 UTC");
+            using (OverrideLocalUtcNow(expectedCutoff))
+            {
+                var owner = new PublishedInitializationFixtureOwner();
+                await owner.RunAsync(() =>
+                {
+                    var settings = new Settings();
+                    var plugin = new Main();
+                    owner.Plugin = plugin;
+                    plugin.Init(CreateContext(settings: settings), expectedCutoff);
+                    owner.CapturePublishedWork();
+                    AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at December 1 UTC");
+                    return Task.CompletedTask;
+                });
+            }
+        });
 
-        AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProFreeModel), "s2.1-pro-free should support normalize_loudness");
-        AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S21ProModel), "s2.1-pro should support normalize_loudness");
-        AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S2ProModel), "s2-pro should support normalize_loudness");
-        AssertEqual(false, FishAudioModelPolicy.SupportsNormalizeLoudness(FishAudioModelPolicy.S1Model), "s1 should not support normalize_loudness");
-
-        using (OverrideLocalUtcNow(lastFreeInstant))
-        {
-            var settings = new Settings();
-            new Main().Init(CreateContext(settings: settings), lastFreeInstant);
-            AssertEqual(FishAudioModelPolicy.S21ProFreeModel, settings.SelectedModel, "New settings should use the free model default through the last tick of November 30 UTC");
-        }
-
-        using (OverrideLocalUtcNow(expectedCutoff))
-        {
-            var settings = new Settings();
-            new Main().Init(CreateContext(settings: settings), expectedCutoff);
-            AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "New settings should use s2.1-pro as the default at December 1 UTC");
-        }
-    }
-
-    internal static void MainInitNormalizesStructuredSettingsWithoutClearingKeys()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/main-init-normalizes-structured-settings-without-clearing-keys")]
+    [NUnit.Framework.Property("OriginalOrdinal", 134)]
+    [NUnit.Framework.Order(134)]
+    public static Task MainInitNormalizesStructuredSettingsWithoutClearingKeys()
     {
-        var settings = new Settings
+        var owner = new PublishedInitializationFixtureOwner();
+        return owner.RunAsync(() =>
         {
-            ApiKey = "ABC",
-            VoiceId = "not-a-voice-id",
-            SelectedModel = FishAudioModelPolicy.S21ProFreeModel,
-            Latency = "turbo",
-            Mp3Bitrate = 999,
-            Speed = 10,
-            Volume = -100,
-            Temperature = 8,
-            TopP = -2,
-        };
-        var context = CreateContext(settings: settings);
-        var proxy = (ContextProxy)(object)context;
-        var plugin = new Main();
-
-        plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc);
-
-        AssertEqual("ABC", settings.ApiKey, "Startup normalization should not clear malformed API Key text");
-        AssertEqual("not-a-voice-id", settings.VoiceId, "Startup normalization should not clear malformed Voice ID text");
-        AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "Expired persisted free model should normalize to the current default");
-        AssertEqual("normal", settings.Latency, "Invalid latency should normalize to default");
-        AssertEqual(192, settings.Mp3Bitrate, "Invalid MP3 bitrate should normalize to default");
-        AssertEqual(1.0, settings.Speed, "Invalid speed should normalize to default");
-        AssertEqual(0.0, settings.Volume, "Invalid volume should normalize to default");
-        AssertEqual(0.7, settings.Temperature, "Invalid temperature should normalize to default");
-        AssertEqual(0.7, settings.TopP, "Invalid top_p should normalize to default");
-        AssertEqual(1, proxy.SaveCount, "Startup normalization should save corrected settings once");
-    }
-
-    internal static async Task StartupRefreshSelectedVoiceMetadataAsync()
-    {
-        foreach (var apiKey in new[] { "configured-startup-key", "", " \t" })
-        {
-            using var network = OverrideNetworkAvailability(true);
             var settings = new Settings
             {
-                ApiKey = apiKey,
-                VoiceId = "fedcba9876543210fedcba9876543210",
-                CachedVoice = new CachedVoiceInfo { Title = "Old", CoverImage = "old" },
+                ApiKey = "ABC",
+                VoiceId = "not-a-voice-id",
+                SelectedModel = FishAudioModelPolicy.S21ProFreeModel,
+                Latency = "turbo",
+                Mp3Bitrate = 999,
+                Speed = 10,
+                Volume = -100,
+                Temperature = 8,
+                TopP = -2,
             };
-            var (httpService, http) = TestHttpServiceProxy.Create();
-            http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Fresh Voice\",\"description\":\"Fresh description\",\"cover_image\":\"fresh-cover\",\"samples\":[{\"audio\":\"https://audio.example/fresh.mp3\"}],\"task_count\":42,\"author\":{\"nickname\":\"Fresh Author\"}}";
-            var context = CreateContext(settings: settings, httpService: httpService);
+            var context = CreateContext(settings: settings);
             var proxy = (ContextProxy)(object)context;
             var plugin = new Main();
+            owner.Plugin = plugin;
 
-            plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+            plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc);
+            owner.CapturePublishedWork();
 
-            AssertEqual(true, http.LastGetUrl?.Contains("/model/fedcba9876543210fedcba9876543210", StringComparison.Ordinal), "Startup refresh should call Get Model for the selected voice");
-            var headers = AssertHeaders(http.LastGetOptions, "Startup voice refresh should send Authorization headers");
-            AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(apiKey) ? "dummy" : apiKey)}", headers["Authorization"], "Startup voice refresh should use the configured key without TTS validation");
-            AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update cached voice title");
-            AssertEqual("Fresh description", settings.CachedVoice?.Description, "Startup voice refresh should update cached voice description");
-            AssertEqual("fresh-cover", settings.CachedVoice?.CoverImage, "Startup voice refresh should update cached voice image");
-            AssertEqual("Fresh Author", settings.CachedVoice?.AuthorName, "Startup voice refresh should update cached voice author");
-            AssertEqual(42, settings.CachedVoice?.TaskCount, "Startup voice refresh should update cached voice task count");
-            AssertEqual("https://audio.example/fresh.mp3", settings.CachedVoice?.SampleAudioUrl, "Startup voice refresh should update cached sample URL");
-            AssertEqual(1, proxy.SaveCount, "Successful startup voice refresh should save updated cached voice");
-
-            network.Set(false);
-            settings = new Settings
-            {
-                VoiceId = "0123456789abcdef0123456789abcdef",
-                CachedVoice = new CachedVoiceInfo { Title = "Keep" },
-            };
-            (httpService, http) = TestHttpServiceProxy.Create();
-            plugin = new Main();
-            plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-
-            AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
-            AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
-        }
+            AssertEqual("ABC", settings.ApiKey, "Startup normalization should not clear malformed API Key text");
+            AssertEqual("not-a-voice-id", settings.VoiceId, "Startup normalization should not clear malformed Voice ID text");
+            AssertEqual(FishAudioModelPolicy.S21ProModel, settings.SelectedModel, "Expired persisted free model should normalize to the current default");
+            AssertEqual("normal", settings.Latency, "Invalid latency should normalize to default");
+            AssertEqual(192, settings.Mp3Bitrate, "Invalid MP3 bitrate should normalize to default");
+            AssertEqual(1.0, settings.Speed, "Invalid speed should normalize to default");
+            AssertEqual(0.0, settings.Volume, "Invalid volume should normalize to default");
+            AssertEqual(0.7, settings.Temperature, "Invalid temperature should normalize to default");
+            AssertEqual(0.7, settings.TopP, "Invalid top_p should normalize to default");
+            AssertEqual(1, proxy.SaveCount, "Startup normalization should save corrected settings once");
+            return Task.CompletedTask;
+        });
     }
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/startup-refresh-selected-voice-metadata")]
+    [NUnit.Framework.Property("OriginalOrdinal", 135)]
+    [NUnit.Framework.Order(135)]
+    public static Task StartupRefreshSelectedVoiceMetadataAsync() =>
+        RegressionFixtureOwner.RunAsync(async () =>
+        {
+            foreach (var apiKey in new[] { "configured-startup-key", "", " \t" })
+            {
+                using var network = OverrideNetworkAvailability(true);
+                var settings = new Settings
+                {
+                    ApiKey = apiKey,
+                    VoiceId = "fedcba9876543210fedcba9876543210",
+                    CachedVoice = new CachedVoiceInfo { Title = "Old", CoverImage = "old" },
+                };
+                var (httpService, http) = TestHttpServiceProxy.Create();
+                http.GetResponseJson = "{\"_id\":\"fedcba9876543210fedcba9876543210\",\"title\":\"Fresh Voice\",\"description\":\"Fresh description\",\"cover_image\":\"fresh-cover\",\"samples\":[{\"audio\":\"https://audio.example/fresh.mp3\"}],\"task_count\":42,\"author\":{\"nickname\":\"Fresh Author\"}}";
+                var context = CreateContext(settings: settings, httpService: httpService);
+                var proxy = (ContextProxy)(object)context;
+                var plugin = new Main();
+
+                var owner1 = new PublishedInitializationFixtureOwner { Plugin = plugin };
+                await owner1.RunAsync(async () =>
+                {
+                    plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+                    owner1.CapturePublishedWork();
+                    await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+
+                    AssertEqual(true, http.LastGetUrl?.Contains("/model/fedcba9876543210fedcba9876543210", StringComparison.Ordinal), "Startup refresh should call Get Model for the selected voice");
+                    var headers = AssertHeaders(http.LastGetOptions, "Startup voice refresh should send Authorization headers");
+                    AssertEqual($"Bearer {(string.IsNullOrWhiteSpace(apiKey) ? "dummy" : apiKey)}", headers["Authorization"], "Startup voice refresh should use the configured key without TTS validation");
+                    AssertEqual("Fresh Voice", settings.CachedVoice?.Title, "Startup voice refresh should update cached voice title");
+                    AssertEqual("Fresh description", settings.CachedVoice?.Description, "Startup voice refresh should update cached voice description");
+                    AssertEqual("fresh-cover", settings.CachedVoice?.CoverImage, "Startup voice refresh should update cached voice image");
+                    AssertEqual("Fresh Author", settings.CachedVoice?.AuthorName, "Startup voice refresh should update cached voice author");
+                    AssertEqual(42, settings.CachedVoice?.TaskCount, "Startup voice refresh should update cached voice task count");
+                    AssertEqual("https://audio.example/fresh.mp3", settings.CachedVoice?.SampleAudioUrl, "Startup voice refresh should update cached sample URL");
+                    AssertEqual(1, proxy.SaveCount, "Successful startup voice refresh should save updated cached voice");
+                });
+
+                network.Set(false);
+                settings = new Settings
+                {
+                    VoiceId = "0123456789abcdef0123456789abcdef",
+                    CachedVoice = new CachedVoiceInfo { Title = "Keep" },
+                };
+                (httpService, http) = TestHttpServiceProxy.Create();
+                plugin = new Main();
+                var owner2 = new PublishedInitializationFixtureOwner { Plugin = plugin };
+                await owner2.RunAsync(async () =>
+                {
+                    plugin.Init(CreateContext(settings: settings, httpService: httpService), FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+                    owner2.CapturePublishedWork();
+                    await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+
+                    AssertEqual(0, http.GetCallCount, "Startup voice refresh should skip server call when offline");
+                    AssertEqual("Keep", settings.CachedVoice?.Title, "Skipped startup voice refresh should preserve cached voice");
+                });
+            }
+        });
 
     [NUnit.Framework.Test]
     [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/startup-metadata-rejects-changed-credentials")]
@@ -1386,45 +1468,60 @@ internal static class InitializationLifecycleSuite
         AssertEqual(FishAudioModelPolicy.S21ProModel, oldViewModel.SelectedModel, "A failed replacement should let the old ViewModel apply its authorized startup revision");
     }
 
-    internal static async Task StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/startup-refresh-dispose-cancels-pending-work-without-logging")]
+    [NUnit.Framework.Property("OriginalOrdinal", 150)]
+    [NUnit.Framework.Order(150)]
+    public static Task StartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync() =>
+        RunStartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync();
+
+    internal static async Task RunStartupRefreshDisposeCancelsPendingWorkWithoutLoggingAsync(
+        Action<NUnitCompatibility.PublishedInitializationObservation>? onAcquired = null)
     {
         using var network = OverrideNetworkAvailability(true);
-        var settings = new Settings
+        var owner = new PublishedInitializationFixtureOwner();
+        await owner.RunAsync(async () =>
         {
-            VoiceId = "fedcba9876543210fedcba9876543210",
-            CachedVoice = new CachedVoiceInfo { Title = "Keep" },
-        };
-        var (httpService, http) = TestHttpServiceProxy.Create();
-        var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var requestCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, ct) =>
-        {
-            requestStarted.SetResult();
-            ct.Register(() => requestCanceled.TrySetResult());
-            return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+            var settings = new Settings
             {
-                if (task.IsCanceled)
-                    throw new OperationCanceledException(ct);
-                return "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
-            }, CancellationToken.None);
-        };
-        var logger = new TestLogger();
-        var context = CreateContext(settings: settings, httpService: httpService, logger: logger);
-        var proxy = (ContextProxy)(object)context;
-        var plugin = new Main();
+                VoiceId = "fedcba9876543210fedcba9876543210",
+                CachedVoice = new CachedVoiceInfo { Title = "Keep" },
+            };
+            var (httpService, http) = TestHttpServiceProxy.Create();
+            var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var requestCanceled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            http.GetAsyncHandler = (_, _, ct) =>
+            {
+                requestStarted.SetResult();
+                ct.Register(() => requestCanceled.TrySetResult());
+                return Task.Delay(TimeSpan.FromSeconds(30), ct).ContinueWith<string>(task =>
+                {
+                    if (task.IsCanceled)
+                        throw new OperationCanceledException(ct);
+                    return "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
+                }, CancellationToken.None);
+            };
+            var logger = new TestLogger();
+            var context = CreateContext(settings: settings, httpService: httpService, logger: logger);
+            var proxy = (ContextProxy)(object)context;
+            var plugin = new Main();
+            owner.Plugin = plugin;
 
-        plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            plugin.Init(context, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            owner.CapturePublishedWork();
+            await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            onAcquired?.Invoke(owner.Observe(requestStarted: requestStarted.Task, requestCanceled: requestCanceled.Task));
 
-        var startupTask = plugin.PendingStartupTask;
-        plugin.Dispose();
+            var startupTask = plugin.PendingStartupTask;
+            plugin.Dispose();
 
-        await requestCanceled.Task.WaitAsync(RegressionExecution.Timeout);
-        await startupTask.WaitAsync(RegressionExecution.Timeout);
+            await requestCanceled.Task.WaitAsync(RegressionExecution.Timeout);
+            await startupTask.WaitAsync(RegressionExecution.Timeout);
 
-        AssertEqual("Keep", settings.CachedVoice?.Title, "Canceled startup refresh should preserve cached voice");
-        AssertEqual(0, proxy.SaveCount, "Canceled startup refresh should not save settings");
-        AssertEqual(false, logger.Contains("startup refresh failed"), "Canceled startup refresh should not log a failure warning");
+            AssertEqual("Keep", settings.CachedVoice?.Title, "Canceled startup refresh should preserve cached voice");
+            AssertEqual(0, proxy.SaveCount, "Canceled startup refresh should not save settings");
+            AssertEqual(false, logger.Contains("startup refresh failed"), "Canceled startup refresh should not log a failure warning");
+        });
     }
 
     internal static async Task StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync()
@@ -1464,42 +1561,60 @@ internal static class InitializationLifecycleSuite
         AssertEqual(false, logger.Contains("startup refresh failed"), "Startup cancellation after model response should not log failure");
     }
 
-    internal static async Task ReinitializedStartupRefreshCannotMutateNewSettingsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "lifecycle.initialization/reinitialized-startup-refresh-cannot-mutate-new-settings")]
+    [NUnit.Framework.Property("OriginalOrdinal", 152)]
+    [NUnit.Framework.Order(152)]
+    public static Task ReinitializedStartupRefreshCannotMutateNewSettingsAsync() =>
+        RunReinitializedStartupRefreshCannotMutateNewSettingsAsync();
+
+    internal static async Task RunReinitializedStartupRefreshCannotMutateNewSettingsAsync(
+        Action<NUnitCompatibility.PublishedInitializationObservation>? onAcquired = null)
     {
         using var network = OverrideNetworkAvailability(true);
-        var oldSettings = new Settings
+        var owner = new PublishedInitializationFixtureOwner();
+        await owner.RunAsync(async () =>
         {
-            VoiceId = "11111111111111111111111111111111",
-            CachedVoice = new CachedVoiceInfo { Title = "Old Keep" },
-        };
-        var newSettings = new Settings
-        {
-            VoiceId = "",
-            CachedVoice = new CachedVoiceInfo { Title = "New Keep" },
-        };
-        var oldRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
-        oldHttp.GetAsyncHandler = (_, _, _) => oldRelease.Task;
-        var oldContext = CreateContext(settings: oldSettings, httpService: oldHttpService);
-        var oldProxy = (ContextProxy)(object)oldContext;
+            var oldSettings = new Settings
+            {
+                VoiceId = "11111111111111111111111111111111",
+                CachedVoice = new CachedVoiceInfo { Title = "Old Keep" },
+            };
+            var newSettings = new Settings
+            {
+                VoiceId = "",
+                CachedVoice = new CachedVoiceInfo { Title = "New Keep" },
+            };
+            var oldRelease = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.ReleaseHeldResponse = () => oldRelease.TrySetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Old Should Not Leak\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            var (oldHttpService, oldHttp) = TestHttpServiceProxy.Create();
+            oldHttp.GetAsyncHandler = (_, _, _) => oldRelease.Task;
+            var oldContext = CreateContext(settings: oldSettings, httpService: oldHttpService);
+            var oldProxy = (ContextProxy)(object)oldContext;
 
-        var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
-        newHttp.GetResponseJson = "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
-        var newContext = CreateContext(settings: newSettings, httpService: newHttpService);
-        var newProxy = (ContextProxy)(object)newContext;
-        var plugin = new Main();
+            var (newHttpService, newHttp) = TestHttpServiceProxy.Create();
+            newHttp.GetResponseJson = "{\"dateTime\":\"2026-06-27T00:00:00Z\"}";
+            var newContext = CreateContext(settings: newSettings, httpService: newHttpService);
+            var newProxy = (ContextProxy)(object)newContext;
+            var plugin = new Main();
+            owner.Plugin = plugin;
 
-        plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        var oldStartupTask = plugin.PendingStartupTask;
-        plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
-        oldRelease.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Old Should Not Leak\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
-        await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+            plugin.Init(oldContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            var oldStartupTask = plugin.PendingStartupTask;
+            owner.CapturePublishedWork();
+            onAcquired?.Invoke(owner.Observe(response: oldRelease.Task));
+            plugin.Init(newContext, FishAudioModelPolicy.FreeModelCutoffUtc.AddDays(-1));
+            owner.CapturePublishedWork();
+            onAcquired?.Invoke(owner.Observe(response: oldRelease.Task));
+            oldRelease.SetResult("{\"_id\":\"11111111111111111111111111111111\",\"title\":\"Old Should Not Leak\",\"description\":\"\",\"cover_image\":\"\",\"samples\":[],\"task_count\":0}");
+            await oldStartupTask.WaitAsync(RegressionExecution.Timeout);
+            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
 
-        AssertEqual("Old Keep", oldSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate old settings after reinitialization");
-        AssertEqual("New Keep", newSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate new settings after reinitialization");
-        AssertEqual(0, oldProxy.SaveCount, "Canceled old startup refresh should not save old context after reinitialization");
-        AssertEqual(0, newProxy.SaveCount, "Canceled old startup refresh should not save new context after reinitialization");
+            AssertEqual("Old Keep", oldSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate old settings after reinitialization");
+            AssertEqual("New Keep", newSettings.CachedVoice?.Title, "Canceled old startup refresh should not mutate new settings after reinitialization");
+            AssertEqual(0, oldProxy.SaveCount, "Canceled old startup refresh should not save old context after reinitialization");
+            AssertEqual(0, newProxy.SaveCount, "Canceled old startup refresh should not save new context after reinitialization");
+        });
     }
 
     internal static void FinishWriteLeaseOwners(

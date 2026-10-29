@@ -52,9 +52,15 @@ internal static class CoverImageCacheSuite
         }
     }
 
-    internal static async Task CoverImageCacheCreatesMissedFileAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-creates-missed-file")]
+    [NUnit.Framework.Order(267)]
+    public static async Task CoverImageCacheCreatesMissedFileAsync()
     {
         var root = CreateTempDirectory();
+        Exception? primaryFailure = null;
+        Task? cacheTask = null;
+        Task? secondCacheTask = null;
         try
         {
             const string voiceId = "22222222222222222222222222222222";
@@ -69,6 +75,7 @@ internal static class CoverImageCacheSuite
             });
 
             var result = cache.ResolveCoverImageUrl(voiceId, coverImage, 128, url => callbackUrl = url);
+            cacheTask = result.CacheTask;
             var expectedRemoteUrl = "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/missed";
 
             AssertEqual(expectedRemoteUrl, result.DisplayUrl, "Missing cover image cache should return remote URL immediately");
@@ -84,17 +91,26 @@ internal static class CoverImageCacheSuite
             AssertEqual($"{bytes.Length} B", cache.GetFormattedCacheSize(), "Cache size should include newly downloaded cover image");
 
             var secondResult = cache.ResolveCoverImageUrl(voiceId, coverImage, 128);
+            secondCacheTask = secondResult.CacheTask;
             AssertEqual(new Uri(cachedFile).AbsoluteUri, secondResult.DisplayUrl, "Created cover image cache should be reused");
             AssertEqual(null, secondResult.CacheTask, "Created cover image cache should not create another download task");
             AssertEqual(1, downloadCount, "Created cover image cache should not download again");
         }
+        catch (Exception error)
+        {
+            primaryFailure = error;
+            throw;
+        }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            await CompleteCacheTasksAndDeleteOwnedRootAsync(root, primaryFailure, cacheTask, secondCacheTask);
         }
     }
 
-    internal static async Task CoverImageCacheRejectsInvalidDownloadsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-rejects-invalid-downloads")]
+    [NUnit.Framework.Order(268)]
+    public static async Task CoverImageCacheRejectsInvalidDownloadsAsync()
     {
         await AssertRejectedCoverDownloadAsync(
             "55555555555555555555555555555555",
@@ -114,9 +130,18 @@ internal static class CoverImageCacheSuite
             "Canceled cover image download should not be cached");
     }
 
-    internal static async Task CoverImageCacheCancelsSlowDownloadAfterTimeoutAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "voice.cover-cache/cover-image-cache-cancels-slow-download-after-timeout")]
+    [NUnit.Framework.Order(269)]
+    public static Task CoverImageCacheCancelsSlowDownloadAfterTimeoutAsync() =>
+        RunSlowCoverDownloadForOwnershipAsync();
+
+    internal static async Task RunSlowCoverDownloadForOwnershipAsync(
+        Action<NUnitCompatibility.CoverCacheOwnershipObservation>? onDownloadStarted = null)
     {
         var root = CreateTempDirectory();
+        Exception? primaryFailure = null;
+        Task? cacheTask = null;
         try
         {
             const string voiceId = "99999999999999999999999999999999";
@@ -137,8 +162,13 @@ internal static class CoverImageCacheSuite
             });
 
             var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/slow", 128, url => callbackUrl = url);
+            cacheTask = result.CacheTask;
 
             await downloadStarted.Task.WaitAsync(RegressionExecution.Timeout);
+            if (onDownloadStarted is not null)
+                onDownloadStarted(new NUnitCompatibility.CoverCacheOwnershipObservation(
+                    cacheTask ?? throw new InvalidOperationException("cover-cache-original-task-not-captured"),
+                    downloadStarted.Task, downloadCanceled.Task, root));
             await downloadCanceled.Task.WaitAsync(RegressionExecution.Timeout);
             await result.CacheTask!.WaitAsync(RegressionExecution.Timeout);
 
@@ -146,9 +176,14 @@ internal static class CoverImageCacheSuite
             AssertEqual(false, File.Exists(cachedFile), "Timed-out cover image download should not write a cache file");
             AssertEqual(null, callbackUrl, "Timed-out cover image download should keep the UI on the remote URL fallback");
         }
+        catch (Exception error)
+        {
+            primaryFailure = error;
+            throw;
+        }
         finally
         {
-            Directory.Delete(root, recursive: true);
+            await CompleteCacheTasksAndDeleteOwnedRootAsync(root, primaryFailure, cacheTask);
         }
     }
 
@@ -383,11 +418,14 @@ internal static class CoverImageCacheSuite
         string message)
     {
         var root = CreateTempDirectory();
+        Exception? primaryFailure = null;
+        Task? cacheTask = null;
         try
         {
             string? callbackUrl = null;
             var cache = new CoverImageCacheService(root, download);
             var result = cache.ResolveCoverImageUrl(voiceId, "coverimage/rejected", 128, url => callbackUrl = url);
+            cacheTask = result.CacheTask;
             var expectedRemoteUrl = "https://public-platform.r2.fish.audio/cdn-cgi/image/width=128,format=auto/coverimage/rejected";
 
             AssertEqual(expectedRemoteUrl, result.DisplayUrl, $"{message}: missing cache should return the remote URL fallback immediately");
@@ -400,9 +438,100 @@ internal static class CoverImageCacheSuite
             AssertEqual(null, callbackUrl, $"{message}: invalid download should not notify the UI with a local URL");
             AssertEqual("0 B", cache.GetFormattedCacheSize(), $"{message}: invalid download should not increase cache size");
         }
+        catch (Exception error)
+        {
+            primaryFailure = error;
+            throw;
+        }
         finally
         {
+            await CompleteCacheTasksAndDeleteOwnedRootAsync(root, primaryFailure, cacheTask);
+        }
+    }
+
+    private static async Task CompleteCacheTasksAndDeleteOwnedRootAsync(
+        string root,
+        Exception? primaryFailure,
+        params Task?[] cacheTasks)
+    {
+        Exception? cleanupFailure = null;
+        foreach (var cacheTask in cacheTasks)
+        {
+            if (cacheTask is null)
+                continue;
+
+            try
+            {
+                // Join the original work, including its callback and pending-entry finally.
+                await cacheTask;
+            }
+            catch (Exception error)
+            {
+                RecordCleanupFailure(error);
+            }
+        }
+
+        try
+        {
+            ValidateOwnedCacheRoot(root);
             Directory.Delete(root, recursive: true);
+        }
+        catch (Exception error)
+        {
+            RecordCleanupFailure(error);
+        }
+
+        if (primaryFailure is null && cleanupFailure is not null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(cleanupFailure).Throw();
+
+        void RecordCleanupFailure(Exception error)
+        {
+            var failure = primaryFailure ?? cleanupFailure;
+            if (failure is null)
+            {
+                cleanupFailure = error;
+                return;
+            }
+            if (ReferenceEquals(failure, error)) return;
+            try
+            {
+                if (failure.Data[RegressionFixtureOwner.CleanupTypesKey] is not List<string> types)
+                    failure.Data[RegressionFixtureOwner.CleanupTypesKey] = types = [];
+                types.Add(error.GetType().FullName ?? error.GetType().Name);
+            }
+            catch { /* Secondary diagnostics cannot replace the original failure. */ }
+        }
+    }
+
+    private static void ValidateOwnedCacheRoot(string root)
+    {
+        var fullRoot = Path.GetFullPath(root);
+        var expectedParent = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "FishAudioTests"));
+        var name = Path.GetFileName(fullRoot);
+        if (!Path.IsPathFullyQualified(root)
+            || !string.Equals(Path.GetDirectoryName(fullRoot), expectedParent, StringComparison.OrdinalIgnoreCase)
+            || !Guid.TryParseExact(name, "N", out var ownerId)
+            || !string.Equals(name, ownerId.ToString("N"), StringComparison.Ordinal))
+            throw new InvalidOperationException("cover-cache-cleanup-owner-invalid");
+
+        for (DirectoryInfo? directory = new(fullRoot); directory is not null; directory = directory.Parent)
+        {
+            if (!directory.Exists || (directory.Attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                throw new InvalidOperationException("cover-cache-cleanup-directory-invalid");
+        }
+
+        var pending = new Stack<string>();
+        pending.Push(fullRoot);
+        while (pending.Count != 0)
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(pending.Pop()))
+            {
+                var attributes = File.GetAttributes(entry);
+                if ((attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                    throw new InvalidOperationException("cover-cache-cleanup-entry-invalid");
+                if ((attributes & FileAttributes.Directory) != 0)
+                    pending.Push(entry);
+            }
         }
     }
 

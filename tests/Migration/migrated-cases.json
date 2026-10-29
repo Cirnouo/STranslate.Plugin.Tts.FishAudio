@@ -1707,6 +1707,97 @@
         "lifecycle.initialization/same-settings-instance-separates-old-and-new-view-model-write-leases"
       ],
       "responsibility": "Transfers original ordinal 126 to its direct NUnit method with the same canonical ID. The same host Settings and Context, both detached runtime Settings loads and actual write leases, both live ViewModels, the first Retire boundary, old and replacement API Key inputs, and all four assertion expressions/messages remain in their original order. The old ViewModel stays live through its rejected mutation, preserving the retired-lease oracle rather than replacing it with disposed-facade behavior. After the complete continuous chain, or a body failure, fixture cleanup independently retires each still-active acquired runtime settings/lease pair and disposes each returned ViewModel once; it does not retire the host Settings object. Original primary dispatch information takes priority, otherwise the first cleanup failure remains a failure. NonParallelizable retains serial ownership without a new Dispatcher, Main lifetime, command task, player, timer, shared ViewModel, execution budget or discovery-time fixture construction. The two separate ordinary body/load-failure ownership tests are not historical successors."
+    },
+    {
+      "originalId": "lifecycle.initialization/dispose-retires-settings-write-lease",
+      "successorIds": [
+        "lifecycle.initialization/dispose-retires-settings-write-lease"
+      ],
+      "responsibility": "Proposed source-only transfer of original ordinal 128 to the same canonical NUnit ID in InitializationLifecycleSuite. All original assertion expressions/messages, scenario action order and existing protective waits remain. One published offline state, factory-returned runtime Settings, real VM, original live-lease then Dispose then retired-lease assertions; no held construction/save barrier. Capture actual Work immediately after Init, then recapture the same Work after the original GetOrCreateSettingsViewModel only to retain that existing VM and actual nullable credit observer. After the complete original assertion chain or first failure, retire Main, join original StartupTask, every captured non-null observer and all actual nonempty retirement tasks independently. The same RegressionFixtureOwner owns both variants' root; GREEN alone supplies independent cleanup stages preserving the first primary; RED omits only those stages. NonParallelizable and original ordinal remain. The additional ordinary ownership fault case is not a historical successor. No compiler, discovery, RED/GREEN runtime, native, full gate or coverage result is claimed; early unpublished-state failure remains outside this published-state observation scope."
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-refresh-dispose-cancels-pending-work-without-logging",
+      "successorIds": [
+        "lifecycle.initialization/startup-refresh-dispose-cancels-pending-work-without-logging"
+      ],
+      "responsibility": "Proposed source-only transfer of original ordinal 150 to the same canonical NUnit ID in InitializationLifecycleSuite. All original assertion expressions/messages, scenario action order and existing protective waits remain. One published state with original cancellable 30-second fake request, requestStarted and requestCanceled signals; no VM or separate credit observer is constructed. Capture real Work immediately after Init and before any disposal; fault callback runs only after the original request-start wait; retains original startup and signals. After original body or failure, Dispose Main to cancel the same token, join original StartupTask and nonempty actual retirement tasks; no artificial response/release/observer task. The same RegressionFixtureOwner owns both variants' root; GREEN alone supplies independent cleanup stages preserving the first primary; RED omits only those stages. NonParallelizable and original ordinal remain. The additional ordinary ownership fault case is not a historical successor. No compiler, discovery, RED/GREEN runtime, native, full gate or coverage result is claimed; early unpublished-state failure remains outside this published-state observation scope."
+    },
+    {
+      "originalId": "lifecycle.initialization/reinitialized-startup-refresh-cannot-mutate-new-settings",
+      "successorIds": [
+        "lifecycle.initialization/reinitialized-startup-refresh-cannot-mutate-new-settings"
+      ],
+      "responsibility": "Proposed source-only transfer of original ordinal 152 to the same canonical NUnit ID in InitializationLifecycleSuite. All original assertion expressions/messages, scenario action order and existing protective waits remain. Two published states on the same Main; old cancellation-ignoring HTTP reply and oldStartupTask survive reinit; new startup has its own original Work. No VM exists. Capture first actual Work before reinit and second immediately after reinit, retain exact old reply/startup, and expose snapshots only after real acquisition. After original assertion chain or fault, Dispose current Main, release the same old reply, join both real StartupTasks and every actual retirement task; no observer or second synthesis is invented. The same RegressionFixtureOwner owns both variants' root; GREEN alone supplies independent cleanup stages preserving the first primary; RED omits only those stages. NonParallelizable and original ordinal remain. The additional ordinary ownership fault case is not a historical successor. No compiler, discovery, RED/GREEN runtime, native, full gate or coverage result is claimed; early unpublished-state failure remains outside this published-state observation scope."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-creates-missed-file",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-creates-missed-file"
+      ],
+      "responsibility": "Transfers original ordinal 267 to its same canonical NUnit ID. Preserves the complete missed-file creation, bytes, callback URL, formatted size and second cache-hit/no-redownload assertion chain in its original order. The fixture captures the first actual CacheTask immediately after Resolve and captures any unexpected second actual CacheTask before the original hit assertions; failure cleanup independently joins both actual tasks before validating/deleting only its owned Temp directory. NonParallelizable and original Order remain. Cleanup attempts every acquired stage and retains all secondary safe exception types on the original primary via the existing RegressionFixtureOwner data key, with no Console I/O; without a primary the first cleanup exception remains a failure. No replacement Task, retry, delay, poll, new execution budget, provider request or audio device is introduced. The separate focused normal and ownership-fault executions do not establish a full baseline."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-rejects-invalid-downloads",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-rejects-invalid-downloads"
+      ],
+      "responsibility": "Transfers original ordinal 268 to its same canonical NUnit ID. Preserves the four original empty, non-image, oversized and canceled download inputs in their original order as one complete scenario. The shared original assertion helper captures each actual CacheTask immediately after Resolve; failure cleanup joins it before validating/deleting only its owned Temp directory. No phase is split into a pseudo-case and every original assertion and protective WaitAsync remains. NonParallelizable and original Order remain. Cleanup attempts every acquired stage and retains all secondary safe exception types on the original primary via the existing RegressionFixtureOwner data key, with no Console I/O; without a primary the first cleanup exception remains a failure. No replacement Task, retry, delay, poll, new execution budget, provider request or audio device is introduced. The separate focused normal and ownership-fault executions do not establish a full baseline."
+    },
+    {
+      "originalId": "voice.cover-cache/cover-image-cache-cancels-slow-download-after-timeout",
+      "successorIds": [
+        "voice.cover-cache/cover-image-cache-cancels-slow-download-after-timeout"
+      ],
+      "responsibility": "Transfers original ordinal 269 to its same canonical NUnit ID. Preserves the original started/canceled signals, infinite fake download canceled by the real product ten-second timer, original CacheTask protective WaitAsync and both no-file/no-callback assertions. Immediately after the original started wait an optional non-null fault callback observes the actual pending CacheTask, original signals and owned root; the normal path constructs no observation. Failure cleanup joins that same CacheTask before validating/deleting its owned root. The separate ordinary fault case asserts readiness, primary identity, original Task success/cancellation and directory deletion before independent rescue; it is not a historical successor. NonParallelizable and original Order remain. Cleanup attempts every acquired stage and retains all secondary safe exception types on the original primary via the existing RegressionFixtureOwner data key, with no Console I/O; without a primary the first cleanup exception remains a failure. No replacement Task, retry, delay, poll, new execution budget, provider request or audio device is introduced. The separate focused normal and ownership-fault executions do not establish a full baseline."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-uses-old-initialization-while-reinit-load-is-blocked",
+      "successorIds": [
+        "streaming.tts/play-audio-uses-old-initialization-while-reinit-load-is-blocked"
+      ],
+      "responsibility": "Preserve the original blocked-load snapshot/key/model/old VM lock and replacement/cancellation/new VM/no whole-buffer assertions and waits. Capture original replacement and playback immediately, both published initialization Work holders and each actual VM/nullable credit observer. Failure cleanup first releases the same load barrier, awaits the same replacement and captures its published work before Main.Dispose, then joins playback/startup/observer/actual nonempty retirement tasks. Observed or explicitly retired cancellation is recognized only from the original genuinely IsCanceled playback Task. Unpublished construction remains outside captured publication scope."
+    },
+    {
+      "originalId": "streaming.tts/play-audio-uses-initialization-snapshot-across-reinit",
+      "successorIds": [
+        "streaming.tts/play-audio-uses-initialization-snapshot-across-reinit"
+      ],
+      "responsibility": "Preserve original two-state snapshot, old/new lock ownership, request counts/log secrecy, credit release and all original waits. Retain original oldPlayback, original newStartup and actual original credit reply, two published Work holders, both original VMs and every actual non-null observer. Cleanup releases the same credit reply before disposal/join, retains already observed cancellation and joins all actual startup/observer/retirement tasks without replacing PendingStartupTask or changing product logic."
+    },
+    {
+      "originalId": "voice.favorite-cache/favorite-misses-load-only-visible-page-and-reject-removed-card-results",
+      "successorIds": [
+        "voice.favorite-cache/favorite-misses-load-only-visible-page-and-reject-removed-card-results"
+      ],
+      "responsibility": "Preserve all original initial Search/no-fetch, visible six/single detail requests, placeholders, selection rejection, cancellation, clamp, late-result/cache/storage, failure and cold-cache assertions. Immediately retain actual oldPage/newPage/afterRemoval and later retry/cold page Tasks, original pending response TCS and all originally acquired resources. Failure cleanup captures any current original page, disposes acquired resources in reverse order, releases the same pending response, joins every captured Task, then deletes only the verified GUID Temp owner after original Tasks ended."
+    },
+    {
+      "originalId": "lifecycle.initialization/reinitialization-retires-old-view-model-without-saving-shared-backing-store",
+      "successorIds": [
+        "lifecycle.initialization/reinitialization-retires-old-view-model-without-saving-shared-backing-store"
+      ],
+      "responsibility": "Preserve the complete shared-backing two-Init workflow, old/new contexts, both original startup waits, original GetOrCreateSettingsViewModel calls, finalSnapshot acquisition and all three original assertions. A single existing PublishedInitializationFixtureOwner captures each original Work immediately after Init and actual nullable observer after each original VM acquisition, then joins startup/observer/nonempty actual retirement tasks after Main disposal. Nullable fault observation occurs only after second VM and finalSnapshot acquisition, before original assertions. No product/seam/budget changes."
+    },
+    {
+      "originalId": "lifecycle.initialization/model-policy-uses-cutoff-defaults-and-normalize-loudness-support",
+      "successorIds": [
+        "lifecycle.initialization/model-policy-uses-cutoff-defaults-and-normalize-loudness-support"
+      ],
+      "responsibility": "Preserve every original cutoff/model/loudness policy assertion and both exact OverrideLocalUtcNow scopes. Two explicit Main instances each use one existing published owner with a synchronous Func<Task>, capture after Init and dispose/join before the original clock scope exits. One outer RegressionFixtureOwner covers the whole original case, so inner owners cannot renew its root budget. Void becomes Task; remove corresponding AddSync registration."
+    },
+    {
+      "originalId": "lifecycle.initialization/main-init-normalizes-structured-settings-without-clearing-keys",
+      "successorIds": [
+        "lifecycle.initialization/main-init-normalizes-structured-settings-without-clearing-keys"
+      ],
+      "responsibility": "Preserve the entire original malformed structured Settings input, explicit cutoff, normalization assertions and exact one-save assertion. One existing published owner runs the complete synchronous original body, captures original published Work after Init and disposes/joins actual startup/retirement without inventing a VM/observer. Void becomes Task; remove corresponding AddSync registration."
+    },
+    {
+      "originalId": "lifecycle.initialization/startup-refresh-selected-voice-metadata",
+      "successorIds": [
+        "lifecycle.initialization/startup-refresh-selected-voice-metadata"
+      ],
+      "responsibility": "Preserve the single original three-key foreach case and its online/offline inputs, assertions and WaitAsync sequence. For each key, finish original first Main's existing published owner before network.Set(false), settings/service/plugin reassignment, then finish second Main's owner before the next iteration. Retain all six original lifetimes in one case with one outer RegressionFixtureOwner root; do not create six cases/budgets or a new clock/network setup. Capture actual Work only; no VM/observer is fabricated."
     }
   ]
 }
