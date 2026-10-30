@@ -3050,6 +3050,1248 @@
         "voice.search-adjustment/cover-failure-cannot-split-successful-snapshot"
       ],
       "responsibility": "Coordinated whole-owner proposal only. This kit supplies pending-intent1, pending-replacement3 and retired-criteria3 complete same-VM workflows with actual command/raw-reply lifetime ownership. The six source-declared Core12V2 successors remain independently required with their original full bodies, assertions, global-override/fresh-host ownership and cleanup. All13 must be composed, independently reviewed and verified before retiring this original aggregate."
+    },
+    {
+      "originalId": "input.settings/native/track-point/speed",
+      "successorIds": [
+        "input.settings/native/track-point/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/track-point/volume",
+      "successorIds": [
+        "input.settings/native/track-point/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/track-point/temperature",
+      "successorIds": [
+        "input.settings/native/track-point/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/track-point/topp",
+      "successorIds": [
+        "input.settings/native/track-point/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/volume-zero/en-us",
+      "successorIds": [
+        "input.settings/native/volume-zero/en-us"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/volume-zero/de-de",
+      "successorIds": [
+        "input.settings/native/volume-zero/de-de"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/volume-zero/ru-ru",
+      "successorIds": [
+        "input.settings/native/volume-zero/ru-ru"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/volume-zero/tr-tr",
+      "successorIds": [
+        "input.settings/native/volume-zero/tr-tr"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/fold-focus/light/search-results",
+      "successorIds": [
+        "input.settings/native/fold-focus/light/search-results"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/fold-focus/light/favorites",
+      "successorIds": [
+        "input.settings/native/fold-focus/light/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/fold-focus/dark/search-results",
+      "successorIds": [
+        "input.settings/native/fold-focus/dark/search-results"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/fold-focus/dark/favorites",
+      "successorIds": [
+        "input.settings/native/fold-focus/dark/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/en/light",
+      "successorIds": [
+        "input.settings/native/tabs/en/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/en/dark",
+      "successorIds": [
+        "input.settings/native/tabs/en/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/zh-cn/light",
+      "successorIds": [
+        "input.settings/native/tabs/zh-cn/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/zh-cn/dark",
+      "successorIds": [
+        "input.settings/native/tabs/zh-cn/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/zh-tw/light",
+      "successorIds": [
+        "input.settings/native/tabs/zh-tw/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/zh-tw/dark",
+      "successorIds": [
+        "input.settings/native/tabs/zh-tw/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ja/light",
+      "successorIds": [
+        "input.settings/native/tabs/ja/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ja/dark",
+      "successorIds": [
+        "input.settings/native/tabs/ja/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ko/light",
+      "successorIds": [
+        "input.settings/native/tabs/ko/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ko/dark",
+      "successorIds": [
+        "input.settings/native/tabs/ko/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ru/light",
+      "successorIds": [
+        "input.settings/native/tabs/ru/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/ru/dark",
+      "successorIds": [
+        "input.settings/native/tabs/ru/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/tr/light",
+      "successorIds": [
+        "input.settings/native/tabs/tr/light"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tabs/tr/dark",
+      "successorIds": [
+        "input.settings/native/tabs/tr/dark"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/by-id-text-geometry",
+      "successorIds": [
+        "input.settings/native/by-id-text-geometry"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/continuous-hover/speed",
+      "successorIds": [
+        "input.settings/native/continuous-hover/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/continuous-hover/volume",
+      "successorIds": [
+        "input.settings/native/continuous-hover/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/continuous-hover/temperature",
+      "successorIds": [
+        "input.settings/native/continuous-hover/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/continuous-hover/topp",
+      "successorIds": [
+        "input.settings/native/continuous-hover/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/hover-rearms-over-target",
+      "successorIds": [
+        "input.settings/native/hover-rearms-over-target"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/resting-wheel/speed",
+      "successorIds": [
+        "input.settings/native/resting-wheel/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/resting-wheel/volume",
+      "successorIds": [
+        "input.settings/native/resting-wheel/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/resting-wheel/temperature",
+      "successorIds": [
+        "input.settings/native/resting-wheel/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/resting-wheel/topp",
+      "successorIds": [
+        "input.settings/native/resting-wheel/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/slider-wheel/speed",
+      "successorIds": [
+        "input.settings/native/slider-wheel/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/slider-wheel/volume",
+      "successorIds": [
+        "input.settings/native/slider-wheel/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/slider-wheel/temperature",
+      "successorIds": [
+        "input.settings/native/slider-wheel/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/slider-wheel/topp",
+      "successorIds": [
+        "input.settings/native/slider-wheel/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/en-us/speed",
+      "successorIds": [
+        "input.settings/native/native-tooltip/en-us/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/en-us/volume",
+      "successorIds": [
+        "input.settings/native/native-tooltip/en-us/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/en-us/temperature",
+      "successorIds": [
+        "input.settings/native/native-tooltip/en-us/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/en-us/topp",
+      "successorIds": [
+        "input.settings/native/native-tooltip/en-us/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/de-de/speed",
+      "successorIds": [
+        "input.settings/native/native-tooltip/de-de/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/de-de/volume",
+      "successorIds": [
+        "input.settings/native/native-tooltip/de-de/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/de-de/temperature",
+      "successorIds": [
+        "input.settings/native/native-tooltip/de-de/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/de-de/topp",
+      "successorIds": [
+        "input.settings/native/native-tooltip/de-de/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/ru-ru/speed",
+      "successorIds": [
+        "input.settings/native/native-tooltip/ru-ru/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/ru-ru/volume",
+      "successorIds": [
+        "input.settings/native/native-tooltip/ru-ru/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/ru-ru/temperature",
+      "successorIds": [
+        "input.settings/native/native-tooltip/ru-ru/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/ru-ru/topp",
+      "successorIds": [
+        "input.settings/native/native-tooltip/ru-ru/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/tr-tr/speed",
+      "successorIds": [
+        "input.settings/native/native-tooltip/tr-tr/speed"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/tr-tr/volume",
+      "successorIds": [
+        "input.settings/native/native-tooltip/tr-tr/volume"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/tr-tr/temperature",
+      "successorIds": [
+        "input.settings/native/native-tooltip/tr-tr/temperature"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/native-tooltip/tr-tr/topp",
+      "successorIds": [
+        "input.settings/native/native-tooltip/tr-tr/topp"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/tooltip-drag-template-ownership",
+      "successorIds": [
+        "input.settings/native/tooltip-drag-template-ownership"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.settings/native/empty-favorites",
+      "successorIds": [
+        "input.settings/native/empty-favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/en/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/en/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/en/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/en/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/en/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/en/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/en/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/en/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/en/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/en/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/en/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/en/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/en/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-cn/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-cn/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/zh-tw/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/zh-tw/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ja/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ja/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ko/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ko/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/ru/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/ru/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-320/search",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-320/by-id",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-320/favorites",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-400/search",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-400/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-400/by-id",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-400/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-400/favorites",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-400/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-480/search",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-480/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-480/by-id",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-480/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-480/favorites",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-480/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-640/search",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-640/by-id",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "input.settings/native/copy/tr/width-640/favorites",
+      "successorIds": [
+        "input.settings/native/copy/tr/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original same-view copy or empty-favorite assertion chain. Ordinary-only typed directory overload transfers actual VM/source/page and owned directory cleanup to HeldFavoritePageFixtureOwner; legacy entry behavior remains."
+    },
+    {
+      "originalId": "repository.link/run-all",
+      "successorIds": [
+        "repository.link/compiled/en",
+        "repository.link/compiled/zh-cn",
+        "repository.link/compiled/zh-tw",
+        "repository.link/compiled/ja",
+        "repository.link/compiled/ko",
+        "repository.link/compiled/ru",
+        "repository.link/compiled/tr"
+      ],
+      "responsibility": "Preserves all seven original independently guarded locale callbacks, each complete compiled repository-link assertion and same ViewModel disposal/navigation chain."
+    },
+    {
+      "originalId": "input.page-entry/run-all",
+      "successorIds": [
+        "input.page-entry/fields/search",
+        "input.page-entry/fields/favorites",
+        "input.page-entry/search-maximum-and-commit-transitions",
+        "input.page-entry/favorite-commits-preserve-pending-owner",
+        "input.page-entry/extreme-maximum-overflow-safe"
+      ],
+      "responsibility": "Preserves both complete compiled-field callbacks, the complete same-view search draft/page/max/idempotence/provider-cap workflow, the complete four-owner favorites mutation/identity/cancellation workflow, and both original overflow-cap assertions, in original order. Existing fixture ownership releases the original cancellation-ignoring replies, joins the actual pending command ExecutionTask and all original page Tasks, disposes actual VMs and deletes validated owned directories while preserving the original body failure."
+    },
+    {
+      "originalId": "input.cursor/construction",
+      "successorIds": [
+        "input.cursor/construction"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/format",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/format"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/search",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/by-id",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/favorites",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/general",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/general"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-320/overlays",
+      "successorIds": [
+        "input.cursor/plugin/light/width-320/overlays"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/format",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/format"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/search",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/by-id",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/favorites",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/general",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/general"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/light/width-640/overlays",
+      "successorIds": [
+        "input.cursor/plugin/light/width-640/overlays"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/format",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/format"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/search",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/search"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/by-id",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/by-id"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/favorites",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/general",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/general"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-320/overlays",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-320/overlays"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/format",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/format"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/search",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/search"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/by-id",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/by-id"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/favorites",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/favorites"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/general",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/general"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/plugin/dark/width-640/overlays",
+      "successorIds": [
+        "input.cursor/plugin/dark/width-640/overlays"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/light/parts",
+      "successorIds": [
+        "input.cursor/native/light/parts"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/light/template",
+      "successorIds": [
+        "input.cursor/native/light/template"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/dark/parts",
+      "successorIds": [
+        "input.cursor/native/dark/parts"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/dark/template",
+      "successorIds": [
+        "input.cursor/native/dark/template"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/light/lifecycle",
+      "successorIds": [
+        "input.cursor/native/light/lifecycle"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "input.cursor/native/dark/lifecycle",
+      "successorIds": [
+        "input.cursor/native/dark/lifecycle"
+      ],
+      "responsibility": "Preserves the complete original named scene, all nested loops, helpers, assertions, same-object transitions, original shared STA/observer and resource lifetimes."
+    },
+    {
+      "originalId": "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences",
+      "successorIds": [
+        "streaming.text/lazy-unpunctuated-first-window-does-not-read-tail"
+      ],
+      "responsibility": "Preserves the complete original lazy first-window and ordinary-long-sentence assertions through the unchanged StreamingTextSuite scene, with a fresh standard NUnit host retaining cold first use. The separate exact child compatibility target retains its original supervised request/source/watchdog/snapshot/drain assertions and is not a default legacy owner or another historical successor."
     }
   ]
 }

@@ -161,7 +161,7 @@ public sealed partial class FrameworkCiEvidenceTests
         Assert.That(slots.Slots.Take(5).Select(item => item.Partition),
             Is.EqualTo(new[] { "core", "native-settings", "native-input", "native-popups", "native-cards" }));
         Assert.That(slots.Slots.Take(5).Select(item => item.Owner),
-            Is.EqualTo(new[] { "legacy", "framework", "legacy", "legacy", "legacy" }));
+            Is.EqualTo(new[] { "framework", "framework", "framework", "legacy", "legacy" }));
         Assert.That(slots.Slots[1].SelectedIds, Is.EqualTo(expected));
         foreach (var slot in slots.Slots.Where(item => item.Owner == "legacy"))
             Assert.That(slot.SelectedIds, Is.EqualTo(legacy.Where(item => item.Partition == slot.Partition).Select(item => item.Id)),

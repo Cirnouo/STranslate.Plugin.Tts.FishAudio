@@ -6,7 +6,7 @@ internal static class RegressionCatalogSuite
     {
         var cases = RegressionCatalog.Create();
         AssertEqual(cases.Count, cases.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count(), "Catalog IDs are unique");
-        var partitions = new[] { "core", "native-input", "native-popups", "native-cards" };
+        var partitions = new[] { "native-popups", "native-cards" };
         AssertEqual(true, partitions.All(partition => cases.Any(item => item.Partition == partition)), "Every supported partition has registered work");
         AssertEqual(true, cases.All(item => partitions.Contains(item.Partition, StringComparer.Ordinal)), "Every case belongs to one supported partition");
 
@@ -67,8 +67,6 @@ internal static class RegressionCatalogSuite
             ("cards.like/run-all", 87, "native-cards"),
             ("cards.avatar/run-all", 36, "native-cards"),
             ("cards.description/run", 25, "native-cards"),
-            ("input.cursor/run", 31, "native-input"),
-            ("input.settings/run-all", 142, "native-input"),
             ("popup.search-adjustment/run-all", 60, "native-popups"),
             ("popup.language-tags/run-all", 84, "native-popups"),
             ("preview.search-retention/run-all", 7, "native-cards"),
@@ -98,8 +96,6 @@ internal static class RegressionCatalogSuite
         {
             new[] { "--accepted-preview-continuity-tests", "selection" },
             new[] { "--accepted-preview-continuity-tests", "lease" },
-            new[] { "--page-entry-tests", "fields" },
-            new[] { "--settings-input-tests", "fold-focus" },
             new[] { "--popup-proof-tests", "private-proof-directory" },
             new[] { "--voice-card-layout-tests", "private-proof-directory" },
         })
@@ -107,6 +103,10 @@ internal static class RegressionCatalogSuite
 
         AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--search-adjustment-control-tests", "titles"]),
             "The former mixed Search selector retires when its diagnostic responsibility moves to NUnit; native owners remain selectable through current case IDs");
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--page-entry-tests", "fields"]),
+            "The former PageEntry fields shape retires with its complete five-workflow NUnit owner");
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--settings-input-tests", "fold-focus"]),
+            "The former settings fold-focus shape retires with its complete native-input profile");
 
     }
 

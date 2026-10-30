@@ -13,7 +13,7 @@ namespace FishAudio.Testing.Tests;
 // authorization to split real scene chains, or source-authentication substitutes.
 [TestFixture]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-public sealed class HybridExecutionSlotPlanTests
+public sealed partial class HybridExecutionSlotPlanTests
 {
     private const string Prefix = "fa-hybrid-slot-tests-";
     private const string Profile = "native-settings", Ordinary = "slot.ordinary/plugin", Tool = "slot.ordinary/tool";

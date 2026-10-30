@@ -23,6 +23,9 @@ internal static class RegressionCaseAliases
     internal static bool Contains(string id) => Prefixes.ContainsKey(id) || IsRetiredMigratedOwner(id);
 
     private static bool IsRetiredMigratedOwner(string id) =>
+        id.StartsWith("input.settings/native/", StringComparison.Ordinal) ||
+        id.StartsWith("input.cursor/", StringComparison.Ordinal) ||
+        id is "repository.link/run-all" or "input.page-entry/run-all" ||
         id.StartsWith("cards.ink/", StringComparison.Ordinal) ||
         id.StartsWith("numeric.geometry/compact/", StringComparison.Ordinal) ||
         id.StartsWith("numeric.bottom/", StringComparison.Ordinal) ||
@@ -53,7 +56,8 @@ internal static class RegressionCaseAliases
             or "preview.ownership/display-preview-voice-switch-ignores-late-refresh"
             or "preview.ownership/display-preview-dispose-cancels-and-ignores-late-refresh"
             or "input.clear/run-requests"
-            or "voice.search-adjustment/run-requests";
+            or "voice.search-adjustment/run-requests"
+            or "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences";
 
     internal static string[] Resolve(string id, IReadOnlyList<RegressionCase> registry, string unknownCode = "unknown-case")
     {

@@ -86,6 +86,12 @@ internal static class LegacyRegressionSelectors
         "--search-adjustment-diagnostic-tests",
         "--numeric-tooltip-diagnostics-tests",
         "--search-adjustment-control-tests",
+        "--settings-input-tests",
+        "--repository-link-tests",
+        "--control-cursor-tests",
+        "--control-cursor-late-combo-tests",
+        "--control-cursor-lifecycle-tests",
+        "--page-entry-tests",
     };
 
     internal static bool ContainsRetiredSelector(string[] args) => args.Any(RetiredSelectors.Contains);

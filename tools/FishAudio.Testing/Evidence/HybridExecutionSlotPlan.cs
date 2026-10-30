@@ -86,10 +86,28 @@ public static class HybridExecutionSlotPlan
                 var selectedLegacy = legacy.Where(item => item.Partition == partition).Select(item => item.Id).ToArray();
                 if (partition == "core")
                 {
-                    // Core remains a required legacy protocol slot until a future
-                    // explicit protocol revision; migrated core leaves use the tail.
-                    Require(selectedLegacy.Length > 0, "owner-missing");
-                    slots.Add(new(NextId(slots.Count), "legacy", partition, Array.AsReadOnly(selectedLegacy)));
+                    var coreOwners = ownership.CheckedOwners.Where(item => item.Partition == partition).ToArray();
+                    var movedCore = coreOwners.Where(item => item.Owner == MigrationOwnerKind.NUnit).ToArray();
+                    var coreSuccessors = movedCore.SelectMany(item => item.SuccessorIds).ToHashSet(StringComparer.Ordinal);
+                    var coreMembers = policies.Where(item => coreSuccessors.Contains(item.Policy.Case.CanonicalId)).ToArray();
+                    Require(coreSuccessors.SetEquals(coreMembers.Select(item => item.Policy.Case.CanonicalId)),
+                        "core-successor-union");
+                    Require(coreMembers.All(item => item.Policy.Profile is null), "core-successor-profile");
+                    if (selectedLegacy.Length != 0)
+                    {
+                        // During partial migration, actual moved core leaves remain in the tail.
+                        slots.Add(new(NextId(slots.Count), "legacy", partition, Array.AsReadOnly(selectedLegacy)));
+                    }
+                    else
+                    {
+                        // Complete core has one nonempty framework owner. Raw catalog identity/order
+                        // permits either assembly; ordinary phase policies still own execution.
+                        Require(coreOwners.Length > 0 && movedCore.Length == coreOwners.Length && coreMembers.Length > 0,
+                            "owner-missing");
+                        var coreSelected = coreMembers.Select(item => item.Policy.Case.CanonicalId).ToArray();
+                        foreach (var id in coreSelected) Require(consumed.Add(id), "framework-union");
+                        slots.Add(new(NextId(slots.Count), "framework", partition, Array.AsReadOnly(coreSelected)));
+                    }
                     continue;
                 }
 

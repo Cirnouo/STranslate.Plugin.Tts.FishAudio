@@ -25,18 +25,20 @@ public sealed class RetiredStreamingSelectorCases
             Directory.CreateDirectory(directory);
             var arguments = new List<string> { typeof(RegressionReport).Assembly.Location, "--legacy", "--list" };
             var originals = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-            if (scenario.StartsWith("replay-", StringComparison.Ordinal))
+            var childTarget = scenario.StartsWith("child-", StringComparison.Ordinal);
+            var route = childTarget ? scenario["child-".Length..] : scenario;
+            if (route.StartsWith("replay-", StringComparison.Ordinal))
             {
-                var outcome = scenario == "replay-not-run" ? "not-run" : scenario == "replay-failed" ? "failed" : "passed";
+                var outcome = route == "replay-not-run" ? "not-run" : route == "replay-failed" ? "failed" : "passed";
                 var source = await RegressionSource.CaptureAsync();
                 source.RecordDirtyScope(RegressionCatalog.Create());
                 var previous = new RegressionReport
                 {
                     // A synthetic old report is an input witness, never a baseline.
-                    Source = scenario == "replay-drift-passed"
+                    Source = route == "replay-drift-passed"
                         ? new RegressionSourceIdentity { Available = false, Fingerprint = new string('f', 64) }
                         : source.Identity,
-                    Cases = [new() { Id = "playback.streaming/run-all", Partition = "core", Outcome = outcome }]
+                    Cases = [new() { Id = childTarget ? StreamingTextChildCompatibilityTarget.HistoricalScenarioId : "playback.streaming/run-all", Partition = "core", Outcome = outcome }]
                 };
                 var path = Path.Combine(directory, "previous.json");
                 previous.Create(path);
@@ -46,8 +48,8 @@ public sealed class RetiredStreamingSelectorCases
             }
             else
             {
-                arguments.Add(scenario == "group" ? "--group" : "--case");
-                arguments.Add(scenario == "leaf"
+                arguments.Add(route == "group" ? "--group" : "--case");
+                arguments.Add(childTarget ? StreamingTextChildCompatibilityTarget.HistoricalScenarioId : route == "leaf"
                     ? "playback.streaming/pcm-byte-carry-and-odd-tail"
                     : "playback.streaming/run-all");
             }
@@ -95,7 +97,10 @@ public sealed class RetiredStreamingSelectorCases
         {
             ("case", "empty-case-alias"), ("group", "empty-case-alias"), ("leaf", "unknown-case"),
             ("replay-failed", "empty-case-alias"), ("replay-not-run", "empty-case-alias"),
-            ("replay-passed", "empty-case-alias"), ("replay-drift-passed", "empty-case-alias")
+            ("replay-passed", "empty-case-alias"), ("replay-drift-passed", "empty-case-alias"),
+            ("child-case", "retired-case"), ("child-group", "retired-case"),
+            ("child-replay-failed", "retired-case"), ("child-replay-not-run", "retired-case"),
+            ("child-replay-passed", "retired-case"), ("child-replay-drift-passed", "retired-case")
         })
             yield return new TestCaseData(row.Key, row.Code)
                 .SetName("RetiredStreamingSelector_" + row.Key)

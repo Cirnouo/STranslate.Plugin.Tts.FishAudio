@@ -49,11 +49,14 @@ public sealed partial class FrameworkCiEvidenceTests
         var currentCore = admitted.CheckedOwners.Where(item => item.Partition == "core").ToArray();
         Assert.That(currentCore, Has.Length.EqualTo(309), "The pinned original reference retains all offline responsibilities.");
         const string childTarget = "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences";
-        Assert.That(currentCore.Where(item => item.Owner == MigrationOwnerKind.Legacy).Select(item => item.OriginalId),
-            Is.EqualTo(new[] { childTarget }), "Only the explicitly retained supervised child target remains legacy core.");
-        var migrated = currentCore.Where(item => item.OriginalId != childTarget).ToArray();
-        Assert.That(migrated, Has.Length.EqualTo(308));
+        Assert.That(legacy.Any(item => item.Partition == "core"), Is.False,
+            "All original core responsibilities have framework owners; the separate compatibility child is not default catalog work.");
+        var migrated = currentCore;
+        Assert.That(migrated, Has.Length.EqualTo(309));
         Assert.That(migrated.All(item => item.Owner == MigrationOwnerKind.NUnit), Is.True);
+        const string childSuccessor = "streaming.text/lazy-unpunctuated-first-window-does-not-read-tail";
+        Assert.That(currentCore.Single(item => item.OriginalId == childTarget).SuccessorIds,
+            Is.EqualTo(new[] { childSuccessor }));
         var policies = paths.SelectMany(NUnitExecutionMetadata.ReadValidated).ToArray();
         foreach (var owner in migrated)
         foreach (var id in owner.SuccessorIds)
@@ -74,10 +77,19 @@ public sealed partial class FrameworkCiEvidenceTests
             Assert.That(owner.SuccessorIds, Has.Count.EqualTo(leaves),
                 "The complete original request/diagnostic responsibility moves as one verified owner transfer.");
         }
+        Assert.That(policies.Single(item => item.Case.CanonicalId == childSuccessor).FreshHost, Is.True,
+            "The standard lazy-text owner retains its original cold first-use process boundary.");
         var slots = HybridExecutionSlotPlan.ReadValidated(reference, legacy, paths, migrations);
         Assert.That(slots.Slots[0].Partition, Is.EqualTo("core"));
-        Assert.That(slots.Slots[0].Owner, Is.EqualTo("legacy"));
-        Assert.That(slots.Slots[0].SelectedIds, Is.EqualTo(new[] { childTarget }));
+        Assert.That(slots.Slots[0].Owner, Is.EqualTo("framework"));
+        var coreSuccessors = currentCore.SelectMany(item => item.SuccessorIds).ToHashSet(StringComparer.Ordinal);
+        Assert.That(coreSuccessors, Is.Not.Empty);
+        Assert.That(slots.Slots[0].SelectedIds,
+            Is.EqualTo(policies.Where(item => coreSuccessors.Contains(item.Case.CanonicalId)).Select(item => item.Case.CanonicalId)),
+            "The core slot owns every mapped current raw identity across both assemblies in discovery order.");
+        Assert.That(slots.Slots.Skip(1).SelectMany(item => item.SelectedIds).Intersect(coreSuccessors), Is.Empty,
+            "A core successor must not execute again in a native slot or the ordinary tail.");
+        Assert.That(slots.Slots.All(item => item.SelectedIds.Count > 0), Is.True);
         var framework = slots.Slots.Where(item => item.Owner == "framework").SelectMany(item => item.SelectedIds).ToArray();
         Assert.That(framework, Is.Unique);
         Assert.That(framework, Is.EquivalentTo(policies.Select(item => item.Case.CanonicalId)),

@@ -96,7 +96,7 @@ internal static class SettingsInputInteractionSuite
 
     // Disabling native move-to-point on any compiled slider must leave its
     // actual routed track press unable to update the bound setting as expected.
-    private static void SliderTrackClickMovesToPoint((string Property, double Minimum, double Maximum, double Requested) field)
+    internal static void SliderTrackClickMovesToPoint((string Property, double Minimum, double Maximum, double Requested) field)
     {
         var settings = new Settings { SelectedModel = "s2-pro" };
         var context = CreateContext(settings: settings);
@@ -162,7 +162,7 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    private static void VolumeZeroIsCanonicalAcrossInputRoutes(string culture)
+    internal static void VolumeZeroIsCanonicalAcrossInputRoutes(string culture)
     {
         var previousCulture = CultureInfo.CurrentCulture;
         try
@@ -312,7 +312,7 @@ internal static class SettingsInputInteractionSuite
         return view;
     }
 
-    private static void FoldControlsSeparateFocusFromPointerState(bool dark, string name)
+    internal static void FoldControlsSeparateFocusFromPointerState(bool dark, string name)
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -373,7 +373,7 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    private static void SelectedTabsKeepAccentThroughNativeStates(string language, bool dark)
+    internal static void SelectedTabsKeepAccentThroughNativeStates(string language, bool dark)
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -435,7 +435,7 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    private static void ByIdUsesUnchangedSearchTextGeometry()
+    internal static void ByIdUsesUnchangedSearchTextGeometry()
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -478,7 +478,7 @@ internal static class SettingsInputInteractionSuite
 
     // Removing dwell gating, swallowing early events, or retaining an old
     // target's partial notch each breaks these real compiled routed controls.
-    private static void NumericWheelRequiresContinuousHover(string property)
+    internal static void NumericWheelRequiresContinuousHover(string property)
     {
         var settings = new Settings { SelectedModel = "s2-pro" };
         var context = CreateContext(settings: settings);
@@ -587,7 +587,7 @@ internal static class SettingsInputInteractionSuite
         LeaveHover(slider);
     }
 
-    private static void NumericHoverRearmsWhenPointerRemainsOverTarget()
+    internal static void NumericHoverRearmsWhenPointerRemainsOverTarget()
     {
         var settings = new Settings { SelectedModel = "s2-pro", Speed = 1 };
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -640,7 +640,7 @@ internal static class SettingsInputInteractionSuite
         AssertEqual(value, target.IsMouseOver, "The explicit retained-pointer fixture must set the actual WPF mouse-over cache");
     }
 
-    private static void RestingNumericWheelEditsWithoutScrolling(string property)
+    internal static void RestingNumericWheelEditsWithoutScrolling(string property)
     {
         var settings = new Settings { SelectedModel = "s2-pro", Speed = 1, Volume = 0, Temperature = .7, TopP = .7 };
         var context = CreateContext(settings: settings);
@@ -728,7 +728,7 @@ internal static class SettingsInputInteractionSuite
 
     // Missing preview ownership, using drag ticks, losing bindings or sharing
     // partial notches across hover sessions each breaks an observable assertion.
-    private static void SliderWheelEditsWithoutScrolling((string Property, double Initial, double Increased, double Decreased, double Minimum, double Maximum, double BelowMaximum, double AboveMinimum, double Tick) field)
+    internal static void SliderWheelEditsWithoutScrolling((string Property, double Initial, double Increased, double Decreased, double Minimum, double Maximum, double BelowMaximum, double AboveMinimum, double Tick) field)
     {
         var settings = new Settings { SelectedModel = "s2-pro", Speed = 1, Volume = 0, Temperature = .7, TopP = .7 };
         var context = CreateContext(settings: settings);
@@ -992,7 +992,7 @@ internal static class SettingsInputInteractionSuite
             AssertEqual(false, output[0].Contains("buffered successful phase", StringComparison.Ordinal), "Success must not dump the detailed phase buffer");
         });
 
-    private static async Task ObserveNativeToolTipActionAsync(string name, Func<Action<string>, Task> action,
+    internal static async Task ObserveNativeToolTipActionAsync(string name, Func<Action<string>, Task> action,
         Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
         RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
@@ -1063,7 +1063,7 @@ internal static class SettingsInputInteractionSuite
     private static Task BoundNativeToolTipObservation(Task observation, TimeProvider? timeProvider = null) =>
         RegressionDiagnostics.BoundAsync(observation, timeProvider);
 
-    private static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, string field, Action<string> stage)
+    internal static async Task SliderWheelUsesNativeValueToolTipAsync(string culture, string field, Action<string> stage)
     {
         var previousCulture = CultureInfo.CurrentCulture;
         try
@@ -1192,7 +1192,7 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    private static async Task SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync()
+    internal static async Task SliderWheelToolTipKeepsDragAndTemplateOwnershipAsync()
     {
         var settings = new Settings { SelectedModel = "s2-pro", Speed = 1 };
         var context = CreateContext(settings: settings);
@@ -1253,10 +1253,18 @@ internal static class SettingsInputInteractionSuite
     }
 
     private static void EmptyFavoritesStayVisibleOutsideCollapsedResults()
+        => EmptyFavoritesStayVisibleOutsideCollapsedResultsCore(null, null);
+
+    internal static void EmptyFavoritesStayVisibleOutsideCollapsedResults(string directory, HeldFavoritePageFixtureOwner owner)
+        => EmptyFavoritesStayVisibleOutsideCollapsedResultsCore(directory, owner);
+
+    private static void EmptyFavoritesStayVisibleOutsideCollapsedResultsCore(string? directory, HeldFavoritePageFixtureOwner? owner)
     {
         var settings = new Settings();
         var cache = new VoiceMetadataCache();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: CreateTempDirectory()), settings, null, null, voiceMetadataCache: cache);
+        var vm = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: directory ?? CreateTempDirectory()), settings, null, null, voiceMetadataCache: cache);
+        owner?.Track(vm);
+        using var legacyVmLifetime = owner is null ? vm : null;
         vm.BrowseMode = VoiceBrowseMode.Favorites;
         var view = CreateView(vm);
         var toggle = (ToggleButton)view.FindName("FavoriteVoicesToggle");
@@ -1295,8 +1303,14 @@ internal static class SettingsInputInteractionSuite
     }
 
     private static void VoiceTitlesExposeCopyOnlyActions(string language, double width, VoiceBrowseMode mode)
+        => VoiceTitlesExposeCopyOnlyActionsCore(language, width, mode, null, null);
+
+    internal static void VoiceTitlesExposeCopyOnlyActions(string language, double width, VoiceBrowseMode mode, string directory, HeldFavoritePageFixtureOwner owner)
+        => VoiceTitlesExposeCopyOnlyActionsCore(language, width, mode, directory, owner);
+
+    private static void VoiceTitlesExposeCopyOnlyActionsCore(string language, double width, VoiceBrowseMode mode, string? directory, HeldFavoritePageFixtureOwner? owner)
     {
-        var directory = CreateTempDirectory();
+        directory ??= CreateTempDirectory();
         var selectedId = new string('a', 32);
         var searchId = new string('b', 32);
         var byId = new string('c', 32);
@@ -1312,14 +1326,18 @@ internal static class SettingsInputInteractionSuite
         var storage = (ContextProxy)(object)context;
         var writes = new List<string>();
         var failClipboard = false;
-        using var vm = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
+        var vm = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
             copyVoiceIdToClipboard: text => { if (failClipboard) throw new InvalidOperationException("Synthetic clipboard failure"); writes.Add(text); });
+        owner?.Track(vm);
+        using var legacyVmLifetime = owner is null ? vm : null;
         vm.SearchResults = [new VoiceSearchItem { Id = searchId, Title = "Search title", Description = "Search description", AuthorName = "Search author" }];
         vm.ByIdResults = [new VoiceSearchItem { Id = byId, Title = "By ID title", Description = "By ID description", AuthorName = "By ID author" }];
         vm.HasSearched = true;
         var view = CreateView(vm);
         view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{language}.xaml"), UriKind.Absolute) });
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio title copy tooltip fixture") { Width = 640, Height = 2000, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        var source = new HwndSource(new HwndSourceParameters("Fish Audio title copy tooltip fixture") { Width = 640, Height = 2000, WindowStyle = 0, PositionX = -10000, PositionY = -10000 });
+        owner?.Track(source);
+        using var legacySourceLifetime = owner is null ? source : null;
         source.RootVisual = view;
         var cardId = mode switch { VoiceBrowseMode.Search => searchId, VoiceBrowseMode.ById => byId, _ => favoriteId };
         vm.BrowseMode = mode;
