@@ -12,6 +12,58 @@ namespace NUnitCases.Runner;
 public sealed class RetiredNativeSettingsSelectorCases
 {
     [Test]
+    [Property("FishAudioCaseId", "infra.runner/retired-offline-core/exact-owner-selection-rejects-before-sta")]
+    public void TransferredOfflineCoreOwnersRejectBeforeAnyActionOrStaWarmup()
+    {
+        var dispatcher = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = dispatcher.IsValueCreated;
+        var events = new List<RegressionActionEvent>();
+        using var owner = RegressionActionScope.BeginCase("runner.probe/retired-offline-metadata", events.Add);
+        var current = RegressionCatalog.Create();
+        using var reference = JsonDocument.Parse(File.ReadAllBytes(FindRepoFile("tests/Migration/legacy-catalog.json")));
+        var original = reference.RootElement.GetProperty("cases").EnumerateArray()
+            .Where(item => item.GetProperty("partition").GetString() == "core")
+            .Select(item => item.GetProperty("id").GetString()!).ToArray();
+        var retired = new[]
+        {
+            "lifecycle.activity/overlapping-startup-manual-and-tts-operations-unlock-after-final-completion",
+            "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry",
+            "input.settings/native-tool-tip-diagnostics-preserve-failures-without-retry",
+            "popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry",
+            "popup.search-adjustment/viewport-diagnostics-preserve-async-completion-and-failures",
+            "preview.ownership/preview-preparation-transitions-to-real-playback",
+            "preview.ownership/preview-same-voice-across-entries-cancels-preparation",
+            "preview.ownership/preview-old-completion-cannot-clear-new-preparation",
+            "preview.ownership/preview-preparation-failure-and-reset-clear-state",
+            "preview.ownership/preview-queued-publications-read-current-preparation-owner",
+            "preview.ownership/run-bounded-preview-regression-tests",
+            "preview.ownership/search-preview-removed-result-ignores-late-refresh",
+            "preview.ownership/search-preview-second-click-cancels-pending-refresh",
+            "preview.ownership/display-preview-second-click-cancels-pending-refresh-without-restart",
+            "preview.ownership/search-preview-invalidates-pending-display-refresh",
+            "preview.ownership/display-preview-voice-switch-ignores-late-refresh",
+            "preview.ownership/display-preview-dispose-cancels-and-ignores-late-refresh",
+            "input.clear/run-requests",
+            "voice.search-adjustment/run-requests",
+        };
+        Assert.That(retired, Has.Length.EqualTo(19));
+        Assert.That(retired, Is.Unique);
+        foreach (var id in retired)
+        {
+            Assert.That(original.Contains(id, StringComparer.Ordinal), Is.True);
+            Assert.That(current.Any(item => item.Id == id), Is.False);
+            foreach (var selector in new[] { "--case", "--group" })
+            {
+                var rejected = Assert.Throws<RegressionSelectionException>(() =>
+                    RegressionSelection.Parse([selector, id]).ExplicitIds(current));
+                Assert.That(rejected!.Message, Is.EqualTo("retired-case"));
+            }
+        }
+        Assert.That(events, Is.Empty);
+        Assert.That(dispatcher.IsValueCreated, Is.EqualTo(wasCreated));
+    }
+
+    [Test]
     [Property("FishAudioCaseId", "infra.runner/retired-native-settings/all-original-owner-identities")]
     public void EveryOriginalNativeSettingsOwnerRejectsWithoutExecutingOrWarmingSta()
     {
@@ -198,6 +250,13 @@ public sealed class RetiredNativeSettingsSelectorCases
         "--input-clear-control-tests", "--numeric-bottom-tests", "--numeric-bottom-lifecycle-tests",
         "--numeric-typography-tests", "--numeric-glyph-observation-tests", "--activity-dispatcher-tests",
         "--voice-card-ink-tests", "--settings-layout-tests", "--settings-control-tests", "--inline-numeric-tests",
+        "--input-clear-request-tests",
+        "--search-adjustment-request-tests",
+        "--preview-ownership-compatibility-tests",
+        "--voice-auth-tests",
+        "--search-adjustment-diagnostic-tests",
+        "--numeric-tooltip-diagnostics-tests",
+        "--search-adjustment-control-tests",
     ];
 
     private static IEnumerable<TestCaseData> CliRows()
@@ -213,6 +272,14 @@ public sealed class RetiredNativeSettingsSelectorCases
         yield return Row("direct-native", ["--input-clear-control-tests"], "Retired legacy regression selector; use NUnit case selection.");
         yield return Row("direct-mixed", ["--activity-dispatcher-tests"], "Retired legacy regression selector; use NUnit case selection.");
         yield return Row("direct-runner", ["--runner-contract-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-1", ["--input-clear-request-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-2", ["--search-adjustment-request-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-3", ["--preview-ownership-compatibility-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-4", ["--voice-auth-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-5", ["--search-adjustment-diagnostic-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-6", ["--numeric-tooltip-diagnostics-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-7", ["--search-adjustment-control-tests"], "Retired legacy regression selector; use NUnit case selection.");
+        yield return Row("direct-offline-search-filter", ["--search-adjustment-control-tests", "titles"], "Retired legacy regression selector; use NUnit case selection.");
         foreach (var outcome in new[] { "failed", "not-run", "passed" })
             yield return Row("replay-aggregate-" + outcome, ["numeric.geometry/compact-numeric-geometry", outcome], "Runner selection error: empty-case-alias.");
         yield return Row("replay-aggregate-drift-passed", ["numeric.geometry/compact-numeric-geometry", "passed"], "Runner selection error: empty-case-alias.");

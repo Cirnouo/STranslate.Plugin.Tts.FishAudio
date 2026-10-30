@@ -92,13 +92,6 @@ internal static class RegressionCatalogSuite
 
     }
 
-    internal static void OfflineDispatcherAndInputRequestsRemainCore()
-    {
-        var cases = RegressionCatalog.Create();
-        AssertEqual(true, cases.Single(item => item.Id == "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry").Partition == "core", "Injected dispatcher diagnostics stay offline core work");
-        AssertEqual(true, cases.Single(item => item.Id == "input.clear/run-requests").Partition == "core", "InputClear requests retain their independent offline owner");
-    }
-
     internal static void OriginalLegacyArgumentShapesRemainValid()
     {
         foreach (var valid in new[]
@@ -106,12 +99,14 @@ internal static class RegressionCatalogSuite
             new[] { "--accepted-preview-continuity-tests", "selection" },
             new[] { "--accepted-preview-continuity-tests", "lease" },
             new[] { "--page-entry-tests", "fields" },
-            new[] { "--search-adjustment-control-tests", "titles" },
             new[] { "--settings-input-tests", "fold-focus" },
             new[] { "--popup-proof-tests", "private-proof-directory" },
             new[] { "--voice-card-layout-tests", "private-proof-directory" },
         })
             AssertEqual(true, LegacyRegressionSelectors.AreArgumentsValid(valid), "Original focused groups and private proof-directory parameters stay valid without executing fixtures");
+
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--search-adjustment-control-tests", "titles"]),
+            "The former mixed Search selector retires when its diagnostic responsibility moves to NUnit; native owners remain selectable through current case IDs");
 
     }
 

@@ -1987,8 +1987,7 @@
         "lifecycle.initialization/startup-refresh-cancellation-after-response-skips-side-effects"
       ],
       "responsibility": "Preserves all 3 original assertions and messages, in their original order, in InitializationLifecycleSuite.StartupRefreshCancellationAfterResponseSkipsSideEffectsAsync / RunStartupRefreshCancellationAfterResponseSkipsSideEffectsAsync. Retains the same objects, original waits, functional timeout/delay values and network/UI override boundaries. Captures every published or failed prepared initialization through the exact Init out value, original Task.Run and observer references; releases original synchronous barriers before joining operations, retires original plugins/views, releases original HTTP replies and joins startup, observer and actual retirement tasks before return. "
-    }
-  ,
+    },
     {
       "originalId": "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread",
       "successorIds": [
@@ -2857,6 +2856,200 @@
         "infra.runner/catalog/current-native-settings-ownership"
       ],
       "responsibility": "Retains complete current legacy card matrices, remaining native aliases and catalog order, strict legacy argument shapes and offline request/dispatcher ownership. Replaces the historical legacy-only native-settings assumptions with actual current raw discovery and the typed identity/metadata/execution/HybridExecutionSlotPlan readers: all94 original owners and173 successors, exact ordered profile ordinals, one plugin assembly, desktop exclusion and maximum concurrency1. Preserves the full cold listener/password prefix and ink25/glyph1/compact48/bottom12/continuous-lifecycle1/InputClear34 anchors. Identity admission does not independently prove assertion or lifecycle conservation."
+    },
+    {
+      "originalId": "lifecycle.activity/overlapping-startup-manual-and-tts-operations-unlock-after-final-completion",
+      "successorIds": [
+        "lifecycle.activity/overlapping-startup-manual-and-tts-operations-unlock-after-final-completion"
+      ],
+      "responsibility": "Preserves the complete original assertions and same-owner workflow through its typed ordinary NUnit successor. Diagnostic fixtures retain and join actual callback, observer, reporter and worker Tasks before independent disposal, preserve the primary failure and use the original execution deadline."
+    },
+    {
+      "originalId": "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry",
+      "successorIds": [
+        "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry"
+      ],
+      "responsibility": "Preserves the complete original assertions and same-owner workflow through its typed ordinary NUnit successor. Diagnostic fixtures retain and join actual callback, observer, reporter and worker Tasks before independent disposal, preserve the primary failure and use the original execution deadline."
+    },
+    {
+      "originalId": "input.settings/native-tool-tip-diagnostics-preserve-failures-without-retry",
+      "successorIds": [
+        "input.settings/native-tool-tip-diagnostics-preserve-failures-without-retry"
+      ],
+      "responsibility": "Preserves the complete original assertions and same-owner workflow through its typed ordinary NUnit successor. Diagnostic fixtures retain and join actual callback, observer, reporter and worker Tasks before independent disposal, preserve the primary failure and use the original execution deadline."
+    },
+    {
+      "originalId": "popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry",
+      "successorIds": [
+        "popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry"
+      ],
+      "responsibility": "Preserves the complete original assertions and same-owner workflow through its typed ordinary NUnit successor. Diagnostic fixtures retain and join actual callback, observer, reporter and worker Tasks before independent disposal, preserve the primary failure and use the original execution deadline."
+    },
+    {
+      "originalId": "popup.search-adjustment/viewport-diagnostics-preserve-async-completion-and-failures",
+      "successorIds": [
+        "popup.search-adjustment/viewport-diagnostics-preserve-async-completion-and-failures"
+      ],
+      "responsibility": "Preserves the complete original assertions and same-owner workflow through its typed ordinary NUnit successor. Diagnostic fixtures retain and join actual callback, observer, reporter and worker Tasks before independent disposal, preserve the primary failure and use the original execution deadline."
+    },
+    {
+      "originalId": "preview.ownership/preview-preparation-transitions-to-real-playback",
+      "successorIds": [
+        "preview.ownership/preview-preparation-transitions-to-real-playback/display",
+        "preview.ownership/preview-preparation-transitions-to-real-playback/search"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.PreviewPreparationTransitionsToRealPlaybackAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/preview-same-voice-across-entries-cancels-preparation",
+      "successorIds": [
+        "preview.ownership/preview-same-voice-across-entries-cancels-preparation/display",
+        "preview.ownership/preview-same-voice-across-entries-cancels-preparation/search"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.PreviewSameVoiceAcrossEntriesCancelsPreparationAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/preview-old-completion-cannot-clear-new-preparation",
+      "successorIds": [
+        "preview.ownership/preview-old-completion-cannot-clear-new-preparation/display",
+        "preview.ownership/preview-old-completion-cannot-clear-new-preparation/search"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.PreviewOldCompletionCannotClearNewPreparationAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/preview-preparation-failure-and-reset-clear-state",
+      "successorIds": [
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/display/refresh",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/display/download",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/display/open",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/display/play",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/search/refresh",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/search/download",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/search/open",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/failure/search/play",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/reset/display",
+        "preview.ownership/preview-preparation-failure-and-reset-clear-state/reset/search"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.PreviewPreparationFailureAndResetClearStateAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/preview-queued-publications-read-current-preparation-owner",
+      "successorIds": [
+        "preview.ownership/preview-queued-publications-read-current-preparation-owner"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.PreviewQueuedPublicationsReadCurrentPreparationOwnerAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/run-bounded-preview-regression-tests",
+      "successorIds": [
+        "preview.ownership/bounded/reject-size/display/empty",
+        "preview.ownership/bounded/reject-size/display/over-cap",
+        "preview.ownership/bounded/reject-size/search/empty",
+        "preview.ownership/bounded/reject-size/search/over-cap",
+        "preview.ownership/bounded/exact-cap/display",
+        "preview.ownership/bounded/exact-cap/search",
+        "preview.ownership/bounded/resource-refresh/display/forbidden",
+        "preview.ownership/bounded/resource-refresh/display/notfound",
+        "preview.ownership/bounded/resource-refresh/search/forbidden",
+        "preview.ownership/bounded/resource-refresh/search/notfound",
+        "preview.ownership/bounded/terminal-resource-failure/display/unauthorized",
+        "preview.ownership/bounded/terminal-resource-failure/display/internalservererror",
+        "preview.ownership/bounded/terminal-resource-failure/display/forbidden",
+        "preview.ownership/bounded/terminal-resource-failure/search/unauthorized",
+        "preview.ownership/bounded/terminal-resource-failure/search/internalservererror",
+        "preview.ownership/bounded/terminal-resource-failure/search/forbidden",
+        "preview.ownership/bounded/pending-cancellation/display/second-click",
+        "preview.ownership/bounded/pending-cancellation/display/voice-change",
+        "preview.ownership/bounded/pending-cancellation/display/dispose",
+        "preview.ownership/bounded/pending-cancellation/search/second-click",
+        "preview.ownership/bounded/pending-cancellation/search/voice-change",
+        "preview.ownership/bounded/pending-cancellation/search/dispose",
+        "preview.ownership/bounded/pending-cancellation/search/results-replaced",
+        "preview.ownership/bounded/cross-entry-late-download",
+        "preview.ownership/bounded/original-shared-deadline",
+        "preview.ownership/bounded/local-player/none",
+        "preview.ownership/bounded/local-player/factory",
+        "preview.ownership/bounded/local-player/open",
+        "preview.ownership/bounded/local-player/play",
+        "preview.ownership/bounded/local-player/synchronous-end",
+        "preview.ownership/bounded/queued-stale-player-event",
+        "preview.ownership/bounded/accepted-playback-results-replaced"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.RunBoundedPreviewRegressionTestsAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-removed-result-ignores-late-refresh",
+      "successorIds": [
+        "preview.ownership/search-preview-removed-result-ignores-late-refresh"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.SearchPreviewRemovedResultIgnoresLateRefreshAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-second-click-cancels-pending-refresh",
+      "successorIds": [
+        "preview.ownership/search-preview-second-click-cancels-pending-refresh"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.SearchPreviewSecondClickCancelsPendingRefreshAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-second-click-cancels-pending-refresh-without-restart",
+      "successorIds": [
+        "preview.ownership/display-preview-second-click-cancels-pending-refresh-without-restart"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.DisplayPreviewSecondClickCancelsPendingRefreshWithoutRestartAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/search-preview-invalidates-pending-display-refresh",
+      "successorIds": [
+        "preview.ownership/search-preview-invalidates-pending-display-refresh"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.SearchPreviewInvalidatesPendingDisplayRefreshAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-voice-switch-ignores-late-refresh",
+      "successorIds": [
+        "preview.ownership/display-preview-voice-switch-ignores-late-refresh"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.DisplayPreviewVoiceSwitchIgnoresLateRefreshAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "preview.ownership/display-preview-dispose-cancels-and-ignores-late-refresh",
+      "successorIds": [
+        "preview.ownership/display-preview-dispose-cancels-and-ignores-late-refresh"
+      ],
+      "responsibility": "Preserves every original assertion and complete same-object scenario from PreviewSuite.DisplayPreviewDisposeCancelsAndIgnoresLateRefreshAsync. Each typed named row retains its original sequence and fake-clock stimuli. The fixture owner releases original held responses, joins captured command/execution Tasks and disposes its actual VM/player/temporary owners while preserving the primary failure and original deadline."
+    },
+    {
+      "originalId": "input.clear/run-requests",
+      "successorIds": [
+        "input.clear/request/api-key-accepted-clear",
+        "input.clear/request/api-key-save-failure",
+        "input.clear/request/rejected-lease-save-failure",
+        "input.clear/request/rejected-lease-retired",
+        "input.clear/request/search-draft-only",
+        "input.clear/request/by-id-late-success",
+        "input.clear/request/by-id-late-failure"
+      ],
+      "responsibility": "Preserves both API clear accepted/save-failure workflows, both rejected-lease save-failure/retired workflows, the complete Search draft/paging/applied-intent chain, and both complete fake-clock By-ID late-success/late-failure workflows. New typed request ownership releases original replies on early failure, joins the actual returned command/coordinator Tasks and exact raw HTTP Tasks, then independently disposes the actual VMs without replacing the primary exception."
+    },
+    {
+      "originalId": "voice.search-adjustment/run-requests",
+      "successorIds": [
+        "voice.search-adjustment/pending-intent-is-independent-of-successful-criteria",
+        "voice.search-adjustment/pending-replacements-cannot-roll-back-intent/success",
+        "voice.search-adjustment/pending-replacements-cannot-roll-back-intent/failure",
+        "voice.search-adjustment/pending-replacements-cannot-roll-back-intent/credentials",
+        "voice.search-adjustment/multiple-languages-are-one-detached-request",
+        "voice.search-adjustment/requests-capture-language-and-explicit-sort",
+        "voice.search-adjustment/applied-criteria-survive-failure-and-draft-edits",
+        "voice.search-adjustment/retired-criteria-cannot-publish/replacement",
+        "voice.search-adjustment/retired-criteria-cannot-publish/credentials",
+        "voice.search-adjustment/retired-criteria-cannot-publish/dispose",
+        "voice.search-adjustment/queued-publication-rechecks-its-owner",
+        "voice.search-adjustment/malformed-apply-retains-successful-snapshot",
+        "voice.search-adjustment/cover-failure-cannot-split-successful-snapshot"
+      ],
+      "responsibility": "Coordinated whole-owner proposal only. This kit supplies pending-intent1, pending-replacement3 and retired-criteria3 complete same-VM workflows with actual command/raw-reply lifetime ownership. The six source-declared Core12V2 successors remain independently required with their original full bodies, assertions, global-override/fresh-host ownership and cleanup. All13 must be composed, independently reviewed and verified before retiring this original aggregate."
     }
   ]
 }

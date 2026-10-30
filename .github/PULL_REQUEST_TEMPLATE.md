@@ -10,7 +10,7 @@ Explain the final change and relevant compatibility, resource or security implic
 
 List checks actually run, their results, the final file state they cover and remaining host/device/provider/publication limits.
 
-- [ ] The installed protocol-2 pre-commit gate and final commit-msg receipt guard passed for the exact staged tree in `bootstrap/full/hybrid` mode, including both complete NUnit catalogs; its tree identity and full PR CI results are reported separately.
+- [ ] The installed protocol-3 pre-commit gate and final commit-msg receipt guard passed for the exact staged tree in `bootstrap/full/hybrid` mode, including both complete NUnit catalogs; its tree identity and full PR CI results are reported separately.
 - [ ] Any focused diagnostic runs state their selected scope and remaining not-run coverage; they do not replace the commit gate.
 - [ ] Relevant offline probe/release-tool checks pass when changed.
 - [ ] The current distributable and its runtime dependencies were checked when applicable.

@@ -171,7 +171,8 @@ internal static class OperationActivityDispatcherSuite
     }
 
     internal static async Task ObserveDispatcherActionAsync(string name, Func<Action<string>, Task> action,
-        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null,
+        RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -189,7 +190,13 @@ internal static class OperationActivityDispatcherSuite
         {
             if (observeCompletion)
             {
-                try { await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false); Stage("same action observation complete; original deadline remains failed"); }
+                try
+                {
+                    var observation = (observe ?? (pending => pending))(completion.Task);
+                    if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                    await observation.ConfigureAwait(false);
+                    Stage("same action observation complete; original deadline remains failed");
+                }
                 catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
             }
             if (failed)
@@ -204,7 +211,7 @@ internal static class OperationActivityDispatcherSuite
             {
                 try { (write ?? Console.WriteLine)($"[activity-dispatcher/{name}] completed in {elapsed.ElapsedMilliseconds}ms."); } catch { }
             }
-        });
+        }, capture: diagnosticWork);
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
@@ -231,69 +238,72 @@ internal static class OperationActivityDispatcherSuite
         }
     }
 
-    internal static async Task DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync()
-    {
-        // Deterministic schedule seam: no real deadline waits or extra STA.
-        var outer = new RegressionExecutionTimeoutException();
-        Func<Task>? queued = null;
-        var runs = 0;
-        var observations = 0;
-        var messages = new List<string>();
-        TimeSpan? executionBudget = null;
-        Exception? caught = null;
-        try
+    internal static Task DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync() =>
+        DiagnosticFixtureOwner.RunAsync(async owner =>
         {
-            await ObserveDispatcherActionAsync("fixture-outer", _ => { runs++; return Task.CompletedTask; },
-                dispatch: (callback, timeout) => { executionBudget = timeout; queued = callback; return Task.FromException(outer); },
-                observe: async completion => { observations++; await queued!(); await completion; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Late completion must retain the original outer deadline exception");
-        AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
-        AssertEqual(1, observations, "The outer deadline must observe the same action once");
-        AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Activity injected async dispatch receives the shared execution guard");
-        AssertEqual(true, messages.Any(message => message.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
+            // Deterministic schedule seam: no real deadline waits or extra STA.
+            var outer = owner.Expect(new RegressionExecutionTimeoutException());
+            Func<Task>? queued = null;
+            var runs = 0;
+            var observations = 0;
+            var messages = new List<string>();
+            TimeSpan? executionBudget = null;
+            Exception? caught = null;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-outer", _ => { runs++; return Task.CompletedTask; },
+                    dispatch: (callback, timeout) => { executionBudget = timeout; queued = owner.Queue(callback); return Task.FromException(outer); },
+                    observe: async completion => { observations++; await queued!(); await completion; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Late completion must retain the original outer deadline exception");
+            AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
+            AssertEqual(1, observations, "The outer deadline must observe the same action once");
+            AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Activity injected async dispatch receives the shared execution guard");
+            AssertEqual(true, messages.Any(message => message.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
 
-        caught = null;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-observation-deadline", _ => throw new InvalidOperationException("Must not rerun"),
-                dispatch: (_, _) => Task.FromException(outer),
-                observe: _ => Task.FromException(new TimeoutException("Synthetic observation deadline")), write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "An observation deadline must preserve the original action deadline exception");
+            var observationDeadline = owner.Expect(new TimeoutException("Synthetic observation deadline"));
+            caught = null;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-observation-deadline", _ => throw new InvalidOperationException("Must not rerun"),
+                    dispatch: (_, _) => Task.FromException(outer),
+                    observe: _ => Task.FromException(observationDeadline), write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "An observation deadline must preserve the original action deadline exception");
 
-        // An already-entered action can also finish during observation. A
-        // separate deadline in observation must never replace the first error.
-        var enteredRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? originalAction = null;
-        messages.Clear(); caught = null; runs = 0; observations = 0;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-entered", async _ => { runs++; await enteredRelease.Task; },
-                dispatch: (callback, _) => { originalAction = callback(); return Task.FromException(outer); },
-                observe: async completion => { observations++; enteredRelease.SetResult(); await completion; await originalAction!; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "An entered action's late completion must not turn the outer deadline into success");
-        AssertEqual(1, runs, "The entered action must not be executed again during observation");
-        AssertEqual(1, observations, "An entered deadline must observe the original completion signal");
-        AssertEqual(true, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An entered deadline must be distinguished from a pre-entry dispatch deadline");
+            // An already-entered action can also finish during observation. A
+            // separate deadline in observation must never replace the first error.
+            var enteredRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => enteredRelease.TrySetResult());
+            Task? originalAction = null;
+            messages.Clear(); caught = null; runs = 0; observations = 0;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-entered", async _ => { runs++; await enteredRelease.Task; },
+                    dispatch: (callback, _) => { originalAction = owner.Track(callback()); return Task.FromException(outer); },
+                    observe: async completion => { observations++; enteredRelease.SetResult(); await completion; await originalAction!; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "An entered action's late completion must not turn the outer deadline into success");
+            AssertEqual(1, runs, "The entered action must not be executed again during observation");
+            AssertEqual(1, observations, "An entered deadline must observe the original completion signal");
+            AssertEqual(true, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An entered deadline must be distinguished from a pre-entry dispatch deadline");
 
-        var inner = new TimeoutException("Synthetic action-owned startup deadline");
-        messages.Clear(); caught = null; observations = 0;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-inner", _ => Task.FromException(inner),
-                dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(inner, caught), "An action's own startup timeout must retain its exact exception");
-        AssertEqual(0, observations, "An action-owned timeout must not be mislabeled or observed as an outer action deadline");
-        AssertEqual(false, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An inner timeout must retain its action-stage classification");
-    }
+            var inner = owner.Expect(new TimeoutException("Synthetic action-owned startup deadline"));
+            messages.Clear(); caught = null; observations = 0;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-inner", _ => Task.FromException(inner),
+                    dispatch: (callback, _) => owner.Track(callback()), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(inner, caught), "An action's own startup timeout must retain its exact exception");
+            AssertEqual(0, observations, "An action-owned timeout must not be mislabeled or observed as an outer action deadline");
+            AssertEqual(false, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An inner timeout must retain its action-stage classification");
+        });
 
     internal static Task QueuedRetirementCannotUnlockNewUiOperationAsync() =>
         RunOnStaThreadAsync(() =>

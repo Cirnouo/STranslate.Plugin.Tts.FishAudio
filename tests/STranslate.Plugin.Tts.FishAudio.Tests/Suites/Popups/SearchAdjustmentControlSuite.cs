@@ -131,7 +131,8 @@ internal static class SearchAdjustmentControlSuite
 
     internal static async Task ObserveMatrixActionAsync(string name, Action<Action<string>> action,
         Func<Action, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
-        string prefix = "search-adjustment", string details = "320/480 DIP.", TimeSpan? executionTimeout = null)
+        string prefix = "search-adjustment", string details = "320/480 DIP.", TimeSpan? executionTimeout = null,
+        RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
         var actionTimeout = executionTimeout ?? RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -151,7 +152,9 @@ internal static class SearchAdjustmentControlSuite
             {
                 try
                 {
-                    await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                    var observation = (observe ?? (pending => pending))(completion.Task);
+                    if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                    await observation.ConfigureAwait(false);
                     Stage("same action observation completed; original deadline remains failed");
                 }
                 catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
@@ -168,7 +171,7 @@ internal static class SearchAdjustmentControlSuite
             {
                 try { (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={actionTimeout.TotalSeconds}s; {details}"); } catch { }
             }
-        }, observationTimeProvider);
+        }, observationTimeProvider, diagnosticWork);
         Stage(FormattableString.Invariant($"queued with {(executionTimeout is null ? "shared" : "explicit")} {actionTimeout.TotalSeconds}s action deadline"));
         try
         {
@@ -198,97 +201,99 @@ internal static class SearchAdjustmentControlSuite
     private static Task BoundMatrixObservation(Task observation, TimeProvider? timeProvider = null) =>
         RegressionDiagnostics.BoundAsync(observation, timeProvider);
 
-    internal static async Task MatrixDiagnosticsPreserveFailuresWithoutRetryAsync()
-    {
-        var outer = new RegressionExecutionTimeoutException();
-        Action? queued = null;
-        var runs = 0;
-        var observations = 0;
-        Exception? caught = null;
-        var output = new List<string>();
-        TimeSpan? explicitBudget = null;
-        try
+    internal static Task MatrixDiagnosticsPreserveFailuresWithoutRetryAsync() =>
+        DiagnosticFixtureOwner.RunAsync(async owner =>
         {
-            await ObserveMatrixActionAsync("queued-fixture", stage => { runs++; stage("action body"); },
-                dispatch: (callback, timeout) => { explicitBudget = timeout; queued = callback; throw outer; },
-                observe: async completion => { observations++; queued!(); await completion; }, write: output.Add, executionTimeout: TimeSpan.FromSeconds(20));
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Observing a queued action must preserve the original outer deadline exception");
-        AssertEqual(1, observations, "An outer deadline must observe only its same queued action once");
-        AssertEqual(1, runs, "Observation must execute that queued action once, without a replacement or retry");
-        AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "A pre-entry deadline must report its queue boundary");
-        AssertEqual(true, output.Any(line => line.Contains("action body", StringComparison.Ordinal)), "Failure output must retain the recorded phases");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), explicitBudget, "The explicit action budget must reach the dispatch boundary");
-        AssertEqual(true, output.Any(line => line.Contains("queued with explicit 20s action deadline", StringComparison.Ordinal)), "The queued diagnostic must describe the budget passed to dispatch");
+            var outer = owner.Expect(new RegressionExecutionTimeoutException());
+            Action? queued = null;
+            var runs = 0;
+            var observations = 0;
+            Exception? caught = null;
+            var output = new List<string>();
+            TimeSpan? explicitBudget = null;
+            try
+            {
+                await ObserveMatrixActionAsync("queued-fixture", stage => { runs++; stage("action body"); },
+                    dispatch: (callback, timeout) => { explicitBudget = timeout; queued = owner.Queue(callback); throw outer; },
+                    observe: async completion => { observations++; queued!(); await completion; }, write: output.Add, executionTimeout: TimeSpan.FromSeconds(20), diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Observing a queued action must preserve the original outer deadline exception");
+            AssertEqual(1, observations, "An outer deadline must observe only its same queued action once");
+            AssertEqual(1, runs, "Observation must execute that queued action once, without a replacement or retry");
+            AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "A pre-entry deadline must report its queue boundary");
+            AssertEqual(true, output.Any(line => line.Contains("action body", StringComparison.Ordinal)), "Failure output must retain the recorded phases");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(20), explicitBudget, "The explicit action budget must reach the dispatch boundary");
+            AssertEqual(true, output.Any(line => line.Contains("queued with explicit 20s action deadline", StringComparison.Ordinal)), "The queued diagnostic must describe the budget passed to dispatch");
 
-        var inner = new TimeoutException("Synthetic action timeout");
-        runs = 0; observations = 0; caught = null; output.Clear();
-        try
-        {
-            await ObserveMatrixActionAsync("inner-fixture", _ => { runs++; throw inner; },
-                dispatch: (callback, _) => { callback(); return Task.CompletedTask; },
-                observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned timeout must remain the original failure");
-        AssertEqual(0, observations, "An action-owned timeout must not be observed as an outer deadline");
-        AssertEqual(1, runs, "An action-owned timeout must not run the action again");
+            var inner = owner.Expect(new TimeoutException("Synthetic action timeout"));
+            runs = 0; observations = 0; caught = null; output.Clear();
+            try
+            {
+                await ObserveMatrixActionAsync("inner-fixture", _ => { runs++; throw inner; },
+                    dispatch: (callback, _) => { callback(); return Task.CompletedTask; },
+                    observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned timeout must remain the original failure");
+            AssertEqual(0, observations, "An action-owned timeout must not be observed as an outer deadline");
+            AssertEqual(1, runs, "An action-owned timeout must not run the action again");
 
-        // Inspect the real helper's Task directly so an early expiry cannot hide
-        // behind scheduling of the outer async catch/continuation.
-        var exactClock = new ManualStreamingTimeProvider();
-        var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var exactBound = BoundMatrixObservation(incomplete.Task, exactClock);
-        exactClock.Advance(TimeSpan.FromMilliseconds(9999));
-        AssertEqual(false, exactBound.IsCompleted, "The real observation bound stays incomplete at 9999ms");
-        exactClock.Advance(TimeSpan.FromMilliseconds(1));
-        AssertEqual(true, exactBound.IsCompleted, "The real observation bound expires at exactly 10000ms");
-        try { await exactBound; throw new InvalidOperationException("The observation did not expire"); }
-        catch (TimeoutException) { }
-        AssertEqual(false, incomplete.Task.IsCompleted, "The bound never cancels or replaces its incomplete observation");
-        incomplete.SetResult();
+            // Inspect the real helper's Task directly so an early expiry cannot hide
+            // behind scheduling of the outer async catch/continuation.
+            var exactClock = new ManualStreamingTimeProvider();
+            var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => incomplete.TrySetResult());
+            var exactBound = owner.Track(BoundMatrixObservation(incomplete.Task, exactClock));
+            exactClock.Advance(TimeSpan.FromMilliseconds(9999));
+            AssertEqual(false, exactBound.IsCompleted, "The real observation bound stays incomplete at 9999ms");
+            exactClock.Advance(TimeSpan.FromMilliseconds(1));
+            AssertEqual(true, exactBound.IsCompleted, "The real observation bound expires at exactly 10000ms");
+            try { await exactBound; throw new InvalidOperationException("The observation did not expire"); }
+            catch (TimeoutException error) { owner.Expect(error); }
+            AssertEqual(false, incomplete.Task.IsCompleted, "The bound never cancels or replaces its incomplete observation");
+            incomplete.SetResult();
 
-        caught = null; observations = 0; runs = 0; output.Clear();
-        var dispatches = 0;
-        var clock = new ManualStreamingTimeProvider();
-        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? sameCompletion = null;
-        var bounded = ObserveMatrixActionAsync("observation-fixture", _ => runs++,
-            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
-            observe: completion => { sameCompletion = completion; observations++; observing.TrySetResult(); return completion; },
-            write: output.Add, observationTimeProvider: clock);
-        await observing.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(9999));
-        AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 9999ms");
-        AssertEqual(false, sameCompletion!.IsCompleted, "The same queued action is still incomplete before expiration");
-        clock.Advance(TimeSpan.FromMilliseconds(1));
-        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "The real 10000ms observation deadline must preserve original outer-error identity");
-        AssertEqual(1, observations, "An incomplete action gets exactly one bounded observation");
-        AssertEqual(1, dispatches, "Expiration never dispatches a replacement or retry");
-        AssertEqual(0, runs, "Expiration does not execute or replace the queued action");
-        AssertEqual(false, sameCompletion.IsCompleted, "Expiration does not cancel the original action/completion");
-        AssertEqual(0, output.Count, "An expired observation may leave output absent rather than grant writing another allowance");
-        queued!();
-        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
+            caught = null; observations = 0; runs = 0; output.Clear();
+            var dispatches = 0;
+            var clock = new ManualStreamingTimeProvider();
+            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task? sameCompletion = null;
+            var bounded = owner.Track(ObserveMatrixActionAsync("observation-fixture", _ => runs++,
+                dispatch: (callback, _) => { dispatches++; queued = owner.Queue(callback); throw outer; },
+                observe: completion => { sameCompletion = owner.Track(completion); observations++; observing.TrySetResult(); return completion; },
+                write: output.Add, observationTimeProvider: clock, diagnosticWork: owner.CaptureWork()));
+            await observing.Task.WaitAsync(RegressionExecution.Timeout);
+            clock.Advance(TimeSpan.FromMilliseconds(9999));
+            AssertEqual(false, bounded.IsCompleted, "The real diagnostic observation remains pending at 9999ms");
+            AssertEqual(false, sameCompletion!.IsCompleted, "The same queued action is still incomplete before expiration");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            try { await bounded.WaitAsync(RegressionExecution.Timeout); }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "The real 10000ms observation deadline must preserve original outer-error identity");
+            AssertEqual(1, observations, "An incomplete action gets exactly one bounded observation");
+            AssertEqual(1, dispatches, "Expiration never dispatches a replacement or retry");
+            AssertEqual(0, runs, "Expiration does not execute or replace the queued action");
+            AssertEqual(false, sameCompletion.IsCompleted, "Expiration does not cancel the original action/completion");
+            AssertEqual(0, output.Count, "An expired observation may leave output absent rather than grant writing another allowance");
+            queued!();
+            await sameCompletion.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(1, runs, "The original action can still complete exactly once after diagnostic expiration");
 
-        output.Clear();
-        TimeSpan? defaultBudget = null;
-        await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
-            dispatch: (callback, timeout) => { defaultBudget = timeout; callback(); return Task.CompletedTask; }, write: output.Add);
-        AssertEqual(1, output.Count, "A successful action emits one compact line");
-        AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), defaultBudget, "An omitted action budget must use the shared execution dispatch boundary");
-        AssertEqual(true, output[0].Contains("deadline=120s", StringComparison.Ordinal), "Matrix success diagnostics describe the actual shared dispatch guard");
-    }
+            output.Clear();
+            TimeSpan? defaultBudget = null;
+            await ObserveMatrixActionAsync("success-fixture", stage => stage("buffered private phase"),
+                dispatch: (callback, timeout) => { defaultBudget = timeout; callback(); return Task.CompletedTask; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            AssertEqual(1, output.Count, "A successful action emits one compact line");
+            AssertEqual(false, output[0].Contains("buffered private phase", StringComparison.Ordinal), "Successful output keeps the detailed phase buffer private");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), defaultBudget, "An omitted action budget must use the shared execution dispatch boundary");
+            AssertEqual(true, output[0].Contains("deadline=120s", StringComparison.Ordinal), "Matrix success diagnostics describe the actual shared dispatch guard");
+        });
 
     private static async Task ObserveViewportActionAsync(Func<Action<string>, Task> action,
         Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null,
         Action<string>? write = null, TimeProvider? observationTimeProvider = null, Func<Action, Task>? scheduleReport = null,
-        string? matrixName = null)
+        string? matrixName = null, RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -317,7 +322,9 @@ internal static class SearchAdjustmentControlSuite
                     {
                         try
                         {
-                            await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                            var observation = (observe ?? (pending => pending))(completion.Task);
+                            if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                            await observation.ConfigureAwait(false);
                             var eventual = Volatile.Read(ref actionFailure);
                             Stage(matrixName is not null ? "same action observation completed; original deadline remains failed"
                                 : eventual is null ? "same action completed after cleanup; original deadline remains failed" : $"same action failed after cleanup ({eventual.GetType().Name}); original deadline remains failed");
@@ -325,7 +332,7 @@ internal static class SearchAdjustmentControlSuite
                         catch (Exception observationFailure) { Stage($"same action observation ended ({observationFailure.GetType().Name}); original deadline remains failed"); }
                     }
                     if (retired()) return;
-                    await (scheduleReport ?? (report => Task.Run(report)))(() =>
+                    var reportWork = (scheduleReport ?? (report => Task.Run(report)))(() =>
                     {
                         if (failed)
                         {
@@ -339,10 +346,12 @@ internal static class SearchAdjustmentControlSuite
                             Write(matrixName is null
                                 ? FormattableString.Invariant($"[search-viewport] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; execution={executionTimeout.TotalSeconds}s; complete same-source viewport chain.")
                                 : $"[search-adjustment/{matrixName}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={executionTimeout.TotalSeconds}s; 320/480 DIP.");
-                    }).ConfigureAwait(false);
+                    });
+                    if (diagnosticWork is not null) diagnosticWork.Report = reportWork;
+                    await reportWork.ConfigureAwait(false);
                 }
                 catch { /* Best-effort diagnostics cannot replace the original outcome. */ }
-            }, observationTimeProvider);
+            }, observationTimeProvider, diagnosticWork);
         }
         Stage(matrixName is null
             ? FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline")
@@ -377,154 +386,159 @@ internal static class SearchAdjustmentControlSuite
         }
     }
 
-    internal static async Task ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync()
-    {
-        var output = new List<string>();
-        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        TimeSpan? budget = null;
-        var runs = 0;
-        var cleanup = false;
-        var pending = ObserveViewportActionAsync(async stage =>
+    internal static Task ViewportDiagnosticsPreserveAsyncCompletionAndFailuresAsync() =>
+        DiagnosticFixtureOwner.RunAsync(async owner =>
         {
-            runs++; stage("private held phase"); entered.SetResult();
-            try { await release.Task; }
-            finally { cleanup = true; }
-        }, dispatch: (callback, timeout) => { budget = timeout; return callback(); }, write: output.Add);
-        await entered.Task.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(false, pending.IsCompleted, "The async viewport observer cannot accept an action before its await completes");
-        AssertEqual(0, output.Count, "An incomplete action cannot publish a success summary");
-        release.SetResult();
-        await pending.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(true, cleanup, "Successful completion follows the complete action's cleanup");
-        AssertEqual(1, runs, "An async action executes exactly once");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "The shared execution budget reaches injected async dispatch");
-        AssertEqual(1, output.Count, "Success emits one compact summary");
-        AssertEqual(true, output[0].Contains("execution=120s", StringComparison.Ordinal), "Success diagnostics use the same dispatched duration");
-        AssertEqual(false, output[0].Contains("private held phase", StringComparison.Ordinal), "Success does not dump buffered private phases");
+            var output = new List<string>();
+            var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => release.TrySetResult());
+            TimeSpan? budget = null;
+            var runs = 0;
+            var cleanup = false;
+            var pending = owner.Track(ObserveViewportActionAsync(async stage =>
+            {
+                runs++; stage("private held phase"); entered.SetResult();
+                try { await release.Task; }
+                finally { cleanup = true; }
+            }, dispatch: (callback, timeout) => { budget = timeout; return owner.Track(callback()); }, write: output.Add, diagnosticWork: owner.CaptureWork()));
+            await entered.Task.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(false, pending.IsCompleted, "The async viewport observer cannot accept an action before its await completes");
+            AssertEqual(0, output.Count, "An incomplete action cannot publish a success summary");
+            release.SetResult();
+            await pending.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(true, cleanup, "Successful completion follows the complete action's cleanup");
+            AssertEqual(1, runs, "An async action executes exactly once");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "The shared execution budget reaches injected async dispatch");
+            AssertEqual(1, output.Count, "Success emits one compact summary");
+            AssertEqual(true, output[0].Contains("execution=120s", StringComparison.Ordinal), "Success diagnostics use the same dispatched duration");
+            AssertEqual(false, output[0].Contains("private held phase", StringComparison.Ordinal), "Success does not dump buffered private phases");
 
-        var inner = new TimeoutException("Synthetic action-owned timeout");
-        var outer = new RegressionExecutionTimeoutException();
-        Exception? caught = null;
-        var observations = 0;
-        output.Clear();
-        try
-        {
-            await ObserveViewportActionAsync(async _ => { await Task.Yield(); throw inner; },
-                dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: _ => throw new IOException("Synthetic reporting failure"));
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(inner, caught), "An async action-owned timeout retains identity even if failure reporting throws");
-        AssertEqual(0, observations, "An action-owned timeout must bypass outer-deadline observation");
+            var inner = owner.Expect(new TimeoutException("Synthetic action-owned timeout"));
+            var outer = owner.Expect(new RegressionExecutionTimeoutException());
+            Exception? caught = null;
+            var observations = 0;
+            output.Clear();
+            try
+            {
+                await ObserveViewportActionAsync(async _ => { await Task.Yield(); throw inner; },
+                    dispatch: (callback, _) => owner.Track(callback()), observe: _ => { observations++; return Task.CompletedTask; }, write: _ => throw new IOException("Synthetic reporting failure"), diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(inner, caught), "An async action-owned timeout retains identity even if failure reporting throws");
+            AssertEqual(0, observations, "An action-owned timeout must bypass outer-deadline observation");
 
-        Func<Task>? queued = null;
-        var dispatches = 0;
-        runs = 0; observations = 0; caught = null; cleanup = false; output.Clear();
-        var cleanupObserved = false;
-        try
-        {
-            await ObserveViewportActionAsync(async stage => { runs++; try { await Task.Yield(); stage("late original action"); } finally { cleanup = true; } },
-                dispatch: (callback, timeout) => { dispatches++; budget = timeout; queued = callback; throw outer; },
-                observe: async completion => { observations++; await queued!(); await completion; cleanupObserved = cleanup; }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Late original completion cannot turn an outer deadline into success");
-        AssertEqual(true, cleanupObserved, "Same-action completion is published after cleanup");
-        AssertEqual(1, dispatches, "Late completion must not dispatch replacement work");
-        AssertEqual(1, runs, "Only the same queued callback may run");
-        AssertEqual(1, observations, "An outer timeout observes its one original completion");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "Failure dispatch receives the shared execution budget");
-        AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Failure diagnostics describe the dispatched duration");
+            Func<Task>? queued = null;
+            var dispatches = 0;
+            runs = 0; observations = 0; caught = null; cleanup = false; output.Clear();
+            var cleanupObserved = false;
+            try
+            {
+                await ObserveViewportActionAsync(async stage => { runs++; try { await Task.Yield(); stage("late original action"); } finally { cleanup = true; } },
+                    dispatch: (callback, timeout) => { dispatches++; budget = timeout; queued = owner.Queue(callback); throw outer; },
+                    observe: async completion => { observations++; await queued!(); await completion; cleanupObserved = cleanup; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Late original completion cannot turn an outer deadline into success");
+            AssertEqual(true, cleanupObserved, "Same-action completion is published after cleanup");
+            AssertEqual(1, dispatches, "Late completion must not dispatch replacement work");
+            AssertEqual(1, runs, "Only the same queued callback may run");
+            AssertEqual(1, observations, "An outer timeout observes its one original completion");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), budget, "Failure dispatch receives the shared execution budget");
+            AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Failure diagnostics describe the dispatched duration");
 
-        var secondary = new IOException("Synthetic observation failure");
-        caught = null; observations = 0; output.Clear();
-        try
-        {
-            await ObserveViewportActionAsync(_ => Task.CompletedTask,
-                dispatch: (callback, _) => { queued = callback; throw outer; },
-                observe: _ => { observations++; throw secondary; }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "A secondary observation fault cannot replace the primary deadline");
-        AssertEqual(1, observations, "A secondary failure does not retry observation");
-        AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "A finite observation fault is reported while diagnostic time remains");
-        await queued!();
+            var secondary = new IOException("Synthetic observation failure");
+            caught = null; observations = 0; output.Clear();
+            try
+            {
+                await ObserveViewportActionAsync(_ => Task.CompletedTask,
+                    dispatch: (callback, _) => { queued = owner.Queue(callback); throw outer; },
+                    observe: _ => { observations++; throw secondary; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "A secondary observation fault cannot replace the primary deadline");
+            AssertEqual(1, observations, "A secondary failure does not retry observation");
+            AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "A finite observation fault is reported while diagnostic time remains");
+            await queued!();
 
-        var clock = new ObservationRegistrationClock();
-        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? sameCompletion = null;
-        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
-        var bounded = ObserveViewportActionAsync(_ => { runs++; return Task.CompletedTask; },
-            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
-            observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return completion; },
-            write: output.Add, observationTimeProvider: clock);
-        await observing.Task.WaitAsync(RegressionExecution.Timeout);
-        await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(9999));
-        AssertEqual(false, bounded.IsCompleted, "The same-action observer cannot expire before 10000ms");
-        AssertEqual(false, sameCompletion!.IsCompleted, "The original callback is still incomplete at 9999ms");
-        clock.Advance(TimeSpan.FromMilliseconds(1));
-        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Observation expiry preserves the original deadline identity");
-        AssertEqual(1, dispatches, "Observation expiry must not dispatch a replacement or retry");
-        AssertEqual(1, observations, "Observation expires after its single bounded attempt");
-        AssertEqual(0, runs, "Expiry does not run queued replacement work");
-        AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry cannot cancel or complete the original action");
-        AssertEqual(1, clock.TimerCount, "Observation and best-effort output share exactly one diagnostic deadline");
-        await queued!();
-        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(1, runs, "Only the original action completes after expiry");
+            var clock = new ObservationRegistrationClock();
+            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task? sameCompletion = null;
+            dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+            var bounded = owner.Track(ObserveViewportActionAsync(_ => { runs++; return Task.CompletedTask; },
+                dispatch: (callback, _) => { dispatches++; queued = owner.Queue(callback); throw outer; },
+                observe: completion => { sameCompletion = owner.Track(completion); observations++; observing.SetResult(); return completion; },
+                write: output.Add, observationTimeProvider: clock, diagnosticWork: owner.CaptureWork()));
+            await observing.Task.WaitAsync(RegressionExecution.Timeout);
+            await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
+            clock.Advance(TimeSpan.FromMilliseconds(9999));
+            AssertEqual(false, bounded.IsCompleted, "The same-action observer cannot expire before 10000ms");
+            AssertEqual(false, sameCompletion!.IsCompleted, "The original callback is still incomplete at 9999ms");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            try { await bounded.WaitAsync(RegressionExecution.Timeout); }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Observation expiry preserves the original deadline identity");
+            AssertEqual(1, dispatches, "Observation expiry must not dispatch a replacement or retry");
+            AssertEqual(1, observations, "Observation expires after its single bounded attempt");
+            AssertEqual(0, runs, "Expiry does not run queued replacement work");
+            AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry cannot cancel or complete the original action");
+            AssertEqual(1, clock.TimerCount, "Observation and best-effort output share exactly one diagnostic deadline");
+            await queued!();
+            await sameCompletion.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(1, runs, "Only the original action completes after expiry");
 
-        await ViewportReportingSharesOneBoundedAllowanceAsync();
-    }
+            await ViewportReportingSharesOneBoundedAllowanceAsync();
+        });
 
     private static async Task ViewportReportingSharesOneBoundedAllowanceAsync()
     {
         foreach (var scenario in new[] { "owned-writer", "outer-partial-observation", "successful-summary" })
         {
-            var clock = new ObservationRegistrationClock();
-            var primary = new IOException("Synthetic held-reporter action fault");
-            var outer = new RegressionExecutionTimeoutException();
-            var actionRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var reporterEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var reportCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var reporterRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            using var writerRelease = new ManualResetEventSlim();
-            Task actionTask = Task.CompletedTask;
-            Task reportTask = Task.CompletedTask;
-            var runs = 0;
             var writes = 0;
-            Exception? caught = null;
-            var pending = ObserveViewportActionAsync(async _ =>
+            await DiagnosticFixtureOwner.RunAsync(async owner =>
             {
-                runs++;
-                if (scenario == "owned-writer") { await Task.Yield(); throw primary; }
-                if (scenario == "outer-partial-observation") await actionRelease.Task;
-            }, dispatch: (callback, _) =>
-            {
-                actionTask = callback();
-                if (scenario == "outer-partial-observation") throw outer;
-                return actionTask;
-            }, observe: completion => { observing.SetResult(); return completion; },
-                write: _ =>
+                var clock = new ObservationRegistrationClock();
+                var primary = owner.Expect(new IOException("Synthetic held-reporter action fault"));
+                var outer = owner.Expect(new RegressionExecutionTimeoutException());
+                var actionRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var reporterEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var reportCreated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var reporterRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var writerRelease = owner.Own(new ManualResetEventSlim());
+                owner.Release(() => actionRelease.TrySetResult());
+                owner.Release(() => reporterRelease.TrySetResult());
+                owner.Release(writerRelease.Set);
+                Task actionTask = Task.CompletedTask;
+                Task reportTask = Task.CompletedTask;
+                var runs = 0;
+                Exception? caught = null;
+                var pending = owner.Track(ObserveViewportActionAsync(async _ =>
                 {
-                    Interlocked.Increment(ref writes);
-                    if (scenario == "owned-writer") { reporterEntered.SetResult(); writerRelease.Wait(); }
-                }, observationTimeProvider: clock, scheduleReport: report =>
+                    runs++;
+                    if (scenario == "owned-writer") { await Task.Yield(); throw primary; }
+                    if (scenario == "outer-partial-observation") await actionRelease.Task;
+                }, dispatch: (callback, _) =>
                 {
-                    reportTask = scenario == "owned-writer" ? Task.Run(report) : Task.Run(async () =>
+                    actionTask = owner.Track(callback());
+                    if (scenario == "outer-partial-observation") throw outer;
+                    return actionTask;
+                }, observe: completion => { observing.SetResult(); return completion; },
+                    write: _ =>
                     {
-                        reporterEntered.SetResult();
-                        await reporterRelease.Task;
-                        report();
-                    });
-                    reportCreated.SetResult();
-                    return reportTask;
-                });
-            try
-            {
+                        Interlocked.Increment(ref writes);
+                        if (scenario == "owned-writer") { reporterEntered.SetResult(); writerRelease.Wait(); }
+                    }, observationTimeProvider: clock, scheduleReport: report =>
+                    {
+                        reportTask = owner.Track(scenario == "owned-writer" ? Task.Run(report) : Task.Run(async () =>
+                        {
+                            reporterEntered.SetResult();
+                            await reporterRelease.Task;
+                            report();
+                        }));
+                        reportCreated.SetResult();
+                        return reportTask;
+                    }, diagnosticWork: owner.CaptureWork()));
                 await clock.TimerCreated.Task.WaitAsync(RegressionExecution.Timeout);
                 if (scenario == "outer-partial-observation")
                 {
@@ -546,20 +560,11 @@ internal static class SearchAdjustmentControlSuite
                 AssertEqual(1, runs, "Held reporting never retries or replaces the original action");
                 AssertEqual(false, reportTask.IsCompleted, "The outcome returns while the external writer or reporter is still held");
                 AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Held scheduling cannot emit a success or failure before release");
-            }
-            finally
-            {
-                actionRelease.TrySetResult();
-                reporterRelease.TrySetResult();
-                writerRelease.Set();
-                try { await actionTask.WaitAsync(RegressionExecution.Timeout); } catch (IOException error) when (ReferenceEquals(error, primary)) { }
-                await reportTask.WaitAsync(RegressionExecution.Timeout);
-                try { await pending.WaitAsync(RegressionExecution.Timeout); }
-                catch (Exception error) when (ReferenceEquals(error, primary) || ReferenceEquals(error, outer)) { }
-            }
+            });
             AssertEqual(scenario == "owned-writer" ? 1 : 0, writes, "Retirement suppresses later buffered output after the allowance expires");
         }
     }
+
 
     private sealed class ObservationRegistrationClock : TimeProvider
     {

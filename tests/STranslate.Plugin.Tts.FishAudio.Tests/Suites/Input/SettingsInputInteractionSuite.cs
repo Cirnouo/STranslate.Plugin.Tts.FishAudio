@@ -861,133 +861,140 @@ internal static class SettingsInputInteractionSuite
         }
     }
 
-    internal static async Task NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync()
-    {
-        // These contracts catch replacement/retry, lost failure identity and
-        // unbounded observation without dispatching WPF or waiting on real time.
-        var outer = new RegressionExecutionTimeoutException();
-        Func<Task>? queued = null;
-        var dispatches = 0;
-        var runs = 0;
-        var observations = 0;
-        Exception? caught = null;
-        var output = new List<string>();
-        TimeSpan? executionBudget = null;
-        try
+    internal static Task NativeToolTipDiagnosticsPreserveFailuresWithoutRetryAsync() =>
+        DiagnosticFixtureOwner.RunAsync(async owner =>
         {
-            await ObserveNativeToolTipActionAsync("queued-contract", stage => { runs++; stage("original action body"); return Task.CompletedTask; },
-                dispatch: (callback, timeout) => { executionBudget = timeout; dispatches++; queued = callback; throw outer; },
-                observe: async completion => { observations++; await queued!(); await completion; }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Queued observation must preserve the original outer timeout identity");
-        AssertEqual(1, observations, "A queued outer deadline must observe its same action exactly once");
-        AssertEqual(1, dispatches, "Observation must not dispatch a replacement action");
-        AssertEqual(1, runs, "The original queued action must run once without retry");
-        AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "Queued failure must identify its pre-entry phase");
-        AssertEqual(true, output.Any(line => line.Contains("original action body", StringComparison.Ordinal)), "Failure output must retain the action phases");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Numeric tooltip injected dispatch receives the shared execution guard");
-        AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Numeric tooltip diagnostics describe the actual injected guard");
+            // These contracts catch replacement/retry, lost failure identity and
+            // unbounded observation without dispatching WPF or waiting on real time.
+            var outer = owner.Expect(new RegressionExecutionTimeoutException());
+            Func<Task>? queued = null;
+            var dispatches = 0;
+            var runs = 0;
+            var observations = 0;
+            Exception? caught = null;
+            var output = new List<string>();
+            TimeSpan? executionBudget = null;
+            try
+            {
+                await ObserveNativeToolTipActionAsync("queued-contract", stage => { runs++; stage("original action body"); return Task.CompletedTask; },
+                    dispatch: (callback, timeout) => { executionBudget = timeout; dispatches++; queued = owner.Queue(callback); throw outer; },
+                    observe: async completion => { observations++; await queued!(); await completion; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Queued observation must preserve the original outer timeout identity");
+            AssertEqual(1, observations, "A queued outer deadline must observe its same action exactly once");
+            AssertEqual(1, dispatches, "Observation must not dispatch a replacement action");
+            AssertEqual(1, runs, "The original queued action must run once without retry");
+            AssertEqual(true, output.Any(line => line.Contains("before entry", StringComparison.Ordinal)), "Queued failure must identify its pre-entry phase");
+            AssertEqual(true, output.Any(line => line.Contains("original action body", StringComparison.Ordinal)), "Failure output must retain the action phases");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Numeric tooltip injected dispatch receives the shared execution guard");
+            AssertEqual(true, output.Any(line => line.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Numeric tooltip diagnostics describe the actual injected guard");
 
-        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? originalAction = null;
-        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
-        try
-        {
-            await ObserveNativeToolTipActionAsync("entered-contract", async stage => { runs++; stage("entered action waiting"); await release.Task; stage("same action resumed"); },
-                dispatch: (callback, _) => { dispatches++; originalAction = callback(); throw outer; },
-                observe: async completion => { observations++; AssertEqual(false, completion.IsCompleted, "Observation must see the incomplete entered action"); release.SetResult(); await completion; }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        await originalAction!.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(true, ReferenceEquals(outer, caught), "Late entered-action completion must leave the original deadline failed");
-        AssertEqual(1, dispatches, "Entered observation must not dispatch again");
-        AssertEqual(1, runs, "The entered action must not be replaced or retried");
-        AssertEqual(1, observations, "The entered action gets one observation");
-        AssertEqual(true, output.Any(line => line.Contains("after entry", StringComparison.Ordinal)), "Entered failure must identify its execution phase");
-        AssertEqual(true, output.Any(line => line.Contains("same action resumed", StringComparison.Ordinal)), "Failure phases must include the same action's late completion");
+            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => release.TrySetResult());
+            Task? originalAction = null;
+            dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+            try
+            {
+                await ObserveNativeToolTipActionAsync("entered-contract", async stage => { runs++; stage("entered action waiting"); await release.Task; stage("same action resumed"); },
+                    dispatch: (callback, _) => { dispatches++; originalAction = owner.Track(callback()); throw outer; },
+                    observe: async completion => { observations++; AssertEqual(false, completion.IsCompleted, "Observation must see the incomplete entered action"); release.SetResult(); await completion; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            await originalAction!.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(true, ReferenceEquals(outer, caught), "Late entered-action completion must leave the original deadline failed");
+            AssertEqual(1, dispatches, "Entered observation must not dispatch again");
+            AssertEqual(1, runs, "The entered action must not be replaced or retried");
+            AssertEqual(1, observations, "The entered action gets one observation");
+            AssertEqual(true, output.Any(line => line.Contains("after entry", StringComparison.Ordinal)), "Entered failure must identify its execution phase");
+            AssertEqual(true, output.Any(line => line.Contains("same action resumed", StringComparison.Ordinal)), "Failure phases must include the same action's late completion");
 
-        foreach (var inner in new Exception[] { new TimeoutException("Synthetic action-owned timeout"), new InvalidOperationException("Synthetic action failure") })
-        {
+            foreach (var inner in new Exception[] { new TimeoutException("Synthetic action-owned timeout"), new InvalidOperationException("Synthetic action failure") })
+            {
+                owner.Expect(inner);
+                runs = 0; observations = 0; caught = null; output.Clear();
+                try
+                {
+                    await ObserveNativeToolTipActionAsync("inner-contract", _ => { runs++; throw inner; },
+                        dispatch: (callback, _) => owner.Track(callback()), observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add, diagnosticWork: owner.CaptureWork());
+                }
+                catch (Exception error) { caught = error; }
+                AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned failure must preserve its exact exception identity");
+                AssertEqual(0, observations, "An action-owned TimeoutException must not be treated as the outer deadline");
+                AssertEqual(1, runs, "An action-owned failure must never retry");
+                AssertEqual(true, output.Any(line => line.Contains("action failed", StringComparison.Ordinal)), "An action-owned failure must dump its phase evidence");
+            }
+
             runs = 0; observations = 0; caught = null; output.Clear();
             try
             {
-                await ObserveNativeToolTipActionAsync("inner-contract", _ => { runs++; throw inner; },
-                    dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: output.Add);
+                await ObserveNativeToolTipActionAsync("observation-failure-contract", _ => { runs++; return Task.CompletedTask; },
+                    dispatch: (callback, _) => { queued = owner.Queue(callback); throw outer; },
+                    observe: _ => { observations++; throw new IOException("Synthetic observation failure"); }, write: output.Add, diagnosticWork: owner.CaptureWork());
             }
             catch (Exception error) { caught = error; }
-            AssertEqual(true, ReferenceEquals(inner, caught), "An action-owned failure must preserve its exact exception identity");
-            AssertEqual(0, observations, "An action-owned TimeoutException must not be treated as the outer deadline");
-            AssertEqual(1, runs, "An action-owned failure must never retry");
-            AssertEqual(true, output.Any(line => line.Contains("action failed", StringComparison.Ordinal)), "An action-owned failure must dump its phase evidence");
-        }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Observation failure must not replace the original outer exception");
+            AssertEqual(1, observations, "Observation failure must not trigger a second observer");
+            AssertEqual(0, runs, "Observation failure must not execute replacement work");
+            AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "The observation failure must remain visible in safe diagnostics");
+            await queued!();
+            AssertEqual(1, runs, "The original queued action can still complete once after observation fails");
 
-        runs = 0; observations = 0; caught = null; output.Clear();
-        try
-        {
-            await ObserveNativeToolTipActionAsync("observation-failure-contract", _ => { runs++; return Task.CompletedTask; },
-                dispatch: (callback, _) => { queued = callback; throw outer; },
-                observe: _ => { observations++; throw new IOException("Synthetic observation failure"); }, write: output.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Observation failure must not replace the original outer exception");
-        AssertEqual(1, observations, "Observation failure must not trigger a second observer");
-        AssertEqual(0, runs, "Observation failure must not execute replacement work");
-        AssertEqual(true, output.Any(line => line.Contains("observation ended (IOException)", StringComparison.Ordinal)), "The observation failure must remain visible in safe diagnostics");
-        await queued!();
-        AssertEqual(1, runs, "The original queued action can still complete once after observation fails");
+            var exactClock = new ManualStreamingTimeProvider();
+            var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => incomplete.TrySetResult());
+            var exactBound = owner.Track(BoundNativeToolTipObservation(incomplete.Task, exactClock));
+            exactClock.Advance(TimeSpan.FromMilliseconds(9999));
+            AssertEqual(false, exactBound.IsCompleted, "The actual observation helper must remain pending at 9999ms");
+            exactClock.Advance(TimeSpan.FromMilliseconds(1));
+            AssertEqual(true, exactBound.IsCompleted, "The actual helper Task must expire at exactly 10000ms, independently of caller scheduling");
+            caught = null;
+            try { await exactBound; }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, caught is TimeoutException, "The bounded helper must report its ten-second observation deadline");
+            owner.Expect(caught!);
+            AssertEqual(false, incomplete.Task.IsCompleted, "Observation expiry must not cancel or complete the original action");
+            incomplete.SetResult();
 
-        var exactClock = new ManualStreamingTimeProvider();
-        var incomplete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var exactBound = BoundNativeToolTipObservation(incomplete.Task, exactClock);
-        exactClock.Advance(TimeSpan.FromMilliseconds(9999));
-        AssertEqual(false, exactBound.IsCompleted, "The actual observation helper must remain pending at 9999ms");
-        exactClock.Advance(TimeSpan.FromMilliseconds(1));
-        AssertEqual(true, exactBound.IsCompleted, "The actual helper Task must expire at exactly 10000ms, independently of caller scheduling");
-        caught = null;
-        try { await exactBound; }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, caught is TimeoutException, "The bounded helper must report its ten-second observation deadline");
-        AssertEqual(false, incomplete.Task.IsCompleted, "Observation expiry must not cancel or complete the original action");
-        incomplete.SetResult();
+            var clock = new ManualStreamingTimeProvider();
+            var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var observationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => observationRelease.TrySetResult());
+            Task? sameCompletion = null;
+            dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
+            var bounded = owner.Track(ObserveNativeToolTipActionAsync("observation-timeout-contract", _ => { runs++; return Task.CompletedTask; },
+                dispatch: (callback, _) => { dispatches++; queued = owner.Queue(callback); throw outer; },
+                observe: completion => { sameCompletion = owner.Track(completion); observations++; observing.SetResult(); return observationRelease.Task; }, write: output.Add, observationTimeProvider: clock, diagnosticWork: owner.CaptureWork()));
+            await observing.Task.WaitAsync(RegressionExecution.Timeout);
+            clock.Advance(TimeSpan.FromMilliseconds(9999));
+            AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the ten-second boundary");
+            AssertEqual(false, sameCompletion!.IsCompleted, "The original action remains pending before observation expiry");
+            clock.Advance(TimeSpan.FromMilliseconds(1));
+            try { await bounded.WaitAsync(RegressionExecution.Timeout); }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Observation timeout must preserve the original outer exception");
+            AssertEqual(1, observations, "The observation bound must not retry its observer");
+            AssertEqual(1, dispatches, "The observation bound must not dispatch another action");
+            AssertEqual(0, runs, "Observation expiry must not run replacement work");
+            AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry must leave the original completion pending");
+            AssertEqual(false, observationRelease.Task.IsCompleted, "Observation expiry must not cancel the observed task");
+            AssertEqual(0, output.Count, "Expiry retires output instead of granting another reporting allowance");
+            await queued!();
+            await sameCompletion.WaitAsync(RegressionExecution.Timeout);
+            observationRelease.SetResult();
+            AssertEqual(1, runs, "Only the same original queued action may complete after observation expiry");
 
-        var clock = new ManualStreamingTimeProvider();
-        var observing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var observationRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? sameCompletion = null;
-        dispatches = 0; runs = 0; observations = 0; caught = null; output.Clear();
-        var bounded = ObserveNativeToolTipActionAsync("observation-timeout-contract", _ => { runs++; return Task.CompletedTask; },
-            dispatch: (callback, _) => { dispatches++; queued = callback; throw outer; },
-            observe: completion => { sameCompletion = completion; observations++; observing.SetResult(); return observationRelease.Task; }, write: output.Add, observationTimeProvider: clock);
-        await observing.Task.WaitAsync(RegressionExecution.Timeout);
-        clock.Advance(TimeSpan.FromMilliseconds(9999));
-        AssertEqual(false, bounded.IsCompleted, "An incomplete observer must not retire before the ten-second boundary");
-        AssertEqual(false, sameCompletion!.IsCompleted, "The original action remains pending before observation expiry");
-        clock.Advance(TimeSpan.FromMilliseconds(1));
-        try { await bounded.WaitAsync(RegressionExecution.Timeout); }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Observation timeout must preserve the original outer exception");
-        AssertEqual(1, observations, "The observation bound must not retry its observer");
-        AssertEqual(1, dispatches, "The observation bound must not dispatch another action");
-        AssertEqual(0, runs, "Observation expiry must not run replacement work");
-        AssertEqual(false, sameCompletion.IsCompleted, "Observation expiry must leave the original completion pending");
-        AssertEqual(false, observationRelease.Task.IsCompleted, "Observation expiry must not cancel the observed task");
-        AssertEqual(0, output.Count, "Expiry retires output instead of granting another reporting allowance");
-        await queued!();
-        await sameCompletion.WaitAsync(RegressionExecution.Timeout);
-        observationRelease.SetResult();
-        AssertEqual(1, runs, "Only the same original queued action may complete after observation expiry");
-
-        output.Clear(); runs = 0;
-        await ObserveNativeToolTipActionAsync("success-contract", stage => { runs++; stage("buffered successful phase"); return Task.CompletedTask; },
-            dispatch: (callback, _) => callback(), write: output.Add);
-        AssertEqual(1, runs, "A successful action executes once");
-        AssertEqual(1, output.Count, "Successful diagnostics must emit exactly one compact case summary");
-        AssertEqual(false, output[0].Contains("buffered successful phase", StringComparison.Ordinal), "Success must not dump the detailed phase buffer");
-    }
+            output.Clear(); runs = 0;
+            await ObserveNativeToolTipActionAsync("success-contract", stage => { runs++; stage("buffered successful phase"); return Task.CompletedTask; },
+                dispatch: (callback, _) => owner.Track(callback()), write: output.Add, diagnosticWork: owner.CaptureWork());
+            AssertEqual(1, runs, "A successful action executes once");
+            AssertEqual(1, output.Count, "Successful diagnostics must emit exactly one compact case summary");
+            AssertEqual(false, output[0].Contains("buffered successful phase", StringComparison.Ordinal), "Success must not dump the detailed phase buffer");
+        });
 
     private static async Task ObserveNativeToolTipActionAsync(string name, Func<Action<string>, Task> action,
-        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null)
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
+        RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -1007,7 +1014,9 @@ internal static class SettingsInputInteractionSuite
             {
                 try
                 {
-                    await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false);
+                    var observation = (observe ?? (pending => pending))(completion.Task);
+                    if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                    await observation.ConfigureAwait(false);
                     Stage("same action observation completed; original deadline remains failed");
                 }
                 catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
@@ -1024,7 +1033,7 @@ internal static class SettingsInputInteractionSuite
             {
                 try { (write ?? Console.WriteLine)($"[numeric-tooltip/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; native field lifecycle."); } catch { }
             }
-        }, observationTimeProvider);
+        }, observationTimeProvider, diagnosticWork);
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {

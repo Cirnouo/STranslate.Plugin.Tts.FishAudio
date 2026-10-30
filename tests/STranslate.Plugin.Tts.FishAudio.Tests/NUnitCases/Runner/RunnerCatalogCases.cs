@@ -26,10 +26,6 @@ public sealed class RunnerCatalogCases
     public void RemainingNativeAliasesKeepTheirExactOrderedOwners() =>
         RegressionCatalogSuite.RemainingNativeAliasesKeepTheirExactOrderedOwners();
 
-    [Test]
-    [Property("FishAudioCaseId", "infra.runner/catalog/offline-dispatcher-and-input-requests-remain-core")]
-    public void OfflineDispatcherAndInputRequestsRemainCore() =>
-        RegressionCatalogSuite.OfflineDispatcherAndInputRequestsRemainCore();
 
     [Test]
     [Property("FishAudioCaseId", "infra.runner/catalog/original-legacy-argument-shapes-remain-valid")]
