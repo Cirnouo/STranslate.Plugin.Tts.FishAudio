@@ -19,7 +19,7 @@ internal static class OperationActivityDispatcherSuite
             await ObserveDispatcherActionAsync(cancel ? "cancellation" : "timeout", stage => PlaybackRetiresBoundCommandsAsync(cancel, stage));
     }
 
-    private static async Task PlaybackRetiresBoundCommandsAsync(bool cancel, Action<string> stage)
+    internal static async Task PlaybackRetiresBoundCommandsAsync(bool cancel, Action<string> stage)
     {
         using var network = OverrideNetworkAvailability(false);
         var dispatcher = Dispatcher.CurrentDispatcher;
@@ -30,87 +30,138 @@ internal static class OperationActivityDispatcherSuite
             if (!dispatcher.CheckAccess()) Interlocked.Increment(ref workerPublicationCount);
             Dispatch(dispatcher, action);
         };
+        STranslate.Plugin.Tts.FishAudio.Main? ownedPlugin = null;
+        CancellationTokenSource? ownedCaller = null;
+        TaskCompletionSource? ownedRelease = null;
+        STranslate.Plugin.Tts.FishAudio.Lifecycle.PluginInitializationCoordinator.InitializationWorkHandle? initializationWork = null;
+        Task? startupCreditObserver = null;
+        Task? ownedPlayback = null;
+        TaskCanceledException? observedCancellation = null;
         try
         {
-            stage("initialization begin");
-            var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var session = new StreamingSessionDouble
+            // ObserveDispatcherActionAsync has already entered the original STA root.
+            // The nested owner suppresses QueueRoot and adds no execution deadline.
+            await RegressionFixtureOwner.RunAsync(async () =>
             {
-                Handler = async (_, _, token) =>
+                stage("initialization begin");
+                var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                ownedRelease = release;
+                var session = new StreamingSessionDouble
                 {
-                    await release.Task.WaitAsync(token).ConfigureAwait(false);
-                    throw new TimeoutException("Synthetic connection timeout.");
-                },
-            };
-            var snackbar = new TestSnackbar();
-            var logger = new TestLogger();
-            using var caller = new CancellationTokenSource();
-            using var plugin = StreamingEntrySuite.CreatePlugin(() => session);
-            plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel),
-                snackbar: snackbar, logger: logger));
-            stage("initialization complete; startup wait begin");
-            await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-            stage("startup complete; ViewModel begin");
-            var viewModel = plugin.GetOrCreateSettingsViewModel();
-            // A real WPF command listener retains its owning dispatcher even
-            // after the settings window is no longer visible.
-            stage("ViewModel complete; Button begin");
-            var pasteButton = new Button { Command = viewModel.PasteApiKeyCommand };
-            stage("Button complete");
-            var notificationThreads = new List<int>();
-            viewModel.PropertyChanged += RecordLockThread;
-            network.Set(true);
-            stage("playback begin");
-            var playback = plugin.PlayAudioAsync("Offline dispatcher regression", caller.Token);
-            AssertEqual(false, pasteButton.IsEnabled, "Beginning playback must disable the bound paste command");
-            var publicationsBeforeRetirement = Volatile.Read(ref workerPublicationCount);
-            stage(cancel ? "worker cancellation begin" : "release begin");
-            if (cancel) Task.Run(caller.Cancel).GetAwaiter().GetResult();
-            else release.TrySetResult();
-            stage("blocking playback wait begin");
+                    Handler = async (_, _, token) =>
+                    {
+                        await release.Task.WaitAsync(token).ConfigureAwait(false);
+                        throw new TimeoutException("Synthetic connection timeout.");
+                    },
+                };
+                var snackbar = new TestSnackbar();
+                var logger = new TestLogger();
+                var caller = new CancellationTokenSource();
+                ownedCaller = caller;
+                var plugin = StreamingEntrySuite.CreatePlugin(() => session);
+                ownedPlugin = plugin;
+                plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel),
+                    snackbar: snackbar, logger: logger));
+                initializationWork = plugin.CaptureInitializationWork()?.Work
+                    ?? throw new InvalidOperationException("activity-dispatcher-initialization-work-unpublished");
+                if (!ReferenceEquals(initializationWork.StartupTask, plugin.PendingStartupTask))
+                    throw new InvalidOperationException("activity-dispatcher-original-startup-identity-changed");
+                stage("initialization complete; startup wait begin");
+                await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
+                stage("startup complete; ViewModel begin");
+                var viewModel = plugin.GetOrCreateSettingsViewModel();
+                startupCreditObserver = viewModel.PendingStartupCreditObserverTask;
+                // A real WPF command listener retains its owning dispatcher even
+                // after the settings window is no longer visible.
+                stage("ViewModel complete; Button begin");
+                var pasteButton = new Button { Command = viewModel.PasteApiKeyCommand };
+                stage("Button complete");
+                var notificationThreads = new List<int>();
+                viewModel.PropertyChanged += RecordLockThread;
+                network.Set(true);
+                stage("playback begin");
+                var playback = plugin.PlayAudioAsync("Offline dispatcher regression", caller.Token);
+                ownedPlayback = playback;
+                AssertEqual(false, pasteButton.IsEnabled, "Beginning playback must disable the bound paste command");
+                var publicationsBeforeRetirement = Volatile.Read(ref workerPublicationCount);
+                stage(cancel ? "worker cancellation begin" : "release begin");
+                if (cancel) Task.Run(caller.Cancel).GetAwaiter().GetResult();
+                else release.TrySetResult();
+                stage("blocking playback wait begin");
 
-            Exception? failure = null;
-            try { playback.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult(); }
-            catch (Exception error) { failure = error; }
-            stage("blocking playback wait complete");
-            if (cancel)
-            {
-                AssertEqual(true, failure is TaskCanceledException,
-                    "Worker-thread retirement must retain quiet host cancellation instead of a dispatcher exception");
-                AssertEqual<string?>(null, snackbar.LastError, "Cancellation must not publish a generic error");
-            }
-            else
-            {
-                AssertEqual<Exception?>(null, failure,
-                    "Worker-thread retirement must not replace the handled native timeout with a dispatcher exception");
-                AssertEqual("STranslate_Plugin_Tts_FishAudio_Request_Timeout", snackbar.LastError,
-                    "The original connection timeout must retain its localized error");
-                AssertEqual(true, logger.Contains("TimeoutException"), "The original timeout classification must be logged");
-            }
-            AssertEqual(true, Volatile.Read(ref workerPublicationCount) > publicationsBeforeRetirement,
-                "Completed worker retirement must have posted its UI publication before the dispatcher is drained");
-            AssertEqual(true, viewModel.IsApiKeyInputLocked,
-                "The completed background operation must leave the UI lock unchanged until its queued publication runs");
-            AssertEqual(false, pasteButton.IsEnabled,
-                "The bound command must remain disabled while final retirement publication is still queued");
-            stage("dispatcher drain begin");
-            Drain(dispatcher);
-            stage("dispatcher drain complete");
-            AssertEqual(false, viewModel.IsApiKeyInputLocked, "The final operation must unlock after UI publication");
-            AssertEqual(true, pasteButton.IsEnabled, "The bound WPF command must observe final retirement");
-            AssertEqual(true, notificationThreads.All(thread => thread == Environment.CurrentManagedThreadId),
-                "Activity property notifications must stay on the owning UI dispatcher");
-            AssertEqual(1, session.DisposeCount, "Retirement must still dispose its native session");
-            stage("cleanup begin");
-            viewModel.PropertyChanged -= RecordLockThread;
-            pasteButton.Command = null;
-            network.Set(false);
+                Exception? failure = null;
+                try { playback.WaitAsync(RegressionExecution.Timeout).GetAwaiter().GetResult(); }
+                catch (Exception error) { failure = error; }
+                stage("blocking playback wait complete");
+                if (cancel)
+                {
+                    AssertEqual(true, failure is TaskCanceledException,
+                        "Worker-thread retirement must retain quiet host cancellation instead of a dispatcher exception");
+                    AssertEqual<string?>(null, snackbar.LastError, "Cancellation must not publish a generic error");
+                    observedCancellation = failure as TaskCanceledException;
+                }
+                else
+                {
+                    AssertEqual<Exception?>(null, failure,
+                        "Worker-thread retirement must not replace the handled native timeout with a dispatcher exception");
+                    AssertEqual("STranslate_Plugin_Tts_FishAudio_Request_Timeout", snackbar.LastError,
+                        "The original connection timeout must retain its localized error");
+                    AssertEqual(true, logger.Contains("TimeoutException"), "The original timeout classification must be logged");
+                }
+                AssertEqual(true, Volatile.Read(ref workerPublicationCount) > publicationsBeforeRetirement,
+                    "Completed worker retirement must have posted its UI publication before the dispatcher is drained");
+                AssertEqual(true, viewModel.IsApiKeyInputLocked,
+                    "The completed background operation must leave the UI lock unchanged until its queued publication runs");
+                AssertEqual(false, pasteButton.IsEnabled,
+                    "The bound command must remain disabled while final retirement publication is still queued");
+                stage("dispatcher drain begin");
+                Drain(dispatcher);
+                stage("dispatcher drain complete");
+                AssertEqual(false, viewModel.IsApiKeyInputLocked, "The final operation must unlock after UI publication");
+                AssertEqual(true, pasteButton.IsEnabled, "The bound WPF command must observe final retirement");
+                AssertEqual(true, notificationThreads.All(thread => thread == Environment.CurrentManagedThreadId),
+                    "Activity property notifications must stay on the owning UI dispatcher");
+                AssertEqual(1, session.DisposeCount, "Retirement must still dispose its native session");
+                stage("cleanup begin");
+                viewModel.PropertyChanged -= RecordLockThread;
+                pasteButton.Command = null;
+                network.Set(false);
 
-            void RecordLockThread(object? sender, PropertyChangedEventArgs args)
+                void RecordLockThread(object? sender, PropertyChangedEventArgs args)
+                {
+                    if (args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
+                        notificationThreads.Add(Environment.CurrentManagedThreadId);
+                }
+            },
+            () =>
             {
-                if (args.PropertyName == nameof(SettingsViewModel.IsApiKeyInputLocked))
-                    notificationThreads.Add(Environment.CurrentManagedThreadId);
-            }
+                // Original success paths have already released or observed cancellation.
+                // Only a failed body with the same pending playback needs this release.
+                if (ownedPlayback is { IsCompleted: false }) ownedRelease?.TrySetResult();
+                return Task.CompletedTask;
+            },
+            async () =>
+            {
+                if (ownedPlayback is null) return;
+                try { await ownedPlayback; }
+                catch (TaskCanceledException) when (observedCancellation is not null && ownedPlayback.IsCanceled)
+                {
+                    // The original synchronous wait/assertions already observed this
+                    // exact task's expected cancellation. Unknown faults are not ignored.
+                }
+            },
+            () => { ownedPlugin?.Dispose(); return Task.CompletedTask; },
+            () => { ownedCaller?.Dispose(); return Task.CompletedTask; },
+            () => initializationWork?.StartupTask ?? Task.CompletedTask,
+            () => startupCreditObserver ?? Task.CompletedTask,
+            () =>
+            {
+                if (initializationWork is null) return Task.CompletedTask;
+                var retirement = initializationWork.RetirementTasks;
+                if (retirement.Count == 0)
+                    throw new InvalidOperationException("activity-dispatcher-has-no-actual-retirement-task");
+                return Task.WhenAll(retirement);
+            });
         }
         finally
         {
@@ -119,8 +170,9 @@ internal static class OperationActivityDispatcherSuite
         }
     }
 
-    private static async Task ObserveDispatcherActionAsync(string name, Func<Action<string>, Task> action,
-        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null)
+    internal static async Task ObserveDispatcherActionAsync(string name, Func<Action<string>, Task> action,
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null,
+        RegressionDiagnostics.WorkCapture? diagnosticWork = null)
     {
         var executionTimeout = RegressionExecution.Timeout;
         var elapsed = Stopwatch.StartNew();
@@ -138,7 +190,13 @@ internal static class OperationActivityDispatcherSuite
         {
             if (observeCompletion)
             {
-                try { await (observe ?? (pending => pending))(completion.Task).ConfigureAwait(false); Stage("same action observation complete; original deadline remains failed"); }
+                try
+                {
+                    var observation = (observe ?? (pending => pending))(completion.Task);
+                    if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                    await observation.ConfigureAwait(false);
+                    Stage("same action observation complete; original deadline remains failed");
+                }
                 catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
             }
             if (failed)
@@ -153,7 +211,7 @@ internal static class OperationActivityDispatcherSuite
             {
                 try { (write ?? Console.WriteLine)($"[activity-dispatcher/{name}] completed in {elapsed.ElapsedMilliseconds}ms."); } catch { }
             }
-        });
+        }, capture: diagnosticWork);
         Stage(FormattableString.Invariant($"queued with shared {executionTimeout.TotalSeconds}s async action deadline"));
         try
         {
@@ -180,69 +238,72 @@ internal static class OperationActivityDispatcherSuite
         }
     }
 
-    internal static async Task DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync()
-    {
-        // Deterministic schedule seam: no real deadline waits or extra STA.
-        var outer = new RegressionExecutionTimeoutException();
-        Func<Task>? queued = null;
-        var runs = 0;
-        var observations = 0;
-        var messages = new List<string>();
-        TimeSpan? executionBudget = null;
-        Exception? caught = null;
-        try
+    internal static Task DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync() =>
+        DiagnosticFixtureOwner.RunAsync(async owner =>
         {
-            await ObserveDispatcherActionAsync("fixture-outer", _ => { runs++; return Task.CompletedTask; },
-                dispatch: (callback, timeout) => { executionBudget = timeout; queued = callback; return Task.FromException(outer); },
-                observe: async completion => { observations++; await queued!(); await completion; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "Late completion must retain the original outer deadline exception");
-        AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
-        AssertEqual(1, observations, "The outer deadline must observe the same action once");
-        AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
-        AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Activity injected async dispatch receives the shared execution guard");
-        AssertEqual(true, messages.Any(message => message.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
+            // Deterministic schedule seam: no real deadline waits or extra STA.
+            var outer = owner.Expect(new RegressionExecutionTimeoutException());
+            Func<Task>? queued = null;
+            var runs = 0;
+            var observations = 0;
+            var messages = new List<string>();
+            TimeSpan? executionBudget = null;
+            Exception? caught = null;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-outer", _ => { runs++; return Task.CompletedTask; },
+                    dispatch: (callback, timeout) => { executionBudget = timeout; queued = owner.Queue(callback); return Task.FromException(outer); },
+                    observe: async completion => { observations++; await queued!(); await completion; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "Late completion must retain the original outer deadline exception");
+            AssertEqual(1, runs, "Observation must execute the originally queued action exactly once without retry");
+            AssertEqual(1, observations, "The outer deadline must observe the same action once");
+            AssertEqual(true, messages.Any(message => message.Contains("before entry", StringComparison.Ordinal)), "A queued action deadline must identify that entry was not yet observed");
+            AssertEqual<TimeSpan?>(TimeSpan.FromSeconds(120), executionBudget, "Activity injected async dispatch receives the shared execution guard");
+            AssertEqual(true, messages.Any(message => message.Contains("queued with shared 120s async action deadline", StringComparison.Ordinal)), "Activity diagnostics describe the actual injected guard");
 
-        caught = null;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-observation-deadline", _ => throw new InvalidOperationException("Must not rerun"),
-                dispatch: (_, _) => Task.FromException(outer),
-                observe: _ => Task.FromException(new TimeoutException("Synthetic observation deadline")), write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "An observation deadline must preserve the original action deadline exception");
+            var observationDeadline = owner.Expect(new TimeoutException("Synthetic observation deadline"));
+            caught = null;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-observation-deadline", _ => throw new InvalidOperationException("Must not rerun"),
+                    dispatch: (_, _) => Task.FromException(outer),
+                    observe: _ => Task.FromException(observationDeadline), write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "An observation deadline must preserve the original action deadline exception");
 
-        // An already-entered action can also finish during observation. A
-        // separate deadline in observation must never replace the first error.
-        var enteredRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task? originalAction = null;
-        messages.Clear(); caught = null; runs = 0; observations = 0;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-entered", async _ => { runs++; await enteredRelease.Task; },
-                dispatch: (callback, _) => { originalAction = callback(); return Task.FromException(outer); },
-                observe: async completion => { observations++; enteredRelease.SetResult(); await completion; await originalAction!; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(outer, caught), "An entered action's late completion must not turn the outer deadline into success");
-        AssertEqual(1, runs, "The entered action must not be executed again during observation");
-        AssertEqual(1, observations, "An entered deadline must observe the original completion signal");
-        AssertEqual(true, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An entered deadline must be distinguished from a pre-entry dispatch deadline");
+            // An already-entered action can also finish during observation. A
+            // separate deadline in observation must never replace the first error.
+            var enteredRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Release(() => enteredRelease.TrySetResult());
+            Task? originalAction = null;
+            messages.Clear(); caught = null; runs = 0; observations = 0;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-entered", async _ => { runs++; await enteredRelease.Task; },
+                    dispatch: (callback, _) => { originalAction = owner.Track(callback()); return Task.FromException(outer); },
+                    observe: async completion => { observations++; enteredRelease.SetResult(); await completion; await originalAction!; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(outer, caught), "An entered action's late completion must not turn the outer deadline into success");
+            AssertEqual(1, runs, "The entered action must not be executed again during observation");
+            AssertEqual(1, observations, "An entered deadline must observe the original completion signal");
+            AssertEqual(true, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An entered deadline must be distinguished from a pre-entry dispatch deadline");
 
-        var inner = new TimeoutException("Synthetic action-owned startup deadline");
-        messages.Clear(); caught = null; observations = 0;
-        try
-        {
-            await ObserveDispatcherActionAsync("fixture-inner", _ => Task.FromException(inner),
-                dispatch: (callback, _) => callback(), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add);
-        }
-        catch (Exception error) { caught = error; }
-        AssertEqual(true, ReferenceEquals(inner, caught), "An action's own startup timeout must retain its exact exception");
-        AssertEqual(0, observations, "An action-owned timeout must not be mislabeled or observed as an outer action deadline");
-        AssertEqual(false, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An inner timeout must retain its action-stage classification");
-    }
+            var inner = owner.Expect(new TimeoutException("Synthetic action-owned startup deadline"));
+            messages.Clear(); caught = null; observations = 0;
+            try
+            {
+                await ObserveDispatcherActionAsync("fixture-inner", _ => Task.FromException(inner),
+                    dispatch: (callback, _) => owner.Track(callback()), observe: _ => { observations++; return Task.CompletedTask; }, write: messages.Add, diagnosticWork: owner.CaptureWork());
+            }
+            catch (Exception error) { caught = error; }
+            AssertEqual(true, ReferenceEquals(inner, caught), "An action's own startup timeout must retain its exact exception");
+            AssertEqual(0, observations, "An action-owned timeout must not be mislabeled or observed as an outer action deadline");
+            AssertEqual(false, messages.Any(message => message.Contains("outer action deadline", StringComparison.Ordinal)), "An inner timeout must retain its action-stage classification");
+        });
 
     internal static Task QueuedRetirementCannotUnlockNewUiOperationAsync() =>
         RunOnStaThreadAsync(() =>

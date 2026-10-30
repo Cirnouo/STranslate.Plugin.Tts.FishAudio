@@ -13,7 +13,10 @@ $ErrorActionPreference = 'Stop'
 # build, platform-driver and metadata-verifier controls exercise the outer hook
 # boundary; they do not execute NUnit scenarios or establish product coverage.
 $sourceRoot = [IO.Path]::GetFullPath($RepositoryRoot)
-$scriptPaths = @('tools/Install-TestHooks.ps1', 'tools/TestGate.ps1', '.githooks/pre-commit', '.githooks/commit-msg')
+$signingSource = 'tools/FishAudio.Testing/Fixtures/GitFixtureSigning.cs'
+$scriptPaths = @('tools/Install-TestHooks.ps1', 'tools/TestGate.ps1', 'tools/Assert-FrameworkSupervisor.ps1',
+    'tools/Assert-FrameworkExecutionPlan.ps1', 'tools/HybridReceipt.ps1', 'tools/HybridSession.Common.ps1',
+    'tools/TestProcessOwner.ps1', 'tools/Invoke-TestProcess.ps1', $signingSource, '.githooks/pre-commit', '.githooks/commit-msg')
 $scenarioNames = @(
     'validator-failure',
     'partial-stage',
@@ -32,7 +35,12 @@ $scenarioNames = @(
     'platform-command-failure',
     'platform-missing-terminal',
     'platform-wrong-case',
-    'late-framework-evidence-mutation'
+    'late-framework-evidence-mutation',
+    'late-hybrid-generation',
+    'late-hybrid-attempt',
+    'installed-receipt-helper-mutation',
+    'atomic-install-copy-failure',
+    'protocol-upgrade'
 )
 $utf8 = [Text.UTF8Encoding]::new($false)
 $shellPath = (Get-Process -Id $PID).Path
@@ -137,6 +145,7 @@ function Invoke-OwnedProcess {
     $start.Environment['FISHAUDIO_ACCEPTANCE_EVIDENCE'] = $Owner.Invocations
     $start.Environment['FISHAUDIO_ACCEPTANCE_REPOSITORY'] = $WorkingDirectory
     foreach ($key in $Environment.Keys) { $start.Environment[$key] = [string]$Environment[$key] }
+    $start.Environment.Remove('SSH_AUTH_SOCK') | Out-Null
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $start
     $stdout = $null
@@ -202,7 +211,45 @@ function Invoke-FixtureInstaller {
     param($Owner, [string]$Root, [ValidateSet('Install', 'Check')][string]$Mode, [switch]$AllowFailure)
     $result = Invoke-OwnedProcess $Owner $shellPath @('-NoLogo', '-NoProfile', '-File', (Join-Path $Root 'tools/Install-TestHooks.ps1'), ('-' + $Mode), '-RepositoryRoot', $Root) $Root ('installer-' + $Mode.ToLowerInvariant())
     if (-not $AllowFailure) { Assert-Condition ($result.ExitCode -eq 0) 'installer-failed' }
+    if($result.ExitCode -eq 0){
+        $hooks=(Invoke-FixtureGit $Owner $Root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        foreach($metadata in $Owner.GitMetadata.Values){if($metadata.Root -ceq $Root){$metadata.Hooks=$hooks}}
+    }
     return $result
+}
+
+function Get-FixtureSigning {
+    param($Owner)
+    if ($null -ne $Owner.Signing) { return $Owner.Signing }
+    Assert-Condition (-not $Owner.SigningAttempted) 'signing-already-attempted'
+    $Owner.SigningAttempted = $true
+    Get-RemainingMilliseconds $Owner | Out-Null
+    if ($null -eq ('FishAudio.Testing.Fixtures.GitFixtureSigning' -as [type])) {
+        Add-Type -Path (Join-Path $sourceRoot $signingSource)
+    }
+    Get-RemainingMilliseconds $Owner | Out-Null
+    # This direct Temp child is deliberately outside both the repository and
+    # archived evidence. Generate owns creation; cleanup also covers keygen failure.
+    $signingId = [Guid]::NewGuid().ToString('N')
+    $signingRoot = [IO.Path]::GetFullPath((Join-Path $temporaryRoot ('fa-hook-sign-' + $signingId)))
+    Assert-Condition (-not [IO.Directory]::Exists($signingRoot) -and -not [IO.File]::Exists($signingRoot)) 'signing-root-exists'
+    $Owner.SigningId = $signingId
+    $Owner.SigningRoot = $signingRoot
+    $keygen = [FishAudio.Testing.Fixtures.GitFixtureSigning]::ResolveSshKeygenExecutable($gitPath)
+    $invoke = [Action[string, string[]]]{
+        param([string]$Executable, [string[]]$Arguments)
+        $generated = Invoke-OwnedProcess $Owner $Executable $Arguments $Owner.FixtureRoot 'signing-keygen'
+        Assert-Condition ($generated.ExitCode -eq 0) 'signing-keygen-failed'
+    }
+    $Owner.Signing = [FishAudio.Testing.Fixtures.GitFixtureSigning]::Generate(
+        $Owner.SigningRoot, $keygen, 'hook-acceptance@example.invalid', $invoke)
+    Write-FixtureText (Join-Path $Owner.Evidence 'signing.json') ([ordered]@{
+        schemaVersion = 1
+        format = 'ssh'
+        identity = $Owner.Signing.UserIdentity
+        publicKey = $Owner.Signing.SshPublicKey
+    } | ConvertTo-Json)
+    return $Owner.Signing
 }
 
 function Invoke-FixtureCommit {
@@ -210,10 +257,16 @@ function Invoke-FixtureCommit {
     $beforePlatform = @(Get-PlatformInvocationPaths $Owner)
     $beforeCatalog = @(Get-PlatformCatalogPaths $Owner)
     $beforePlatformVerifier = @(Get-PlatformVerifierPaths $Owner)
-    $result = Invoke-FixtureGit $Owner $Root @('-c', 'user.name=Hook Acceptance', '-c', 'user.email=hook-acceptance@example.invalid', 'commit', '--no-gpg-sign', '-m', 'test: exercise installed commit hook') $Environment -AllowFailure
+    $beforePlan = @(Get-PlatformPlanPaths $Owner)
+    $signing = Get-FixtureSigning $Owner
+    $arguments = @($signing.ConfigurationArguments()) + @('-c', 'user.name=Hook Acceptance', '-c', 'user.email=hook-acceptance@example.invalid', 'commit', '-S', '-m', 'test: exercise installed commit hook')
+    $result = Invoke-FixtureGit $Owner $Root $arguments $Environment -AllowFailure
     if ($result.ExitCode -eq 0) {
-        $tree = (Invoke-FixtureGit $Owner $Root @('rev-parse', 'HEAD^{tree}')).Output.Trim()
-        Assert-HybridSuccess $Owner $Root $tree $beforePlatform $beforeCatalog $beforePlatformVerifier
+        $objectId = (Invoke-FixtureGit $Owner $Root @('rev-parse', '--verify', 'HEAD')).Output.Trim()
+        Assert-Condition ($objectId -cmatch '^(?:[a-f0-9]{40}|[a-f0-9]{64})$') 'signed-commit-object-invalid'
+        Invoke-FixtureGit $Owner $Root @($signing.VerifyCommitArguments($objectId)) $Environment | Out-Null
+        $tree = (Invoke-FixtureGit $Owner $Root @('rev-parse', ($objectId + '^{tree}'))).Output.Trim()
+        Assert-HybridSuccess $Owner $Root $tree $beforePlatform $beforeCatalog $beforePlatformVerifier $beforePlan
     }
     return $result
 }
@@ -240,6 +293,10 @@ function Get-PlatformVerifierPaths($Owner) {
     return @([IO.Directory]::GetFiles($Owner.Invocations, 'platform-verifier-*.json'))
 }
 
+function Get-PlatformPlanPaths($Owner) {
+    return @([IO.Directory]::GetFiles($Owner.Invocations, 'platform-plan-*.json'))
+}
+
 function Get-NewPlatformInvocation($Owner, [string[]]$Before) {
     $new = @(Get-PlatformInvocationPaths $Owner | Where-Object { $Before -cnotcontains $_ })
     Assert-Condition ($new.Count -eq 1) 'expected-one-platform-invocation'
@@ -248,7 +305,7 @@ function Get-NewPlatformInvocation($Owner, [string[]]$Before) {
 
 function Assert-HybridSuccess {
     param($Owner, [string]$Root, [string]$Tree, [string[]]$BeforePlatform,
-        [string[]]$BeforeCatalog, [string[]]$BeforeVerifier)
+        [string[]]$BeforeCatalog, [string[]]$BeforeVerifier, [string[]]$BeforePlan)
     $invocation = Get-NewPlatformInvocation $Owner $BeforePlatform
     Assert-Condition ($invocation.syntheticBoundaryControl -and $invocation.mode -ceq 'Full' -and
         $invocation.rootMatchesContext -and $invocation.externalResults -and $invocation.passed -and
@@ -257,8 +314,9 @@ function Assert-HybridSuccess {
         -not (Test-ContainedPath $invocation.snapshotRoot $Root)) 'platform-used-working-tree-or-internal-results'
     $catalogs = @(Get-PlatformCatalogPaths $Owner | Where-Object { $BeforeCatalog -cnotcontains $_ })
     $verifiers = @(Get-PlatformVerifierPaths $Owner | Where-Object { $BeforeVerifier -cnotcontains $_ })
-    Assert-Condition ($catalogs.Count -eq 2 -and $verifiers.Count -eq 2) 'platform-not-independently-reparsed'
-    foreach ($kind in @($catalogs, $verifiers)) {
+    $plans = @(Get-PlatformPlanPaths $Owner | Where-Object { $BeforePlan -cnotcontains $_ })
+    Assert-Condition ($catalogs.Count -eq 2 -and $plans.Count -eq 2 -and $verifiers.Count -eq 2) 'platform-not-independently-reparsed'
+    foreach ($kind in @($catalogs, $plans, $verifiers)) {
         $keys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
         foreach ($path in $kind) {
             $record = [IO.File]::ReadAllText($path) | ConvertFrom-Json
@@ -266,6 +324,39 @@ function Assert-HybridSuccess {
                 $record.tree -ceq $Tree -and $keys.Add([string]$record.key)) 'platform-metadata-verification-not-current'
         }
         Assert-Condition ($keys.SetEquals([string[]]@('plugin', 'testing-tool'))) 'platform-metadata-assembly-set-mismatch'
+    }
+    $manifest = [IO.File]::ReadAllText((Join-Path $invocation.resultsDirectory 'manifest.json')) | ConvertFrom-Json
+    Assert-Condition ($manifest.schemaVersion -eq 2 -and $manifest.workers -eq 4) 'platform-phase-schema-mismatch'
+    $run = [IO.Path]::GetDirectoryName($invocation.resultsDirectory)
+    $gate = [IO.File]::ReadAllText((Join-Path $run 'gate.json')) | ConvertFrom-Json
+    $requiredArtifacts = [Collections.Generic.List[string]]::new()
+    $requiredArtifacts.Add('platform/manifest.json')
+    foreach ($assembly in $manifest.assemblies) {
+        $key = [string]$assembly.key
+        $groups = @($assembly.executionPhases)
+        Assert-Condition ($groups.Count -eq 1 -and $groups[0].id -ceq 'phase-0001' -and
+            $groups[0].kind -ceq 'ordinary' -and $null -eq $groups[0].profile -and
+            -not $groups[0].requireOrder -and $groups[0].maximumConcurrency -eq 4 -and
+            @($groups[0].exclusiveResources).Count -eq 0 -and $groups[0].executed -and
+            $groups[0].passedCount -eq 1 -and @($groups[0].selectedIds).Count -eq 1) 'platform-phase-fixture-shape'
+        foreach ($name in @('catalog', 'selection', 'requestedSelection', 'executionPlan')) {
+            $requiredArtifacts.Add('platform/' + $assembly.$name)
+        }
+        foreach ($name in @('selection', 'request', 'runSettings', 'terminal', 'resultXml', 'trx', 'supervisor')) {
+            $requiredArtifacts.Add('platform/' + $groups[0].$name)
+        }
+        $discovery = @($manifest.phases | Where-Object name -CEQ ('discover-' + $key))
+        Assert-Condition ($discovery.Count -eq 1) 'platform-discovery-phase-missing'
+        $requiredArtifacts.Add('platform/' + $discovery[0].directory + '/discovery.dump')
+        foreach ($label in @('catalog', 'requested', 'plan')) {
+            $requiredArtifacts.Add('framework-' + $label + '-' + $key + '.json')
+        }
+        $requiredArtifacts.Add('framework-terminal-' + $key + '-phase-0001.json')
+    }
+    foreach ($relative in $requiredArtifacts) {
+        $pins = @($gate.hybridArtifacts | Where-Object path -CEQ $relative)
+        Assert-Condition ($pins.Count -eq 1 -and
+            (Get-FileHash -LiteralPath (Join-Path $run $relative) -Algorithm SHA256).Hash.ToLowerInvariant() -ceq $pins[0].sha256) 'platform-phase-artifact-not-receipted'
     }
 }
 
@@ -298,7 +389,7 @@ function Assert-NoCommit {
 function Assert-Snapshot {
     param($Invocation, [string]$Root, [string]$Tree, [string]$Value = 'good')
     Assert-Condition ($Invocation.value -ceq $Value) 'wrong-snapshot-value'
-    Assert-Condition ($Invocation.release -and $Invocation.test) 'wrong-build-arguments'
+    Assert-Condition ($Invocation.release -and -not $Invocation.test) 'package-build-must-not-run-legacy-before-hybrid'
     Assert-Condition ($Invocation.context.schemaVersion -eq 1) 'wrong-context-schema'
     Assert-Condition ($Invocation.context.tree -ceq $Tree) 'wrong-snapshot-tree'
     Assert-Condition ($Invocation.rootMatchesContext) 'context-root-mismatch'
@@ -316,6 +407,7 @@ $ErrorActionPreference = 'Stop'
 $encoding = [Text.UTF8Encoding]::new($false)
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 $context = [IO.File]::ReadAllText($env:FISHAUDIO_SNAPSHOT_CONTEXT) | ConvertFrom-Json
+if([string]::IsNullOrEmpty($TestResults)){$TestResults=Join-Path ([IO.Path]::GetDirectoryName($env:FISHAUDIO_SNAPSHOT_CONTEXT)) 'regression.json'}
 $value = [IO.File]::ReadAllText((Join-Path $root 'value.txt')).Trim()
 function Test-Under([string]$path, [string]$parent) {
     $prefix = [IO.Path]::GetFullPath($parent).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
@@ -341,11 +433,15 @@ if ([IO.File]::Exists($rawPath)) {
     $expected = [IO.File]::ReadAllText((Join-Path $root 'raw.expected.sha256')).Trim()
     $rawMatches = $rawSha256 -ceq $expected
 }
-$passed = $Release -and $Test -and $rootMatches -and $externalResults -and $value -ceq 'good' -and
+$passed = $Release -and -not $Test -and $rootMatches -and $externalResults -and $value -ceq 'good' -and
     -not $unexpectedSource -and -not $unexpectedOutput -and $rawMatches
 $verifierProject = Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'
-& dotnet build $verifierProject --configuration Release --nologo --verbosity quiet --ignore-failed-sources
+& dotnet build $verifierProject --configuration Release --nologo --verbosity quiet --ignore-failed-sources --disable-build-servers
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+# Both tiny projects have the same empty dependency graph. Preserve the real
+# SDK-generated lock bytes for the standard locked preparation below.
+$lock=Join-Path ([IO.Path]::GetDirectoryName($verifierProject)) 'packages.lock.json'
+[IO.File]::Copy($lock,(Join-Path $root 'tests/FishAudio.Testing.Tests/packages.lock.json'),$false)
 # One compiled boundary control supplies the legacy verifier and the independent
 # platform metadata commands. These copied binaries do not contain NUnit tests.
 $binaryBase = Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests'
@@ -391,6 +487,8 @@ $evidence = Join-Path $env:FISHAUDIO_ACCEPTANCE_EVIDENCE ('invocation-' + [Guid]
 [IO.File]::WriteAllText($evidence, ($invocation | ConvertTo-Json -Depth 15), $encoding)
 $report = [ordered]@{
     schemaVersion = 1
+    runId = [Guid]::NewGuid().ToString('N')
+    generation = 1
     complete = $true
     configuration = 'Release'
     source = [ordered]@{ tree = $context.tree; available = $true; snapshot = $true }
@@ -402,6 +500,14 @@ if ([IO.File]::Exists($reportMode) -and [IO.File]::ReadAllText($reportMode).Trim
 }
 [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($TestResults))) | Out-Null
 [IO.File]::WriteAllText($TestResults, ($report | ConvertTo-Json -Depth 10), $encoding)
+$generationRoot=$TestResults+'.generations/'+$report.runId
+[IO.Directory]::CreateDirectory($generationRoot)|Out-Null
+[IO.File]::Copy($TestResults,(Join-Path $generationRoot '00000000000000000001.json'),$false)
+$initial=$report|ConvertTo-Json -Depth 10|ConvertFrom-Json
+$initial.generation=0;$initial.complete=$false
+foreach($item in $initial.cases){$item.outcome='not-run'}
+[IO.File]::WriteAllText((Join-Path $generationRoot '00000000000000000000.json'),($initial|ConvertTo-Json -Depth 10),$encoding)
+[IO.File]::WriteAllText((Join-Path $root 'STranslate.Plugin.Tts.FishAudio.spkg'),'synthetic-hook-package-boundary',$encoding)
 if (-not $passed) { exit 17 }
 '@
 
@@ -412,24 +518,30 @@ $fixtureVerifierProject = @'
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 </Project>
 '@
 
 $fixtureVerifierProgram = @'
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Xml.Linq;
 
 if (args.Length != 0 && args[0] == "evidence-catalog")
     return RunCatalog(args);
+if (args.Length != 0 && args[0] == "evidence-execution-plan")
+    return RunExecutionPlan(args);
 if (args.Length != 0 && args[0] == "evidence-verify")
     return RunPlatformVerifier(args);
+if (args.Length != 0 && args[0] == "evidence-migration")
+    return RunMigrationVerifier(args);
 
 var legacyValid = false;
-var legacyTree = args.Length == 3 ? args[2] : string.Empty;
+var legacyTree = args.Length is 3 or 5 ? args[2] : string.Empty;
 try
 {
-    if (args.Length != 3 || args[0] != "--verify-snapshot-report")
+    if ((args.Length != 3 && (args.Length != 5 || args[3] != "--catalog-output")) || args[0] != "--verify-snapshot-report")
         return 1;
 
     using var document = JsonDocument.Parse(File.ReadAllBytes(args[1]));
@@ -445,6 +557,9 @@ try
         cases.GetArrayLength() == 1 &&
         cases[0].GetProperty("id").GetString() == "fixture/pass" &&
         cases[0].GetProperty("outcome").GetString() == "passed";
+    if (legacyValid && args.Length == 5)
+        WriteNew(args[4], new { schemaVersion = 1, kind = "verified-legacy-catalog", sourceTree = legacyTree,
+            cases = new[] { new { id = "fixture/pass", partition = "core" } } });
 }
 catch
 {
@@ -483,6 +598,32 @@ static string ReadKey(string canonicalId)
         "fixture.platform/testing-tool" => "testing-tool",
         _ => throw new InvalidDataException(),
     };
+}
+
+static int RunMigrationVerifier(string[] arguments)
+{
+    // This executable is a synthetic hook-boundary producer, not the real
+    // pinned-reference reader or evidence of product assertion conservation.
+    try
+    {
+        var values = ReadOptions(arguments, "--reference", "--legacy", "--discoveries", "--migrations", "--output");
+        using var reference = JsonDocument.Parse(File.ReadAllBytes(values["--reference"]));
+        using var legacy = JsonDocument.Parse(File.ReadAllBytes(values["--legacy"]));
+        using var discoveries = JsonDocument.Parse(File.ReadAllBytes(values["--discoveries"]));
+        using var migrations = JsonDocument.Parse(File.ReadAllBytes(values["--migrations"]));
+        if (reference.RootElement.GetProperty("referenceKind").GetString() != "synthetic-hook-fixture" ||
+            reference.RootElement.GetProperty("cases")[0].GetProperty("id").GetString() != "fixture/pass" ||
+            legacy.RootElement.GetProperty("cases").GetArrayLength() != 1 ||
+            legacy.RootElement.GetProperty("cases")[0].GetProperty("id").GetString() != "fixture/pass" ||
+            migrations.RootElement.GetProperty("migrations").GetArrayLength() != 0) return 1;
+        var paths = discoveries.RootElement.GetProperty("paths").EnumerateArray().Select(item => item.GetString()!).ToArray();
+        if (paths.Length != 2 || paths.Any(path => !Path.IsPathFullyQualified(path) || !File.Exists(path))) return 1;
+        WriteNew(values["--output"], new { schemaVersion = 1, kind = "migration-conservation", complete = true,
+            originalCount = 1, legacyCount = 1, migratedCount = 0, baselineClaim = false,
+            syntheticBoundaryControl = true, evidence = new { checkedOwners = new[] { new { originalId = "fixture/pass", owner = 0 } } } });
+        return 0;
+    }
+    catch { return 1; }
 }
 
 static object CaseRecord(string key)
@@ -579,6 +720,55 @@ static int RunPlatformVerifier(string[] arguments)
     finally { RecordPlatformCommand("verifier", key, valid); }
     return valid ? 0 : 1;
 }
+
+static int RunExecutionPlan(string[] arguments)
+{
+    var valid = false;
+    var key = "unavailable";
+    try
+    {
+        // This supports only the declared single ordinary case. It reads raw
+        // bytes and selection independently; it is not a general NUnit planner.
+        var values = ReadOptions(arguments, "--discovery", "--selection", "--output");
+        using var raw = new FileStream(values["--discovery"], FileMode.Open, FileAccess.Read, FileShare.Read);
+        var discovery = XDocument.Load(raw).Root!;
+        var leaf = discovery.Descendants("test-case").Single();
+        var properties = leaf.Elements("properties").Elements("property").ToArray();
+        var canonicalId = properties.Single(item => (string?)item.Attribute("name") == "FishAudioCaseId").Attribute("value")!.Value;
+        key = ReadKey(canonicalId);
+        var name = key == "plugin" ? "Plugin" : "TestingTool";
+        var platformId = key == "plugin" ? "0-1" : "0-2";
+        var fixture = leaf.Ancestors("test-suite").FirstOrDefault(item => (string?)item.Attribute("type") == "TestFixture");
+        using var selection = JsonDocument.Parse(File.ReadAllBytes(values["--selection"]));
+        var request = selection.RootElement;
+        var ids = request.GetProperty("ids");
+        var maximum = request.GetProperty("maximumConcurrency").GetInt32();
+        valid = discovery.Name == "test-run" && discovery.Attribute("result") is null &&
+            (string?)discovery.Attribute("runstate") == "Runnable" && (string?)discovery.Attribute("testcasecount") == "1" &&
+            (string?)leaf.Attribute("id") == platformId && (string?)leaf.Attribute("runstate") == "Runnable" &&
+            (string?)leaf.Attribute("fullname") == "Fixture.Platform." + name &&
+            (string?)leaf.Attribute("classname") == "Fixture.Platform" && (string?)leaf.Attribute("methodname") == name &&
+            (string?)fixture?.Attribute("fullname") == "Fixture.Platform" && properties.Length == 1 &&
+            !discovery.Descendants("property").Any(item => (string?)item.Attribute("name") is
+                "FishAudioFreshHost" or "FishAudioExecutionProfile" or "FishAudioProfileOrdinal" or "FishAudioExclusiveResource") &&
+            request.EnumerateObject().Count() == 3 && request.GetProperty("schemaVersion").GetInt32() == 1 &&
+            ids.ValueKind == JsonValueKind.Array && ids.GetArrayLength() == 1 && ids[0].GetString() == canonicalId &&
+            maximum is >= 1 and <= 4;
+        if (valid)
+        {
+            raw.Position = 0;
+            var digest = Convert.ToHexStringLower(SHA256.HashData(raw));
+            WriteNew(values["--output"], new { schemaVersion = 1, kind = "nunit-execution-plan", complete = true,
+                plan = new { rawDiscoverySha256 = digest, requestedIds = new[] { canonicalId }, expandedIds = new[] { canonicalId },
+                    expansionReasons = Array.Empty<object>(), phases = new[] { new { id = "phase-0001", kind = "ordinary",
+                        profile = (string?)null, cases = new[] { CaseRecord(key) }, requireOrder = false,
+                        maximumConcurrency = maximum, exclusiveResources = Array.Empty<string>() } } } });
+        }
+    }
+    catch { valid = false; }
+    finally { RecordPlatformCommand("plan", key, valid); }
+    return valid ? 0 : 1;
+}
 '@
 
 $fixturePlatformDriver = @'
@@ -622,7 +812,7 @@ $externalResults = -not [string]::IsNullOrWhiteSpace($ResultsDirectory) -and
 $fault = 'none'
 $faultPath = Join-Path $root 'fixture-platform-mode.txt'
 if ([IO.File]::Exists($faultPath)) { $fault = [IO.File]::ReadAllText($faultPath).Trim() }
-$passed = $Mode -ceq 'Full' -and $CaseId.Count -eq 0 -and $rootMatches -and $externalResults -and $fault -cne 'command-failure'
+$passed = $Mode -ceq 'Full' -and $Workers -eq 4 -and $CaseId.Count -eq 0 -and $rootMatches -and $externalResults -and $fault -cne 'command-failure'
 $invocation = [ordered]@{
     syntheticBoundaryControl = $true; mode = $Mode; snapshotRoot = $root; context = $context
     rootMatchesContext = $rootMatches; externalResults = $externalResults; resultsDirectory = $ResultsDirectory
@@ -641,6 +831,25 @@ if (-not $passed) {
 $assemblyRecords = [Collections.Generic.List[object]]::new()
 $phaseRecords = [Collections.Generic.List[object]]::new()
 $ordinal = 0
+$platformRunId = [Guid]::NewGuid().ToString('N')
+$platformFingerprint = Get-Hash $env:FISHAUDIO_SNAPSHOT_CONTEXT
+$controlNonce = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+function New-HostEvent($Kind, [long]$Timestamp, $AssemblySha256, $CanonicalId = $null, $FullName = $null, $Outcome = $null) {
+    return [ordered]@{
+        schemaVersion = 1; role = 'nunit-host'; nonce = $controlNonce; runId = $platformRunId; sourceTree = $context.tree
+        pid = 1237; kind = $Kind; timestamp = $Timestamp; frequency = 1000L; assemblySha256 = $AssemblySha256
+        caseId = $CanonicalId; fullName = $FullName; ordinal = 0; queuedTimestamp = 0L; outcome = $Outcome
+        targetPid = $null; exitCode = $null
+    }
+}
+function New-LauncherEvent($Kind, [long]$Timestamp, [Nullable[int]]$ExitCode = $null) {
+    return [ordered]@{
+        schemaVersion = 1; role = 'execution-launcher'; nonce = $controlNonce; runId = $platformRunId; sourceTree = $context.tree
+        pid = 1236; kind = $Kind; timestamp = $Timestamp; frequency = 1000L; assemblySha256 = $null
+        caseId = $null; fullName = $null; ordinal = 0; queuedTimestamp = 0L; outcome = $null
+        targetPid = 1235; exitCode = $ExitCode
+    }
+}
 foreach ($key in @('plugin', 'testing-tool')) {
     $directory = Join-Path $ResultsDirectory $key
     [IO.Directory]::CreateDirectory($directory) | Out-Null
@@ -651,7 +860,25 @@ foreach ($key in @('plugin', 'testing-tool')) {
     $case = [ordered]@{ canonicalId = $canonicalId; fullName = $fullName; platformId = $platformId; className = 'Fixture.Platform'; methodName = $name }
     Write-NewJson (Join-Path $directory 'catalog.json') @{ schemaVersion = 1; kind = 'nunit-catalog'; complete = $true; cases = @($case) }
     Write-NewJson (Join-Path $directory 'selection.json') @{ schemaVersion = 1; ids = @($canonicalId) }
-    Write-NewJson (Join-Path $directory 'terminal.json') @{
+    Write-NewJson (Join-Path $directory 'requested-selection.json') @{ schemaVersion = 1; ids = @($canonicalId); maximumConcurrency = 4 }
+    $phaseRelative = $key + '/execution/phase-0001'
+    $executionDirectory = Join-Path $ResultsDirectory $phaseRelative
+    $supervised = Join-Path $executionDirectory 'supervised'
+    $runtimeDirectory = Join-Path $executionDirectory 'runtime-evidence'
+    foreach ($child in @('supervised/nunit', 'supervised/trx', 'runtime-evidence')) {
+        [IO.Directory]::CreateDirectory((Join-Path $executionDirectory $child)) | Out-Null
+    }
+    $assemblyPath = if ($key -ceq 'plugin') {
+        'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
+    } else { 'tests/FishAudio.Testing.Tests/bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll' }
+    $projectPath = if ($key -ceq 'plugin') {
+        'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj'
+    } else { 'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj' }
+    $xmlName = [IO.Path]::GetFileNameWithoutExtension($assemblyPath) + '.xml'
+    $resultPath = [IO.Path]::GetFullPath((Join-Path $supervised ('nunit/' + $xmlName)))
+    $trxPath = [IO.Path]::GetFullPath((Join-Path $supervised 'trx/results.trx'))
+    Write-NewJson (Join-Path $executionDirectory 'selection.json') @{ schemaVersion = 1; ids = @($canonicalId) }
+    Write-NewJson (Join-Path $executionDirectory 'terminal.json') @{
         schemaVersion = 1; kind = 'nunit-terminal'; complete = $true; passedCount = 1
         cases = @(@{ canonicalId = $canonicalId; fullName = $fullName; outcome = 'passed'; duration = '00:00:00.0010000'; platformDuration = '00:00:00.0010000' })
     }
@@ -659,16 +886,20 @@ foreach ($key in @('plugin', 'testing-tool')) {
     $actualName = if ($fault -ceq 'wrong-case' -and $key -ceq 'plugin') { 'Fixture.Platform.Unexpected' } else { $fullName }
     $resultXml = '<test-run result="Passed" total="1" passed="1"><test-case fullname="' + $actualName + '" result="Passed"><properties><property name="FishAudioCaseId" value="' + $actualId + '" /></properties></test-case></test-run>'
     $trx = '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results><UnitTestResult testName="' + $fullName + '" outcome="Passed" /></Results></TestRun>'
-    Write-NewText (Join-Path $directory 'result.xml') $resultXml
-    Write-NewText (Join-Path $directory 'results.trx') $trx
-    foreach ($phaseName in @('discover', 'catalog', 'execute', 'verify')) {
+    Write-NewText $resultPath $resultXml
+    Write-NewText $trxPath $trx
+    $discoveryPath = $null
+    foreach ($phaseName in @('discover', 'catalog', 'plan', 'execute', 'verify')) {
         $ordinal++
-        $relative = 'phases/{0:D3}-{1}-{2}' -f $ordinal, $phaseName, $key
+        $label = $phaseName + '-' + $key
+        if ($phaseName -cin @('execute', 'verify')) { $label += '-phase-0001' }
+        $relative = 'phases/{0:D3}-{1}' -f $ordinal, $label
         $phase = Join-Path $ResultsDirectory $relative
         [IO.Directory]::CreateDirectory($phase) | Out-Null
         if ($phaseName -ceq 'discover') {
-            $discovery = '<test-run runstate="Runnable" testcasecount="1"><test-case id="' + $platformId + '" name="' + $name + '" fullname="' + $fullName + '" classname="Fixture.Platform" methodname="' + $name + '" runstate="Runnable"><properties><property name="FishAudioCaseId" value="' + $canonicalId + '" /></properties></test-case></test-run>'
-            Write-NewText (Join-Path $phase 'discovery.dump') $discovery
+            $discovery = '<test-run runstate="Runnable" testcasecount="1"><test-suite type="TestFixture" fullname="Fixture.Platform" runstate="Runnable" testcasecount="1"><test-case id="' + $platformId + '" name="' + $name + '" fullname="' + $fullName + '" classname="Fixture.Platform" methodname="' + $name + '" runstate="Runnable"><properties><property name="FishAudioCaseId" value="' + $canonicalId + '" /></properties></test-case></test-suite></test-run>'
+            $discoveryPath = [IO.Path]::GetFullPath((Join-Path $phase 'discovery.dump'))
+            Write-NewText $discoveryPath $discovery
         }
         Write-NewJson (Join-Path $phase 'argv.json') @{ syntheticBoundaryControl = $true; phase = $phaseName; key = $key }
         Write-NewJson (Join-Path $phase 'process.json') @{
@@ -678,31 +909,95 @@ foreach ($key in @('plugin', 'testing-tool')) {
         Write-NewText (Join-Path $phase 'stdout.log') 'synthetic hook boundary control'
         Write-NewText (Join-Path $phase 'stderr.log') ''
         Write-NewText (Join-Path $phase 'exit-code.txt') '0'
-        $phaseRecords.Add(@{ name = $phaseName + '-' + $key; directory = $relative; complete = $true; exitCode = 0 })
+        $phaseRecords.Add(@{ name = $label; directory = $relative; complete = $true; exitCode = 0 })
     }
-    $assemblyPath = if ($key -ceq 'plugin') {
-        'tests/STranslate.Plugin.Tts.FishAudio.Tests/bin/Release/net10.0-windows/STranslate.Plugin.Tts.FishAudio.Tests.dll'
-    } else { 'tests/FishAudio.Testing.Tests/bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll' }
+    # The plan has only the real API fields. Synthetic provenance belongs to
+    # the surrounding fixture manifest, not the strict plan/request contracts.
+    Write-NewJson (Join-Path $directory 'execution-plan.json') @{
+        schemaVersion = 1; kind = 'nunit-execution-plan'; complete = $true
+        plan = @{ rawDiscoverySha256 = Get-Hash $discoveryPath; requestedIds = @($canonicalId); expandedIds = @($canonicalId)
+            expansionReasons = @(); phases = @(@{ id = 'phase-0001'; kind = 'ordinary'; profile = $null; cases = @($case)
+                requireOrder = $false; maximumConcurrency = 4; exclusiveResources = @() }) }
+    }
+    $settingsPath = [IO.Path]::GetFullPath((Join-Path $executionDirectory 'execution.runsettings'))
+    $regex = '\A' + [Text.RegularExpressions.Regex]::Escape($fullName) + '\z'
+    $filter = '(test =~ "' + $regex.Replace('\', '\\').Replace('"', '\"') + '")'
+    $settings = '<RunSettings><RunConfiguration><MaxCpuCount>1</MaxCpuCount><TreatNoTestsAsError>true</TreatNoTestsAsError></RunConfiguration><NUnit><NumberOfTestWorkers>4</NumberOfTestWorkers><PreFilter>false</PreFilter><UseParentFQNForParametrizedTests>false</UseParentFQNForParametrizedTests><IncludeStackTrace>false</IncludeStackTrace><DumpXmlTestDiscovery>true</DumpXmlTestDiscovery><DumpXmlTestResults>false</DumpXmlTestResults><TestOutputXml>' +
+        [Security.SecurityElement]::Escape([IO.Path]::GetFullPath((Join-Path $supervised 'nunit'))) + '</TestOutputXml><OutputXmlFolderMode>AsSpecified</OutputXmlFolderMode><StopOnError>true</StopOnError><Where>' +
+        [Security.SecurityElement]::Escape($filter) + '</Where></NUnit></RunSettings>'
+    Write-NewText $settingsPath $settings
+    $assemblySha256 = Get-Hash (Join-Path $root $assemblyPath)
+    $requestPath = [IO.Path]::GetFullPath((Join-Path $executionDirectory 'execution-request.json'))
+    Write-NewJson $requestPath ([ordered]@{
+        schemaVersion = 1; runId = $platformRunId; sourceTree = $context.tree; sourceFingerprint = $platformFingerprint
+        workingDirectory = $root; shellExecutable = (Get-Process -Id $PID).Path
+        dotnetExecutable = (Get-Command dotnet -CommandType Application | Select-Object -First 1).Source
+        launcherScript = Join-Path $root 'tools/Invoke-TestProcess.ps1'
+        testAssembly = [IO.Path]::GetFullPath((Join-Path $root $assemblyPath)); testAssemblySha256 = $assemblySha256
+        runSettings = $settingsPath; discoveryPath = $discoveryPath; resultXmlPath = $resultPath; trxPath = $trxPath
+        outputDirectory = [IO.Path]::GetFullPath($supervised)
+        cases = @(@{ canonicalId = $canonicalId; fullName = $fullName })
+        maximumConcurrency = 4; requireOrder = $false
+        environment = @{ FISHAUDIO_COMPAT_EVIDENCE_ROOT = [IO.Path]::GetFullPath($runtimeDirectory) }
+    })
+    $executionRecord = [ordered]@{
+        id = 'phase-0001'; kind = 'ordinary'; profile = $null; requireOrder = $false; maximumConcurrency = 4
+        exclusiveResources = @(); selectedIds = @($canonicalId); executed = $true; passedCount = 1
+        runtimeEvidence = $phaseRelative + '/runtime-evidence'; markerRequired = $false; markerObserved = $false; parallelProof = $false
+    }
+    $phasePaths = [ordered]@{
+        selection = 'selection.json'; request = 'execution-request.json'; runSettings = 'execution.runsettings'; terminal = 'terminal.json'
+        resultXml = 'supervised/nunit/' + $xmlName; trx = 'supervised/trx/results.trx'; supervisor = 'supervised/supervisor.json'
+    }
+    foreach ($name in $phasePaths.Keys) {
+        $executionRecord[$name] = $phaseRelative + '/' + $phasePaths[$name]
+        if ($name -cne 'supervisor') { $executionRecord[$name + 'Sha256'] = Get-Hash (Join-Path $executionDirectory $phasePaths[$name]) }
+    }
     $record = [ordered]@{
-        key = $key; assembly = $assemblyPath; sha256 = Get-Hash (Join-Path $root $assemblyPath)
+        key = $key; project = $projectPath; assembly = $assemblyPath; sha256 = $assemblySha256
         catalog = $key + '/catalog.json'; catalogSha256 = Get-Hash (Join-Path $directory 'catalog.json')
         selection = $key + '/selection.json'; selectionSha256 = Get-Hash (Join-Path $directory 'selection.json')
-        terminal = $key + '/terminal.json'; terminalSha256 = Get-Hash (Join-Path $directory 'terminal.json')
-        resultXml = $key + '/result.xml'; resultXmlSha256 = Get-Hash (Join-Path $directory 'result.xml')
-        trx = $key + '/results.trx'; trxSha256 = Get-Hash (Join-Path $directory 'results.trx')
+        requestedSelection = $key + '/requested-selection.json'; requestedSelectionSha256 = Get-Hash (Join-Path $directory 'requested-selection.json')
+        executionPlan = $key + '/execution-plan.json'; executionPlanSha256 = Get-Hash (Join-Path $directory 'execution-plan.json')
         discoveredCount = 1; selectedCount = 1; passedCount = 1; selectedIds = @($canonicalId); executed = $true
+        executionPhases = @($executionRecord)
     }
+    Write-NewJson (Join-Path $supervised 'supervisor.json') @{
+        schemaVersion = 1; kind = 'framework-execution'; syntheticBoundaryControl = $true
+        runId = $platformRunId; sourceTree = $context.tree; sourceFingerprint = $platformFingerprint
+        testAssemblySha256 = $record.sha256; baselineClaim = $false; failureCode = $null
+        requestSha256 = $executionRecord.requestSha256; policy = @{ maximumConcurrency = 4; requireOrder = $false }
+        launch = @{ kind = 'vstest'; sessionId = $null; invocationSha256 = '9999999999999999999999999999999999999999999999999999999999999999'
+            toolSha256 = $null; vstestConsoleSha256 = $null }
+        selectedIds = @($canonicalId)
+        state = @{ complete = $true; stage = 'child-exit'; failureStage = $null; failureCaseId = $null
+            terminationRequired = $false; passedIds = @($canonicalId); failedIds = @(); timedOutIds = @()
+            activeIds = @(); interruptedIds = @(); notRunIds = @() }
+        target = @{ started = $true; pid = 1235; exitCode = 0 }
+        process = @{ launcherPid = 1236; launcherExited = $true; stdoutDrained = $true; stderrDrained = $true; ownedActiveProcesses = 0 }
+        rawEvidence = @{ verified = $true; resultXmlPath = $resultPath; trxPath = $trxPath
+            resultXmlSha256 = $executionRecord.resultXmlSha256; trxSha256 = $executionRecord.trxSha256 }
+        events = @(
+            (New-LauncherEvent 'target-started' 1000)
+            (New-HostEvent 'ready' 1001 $assemblySha256)
+            (New-HostEvent 'case-start' 1010 $assemblySha256 $canonicalId $fullName)
+            (New-HostEvent 'case-finished' 1020 $assemblySha256 $canonicalId $fullName 'passed')
+            (New-HostEvent 'cleanup-complete' 1030 $assemblySha256)
+            (New-LauncherEvent 'target-exited' 1031 0)
+        )
+    }
+    $executionRecord['supervisorSha256'] = Get-Hash (Join-Path $supervised 'supervisor.json')
     if ($fault -ceq 'missing-terminal' -and $key -ceq 'plugin') {
-        [IO.File]::Delete((Join-Path $directory 'terminal.json'))
+        [IO.File]::Delete((Join-Path $executionDirectory 'terminal.json'))
     }
     $assemblyRecords.Add($record)
 }
 Write-NewJson (Join-Path $ResultsDirectory 'manifest.json') ([ordered]@{
-    schemaVersion = 1; kind = 'unified-test-session'; syntheticBoundaryControl = $true
-    runId = [Guid]::NewGuid().ToString('N'); mode = 'Full'; platform = 'VSTest'; complete = $true
-    configuration = 'Release'; selection = 'all-discovered'; baselineClaim = $false
+    schemaVersion = 2; kind = 'unified-test-session'; syntheticBoundaryControl = $true
+    runId = $platformRunId; mode = 'Full'; platform = 'VSTest'; complete = $true
+    configuration = 'Release'; workers = 4; selection = 'all-discovered'; baselineClaim = $false
     source = @{ snapshot = $true; tree = $context.tree; sourceCommit = $context.sourceCommit; commit = $context.sourceCommit
-        snapshotRootValidated = $true; contextSha256 = Get-Hash $env:FISHAUDIO_SNAPSHOT_CONTEXT }
+        snapshotRootValidated = $true; contextSha256 = Get-Hash $env:FISHAUDIO_SNAPSHOT_CONTEXT; fingerprint = $platformFingerprint }
     assemblies = $assemblyRecords.ToArray(); phases = $phaseRecords.ToArray()
     toolSha256 = Get-Hash (Join-Path $root 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll')
 })
@@ -718,7 +1013,7 @@ function Register-FixtureRepository {
         Assert-Condition (Test-ContainedPath $gitDir $Owner.FixtureRoot) 'foreign-fixture-git-directory'
         Assert-Condition (Test-ContainedPath $commonDir $Owner.FixtureRoot) 'foreign-fixture-common-directory'
         $Owner.GitStateRoots.Add($state)
-        $Owner.GitMetadata.Add($state, [pscustomobject]@{ GitDir = $gitDir; CommonDir = $commonDir })
+        $Owner.GitMetadata.Add($state, [pscustomobject]@{ GitDir = $gitDir; CommonDir = $commonDir; Root = $Root; Hooks = $null })
     }
 }
 
@@ -735,8 +1030,14 @@ function New-FixtureRepository {
     }
     Write-FixtureText (Join-Path $root 'build.ps1') $fixtureBuild
     Write-FixtureText (Join-Path $root 'tools/Test.ps1') $fixturePlatformDriver
+    Write-FixtureText (Join-Path $root 'tools/TestHybrid.ps1') ([IO.File]::ReadAllText((Join-Path $sourceRoot 'tools/tests/fixtures/HookHybridProducer.ps1')))
+    Write-FixtureText (Join-Path $root 'tools/Assert-HybridSession.ps1') ([IO.File]::ReadAllText((Join-Path $sourceRoot 'tools/tests/fixtures/HookHybridConsumer.ps1')))
+    Write-FixtureText (Join-Path $root 'tests/Migration/legacy-catalog.json') '{"schemaVersion":1,"referenceKind":"synthetic-hook-fixture","cases":[{"id":"fixture/pass","partition":"core"}]}'
+    Write-FixtureText (Join-Path $root 'tests/Migration/migrated-cases.json') '{"schemaVersion":1,"migrations":[]}'
     Write-FixtureText (Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj') $fixtureVerifierProject
     Write-FixtureText (Join-Path $root 'tests/STranslate.Plugin.Tts.FishAudio.Tests/Program.cs') $fixtureVerifierProgram
+    Write-FixtureText (Join-Path $root 'tests/FishAudio.Testing.Tests/FishAudio.Testing.Tests.csproj') $fixtureVerifierProject
+    Write-FixtureText (Join-Path $root 'tests/FishAudio.Testing.Tests/Program.cs') $fixtureVerifierProgram
     Write-FixtureText (Join-Path $root 'value.txt') ($Value + "`n")
     Write-FixtureText (Join-Path $root '.gitignore') "stale-output/`n"
     Invoke-FixtureGit $Owner $root @('add', '--', '.') | Out-Null
@@ -775,14 +1076,19 @@ function Invoke-PlatformFailureScenario {
     $beforePlatform = @(Get-PlatformInvocationPaths $Owner)
     $beforeCatalog = @(Get-PlatformCatalogPaths $Owner)
     $beforeVerifier = @(Get-PlatformVerifierPaths $Owner)
+    $beforePlan = @(Get-PlatformPlanPaths $Owner)
     $commit = Invoke-FixtureCommit $Owner $root
     Assert-Condition ($commit.ExitCode -ne 0) ('platform-' + $Fault + '-allowed-commit')
     Assert-NoCommit $Owner $root
     $build = Get-NewInvocation $Owner $beforeBuild
     Assert-Snapshot $build $root $tree
     Assert-Condition $build.passed 'platform-failure-did-not-pass-legacy-build'
-    $legacy = Get-NewVerifierInvocation $Owner $beforeLegacyVerifier
-    Assert-Condition ($legacy.valid -and $legacy.tree -ceq $tree) 'platform-failure-did-not-pass-legacy-verifier'
+    if($Fault -ceq 'command-failure'){
+        Assert-Condition (@(Get-VerifierPaths $Owner | Where-Object {$beforeLegacyVerifier -cnotcontains $_}).Count -eq 0) 'failed-producer-reached-authoritative-admission'
+    }else{
+        $legacy = Get-NewVerifierInvocation $Owner $beforeLegacyVerifier
+        Assert-Condition ($legacy.valid -and $legacy.tree -ceq $tree) 'platform-failure-did-not-pass-legacy-verifier'
+    }
     $platform = Get-NewPlatformInvocation $Owner $beforePlatform
     Assert-Condition ($platform.syntheticBoundaryControl -and $platform.fault -ceq $Fault -and
         $platform.context.tree -ceq $tree -and $platform.rootMatchesContext -and $platform.externalResults) 'platform-failure-boundary-not-reached'
@@ -792,36 +1098,126 @@ function Invoke-PlatformFailureScenario {
     Assert-Condition (-not [IO.File]::Exists((Join-Path $build.privateStateRoot 'commit-receipt.json'))) 'platform-failure-created-receipt'
     $catalogs = @(Get-PlatformCatalogPaths $Owner | Where-Object { $beforeCatalog -cnotcontains $_ })
     $verifiers = @(Get-PlatformVerifierPaths $Owner | Where-Object { $beforeVerifier -cnotcontains $_ })
+    $plans = @(Get-PlatformPlanPaths $Owner | Where-Object { $beforePlan -cnotcontains $_ })
     $manifestPath = Join-Path $platform.resultsDirectory 'manifest.json'
     switch -CaseSensitive ($Fault) {
         'command-failure' {
             Assert-Condition (-not $platform.passed -and -not [IO.File]::Exists($manifestPath) -and
                 [IO.File]::Exists((Join-Path $platform.resultsDirectory 'failure.json'))) 'platform-command-failure-not-retained'
-            Assert-Condition ($catalogs.Count -eq 0 -and $verifiers.Count -eq 0) 'failed-platform-command-reached-metadata-admission'
+            Assert-Condition ($catalogs.Count -eq 0 -and $plans.Count -eq 0 -and $verifiers.Count -eq 0) 'failed-platform-command-reached-metadata-admission'
         }
         'missing-terminal' {
             $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
             $plugin = @($manifest.assemblies | Where-Object key -CEQ 'plugin')
+            $groups = @($plugin[0].executionPhases)
             Assert-Condition ($platform.passed -and $manifest.complete -and $plugin.Count -eq 1 -and
-                -not [IO.File]::Exists((Join-Path $platform.resultsDirectory $plugin[0].terminal))) 'missing-platform-terminal-fixture-invalid'
+                $groups.Count -eq 1 -and $groups[0].id -ceq 'phase-0001' -and
+                -not [IO.File]::Exists((Join-Path $platform.resultsDirectory $groups[0].terminal))) 'missing-platform-terminal-fixture-invalid'
+            Assert-Condition ($catalogs.Count -eq 1 -and $plans.Count -eq 1 -and $verifiers.Count -eq 0) 'missing-terminal-did-not-stop-at-phase-admission'
         }
         'wrong-case' {
             $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
             $plugin = @($manifest.assemblies | Where-Object key -CEQ 'plugin')
+            $groups = @($plugin[0].executionPhases)
             Assert-Condition ($platform.passed -and $manifest.complete -and $plugin.Count -eq 1 -and
-                $plugin[0].discoveredCount -eq 1 -and $plugin[0].selectedCount -eq 1 -and $plugin[0].passedCount -eq 1) 'wrong-platform-case-fixture-not-claiming-pass'
-            $resultPath = Join-Path $platform.resultsDirectory $plugin[0].resultXml
+                $plugin[0].discoveredCount -eq 1 -and $plugin[0].selectedCount -eq 1 -and $plugin[0].passedCount -eq 1 -and
+                $groups.Count -eq 1 -and $groups[0].executed -and $groups[0].passedCount -eq 1) 'wrong-platform-case-fixture-not-claiming-pass'
+            $resultPath = Join-Path $platform.resultsDirectory $groups[0].resultXml
             Assert-Condition ((Get-FileHash -LiteralPath $resultPath -Algorithm SHA256).Hash.ToLowerInvariant() -ceq
-                $plugin[0].resultXmlSha256) 'wrong-platform-case-hash-did-not-match-manifest'
+                $groups[0].resultXmlSha256) 'wrong-platform-case-hash-did-not-match-manifest'
             $resultXml = [xml][IO.File]::ReadAllText($resultPath)
             Assert-Condition ($resultXml.SelectSingleNode('/test-run/test-case').GetAttribute('fullname') -ceq
                 'Fixture.Platform.Unexpected') 'wrong-platform-case-not-in-actual-result'
             $rejected = @($verifiers | ForEach-Object { [IO.File]::ReadAllText($_) | ConvertFrom-Json } |
                 Where-Object { -not $_.valid -and $_.key -ceq 'plugin' -and $_.tree -ceq $tree })
-            Assert-Condition ($catalogs.Count -ge 1 -and $rejected.Count -eq 1) 'wrong-platform-case-not-independently-rejected'
+            Assert-Condition ($catalogs.Count -ge 1 -and $plans.Count -ge 1 -and $rejected.Count -eq 1) 'wrong-platform-case-not-independently-rejected'
         }
     }
 }
+
+function Invoke-LateHybridMutationScenario($Owner,[string]$Mode){
+    $root=New-FixtureRepository $Owner -WithoutInstall
+    $oldMessageHook=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks/commit-msg')).Output.Trim()
+    Write-FixtureText (Join-Path $root 'late-hybrid.ps1') @'
+param([string]$Mode)
+$ErrorActionPreference='Stop'
+$state=(git rev-parse --path-format=absolute --git-path fish-audio-testing).Trim()
+if($LASTEXITCODE -ne 0){exit 29}
+$receipt=Get-Content -LiteralPath (Join-Path $state 'commit-receipt.json') -Raw|ConvertFrom-Json
+$run=Join-Path $state ('runs/'+$receipt.runId)
+$gate=Get-Content -LiteralPath (Join-Path $run 'gate.json') -Raw|ConvertFrom-Json
+$sessionRoot=Join-Path $run $gate.hybrid.session
+$session=Get-Content -LiteralPath (Join-Path $sessionRoot 'manifest.json') -Raw|ConvertFrom-Json
+$slot=@($session.slots|Where-Object owner -CEQ 'legacy')[0]
+if($Mode -ceq 'generation'){
+    $report=Join-Path $sessionRoot ('slots/'+$slot.id+'/attempt-0001/legacy.json')
+    $next=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+    $next.generation=[long]$next.generation+1;$next.complete=$false;$next.cases[0].outcome='failed'
+    $path=Join-Path ($report+'.generations/'+$next.runId) ($next.generation.ToString('D20')+'.json')
+    $stream=[IO.FileStream]::new($path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::Read)
+    try{$bytes=[Text.UTF8Encoding]::new($false).GetBytes(($next|ConvertTo-Json -Depth 32));$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+}else{
+    $directory=Join-Path $sessionRoot ('slots/'+$slot.id+'/attempt-0002')
+    [IO.Directory]::CreateDirectory($directory)|Out-Null
+    [IO.File]::WriteAllText((Join-Path $directory 'attempt.json'),(@{ordinal=2;complete=$false;exitCode=1}|ConvertTo-Json),[Text.UTF8Encoding]::new($false))
+}
+foreach($artifact in $gate.hybridArtifacts){
+    if((Get-FileHash -LiteralPath (Join-Path $run $artifact.path) -Algorithm SHA256).Hash.ToLowerInvariant() -cne $artifact.sha256){throw 'fixture-old-artifact-unexpectedly-changed'}
+}
+[IO.File]::WriteAllText('late-hybrid.marker',$Mode,[Text.UTF8Encoding]::new($false))
+exit 0
+'@
+    Write-FixtureText $oldMessageHook ("#!/bin/sh`nexec pwsh -NoLogo -NoProfile -File ./late-hybrid.ps1 -Mode "+$Mode+"`n")
+    Invoke-FixtureInstaller $Owner $root Install|Out-Null
+    $tree=(Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim()
+    $commit=Invoke-FixtureCommit $Owner $root
+    Assert-Condition ($commit.ExitCode -ne 0) 'new-unlisted-hybrid-evidence-allowed-commit'
+    Assert-NoCommit $Owner $root
+    Assert-Condition ([IO.File]::Exists((Join-Path $root 'late-hybrid.marker'))) 'late-hybrid-mutation-not-reached'
+    Assert-Condition ((Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim() -ceq $tree) 'late-hybrid-fixture-changed-index'
+}
+function Invoke-HybridInstallScenario($Owner,[string]$Mode){
+    if($Mode -ceq 'upgrade'){
+        $root=New-FixtureRepository $Owner -WithoutInstall
+        $previous=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        Write-FixtureText (Join-Path $previous 'pre-commit') "#!/bin/sh`nprintf 'original-chain\n' > upgrade-prior.marker`nexit 0`n"
+        $state=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','fish-audio-testing')).Output.Trim()
+        $old=Join-Path $state 'hooks'
+        Write-FixtureText (Join-Path $old 'TestGate.ps1') "throw 'old-protocol-entry-must-not-run'"
+        Write-FixtureText (Join-Path $old 'pre-commit') "#!/bin/sh`nexit 21`n"
+        $oldBytes=[IO.File]::ReadAllBytes((Join-Path $old 'TestGate.ps1'))
+        $common=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-common-dir')).Output.Trim()
+        Write-FixtureText (Join-Path $old 'installation.json') (@{schemaVersion=1;gateProtocolVersion=2;repositoryRoot=$root;commonGitDirectory=$common;previousHooks=$previous;digests=@{}}|ConvertTo-Json)
+        Invoke-FixtureGit $Owner $root @('config','--local','core.hooksPath',$old)|Out-Null
+        Invoke-FixtureInstaller $Owner $root Install|Out-Null
+        Invoke-FixtureInstaller $Owner $root Check|Out-Null
+        $effective=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+        $descriptor=[IO.File]::ReadAllText((Join-Path $effective 'installation.json'))|ConvertFrom-Json
+        Assert-Condition ($descriptor.schemaVersion -eq 2 -and $descriptor.gateProtocolVersion -eq 3 -and $descriptor.previousHooks -ceq $previous) 'protocol-upgrade-lost-original-chain'
+        Assert-Condition ([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $old 'TestGate.ps1'))) -ceq [Convert]::ToBase64String($oldBytes)) 'protocol-upgrade-mutated-old-bundle'
+        Assert-Condition (-not [IO.File]::Exists((Join-Path $effective 'pre-push'))) 'protocol-upgrade-added-prepush-test'
+        Assert-Condition ((Invoke-FixtureCommit $Owner $root).ExitCode -eq 0 -and [IO.File]::Exists((Join-Path $root 'upgrade-prior.marker'))) 'protocol-upgrade-chain-not-executed'
+        return
+    }
+    $root=New-FixtureRepository $Owner
+    $effective=(Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim()
+    if($Mode -ceq 'helper'){
+        [IO.File]::AppendAllText((Join-Path $effective 'HybridReceipt.ps1'),"`n ")
+        [IO.File]::Copy((Join-Path $effective 'HybridReceipt.ps1'),(Join-Path $Owner.Evidence 'mutated-installed-receipt.ps1'),$false)
+        Assert-Condition ((Invoke-FixtureInstaller $Owner $root Check -AllowFailure).ExitCode -ne 0) 'changed-installed-receipt-helper-passed-check'
+        $before=@(Get-InvocationPaths $Owner)
+        Assert-Condition ((Invoke-FixtureCommit $Owner $root).ExitCode -ne 0) 'changed-installed-receipt-helper-allowed-commit'
+        Assert-NoCommit $Owner $root
+        Assert-NoNewInvocation $Owner $before
+    }else{
+        $oldDescriptor=[Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $effective 'installation.json')))
+        [IO.File]::Move((Join-Path $root 'tools/HybridReceipt.ps1'),(Join-Path $root 'saved-receipt-helper.txt'))
+        Assert-Condition ((Invoke-FixtureInstaller $Owner $root Install -AllowFailure).ExitCode -ne 0) 'incomplete-bundle-install-passed'
+        Assert-Condition ((Invoke-FixtureGit $Owner $root @('rev-parse','--path-format=absolute','--git-path','hooks')).Output.Trim() -ceq $effective) 'failed-copy-switched-hooks-path'
+        Assert-Condition ([Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $effective 'installation.json'))) -ceq $oldDescriptor) 'failed-copy-mutated-prior-installation'
+    }
+}
+
 
 function Invoke-AcceptanceScenario {
     param($Owner, [string]$Name)
@@ -1087,7 +1483,9 @@ $receipt = Get-Content -LiteralPath (Join-Path $state 'commit-receipt.json') -Ra
 $runRoot = Join-Path $state ('runs/' + $receipt.runId)
 $gatePath = Join-Path $runRoot 'gate.json'
 $gate = Get-Content -LiteralPath $gatePath -Raw | ConvertFrom-Json
-$artifact = @($gate.platformArtifacts | Where-Object { $_.path.EndsWith('/terminal.json') })[0]
+$terminalPins = @($gate.hybridArtifacts | Where-Object path -CEQ 'platform/plugin/execution/phase-0001/terminal.json')
+if ($terminalPins.Count -ne 1) { throw 'fixture-phase-terminal-receipt-missing' }
+$artifact = $terminalPins[0]
 $path = Join-Path $runRoot $artifact.path
 [IO.File]::AppendAllText($path, "`n ", [Text.UTF8Encoding]::new($false))
 $artifact.sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -1106,6 +1504,11 @@ exit 0
             Assert-Snapshot (Get-NewInvocation $Owner $before) $root $tree
             Assert-Condition ((Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim() -ceq $tree) 'evidence-fixture-changed-index'
         }
+        'late-hybrid-generation' {Invoke-LateHybridMutationScenario $Owner 'generation'}
+        'late-hybrid-attempt' {Invoke-LateHybridMutationScenario $Owner 'attempt'}
+        'installed-receipt-helper-mutation' {Invoke-HybridInstallScenario $Owner 'helper'}
+        'atomic-install-copy-failure' {Invoke-HybridInstallScenario $Owner 'copy'}
+        'protocol-upgrade' {Invoke-HybridInstallScenario $Owner 'upgrade'}
         default { throw 'hook-acceptance-unknown-scenario' }
     }
 }
@@ -1140,7 +1543,8 @@ function Copy-FixtureGateEvidence {
         [IO.Directory]::CreateDirectory($stateDestination) | Out-Null
         $metadata = $Owner.GitMetadata[$state]
         $privateFiles = [ordered]@{
-            'installation.json' = Join-Path $state 'hooks/installation.json'
+            'commit-receipt.json' = Join-Path $state 'commit-receipt.json'
+            'installation.json' = $(if($metadata.Hooks){Join-Path $metadata.Hooks 'installation.json'}else{Join-Path $state 'hooks/installation.json'})
             'git-dir.config' = Join-Path $metadata.GitDir 'config'
             'git-dir.config.worktree' = Join-Path $metadata.GitDir 'config.worktree'
             'git-common.config' = Join-Path $metadata.CommonDir 'config'
@@ -1159,7 +1563,8 @@ function Copy-FixtureGateEvidence {
             Assert-Condition ($runName -cmatch '^[a-f0-9]{32}$') 'invalid-gate-evidence-owner'
             $destination = Join-Path $Owner.Evidence ('gate-runs/{0:D2}/{1}' -f $stateOrdinal, $runName)
             [IO.Directory]::CreateDirectory($destination) | Out-Null
-            foreach ($name in @('gate.json', 'snapshot.json', 'regression.json', 'commit-final.json')) {
+            foreach ($name in @('gate.json', 'snapshot.json', 'regression.json', 'commit-final.json',
+                'verified-legacy-catalog.json', 'migration-discoveries.json', 'migration-conservation.json')) {
                 $source = Join-Path $run $name
                 if ([IO.File]::Exists($source)) { [IO.File]::Copy($source, (Join-Path $destination $name), $false) }
             }
@@ -1171,6 +1576,11 @@ function Copy-FixtureGateEvidence {
             $platform = Join-Path $run 'platform'
             if ([IO.Directory]::Exists($platform)) {
                 Copy-OwnedEvidenceDirectory $Owner $platform (Join-Path $destination 'platform')
+            }
+            foreach ($pattern in @('framework-*','migration-conservation','hybrid','hybrid-admission','build-package','build-plugin','build-testing-tool','hybrid-command','hybrid-admission-command','legacy-verifier')) {
+                foreach ($phase in [IO.Directory]::GetDirectories($run, $pattern)) {
+                    Copy-OwnedEvidenceDirectory $Owner $phase (Join-Path $destination ([IO.Path]::GetFileName($phase)))
+                }
             }
         }
     }
@@ -1189,6 +1599,44 @@ function Remove-OwnedFixture {
     Assert-Condition (Test-ContainedPath $resolvedOwner $resolvedFixtures) 'unsafe-owner-cleanup'
     Assert-Condition (-not (Test-ContainedPath $Owner.Evidence $resolvedOwner)) 'evidence-inside-cleanup-target'
     if ([IO.Directory]::Exists($resolvedOwner)) { Remove-Item -LiteralPath $resolvedOwner -Recurse -Force }
+}
+
+function Remove-OwnedSigningRoot {
+    param($Owner)
+    if ($null -eq $Owner.SigningRoot) { return }
+    Assert-Condition ([IO.Path]::IsPathFullyQualified($Owner.SigningRoot)) 'signing-cleanup-not-absolute'
+    $root = [IO.Path]::GetFullPath($Owner.SigningRoot)
+    $temp = $temporaryRoot.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    Assert-Condition ($root -ceq $Owner.SigningRoot -and $Owner.SigningId -cmatch '^[a-f0-9]{32}$') 'signing-cleanup-owner-invalid'
+    Assert-Condition ([IO.Path]::GetDirectoryName($root).Equals($temp, [StringComparison]::OrdinalIgnoreCase)) 'signing-cleanup-not-temp-child'
+    Assert-Condition ([IO.Path]::GetFileName($root) -ceq ('fa-hook-sign-' + $Owner.SigningId)) 'signing-cleanup-wrong-owner'
+    $ancestor = [IO.DirectoryInfo]::new($root).Parent
+    while ($null -ne $ancestor) {
+        $attributes = [IO.File]::GetAttributes($ancestor.FullName)
+        Assert-Condition (($attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and
+            ($attributes -band [IO.FileAttributes]::Directory) -ne 0) 'signing-cleanup-ancestor-invalid'
+        $ancestor = $ancestor.Parent
+    }
+    try { $attributes = [IO.File]::GetAttributes($root) }
+    catch [IO.FileNotFoundException] { return }
+    catch [IO.DirectoryNotFoundException] { return }
+    Assert-Condition (($attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and
+        ($attributes -band [IO.FileAttributes]::Directory) -ne 0) 'signing-cleanup-root-invalid'
+    $materialFailure = $null
+    foreach ($name in @('fixture-ed25519', 'fixture-ed25519.pub', 'allowed_signers')) {
+        $path = Join-Path $root $name
+        try {
+            try { $attributes = [IO.File]::GetAttributes($path) }
+            catch [IO.FileNotFoundException] { continue }
+            catch [IO.DirectoryNotFoundException] { continue }
+            Assert-Condition (($attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and
+                ($attributes -band [IO.FileAttributes]::Directory) -eq 0) 'signing-cleanup-material-invalid'
+            [IO.File]::Delete($path)
+        } catch { if ($null -eq $materialFailure) { $materialFailure = $_ } }
+    }
+    if ($null -ne $materialFailure) { throw $materialFailure }
+    Assert-Condition ([IO.Directory]::GetFileSystemEntries($root).Length -eq 0) 'signing-cleanup-unexpected-entry'
+    [IO.Directory]::Delete($root, $false)
 }
 
 $overallFailure = $null
@@ -1216,10 +1664,15 @@ try {
             GitMetadata = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
             Clock = [Diagnostics.Stopwatch]::StartNew()
             CommandOrdinal = 0
+            SigningAttempted = $false
+            SigningId = $null
+            SigningRoot = $null
+            Signing = $null
         }
         [IO.Directory]::CreateDirectory($owner.FixtureRoot) | Out-Null
         [IO.Directory]::CreateDirectory($owner.Invocations) | Out-Null
         $failure = $null
+        $fixtureRetained = $false
         $originalLocation = Get-Location
         try {
             Invoke-AcceptanceScenario $owner $name
@@ -1228,10 +1681,15 @@ try {
             try { Write-PrivateFailure $failure (Join-Path $owner.Evidence 'failure.txt') } catch { }
         } finally {
             $cleanupFailure = $null
-            try { Copy-FixtureGateEvidence $owner } catch { $cleanupFailure = $_ }
+            try { Copy-FixtureGateEvidence $owner } catch { $cleanupFailure = $_; $fixtureRetained = $true }
+            try { Remove-OwnedSigningRoot $owner } catch {
+                $signingCleanupFailure = $_
+                try { Write-PrivateFailure $signingCleanupFailure (Join-Path $owner.Evidence 'signing-cleanup.failure.txt') } catch { }
+                if ($null -eq $cleanupFailure) { $cleanupFailure = $signingCleanupFailure }
+            }
             try {
                 Set-Location -LiteralPath $originalLocation.Path
-                Remove-OwnedFixture $owner
+                if (-not $fixtureRetained) { Remove-OwnedFixture $owner }
                 Assert-Condition ($owner.Clock.ElapsedMilliseconds -lt 120000) 'owner-deadline'
             } catch { if ($null -eq $cleanupFailure) { $cleanupFailure = $_ } }
             if ($null -ne $cleanupFailure) {
@@ -1242,7 +1700,8 @@ try {
         }
         $outcome = if ($null -eq $failure) { 'passed' } else { 'failed' }
         $code = if ($null -eq $failure) { $null } elseif ($failure.Exception.Message -cmatch '^hook-acceptance-[a-z0-9-]+$') { $failure.Exception.Message } else { $failure.Exception.GetType().FullName }
-        $results.Add([pscustomobject]@{ id = $name; outcome = $outcome; durationMilliseconds = $owner.Clock.ElapsedMilliseconds; failure = $code })
+        $results.Add([pscustomobject]@{ id = $name; outcome = $outcome; durationMilliseconds = $owner.Clock.ElapsedMilliseconds; failure = $code
+            retainedFixture = $(if ($fixtureRetained) { $owner.FixtureRoot } else { $null }) })
         Write-Output ('{0}: {1}' -f $name, $outcome)
     }
 } catch { $overallFailure = $_ } finally {

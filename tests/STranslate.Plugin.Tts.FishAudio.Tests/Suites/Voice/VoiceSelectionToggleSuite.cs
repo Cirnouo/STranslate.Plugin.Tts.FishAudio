@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.ViewModel;
@@ -5,9 +6,14 @@ using static ContextProxy;
 using static FavoriteVoicesSuite;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class VoiceSelectionToggleSuite
 {
-    internal static void MatchingCardsToggleSelectionWithoutChangingFavoriteIds()
+    [Test]
+    [Property("FishAudioCaseId", "voice.selection/matching-cards-toggle-selection-without-changing-favorite-ids")]
+    [Order(280)]
+    public static void MatchingCardsToggleSelectionWithoutChangingFavoriteIds()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) }));
@@ -37,7 +43,10 @@ internal static class VoiceSelectionToggleSuite
             "The selected card's existing Cross must publish the same clear state");
     }
 
-    internal static void RemovedOriginsCannotApplyOrClearMatchingCurrentCards()
+    [Test]
+    [Property("FishAudioCaseId", "voice.selection/removed-origins-cannot-apply-or-clear-matching-current-cards")]
+    [Order(281)]
+    public static void RemovedOriginsCannotApplyOrClearMatchingCurrentCards()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) }));
@@ -64,7 +73,10 @@ internal static class VoiceSelectionToggleSuite
         AssertEqual("", settings.VoiceId, "The actual current card still owns its Cancel Apply action");
     }
 
-    internal static void FailedSelectionWritesKeepAppliedIdentityAndStars()
+    [Test]
+    [Property("FishAudioCaseId", "voice.selection/failed-selection-writes-keep-applied-identity-and-stars")]
+    [Order(282)]
+    public static void FailedSelectionWritesKeepAppliedIdentityAndStars()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(99) }));
@@ -92,7 +104,10 @@ internal static class VoiceSelectionToggleSuite
         AssertEnumerableEqual(new[] { Id(99) }, store.Read(), "Selection failures and recovery cannot mutate favorite IDs");
     }
 
-    internal static async Task MatchingByIdQueriesInspectWithoutCancelingSelectionAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.selection/matching-by-id-queries-inspect-without-canceling-selection")]
+    [Order(283)]
+    public static async Task MatchingByIdQueriesInspectWithoutCancelingSelectionAsync()
     {
         var settings = SelectedSettings();
         var (service, http) = TestHttpServiceProxy.Create();

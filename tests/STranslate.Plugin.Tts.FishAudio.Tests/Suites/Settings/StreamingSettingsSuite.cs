@@ -5,11 +5,16 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using static ContextProxy;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class StreamingSettingsSuite
 {
     private static readonly DateTimeOffset BeforeCutoff = new(2026, 10, 20, 0, 0, 0, TimeSpan.Zero);
 
-    internal static void MissingConfigurationLoadsPcm()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/missing-configuration-loads-pcm")]
+    [NUnit.Framework.Order(8)]
+    public static void MissingConfigurationLoadsPcm()
     {
         var context = CreateContext();
         ((ContextProxy)context).LoadSettings = () => null!;
@@ -18,7 +23,10 @@ internal static class StreamingSettingsSuite
         AssertEqual("pcm", settings.AudioFormat, "Missing configuration starts with PCM");
     }
 
-    internal static void LegacyFormatsMigrateAndCurrentDefaultsUsePcm()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/legacy-formats-migrate-and-current-defaults-use-pcm")]
+    [NUnit.Framework.Order(9)]
+    public static void LegacyFormatsMigrateAndCurrentDefaultsUsePcm()
     {
         AssertEqual(2, SettingsSchema.Current, "Streaming settings use schema 2");
         AssertEqual("pcm", new Settings().AudioFormat, "New settings use PCM");
@@ -53,7 +61,10 @@ internal static class StreamingSettingsSuite
         }
     }
 
-    internal static void FutureAndDuplicateSchemasRemainReadOnly()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/future-and-duplicate-schemas-remain-read-only")]
+    [NUnit.Framework.Order(10)]
+    public static void FutureAndDuplicateSchemasRemainReadOnly()
     {
         foreach (var json in new[]
         {
@@ -73,7 +84,10 @@ internal static class StreamingSettingsSuite
         AssertEqual(99, future.SchemaVersion, "Future schema number is retained");
     }
 
-    internal static void InvalidStreamingFieldTypesDefaultIndependently()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/invalid-streaming-field-types-default-independently")]
+    [NUnit.Framework.Order(11)]
+    public static void InvalidStreamingFieldTypesDefaultIndependently()
     {
         foreach (var fields in new[]
         {
@@ -89,7 +103,10 @@ internal static class StreamingSettingsSuite
         }
     }
 
-    internal static void NewFieldsRoundTripAndSnapshotsPreserveAllSettings()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/new-fields-round-trip-and-snapshots-preserve-all-settings")]
+    [NUnit.Framework.Order(12)]
+    public static void NewFieldsRoundTripAndSnapshotsPreserveAllSettings()
     {
         var original = CreatePopulatedSettings();
         var restored = Read(JsonSerializer.Serialize(original));
@@ -103,7 +120,10 @@ internal static class StreamingSettingsSuite
         AssertEqual("Saved voice", snapshot.CachedVoice!.Title, "Snapshot deep-copies cached metadata");
     }
 
-    internal static void LeaseCommitAndRollbackPreserveStreamingSettings()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/lease-commit-and-rollback-preserve-streaming-settings")]
+    [NUnit.Framework.Order(13)]
+    public static void LeaseCommitAndRollbackPreserveStreamingSettings()
     {
         var storage = CreatePopulatedSettings();
         var baseline = JsonSerializer.Serialize(storage);
@@ -140,7 +160,10 @@ internal static class StreamingSettingsSuite
         AssertEqual(beforeUpdate, JsonSerializer.Serialize(storage), "Failed update preserves stored snapshot");
     }
 
-    internal static void ModelOrderDefaultsAndSavedChoicesStayIndependent()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/model-order-defaults-and-saved-choices-stay-independent")]
+    [NUnit.Framework.Order(14)]
+    public static void ModelOrderDefaultsAndSavedChoicesStayIndependent()
     {
         AssertEnumerableEqual(new[] { "s2.1-pro-free", "drama-3", "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(BeforeCutoff), "Free precedes capability groups");
         AssertEnumerableEqual(new[] { "drama-3", "s2.1-pro", "s2-pro", "s1" }, FishAudioModelPolicy.GetAvailableModels(FishAudioModelPolicy.FreeModelCutoffUtc), "Cutoff removes only expired free option");
@@ -157,7 +180,10 @@ internal static class StreamingSettingsSuite
         AssertEqual(true, FishAudioModelPolicy.SupportsNormalizeLoudness("s2-pro"), "Existing S2 capability remains supported");
     }
 
-    internal static void ViewModelFormatAndModelTogglesPreserveSettings()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/view-model-format-and-model-toggles-preserve-settings")]
+    [NUnit.Framework.Order(15)]
+    public static void ViewModelFormatAndModelTogglesPreserveSettings()
     {
         var settings = CreatePopulatedSettings();
         var context = CreateContext(settings: settings, pluginCacheDirectoryPath: CreateTempDirectory());
@@ -177,7 +203,10 @@ internal static class StreamingSettingsSuite
         AssertEqual(true, vm.IsApiKeyInputEnabled, "Format changes preserve API key lock behavior");
     }
 
-    internal static void StreamingSettingsUiResourcesAreComplete()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/streaming-settings-ui-resources-are-complete")]
+    [NUnit.Framework.Order(16)]
+    public static void StreamingSettingsUiResourcesAreComplete()
     {
         var view = File.ReadAllText(FindRepoFile("STranslate.Plugin.Tts.FishAudio/Presentation/View/SettingsView.xaml"));
         AssertEqual(true, view.Contains("SelectedItem=\"{Binding AudioFormat}\"", StringComparison.Ordinal), "Format selector binds persisted value");

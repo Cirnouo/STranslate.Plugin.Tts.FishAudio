@@ -12,18 +12,7 @@ internal static class RegressionFailureEvidenceSuite
     private static readonly int[] ApprovedControlledKeys = [0x01, 0x10, 0xA0, 0xA1, 0x11, 0xA2, 0xA3, 0x12, 0xA4, 0xA5];
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-    internal static async Task RunAsync()
-    {
-        CapturesTheOwnedThrowAndCallerFrames();
-        OmitsFrameworkFramesAndBoundsOwnedRecursion();
-        SerializesOnlyApprovedFieldsWithoutPrivateExceptionContent();
-        RetainsOnlyTheBoundedNativeFixtureGrammar();
-        HandlesMissingPhysicalStackWithoutUsingRemoteStackText();
-        LeavesThePrimaryExceptionAndItsCleanupEvidenceUnchanged();
-        await SidecarsRemainSecondaryToTheOriginalOutcomeAsync();
-    }
-
-    private static void CapturesTheOwnedThrowAndCallerFrames()
+    internal static void CapturesTheOwnedThrowAndCallerFrames()
     {
         var error = CaptureOwnedFailure(new InvalidOperationException(Secret));
         var info = RegressionFailureEvidence.Capture(error);
@@ -38,7 +27,7 @@ internal static class RegressionFailureEvidenceSuite
         AssertSafeFrames(info);
     }
 
-    private static void OmitsFrameworkFramesAndBoundsOwnedRecursion()
+    internal static void OmitsFrameworkFramesAndBoundsOwnedRecursion()
     {
         Exception frameworkFailure;
         try { ThrowThroughFramework(); throw new InvalidOperationException("Unreachable fixture branch."); }
@@ -59,7 +48,7 @@ internal static class RegressionFailureEvidenceSuite
         AssertSafeFrames(recursiveInfo);
     }
 
-    private static void SerializesOnlyApprovedFieldsWithoutPrivateExceptionContent()
+    internal static void SerializesOnlyApprovedFieldsWithoutPrivateExceptionContent()
     {
         var payload = new HostileDiagnosticPayload();
         var error = CaptureOwnedFailure(new InvalidOperationException(Secret + "-message", new IOException(Secret + "-inner")));
@@ -85,7 +74,7 @@ internal static class RegressionFailureEvidenceSuite
         AssertSafeFrames(info);
     }
 
-    private static void RetainsOnlyTheBoundedNativeFixtureGrammar()
+    internal static void RetainsOnlyTheBoundedNativeFixtureGrammar()
     {
         const string emptyChanges = "phase=before-action; controlledChangedCount=0; controlledChanges=[]; spaceChanged=False; otherChangedCount=0";
         var allChanges = "phase=restore; controlledChangedCount=10; controlledChanges=[" +
@@ -132,7 +121,7 @@ internal static class RegressionFailureEvidenceSuite
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void HandlesMissingPhysicalStackWithoutUsingRemoteStackText()
+    internal static void HandlesMissingPhysicalStackWithoutUsingRemoteStackText()
     {
         var unthrown = new InvalidOperationException(Secret);
         var empty = RegressionFailureEvidence.Capture(unthrown);
@@ -167,7 +156,7 @@ internal static class RegressionFailureEvidenceSuite
         AssertSafeFrames(partial);
     }
 
-    private static void LeavesThePrimaryExceptionAndItsCleanupEvidenceUnchanged()
+    internal static void LeavesThePrimaryExceptionAndItsCleanupEvidenceUnchanged()
     {
         var cleanup = new IOException(Secret + "-cleanup");
         var payload = new HostileDiagnosticPayload();
@@ -199,7 +188,7 @@ internal static class RegressionFailureEvidenceSuite
         throw new InvalidOperationException("The preserved primary exception must still propagate.");
     }
 
-    private static async Task SidecarsRemainSecondaryToTheOriginalOutcomeAsync()
+    internal static async Task SidecarsRemainSecondaryToTheOriginalOutcomeAsync()
     {
         var directory = Path.GetFullPath(TestAssertions.CreateTempDirectory());
         var primaryFailure = false;

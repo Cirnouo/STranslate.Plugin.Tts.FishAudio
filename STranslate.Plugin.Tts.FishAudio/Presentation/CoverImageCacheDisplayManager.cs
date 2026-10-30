@@ -14,6 +14,9 @@ internal sealed class CoverImageCacheDisplayManager
 
     private long _clearOperationId;
 
+    internal Task? LastResolvedCacheTask { get; private set; }
+    internal Task? TimedOutClearContinuationTask { get; private set; }
+
     public CoverImageCacheDisplayManager(
         IPluginContext context,
         Func<string, CancellationToken, Task<Stream>> openStreamAsync,
@@ -45,6 +48,7 @@ internal sealed class CoverImageCacheDisplayManager
                 refreshCacheSize();
             });
         });
+        LastResolvedCacheTask = result.CacheTask;
         return result.DisplayUrl;
     }
 
@@ -75,7 +79,7 @@ internal sealed class CoverImageCacheDisplayManager
                 _context.Snackbar.ShowError(_context.GetTranslation("STranslate_Plugin_Tts_FishAudio_ClearCache_Timeout"));
             }
 
-            _ = clearTask.ContinueWith(task =>
+            TimedOutClearContinuationTask = clearTask.ContinueWith(task =>
             {
                 _ = task.Exception;
                 _runOnUiThread(refreshCacheSize);

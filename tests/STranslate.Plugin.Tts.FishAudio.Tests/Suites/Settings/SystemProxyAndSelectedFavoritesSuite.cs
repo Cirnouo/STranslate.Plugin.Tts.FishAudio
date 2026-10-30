@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -12,9 +13,14 @@ using static FavoriteVoicesSuite;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class SystemProxyAndSelectedFavoritesSuite
 {
-    internal static async Task RetiredProxyInputsCannotBlockFormalReadingAsync()
+    [Test]
+    [Property("FishAudioCaseId", "settings.proxy/retired-proxy-inputs-cannot-block-formal-reading")]
+    [Order(278)]
+    public static async Task RetiredProxyInputsCannotBlockFormalReadingAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         foreach (var mode in new[] { "direct", "custom", "unknown" })
@@ -36,7 +42,10 @@ internal static class SystemProxyAndSelectedFavoritesSuite
         }
     }
 
-    internal static void RetiredProxyInputsAreDiscardedAndSocketUsesSystemProxy()
+    [Test]
+    [Property("FishAudioCaseId", "settings.proxy/retired-proxy-inputs-are-discarded-and-socket-uses-system-proxy")]
+    [Order(277)]
+    public static void RetiredProxyInputsAreDiscardedAndSocketUsesSystemProxy()
     {
         var previous = HttpClient.DefaultProxy;
         var systemProxy = new WebProxy("http://system-fixture.invalid:3128");
@@ -69,7 +78,10 @@ internal static class SystemProxyAndSelectedFavoritesSuite
         finally { HttpClient.DefaultProxy = previous; }
     }
 
-    internal static void SelectedFavoriteTracksApplyClearBrowseMutationsAndFailedWrites()
+    [Test]
+    [Property("FishAudioCaseId", "voice.selection/selected-favorite-tracks-apply-clear-browse-mutations-and-failed-writes")]
+    [Order(279)]
+    public static void SelectedFavoriteTracksApplyClearBrowseMutationsAndFailedWrites()
     {
         var directory = CreateTempDirectory();
         var settings = SelectedSettings();

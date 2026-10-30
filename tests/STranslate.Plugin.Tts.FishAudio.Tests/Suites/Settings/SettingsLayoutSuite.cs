@@ -80,22 +80,26 @@ internal static class SettingsLayoutSuite
             ResultTogglesKeepIndependentViewState,
             SharedVoiceCardReflectsMetadataState,
         })
-        {
-            var phase = System.Diagnostics.Stopwatch.StartNew();
-            Console.WriteLine($"[settings-layout] {scenario.Method.Name} queued.");
-            await RunOnStaThreadAsync(() =>
-            {
-                Console.WriteLine($"[settings-layout] {scenario.Method.Name} entered after {phase.ElapsedMilliseconds}ms.");
-                scenario();
-                Console.WriteLine($"[settings-layout] {scenario.Method.Name} completed after {phase.ElapsedMilliseconds}ms.");
-            });
-        }
+            await ObserveCompiledScenarioAsync(scenario);
         // Keep the same dispatcher and bounded per-group deadline as the
         // native template/viewport matrix grows.
         await InlineNumericInteractionsAsync();
     }
 
-    private static void PcmHidesWholeBitrateCardAndMp3RestoresIt()
+    // The legacy loop and NUnit rows invoke the same single original STA root.
+    internal static async Task ObserveCompiledScenarioAsync(Action scenario)
+    {
+        var phase = System.Diagnostics.Stopwatch.StartNew();
+        Console.WriteLine($"[settings-layout] {scenario.Method.Name} queued.");
+        await RunOnStaThreadAsync(() =>
+        {
+            Console.WriteLine($"[settings-layout] {scenario.Method.Name} entered after {phase.ElapsedMilliseconds}ms.");
+            scenario();
+            Console.WriteLine($"[settings-layout] {scenario.Method.Name} completed after {phase.ElapsedMilliseconds}ms.");
+        });
+    }
+
+    internal static void PcmHidesWholeBitrateCardAndMp3RestoresIt()
     {
         var settings = new Settings { AudioFormat = "mp3", Mp3Bitrate = 128 };
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -120,7 +124,7 @@ internal static class SettingsLayoutSuite
         AssertStandardCard(view, BoundComboBox(view, nameof(SettingsViewModel.AudioFormat)));
     }
 
-    private static void ResultTogglesKeepIndependentViewState()
+    internal static void ResultTogglesKeepIndependentViewState()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings) { HasSearched = true };
@@ -183,7 +187,7 @@ internal static class SettingsLayoutSuite
         AssertEqual(Visibility.Visible, searchBody.Visibility, "Accessible favorites toggling must leave search unchanged");
     }
 
-    private static void ReadingNetworkSettingsAreAbsent()
+    internal static void ReadingNetworkSettingsAreAbsent()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -199,7 +203,7 @@ internal static class SettingsLayoutSuite
             "Removing the network controls must also remove their group heading");
     }
 
-    private static void FavoriteVoicesTabMatchesPeerTabs()
+    internal static void FavoriteVoicesTabMatchesPeerTabs()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -243,7 +247,7 @@ internal static class SettingsLayoutSuite
         }
     }
 
-    private static void SelectedVoiceHeartSharesFavoriteState()
+    internal static void SelectedVoiceHeartSharesFavoriteState()
     {
         var id = "0123456789abcdef0123456789abcdef";
         var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
@@ -329,7 +333,7 @@ internal static class SettingsLayoutSuite
         AssertEqual(((FontIcon)search.Content).Icon, ((FontIcon)query.Content).Icon, "By ID lookup must match the existing Search magnifier");
     }
 
-    private static void SelectionAndPagingActionsUseBareIcons()
+    internal static void SelectionAndPagingActionsUseBareIcons()
     {
         var id = "0123456789abcdef0123456789abcdef";
         var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
@@ -469,7 +473,7 @@ internal static class SettingsLayoutSuite
         DrainBindings();
     }
 
-    private static void LoudnessCardFollowsModelCapability(bool stored)
+    internal static void LoudnessCardFollowsModelCapability(bool stored)
     {
         var settings = new Settings { NormalizeLoudness = stored, SelectedModel = FishAudioModelPolicy.S1Model };
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -487,7 +491,7 @@ internal static class SettingsLayoutSuite
         AssertEqual(stored, toggle.IsOn, "The restored setting must display its saved value");
     }
 
-    private static void TopPMinimumKeepsSliderTracksAligned()
+    internal static void TopPMinimumKeepsSliderTracksAligned()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -520,7 +524,7 @@ internal static class SettingsLayoutSuite
         }
     }
 
-    private static void SharedVoiceCardReflectsMetadataState()
+    internal static void SharedVoiceCardReflectsMetadataState()
     {
         var settings = new Settings();
         using var viewModel = new SettingsViewModel(CreateContext(settings: settings), settings);

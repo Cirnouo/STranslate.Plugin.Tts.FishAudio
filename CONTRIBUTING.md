@@ -45,16 +45,16 @@ Install and check the local commit gate after cloning and in each worktree that 
 .\tools\Install-TestHooks.ps1 -Check
 ```
 
-Both commands accept `-RepositoryRoot <path>` when invoked outside the intended worktree. Rerun `-Install`, then `-Check`, when upgrading an older installation to gate protocol 2. The installer uses worktree-private `pre-commit` and `commit-msg` entries. Existing pre-commit runs before validation; existing prepare/message hooks retain their normal order, with the prior commit-msg hook followed by the final receipt guard. The installation check validates installation and exit-code plumbing; it does not establish a passing product regression run. See the [test-system specification](docs/specs/test-system.md) for the identity, snapshot and evidence contract.
+Both commands accept `-RepositoryRoot <path>` when invoked outside the intended worktree. Rerun `-Install`, then `-Check`, when upgrading an older installation to schema 2 and gate protocol 3. The installer prepares an immutable worktree-owned bundle containing `pre-commit`, `commit-msg`, the gate and its digest-bound minimal receipt consumer before activating it. Existing pre-commit runs before validation; existing prepare/message hooks retain their normal order, with the prior commit-msg hook followed by the final receipt guard. The installation check validates ownership, installed bytes and exit-code plumbing; it does not establish a passing product regression run. See the [test-system specification](docs/specs/test-system.md) for the identity, snapshot and evidence contract.
 
-Stage the intended files, review the staged diff and use ordinary `git commit`. Every commit runs the gate against a raw-blob snapshot of the index tree, excluding unstaged and untracked content. The current `bootstrap/full/hybrid` mode builds and inspects the Release package, runs the complete legacy catalog and runs both complete NUnit catalogs. The gate independently verifies the legacy report and reparses framework discovery/results from that snapshot's built tools. The final commit-msg guard requires the same tree, index-file hash and successful receipt, including the recorded framework artifact hashes, after the prior message hook. Changing staged content or admitted framework evidence requires another validation. No tests run at pre-push. Every new PR/main validation commit continues to run complete legacy and framework validation.
+Stage the intended files, review the staged diff and use `git commit -S` with the contributor's configured signing key. Every commit runs the gate against a raw-blob snapshot of the index tree, excluding unstaged and untracked content. The current `bootstrap/full/hybrid` mode separately builds and inspects the Release package, executes the complete current hybrid owner plan once, and independently admits its raw legacy and framework results from that snapshot's built tools. The final commit-msg guard requires the same tree, index-file hash and successful frozen receipt after the prior message hook, checking retained bytes and physical attempt/committed-generation inventories without rebuilding the cleaned snapshot. Changing staged content or admitted evidence requires another validation. Verify the actual created commit's signature and tested tree. No tests run at pre-push. Every new PR/main validation commit continues to require complete hybrid validation.
 
 For a workflow that must freeze the intended staged tree before a later commit command, capture it explicitly:
 
 ```powershell
 $env:FISHAUDIO_EXPECTED_TREE = (git write-tree)
 try {
-    git commit -m 'fix(preview): cancel stale downloads'
+    git commit -S -m 'fix(preview): cancel stale downloads'
 }
 finally {
     Remove-Item Env:FISHAUDIO_EXPECTED_TREE -ErrorAction SilentlyContinue
@@ -69,7 +69,7 @@ Run full combined verification when its coverage is required:
 .\build.ps1 -Release -Clean -Test
 ```
 
-It builds Release, checks the current distributable, runs the complete legacy catalog followed by both framework-discovered NUnit catalogs, and cleans intermediates afterward. The copied `STranslate.Plugin.Tts.FishAudio.spkg` remains in the repository root. A package left by an earlier run is not evidence that the current command passed.
+It builds Release, checks the current distributable, executes the complete fixed-slot hybrid plan and disjoint framework tail through [TestHybrid.ps1](tools/TestHybrid.ps1), and independently admits the retained raw results before cleaning intermediates. This covers every current legacy owner and both complete NUnit catalogs once. The copied `STranslate.Plugin.Tts.FishAudio.spkg` remains in the repository root. A package left by an earlier run is not evidence that the current command passed.
 
 For local iteration:
 
@@ -84,7 +84,7 @@ For local iteration:
 .\build.ps1 -CleanOnly
 ```
 
-Focused legacy iteration remains available through `-Test -Affected`, `-TestBase`, `-TestGroup`, `-TestCase`, `-TestPartition` and `-RerunFailed`. Affected recommendations use the existing explicit source/shared-dependency map and include working-tree changes; unknown dependencies expand coverage conservatively. Debug and focused legacy commands keep that legacy scope. The transitional `-LegacyOnly` switch coordinates the outer commit gate, which owns its separate framework phase. Ordinary full verification uses the combined Release command above.
+Focused legacy iteration remains available through `-Test -Affected`, `-TestBase`, `-TestGroup`, `-TestCase`, `-TestPartition` and `-RerunFailed`. Affected recommendations use the existing explicit source/shared-dependency map and include working-tree changes; unknown dependencies expand coverage conservatively. Debug, focused legacy commands and `-LegacyOnly` keep that diagnostic legacy scope. They do not replace the full hybrid gate. Ordinary full verification uses the combined Release command above.
 
 Use [tools/Test.ps1](tools/Test.ps1) for framework discovery and focused execution. Each explicit results directory must be a new absolute path; omitting it creates an owned temporary directory.
 
@@ -99,7 +99,7 @@ Use [tools/Test.ps1](tools/Test.ps1) for framework discovery and focused executi
 .\tools\Test.ps1 -Mode Full -CaseId 'compat.sync/api-key-format' -Workers 0
 ```
 
-The driver builds both test projects with locked restore unless `-NoBuild` is supplied; `-NoBuild` requires all normal Release inputs to exist. It rejects unknown, duplicate, ambiguous and empty requested selections and verifies exact NUnit XML/TRX outcomes. `-Workers` accepts 0 through 4 and defaults to 4. Coverage and baseline publication have separate admission boundaries and are not driver modes. These focused commands and legacy recommendations do not replace the full staged-tree gate or complete CI validation. Formal test-impact analysis and reusable coverage baselines remain future work.
+The driver builds both test projects with locked restore unless `-NoBuild` is supplied; `-NoBuild` requires all normal Release inputs to exist. It rejects unknown, duplicate, ambiguous and empty requested selections and verifies exact NUnit XML/TRX outcomes. `-Workers` accepts 0 through 4 and defaults to 4. Ordinary full verification stays separate from coverage collection and baseline publication. These focused commands and legacy recommendations do not replace the full staged-tree gate or complete CI validation. Formal test-impact analysis and reusable coverage baselines remain future work.
 
 Add ordinary new tests with NUnit attributes in the appropriate test project; no central registry edit is needed. Give each parameter row a stable explicit name, and use an optional `FishAudioCaseId` property when its identity should survive a display-name change. The remaining legacy scenarios continue through their explicit [catalog](tests/STranslate.Plugin.Tts.FishAudio.Tests/Runner/RegressionCatalog.cs). Its metadata command is `dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release -- --legacy --list`. Preserve every existing assertion responsibility, source owner, cleanup and deadline until its migration is verified. The direct STA compatibility samples do not establish replacement of the supervised native watchdog. Normal tests use fakes and local fixtures and should remain deterministic and offline. For probe changes, run its documented offline self-tests. See the verification policies for device/host acceptance, final-state reruns and package runtime checks.
 

@@ -25,8 +25,12 @@ public sealed class DotCoverConsoleDiagnosticException : Exception
 /// </summary>
 public static class DotCoverConsoleDiagnostics
 {
-    public const string Rule = "dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v1";
+    public const string Rule = "dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v2";
     private const int MaximumBytes = 64 * 1024;
+    private static readonly string[] TimestampFormats =
+    [
+        "ddd MM dd yyyy h:mm:ss tt", "ddd MM dd yyyy hh:mm:ss tt",
+    ];
     private static readonly byte[] Banner =
     [
         .. Encoding.ASCII.GetBytes("JetBrains dotCover Console Runner 2026.2.3.1. Build 20260930.210750 (windows-x64)\r\nCopyright (c) 2009"),
@@ -133,10 +137,9 @@ public static class DotCoverConsoleDiagnostics
             var line = lines[index];
             Require(line.StartsWith(prefix, StringComparison.Ordinal) && line.EndsWith(']'), "console-message-mismatch");
             var stamp = line[prefix.Length..^1];
-            Require(DateTime.TryParseExact(stamp, "ddd MM dd yyyy hh:mm:ss tt", CultureInfo.InvariantCulture,
-                DateTimeStyles.None, out var parsed) &&
-                parsed.ToString("ddd MM dd yyyy hh:mm:ss tt", CultureInfo.InvariantCulture) == stamp,
-                "console-invalid-timestamp");
+            Require(TimestampFormats.Any(format => DateTime.TryParseExact(stamp, format,
+                CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed) &&
+                parsed.ToString(format, CultureInfo.InvariantCulture) == stamp), "console-invalid-timestamp");
         }
     }
 

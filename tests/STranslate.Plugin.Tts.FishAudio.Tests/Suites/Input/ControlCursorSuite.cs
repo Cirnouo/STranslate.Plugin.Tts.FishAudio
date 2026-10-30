@@ -76,6 +76,42 @@ internal static class ControlCursorSuite
         return cases;
     }
 
+    // Typed NUnit bindings retain each original whole callback and observer.
+    internal static Task ObserveConstructionAsync() => SearchAdjustmentControlSuite.ObserveMatrixActionAsync("construction", stage =>
+    {
+        using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
+        SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm));
+        stage("compiled themed construction and layout completed");
+    }, prefix: "cursor", details: "separate compiled construction action.");
+
+    internal static Task ObserveFormatAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.Format);
+    internal static Task ObserveSearchAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.Search);
+    internal static Task ObserveByIdAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.ById);
+    internal static Task ObserveFavoritesAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.Favorites);
+    internal static Task ObserveGeneralAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.General);
+    internal static Task ObserveOverlaysAsync(double width, bool dark) => ObservePluginAsync(width, dark, CursorWorkflow.Overlays);
+
+    private static Task ObservePluginAsync(double width, bool dark, CursorWorkflow workflow) =>
+        SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"plugin/{workflow}/{width}/{dark}",
+            stage => Inspect(width, dark, workflow, stage), prefix: "cursor", details: "independently owned plugin native interaction workflow.");
+
+    internal static Task ObserveNativePartsAsync(bool dark) => ObserveNativePeerAsync(dark, NativePeerWorkflow.Parts);
+    internal static Task ObserveNativeTemplateAsync(bool dark) => ObserveNativePeerAsync(dark, NativePeerWorkflow.Template);
+    internal static Task ObserveNativeLifecycleAsync(bool dark) => ObserveNativePeerAsync(dark, NativePeerWorkflow.Lifecycle);
+
+    private static Task ObserveNativePeerAsync(bool dark, NativePeerWorkflow workflow) =>
+        SearchAdjustmentControlSuite.ObserveMatrixActionAsync($"native-{workflow.ToString().ToLowerInvariant()}/{dark}", stage =>
+        {
+            using var vm = new SettingsViewModel(ContextProxy.CreateContext(), new Settings());
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            SettingsLayoutSuite.Layout(view);
+            InspectNativePeers(view, stage, workflow);
+        }, prefix: "cursor", details: workflow == NativePeerWorkflow.Lifecycle
+            ? FormattableString.Invariant($"500 DIP same-source lifecycle chain; explicit {RegressionExecution.Timeout.TotalSeconds}s action deadline.")
+            : "500 DIP native peers.", executionTimeout: workflow == NativePeerWorkflow.Lifecycle ? RegressionExecution.Timeout : null);
+
     private enum CursorWorkflow { Format, Search, ById, Favorites, General, Overlays }
     private enum NativePeerWorkflow { Parts, Template, Lifecycle }
 

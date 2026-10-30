@@ -24,6 +24,14 @@ public sealed class DotCoverConsoleDiagnosticTests
         "[JetBrains dotCover] Report generation started. [Tue 10 27 2026 11:26:03 PM]\r\n" +
         "[JetBrains dotCover] JSON report generated. [Tue 10 27 2026 11:26:04 PM]\r\n" +
         "[JetBrains dotCover] XML report generated. [Tue 10 27 2026 11:26:04 PM]\r\n";
+    // Literal single-hour form from the retained fixed-runner console bytes.
+    private const string SingleHourCover =
+        "[JetBrains dotCover] Coverage session started [Thu 10 29 2026 2:10:34 AM]\r\n" +
+        "[JetBrains dotCover] Coverage session finished [Thu 10 29 2026 2:10:45 AM]\r\n" +
+        "[JetBrains dotCover] Coverage results post-processing started [Thu 10 29 2026 2:10:45 AM]\r\n" +
+        "[JetBrains dotCover] Merging snapshots [Thu 10 29 2026 2:10:45 AM]\r\n" +
+        "[JetBrains dotCover] Snapshots merging finished [Thu 10 29 2026 2:10:45 AM]\r\n" +
+        "[JetBrains dotCover] Coverage results post-processing finished [Thu 10 29 2026 2:10:45 AM]\r\n";
     private string _parent = "";
     private string _root = "";
     private string[] _paths = [];
@@ -72,7 +80,7 @@ public sealed class DotCoverConsoleDiagnosticTests
         Assert.That(before.Select(bytes => bytes.Length), Is.EqualTo(new[] { 632, 0, 372, 0 }));
         var review = Read();
         Assert.That(review.SchemaVersion, Is.EqualTo(1));
-        Assert.That(review.RuleId, Is.EqualTo("dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v1"));
+        Assert.That(review.RuleId, Is.EqualTo("dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v2"));
         Assert.That(review.Evidence.Select(item => item.Path), Is.EqualTo(_paths));
         Assert.That(review.Evidence.Select(item => item.Sha256), Is.EqualTo(before
             .Select(bytes => Convert.ToHexStringLower(SHA256.HashData(bytes)))));
@@ -80,6 +88,42 @@ public sealed class DotCoverConsoleDiagnosticTests
         Assert.That(review.Evidence[2].Sha256, Is.EqualTo("380ad9f8656fc4071236b410752652eaa5a7d1c4811d953d25291e340fc7d587"));
         Assert.That(review.BaselineClaim, Is.False);
         Assert.That(review.Scope, Does.Contain("console-only").And.Contain("no process, test-pass or baseline claim"));
+        for (var index = 0; index < _paths.Length; index++)
+            Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "console-diagnostics/single-hour-observed-console-protocol")]
+    public void ObservedSingleHourConsoleProtocolPreservesAllRawDigests()
+    {
+        File.WriteAllBytes(_paths[0], ObservedBytes(SingleHourCover));
+        var before = _paths.Select(File.ReadAllBytes).ToArray();
+        Assert.That(before[0], Has.Length.EqualTo(626));
+        Assert.That(Convert.ToHexStringLower(SHA256.HashData(before[0])),
+            Is.EqualTo("78652c50c2271960c420ddd27f8209e4c7f4bca9db0c10ffda1ddd759944af13"));
+        ConsoleDiagnosticReview? review = null;
+        Assert.DoesNotThrow(() => review = Read(),
+            "console-diagnostics-single-hour-observed-form-must-be-admitted");
+        var admitted = review ?? throw new InvalidOperationException("console-diagnostics-single-hour-review-missing");
+        Assert.That(admitted.SchemaVersion, Is.EqualTo(1));
+        Assert.That(admitted.Evidence.Select(item => item.Path), Is.EqualTo(_paths));
+        Assert.That(admitted.Evidence.Select(item => item.Sha256), Is.EqualTo(before
+            .Select(bytes => Convert.ToHexStringLower(SHA256.HashData(bytes)))));
+        Assert.That(admitted.BaselineClaim, Is.False);
+        for (var index = 0; index < _paths.Length; index++)
+            Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
+    }
+
+    [TestCase("0:10:34 AM", TestName = "console-diagnostics/single-hour-zero-hour-rejected")]
+    [TestCase("002:10:34 AM", TestName = "console-diagnostics/single-hour-three-digit-hour-rejected")]
+    [TestCase("2:1:34 AM", TestName = "console-diagnostics/single-hour-unpadded-minute-rejected")]
+    public void SingleHourSupportDoesNotAdmitNoncanonicalTimes(string invalidTime)
+    {
+        File.WriteAllBytes(_paths[0], ObservedBytes(SingleHourCover.Replace(
+            "2:10:34 AM", invalidTime, StringComparison.Ordinal)));
+        var before = _paths.Select(File.ReadAllBytes).ToArray();
+        var failure = Assert.Throws<DotCoverConsoleDiagnosticException>(() => Read());
+        Assert.That(failure!.Code, Is.EqualTo("console-invalid-timestamp"));
         for (var index = 0; index < _paths.Length; index++)
             Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
     }

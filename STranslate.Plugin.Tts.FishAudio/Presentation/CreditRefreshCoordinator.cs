@@ -25,6 +25,7 @@ internal sealed class CreditRefreshCoordinator : IDisposable
     private readonly OperationActivityCounter _apiKeyOperationState;
     private readonly OperationActivityCounter _creditOperationState;
     private StartupCreditRefreshCycle? _startupCreditRefreshCycle;
+    private Task? _pendingStartupCreditObserverTask;
     private DispatcherTimer? _latencyHideTimer;
 
     internal CreditRefreshCoordinator(
@@ -96,6 +97,8 @@ internal sealed class CreditRefreshCoordinator : IDisposable
         _apiKeyOperationState.End();
     }
 
+    internal Task? PendingStartupCreditObserverTask => Volatile.Read(ref _pendingStartupCreditObserverTask);
+
     internal void AttachStartupCreditRefresh(StartupCreditRefreshCycle startupCreditRefreshCycle)
     {
         _startupCreditRefreshCycle = startupCreditRefreshCycle;
@@ -109,7 +112,7 @@ internal sealed class CreditRefreshCoordinator : IDisposable
 
         BeginCreditOperation();
         BeginApiKeyOperation();
-        _ = ObserveStartupCreditRefreshAsync(startupCreditRefreshCycle);
+        Volatile.Write(ref _pendingStartupCreditObserverTask, ObserveStartupCreditRefreshAsync(startupCreditRefreshCycle));
     }
 
     internal void InvalidateStartupCreditRefresh()

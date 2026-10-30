@@ -16,6 +16,11 @@ internal static class RegressionRunner
             if (options.RerunPath is not null)
             {
                 previous = RegressionReport.Read(options.RerunPath);
+                // A retired aggregate cannot turn a source-drift replay into an
+                // unrelated full selection, even when that old aggregate passed.
+                foreach (var item in previous.Cases)
+                    if (RegressionCaseAliases.Contains(item.Id))
+                        _ = RegressionCaseAliases.Resolve(item.Id, cases, "replay-case-removed");
                 foreach (var item in previous.Cases.Where(item => item.Outcome != "passed"))
                 {
                     selectedIds.UnionWith(RegressionCaseAliases.Resolve(item.Id, cases, "replay-case-removed"));

@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using MessagePack;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -6,11 +7,16 @@ using STranslate.Plugin.Tts.FishAudio.Streaming;
 using static ContextProxy;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class TopPCompatibilitySuite
 {
     private static readonly DateTimeOffset PolicyTime = new(2026, 10, 21, 0, 0, 0, TimeSpan.Zero);
 
-    internal static void ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero()
+    [Test]
+    [Property("FishAudioCaseId", "numeric.top-p/client-floor-keeps-displayed-precision-defaults-and-temperature-zero")]
+    [Order(284)]
+    public static void ClientFloorKeepsDisplayedPrecisionDefaultsAndTemperatureZero()
     {
         AssertEqual(0.7, Settings.DefaultTopP, "The client compatibility floor must not change the existing default");
         foreach (var (input, stored, _) in Cases())
@@ -23,7 +29,10 @@ internal static class TopPCompatibilitySuite
         }
     }
 
-    internal static void OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips()
+    [Test]
+    [Property("FishAudioCaseId", "numeric.top-p/old-zero-canonically-rewrites-once-and-saved-floor-round-trips")]
+    [Order(285)]
+    public static void OldZeroCanonicallyRewritesOnceAndSavedFloorRoundTrips()
     {
         foreach (var schema in new[] { 1, 2 })
         {
@@ -47,7 +56,10 @@ internal static class TopPCompatibilitySuite
         }
     }
 
-    internal static void FutureAndDuplicateSchemasKeepTheirReadOnlyProtection()
+    [Test]
+    [Property("FishAudioCaseId", "numeric.top-p/future-and-duplicate-schemas-keep-their-read-only-protection")]
+    [Order(286)]
+    public static void FutureAndDuplicateSchemasKeepTheirReadOnlyProtection()
     {
         foreach (var json in new[]
         {
@@ -64,7 +76,10 @@ internal static class TopPCompatibilitySuite
         }
     }
 
-    internal static async Task RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads")]
+    [Order(287)]
+    public static async Task RawSettingsCannotSendZeroThroughHttpOrNativePayloadsAsync()
     {
         foreach (var (input, _, wire) in Cases())
         {

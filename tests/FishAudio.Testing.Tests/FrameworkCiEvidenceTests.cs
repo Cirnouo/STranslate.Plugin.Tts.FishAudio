@@ -3,7 +3,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using FishAudio.Testing.Evidence;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
@@ -11,7 +15,7 @@ namespace FishAudio.Testing.Tests;
 
 [TestFixture]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-public sealed class FrameworkCiEvidenceTests
+public sealed partial class FrameworkCiEvidenceTests
 {
     // These fixtures admit CI evidence. They execute the real parser and helper,
     // but their two declared cases do not claim execution of product scenarios.
@@ -24,6 +28,7 @@ public sealed class FrameworkCiEvidenceTests
     private const long RunId = 901;
     private const string ExecutionStep = "Run all discovered NUnit foundation cases in both assemblies";
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
+    private static readonly Lazy<byte[]> LegacyMetadataImage = new(CompileLegacyMetadataImage);
     private readonly Stopwatch _clock = new();
     private string _root = "";
     private string _repositoryRoot = "";
@@ -48,6 +53,11 @@ public sealed class FrameworkCiEvidenceTests
         Directory.CreateDirectory(_root);
         Directory.CreateDirectory(Path.Combine(_root, "repository/tools"));
         Directory.CreateDirectory(Path.Combine(_root, "artifacts"));
+        File.Copy(Path.Combine(_repositoryRoot, "tools/Assert-FrameworkSupervisor.ps1"),
+            Path.Combine(_root, "repository/tools/Assert-FrameworkSupervisor.ps1"), overwrite: false);
+        File.Copy(Path.Combine(_repositoryRoot, "tools/Assert-FrameworkExecutionPlan.ps1"),
+            Path.Combine(_root, "repository/tools/Assert-FrameworkExecutionPlan.ps1"), overwrite: false);
+        PrepareLegacyMetadataFixture();
         _bundle = Bundle(1);
         Directory.CreateDirectory(_bundle);
         _manifest = Session("Full");
@@ -63,7 +73,6 @@ public sealed class FrameworkCiEvidenceTests
         WriteJson(Path.Combine(_root, "repository/discovery-template/manifest.json"), fresh);
         Write(Path.Combine(_root, "repository/tools/Test.ps1"), DiscoveryBoundary);
         Write(Path.Combine(_root, "invoke.ps1"), ProcessBoundary);
-        Write(Path.Combine(_bundle, "runtime-evidence/fixture-created-1234.txt"), "constructed");
         WriteOwner(_bundle, 1);
         _jobs = new JsonObject
         {
@@ -158,9 +167,10 @@ public sealed class FrameworkCiEvidenceTests
         var result = await AdmitAsync();
         Assert.That(result.ExitCode, Is.Zero, result.Error);
         Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
-        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify", "evidence-catalog", "evidence-verify" }));
-        Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-terminal.json")), Is.True);
-        Assert.That(File.Exists(Path.Combine(_root, "verification/testing-tool-terminal.json")), Is.True);
+        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify",
+            "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify", "evidence-migration" }));
+        Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-phase-0001-terminal.json")), Is.True);
+        Assert.That(File.Exists(Path.Combine(_root, "verification/testing-tool-phase-0001-terminal.json")), Is.True);
     }
 
     [Test]
@@ -179,17 +189,18 @@ public sealed class FrameworkCiEvidenceTests
     public async Task SingleDownloadedArtifactCanBeAdmittedFromItsFlatRoot()
     {
         FlattenSingleBundle();
-        var resultHash = Hash(Path.Combine(_bundle, "plugin/result.xml"));
+        var resultHash = Hash(Path.Combine(_bundle, FirstExecutionPhase["resultXml"]!.GetValue<string>()));
 
         var result = await AdmitAsync();
 
         Assert.That(result.ExitCode, Is.Zero, result.Error);
         Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
-        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify", "evidence-catalog", "evidence-verify" }));
+        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify",
+            "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify", "evidence-migration" }));
         Assert.That(Directory.Exists(Bundle(1)), Is.False, "Admission must read the flat artifact without manufacturing a wrapper.");
-        Assert.That(Hash(Path.Combine(_bundle, "plugin/result.xml")), Is.EqualTo(resultHash));
-        Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-terminal.json")), Is.True);
-        Assert.That(File.Exists(Path.Combine(_root, "verification/testing-tool-terminal.json")), Is.True);
+        Assert.That(Hash(Path.Combine(_bundle, FirstExecutionPhase["resultXml"]!.GetValue<string>())), Is.EqualTo(resultHash));
+        Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-phase-0001-terminal.json")), Is.True);
+        Assert.That(File.Exists(Path.Combine(_root, "verification/testing-tool-phase-0001-terminal.json")), Is.True);
     }
 
     [Test]
@@ -336,7 +347,8 @@ public sealed class FrameworkCiEvidenceTests
 
         Assert.That(result.ExitCode, Is.Zero, result.Error);
         Assert.That(result.Output, Does.Contain("verified complete NUnit foundation attempt 1 (2 cases)."));
-        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify", "evidence-catalog", "evidence-verify" }));
+        Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify",
+            "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify", "evidence-migration" }));
         var owner = JsonNode.Parse(File.ReadAllText(Path.Combine(_bundle, "ci-owner.json")))!;
         Assert.That(owner["commit"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
         Assert.That(owner["head"]!.GetValue<string>(), Is.EqualTo(MergeCommit));
@@ -469,6 +481,8 @@ public sealed class FrameworkCiEvidenceTests
     [TestCase("malformed-raw-result", "framework-ci-parser-rejected", TestName = "framework-ci/malformed-raw-result-with-matching-digest")]
     [TestCase("wrong-catalog", "framework-ci-current-catalog-mismatch", TestName = "framework-ci/catalog-metadata-drift")]
     [TestCase("not-run", "framework-ci-parser-rejected", TestName = "framework-ci/raw-not-run-cannot-borrow-terminal-success")]
+    [TestCase("missing-phase-settings-digest", "framework-ci-missing-artifact-digest", TestName = "framework-ci/phase-settings-require-a-digest")]
+    [TestCase("wrong-supervised-full-name", "framework-ci-phase-request-binding", TestName = "framework-ci/supervised-full-name-requires-current-binding")]
     [TestCase("skipped-execution-step", "framework-ci-missing-execution-step", TestName = "framework-ci/successful-job-with-skipped-execution-step")]
     public async Task IncompleteOrInconsistentEvidenceCannotPass(string fault, string expectedReason)
     {
@@ -512,9 +526,28 @@ public sealed class FrameworkCiEvidenceTests
                 ReplaceArtifact("catalog", catalog.ToJsonString(Json));
                 break;
             case "not-run":
-                var resultPath = Path.Combine(_bundle, "plugin/result.xml");
+                var resultPath = Path.Combine(_bundle, FirstExecutionPhase["resultXml"]!.GetValue<string>());
                 var xml = File.ReadAllText(resultPath).Replace("result=\"Passed\" duration=\"0.125\"", "result=\"Skipped\" duration=\"0.125\"", StringComparison.Ordinal);
                 ReplaceArtifact("resultXml", xml);
+                break;
+            case "missing-phase-settings-digest":
+                FirstExecutionPhase["runSettingsSha256"] = "";
+                break;
+            case "wrong-supervised-full-name":
+                var phase = FirstExecutionPhase;
+                var requestPath = Artifact(phase["request"]!.GetValue<string>());
+                var request = JsonNode.Parse(File.ReadAllText(requestPath))!;
+                request["cases"]![0]!["fullName"] = "Fixture.Foreign.Unrelated";
+                WriteJson(requestPath, request);
+                phase["requestSha256"] = Hash(requestPath);
+                var supervisorPath = Artifact(phase["supervisor"]!.GetValue<string>());
+                var supervisor = JsonNode.Parse(File.ReadAllText(supervisorPath))!;
+                supervisor["requestSha256"] = phase["requestSha256"]!.DeepClone();
+                foreach (var observation in supervisor["events"]!.AsArray())
+                    if (observation!["caseId"] is not null)
+                        observation["fullName"] = "Fixture.Foreign.Unrelated";
+                WriteJson(supervisorPath, supervisor);
+                phase["supervisorSha256"] = Hash(supervisorPath);
                 break;
             case "skipped-execution-step":
                 _jobs["jobs"]![0]!["steps"]![1]!["conclusion"] = "skipped";
@@ -524,73 +557,319 @@ public sealed class FrameworkCiEvidenceTests
         }
 
         var result = await AdmitAsync();
-        Assert.That(result.ExitCode, Is.EqualTo(1), result.Output + result.Error);
+        var marker = fault == "wrong-supervised-full-name" ? "framework-ci-request-full-name-must-bind-current-catalog\n" : "";
+        Assert.That(result.ExitCode, Is.EqualTo(1), marker + result.Output + result.Error);
         Assert.That(result.Error, Does.Contain("framework-ci: rejected (" + expectedReason + ";"));
         Assert.That(result.Output, Does.Not.Contain("verified complete NUnit foundation"));
         if (fault is "malformed-raw-result" or "not-run")
         {
-            Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-verify" }));
-            Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-terminal.json")), Is.False);
+            Assert.That(Invocations(), Is.EqualTo(new[] { "discover", "evidence-catalog", "evidence-execution-plan", "evidence-execution-plan", "evidence-verify" }));
+            Assert.That(File.Exists(Path.Combine(_root, "verification/plugin-phase-0001-terminal.json")), Is.False);
         }
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "framework-ci/pending-supervisor-cannot-publish-success")]
+    public async Task MatchingDigestCannotPromoteAnUnpublishedSupervisorFile()
+    {
+        var phase = FirstExecutionPhase;
+        var relative = phase["supervisor"]!.GetValue<string>();
+        var pending = relative + ".pending";
+        File.Move(Path.Combine(_bundle, relative), Path.Combine(_bundle, pending));
+        phase["supervisor"] = pending;
+        // The report bytes, digest, execution and raw case results remain valid.
+        // Only the producer-owned final publication path is absent.
+        var result = await AdmitAsync();
+
+        Assert.That(result.ExitCode, Is.EqualTo(1),
+            "pending-supervisor-must-not-admit\n" + result.Output + result.Error);
+        Assert.That(result.Error, Does.Contain("framework-ci: rejected (framework-ci-supervisor-rejected;"));
+        Assert.That(result.Output, Does.Not.Contain("verified complete NUnit foundation"));
     }
 
     private void AddAssembly(CaseDefinition definition, JsonObject fresh)
     {
         var key = definition.Key;
         var relativeDirectory = "phases/discover-" + key;
-        Write(Path.Combine(_bundle, relativeDirectory, "discovery.dump"), Discovery(definition));
+        var discoveryPath = Artifact(relativeDirectory + "/discovery.dump");
+        Write(discoveryPath, Discovery(definition));
         WriteJson(Path.Combine(_bundle, key, "catalog.json"), Catalog(definition, "captured-1"));
         WriteJson(Path.Combine(_bundle, key, "selection.json"), new JsonObject { ["schemaVersion"] = 1, ["ids"] = new JsonArray(definition.Id) });
-        WriteJson(Path.Combine(_bundle, key, "terminal.json"), new JsonObject
+        WriteJson(Path.Combine(_bundle, key, "requested-selection.json"), new JsonObject
+        {
+            ["schemaVersion"] = 1, ["ids"] = new JsonArray(definition.Id), ["maximumConcurrency"] = 4,
+        });
+        WriteJson(Path.Combine(_bundle, key, "execution-plan.json"), ExecutionPlan(definition, discoveryPath));
+        var relativeAssembly = "tests/" + key + "/bin/Release/net10.0-windows/" + key + ".dll";
+        var currentAssembly = Path.Combine(_root, "repository", relativeAssembly);
+        if (key == "testing-tool")
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(currentAssembly)!);
+            File.Copy(typeof(FrameworkCiEvidenceTests).Assembly.Location, currentAssembly, overwrite: false);
+        }
+        var assemblyHash = Hash(currentAssembly);
+        var phaseDirectory = key + "/execution/phase-0001";
+        var phase = new JsonObject
+        {
+            ["id"] = "phase-0001", ["kind"] = "ordinary", ["profile"] = null,
+            ["requireOrder"] = false, ["maximumConcurrency"] = 4, ["exclusiveResources"] = new JsonArray(),
+            ["selectedIds"] = new JsonArray(definition.Id), ["executed"] = true, ["passedCount"] = 1,
+            ["runtimeEvidence"] = phaseDirectory + "/runtime-evidence",
+            ["markerRequired"] = key == "plugin", ["markerObserved"] = key == "plugin", ["parallelProof"] = false,
+        };
+        WriteJson(Artifact(phaseDirectory + "/selection.json"), new JsonObject { ["schemaVersion"] = 1, ["ids"] = new JsonArray(definition.Id) });
+        WriteJson(Artifact(phaseDirectory + "/terminal.json"), new JsonObject
         {
             ["schemaVersion"] = 1, ["kind"] = "nunit-terminal", ["complete"] = true, ["passedCount"] = 1,
-            ["cases"] = new JsonArray(new JsonObject { ["canonicalId"] = definition.Id, ["outcome"] = "passed" }),
+            ["cases"] = new JsonArray(new JsonObject
+            {
+                ["canonicalId"] = definition.Id, ["fullName"] = definition.ClassName + ".Probe", ["outcome"] = "passed",
+                ["duration"] = "00:00:00.1250000", ["platformDuration"] = "00:00:00.1250000",
+            }),
         });
-        Write(Path.Combine(_bundle, key, "result.xml"), Terminal(definition));
-        Write(Path.Combine(_bundle, key, "result.trx"), Trx(definition));
+        Write(Artifact(phaseDirectory + "/supervised/nunit/" + key + ".xml"), Terminal(definition));
+        Write(Artifact(phaseDirectory + "/supervised/trx/results.trx"), Trx(definition));
+        Write(Artifact(phaseDirectory + "/execution.runsettings"), RunSettings(definition, Artifact(phaseDirectory + "/supervised/nunit")));
+        var requestPath = Artifact(phaseDirectory + "/execution-request.json");
+        WriteJson(requestPath, ExecutionRequest(definition, currentAssembly, assemblyHash, discoveryPath, phaseDirectory));
+        Directory.CreateDirectory(Artifact(phaseDirectory + "/runtime-evidence"));
+        if (key == "plugin") Write(Artifact(phaseDirectory + "/runtime-evidence/fixture-created-1234.txt"), "constructed");
+        var supervisorPath = Artifact(phaseDirectory + "/supervised/supervisor.json");
+        // This is explicitly synthetic admission input. The real XML/TRX parser
+        // still decides whether its claimed case results can be admitted; these
+        // process fields do not claim execution of real product scenarios.
+        WriteJson(supervisorPath, Supervisor(definition, assemblyHash, phaseDirectory, requestPath));
+        foreach (var item in new[] { ("selection", "selection.json"), ("request", "execution-request.json"),
+                     ("runSettings", "execution.runsettings"), ("terminal", "terminal.json"),
+                     ("resultXml", "supervised/nunit/" + key + ".xml"), ("trx", "supervised/trx/results.trx"),
+                     ("supervisor", "supervised/supervisor.json") })
+        {
+            phase[item.Item1] = phaseDirectory + "/" + item.Item2;
+            phase[item.Item1 + "Sha256"] = Hash(Artifact(phaseDirectory + "/" + item.Item2));
+        }
         var assembly = new JsonObject
         {
             ["key"] = key, ["project"] = "tests/" + key + "/" + key + ".csproj",
-            ["assembly"] = "tests/" + key + "/bin/Release/net10.0-windows/" + key + ".dll",
-            ["sha256"] = Hash(typeof(FrameworkCiEvidenceTests).Assembly.Location),
+            ["assembly"] = relativeAssembly, ["sha256"] = assemblyHash,
             ["discoveredCount"] = 1, ["selectedCount"] = 1, ["passedCount"] = 1, ["executed"] = true,
-            ["selectedIds"] = new JsonArray(definition.Id), ["markerRequired"] = key == "plugin", ["markerObserved"] = key == "plugin",
+            ["selectedIds"] = new JsonArray(definition.Id), ["executionPhases"] = new JsonArray(phase),
         };
-        foreach (var item in new[] { ("catalog", "catalog.json"), ("selection", "selection.json"), ("terminal", "terminal.json"), ("resultXml", "result.xml"), ("trx", "result.trx") })
+        foreach (var item in new[] { ("catalog", "catalog.json"), ("selection", "selection.json"),
+                     ("requestedSelection", "requested-selection.json"), ("executionPlan", "execution-plan.json") })
         {
             assembly[item.Item1] = key + "/" + item.Item2;
             assembly[item.Item1 + "Sha256"] = Hash(Path.Combine(_bundle, key, item.Item2));
         }
         _manifest["assemblies"]!.AsArray().Add(assembly);
-        foreach (var phase in new[] { "build", "discover", "catalog", "execute", "verify" })
+        foreach (var name in new[] { "build-" + key, "discover-" + key, "catalog-" + key, "plan-" + key,
+                     "execute-" + key + "-phase-0001", "verify-" + key + "-phase-0001" })
         {
             _manifest["phases"]!.AsArray().Add(new JsonObject
             {
-                ["name"] = phase + "-" + key, ["complete"] = true, ["exitCode"] = 0,
-                ["directory"] = "phases/" + phase + "-" + key,
+                ["name"] = name, ["complete"] = true, ["exitCode"] = 0, ["directory"] = "phases/" + name,
             });
         }
-        var current = (JsonObject)assembly.DeepClone();
-        current["executed"] = false;
-        current["passedCount"] = 0;
-        fresh["assemblies"]!.AsArray().Add(current);
         // Cross-process adapter IDs deliberately differ from both raw discovery
         // and the captured catalog; only canonical and exact named identity join.
-        WriteJson(Path.Combine(_root, "repository/discovery-template", key, "catalog.json"), Catalog(definition, "fresh-99"));
+        var freshRoot = Path.Combine(_root, "repository/discovery-template");
+        var freshCatalogPath = Path.Combine(freshRoot, key, "catalog.json");
+        var freshSelectionPath = Path.Combine(freshRoot, key, "selection.json");
+        WriteJson(freshCatalogPath, Catalog(definition, "fresh-99"));
+        WriteJson(freshSelectionPath, new JsonObject { ["schemaVersion"] = 1, ["ids"] = new JsonArray(definition.Id) });
+        Write(Path.Combine(freshRoot, relativeDirectory, "discovery.dump"), Discovery(definition, "fresh-99"));
+        fresh["assemblies"]!.AsArray().Add(new JsonObject
+        {
+            ["key"] = key, ["project"] = "tests/" + key + "/" + key + ".csproj",
+            ["assembly"] = relativeAssembly, ["sha256"] = assemblyHash,
+            ["catalog"] = key + "/catalog.json", ["catalogSha256"] = Hash(freshCatalogPath),
+            ["selection"] = key + "/selection.json", ["selectionSha256"] = Hash(freshSelectionPath),
+            ["discoveredCount"] = 1, ["selectedCount"] = 1, ["selectedIds"] = new JsonArray(definition.Id),
+            ["executed"] = false, ["passedCount"] = 0, ["terminal"] = null, ["terminalSha256"] = null,
+            ["resultXml"] = null, ["resultXmlSha256"] = null, ["trx"] = null, ["trxSha256"] = null,
+            ["supervisor"] = null, ["supervisorSha256"] = null,
+            ["markerRequired"] = false, ["markerObserved"] = false, ["parallelProof"] = false,
+        });
+        fresh["phases"]!.AsArray().Add(new JsonObject
+        {
+            ["name"] = "discover-" + key, ["complete"] = true, ["exitCode"] = 0, ["directory"] = relativeDirectory,
+        });
     }
 
     private static JsonObject Session(string mode) => new()
     {
-        ["schemaVersion"] = 1, ["kind"] = "unified-test-session", ["complete"] = true, ["mode"] = mode,
-        ["platform"] = "VSTest", ["configuration"] = "Release", ["selection"] = "all-discovered", ["baselineClaim"] = false,
+        ["schemaVersion"] = mode == "Full" ? 2 : 1, ["kind"] = "unified-test-session", ["complete"] = true, ["mode"] = mode,
+        ["runId"] = mode == "Full" ? "11111111111111111111111111111111" : "22222222222222222222222222222222",
+        ["platform"] = "VSTest", ["configuration"] = "Release", ["workers"] = 4, ["selection"] = "all-discovered", ["baselineClaim"] = false,
         ["source"] = new JsonObject
         {
             ["snapshot"] = false, ["dirty"] = false, ["tree"] = null, ["commit"] = MergeCommit, ["sourceCommit"] = MergeCommit,
-            ["fingerprint"] = new string('c', 64), ["fingerprintKind"] = "sha256-source-path-and-bytes-v1",
+            ["fingerprint"] = new string('c', 64), ["fingerprintKind"] = "sha256-source-path-and-bytes-ordinal-v1",
         },
         ["toolSha256"] = Hash(typeof(BinaryIdentity).Assembly.Location),
         ["finishedUtc"] = "2026-10-20T01:05:00Z", ["assemblies"] = new JsonArray(), ["phases"] = new JsonArray(),
     };
+
+    private string Artifact(string relative) => Path.GetFullPath(Path.Combine(_bundle, relative));
+
+    private static JsonObject ExecutionPlan(CaseDefinition definition, string discoveryPath) => new()
+    {
+        ["schemaVersion"] = 1, ["kind"] = "nunit-execution-plan", ["complete"] = true,
+        ["plan"] = new JsonObject
+        {
+            ["rawDiscoverySha256"] = Hash(discoveryPath), ["requestedIds"] = new JsonArray(definition.Id),
+            ["expandedIds"] = new JsonArray(definition.Id), ["expansionReasons"] = new JsonArray(),
+            ["phases"] = new JsonArray(new JsonObject
+            {
+                ["id"] = "phase-0001", ["kind"] = "ordinary", ["profile"] = null,
+                ["cases"] = Catalog(definition, "0-1")["cases"]!.DeepClone(), ["requireOrder"] = false,
+                ["maximumConcurrency"] = 4, ["exclusiveResources"] = new JsonArray(),
+            }),
+        },
+    };
+
+    private JsonObject ExecutionRequest(CaseDefinition definition, string assemblyPath, string assemblyHash,
+        string discoveryPath, string phaseDirectory) => new()
+    {
+        ["schemaVersion"] = 1, ["runId"] = _manifest["runId"]!.DeepClone(),
+        ["sourceTree"] = null, ["sourceFingerprint"] = new string('c', 64),
+        ["workingDirectory"] = Path.Combine(_root, "repository"), ["shellExecutable"] = FindExecutable("pwsh.exe"),
+        ["dotnetExecutable"] = FindExecutable("dotnet.exe"), ["launcherScript"] = Path.Combine(_repositoryRoot, "tools/Invoke-TestProcess.ps1"),
+        ["testAssembly"] = Path.GetFullPath(assemblyPath), ["testAssemblySha256"] = assemblyHash,
+        ["runSettings"] = Artifact(phaseDirectory + "/execution.runsettings"), ["discoveryPath"] = discoveryPath,
+        ["resultXmlPath"] = Artifact(phaseDirectory + "/supervised/nunit/" + definition.Key + ".xml"),
+        ["trxPath"] = Artifact(phaseDirectory + "/supervised/trx/results.trx"), ["outputDirectory"] = Artifact(phaseDirectory + "/supervised"),
+        ["cases"] = new JsonArray(new JsonObject { ["canonicalId"] = definition.Id, ["fullName"] = definition.ClassName + ".Probe" }),
+        ["maximumConcurrency"] = 4, ["requireOrder"] = false,
+        ["environment"] = new JsonObject { ["FISHAUDIO_COMPAT_EVIDENCE_ROOT"] = Artifact(phaseDirectory + "/runtime-evidence") },
+    };
+
+    private static string RunSettings(CaseDefinition definition, string outputDirectory)
+    {
+        var regex = @"\A" + Regex.Escape(definition.ClassName + ".Probe") + @"\z";
+        var literal = regex.Replace(@"\", @"\\").Replace("\"", "\\\"");
+        return new XElement("RunSettings",
+            new XElement("RunConfiguration", new XElement("MaxCpuCount", "1"), new XElement("TreatNoTestsAsError", "true")),
+            new XElement("NUnit", new XElement("NumberOfTestWorkers", "4"), new XElement("PreFilter", "false"),
+                new XElement("UseParentFQNForParametrizedTests", "false"), new XElement("IncludeStackTrace", "false"),
+                new XElement("DumpXmlTestDiscovery", "true"), new XElement("DumpXmlTestResults", "false"),
+                new XElement("TestOutputXml", outputDirectory), new XElement("OutputXmlFolderMode", "AsSpecified"),
+                new XElement("StopOnError", "true"), new XElement("Where", "(test =~ \"" + literal + "\")"))).ToString();
+    }
+
+    private JsonObject Supervisor(CaseDefinition definition, string assemblyHash, string phaseDirectory, string requestPath) => new()
+    {
+        ["schemaVersion"] = 1, ["kind"] = "framework-execution", ["runId"] = _manifest["runId"]!.DeepClone(),
+        ["sourceTree"] = null, ["sourceFingerprint"] = new string('c', 64), ["testAssemblySha256"] = assemblyHash,
+        ["requestSha256"] = Hash(requestPath),
+        ["policy"] = new JsonObject { ["maximumConcurrency"] = 4, ["requireOrder"] = false },
+        ["launch"] = new JsonObject { ["kind"] = "vstest", ["sessionId"] = null, ["invocationSha256"] = new string('9', 64),
+            ["toolSha256"] = null, ["vstestConsoleSha256"] = null },
+        ["selectedIds"] = new JsonArray(definition.Id), ["failureCode"] = null, ["baselineClaim"] = false,
+        ["state"] = new JsonObject
+        {
+            ["stage"] = "child-exit", ["failureStage"] = null, ["failureCaseId"] = null, ["warningCount"] = 0,
+            ["complete"] = true, ["terminationRequired"] = false, ["passedIds"] = new JsonArray(definition.Id),
+            ["failedIds"] = new JsonArray(), ["timedOutIds"] = new JsonArray(), ["activeIds"] = new JsonArray(),
+            ["interruptedIds"] = new JsonArray(), ["notRunIds"] = new JsonArray(),
+        },
+        ["target"] = new JsonObject { ["started"] = true, ["pid"] = 1235, ["exitCode"] = 0 },
+        ["process"] = new JsonObject
+        {
+            ["launcherPid"] = 1236, ["launcherExited"] = true, ["stdoutDrained"] = true, ["stderrDrained"] = true,
+            ["ownedActiveProcesses"] = 0,
+        },
+        ["rawEvidence"] = new JsonObject
+        {
+            ["verified"] = true, ["resultXmlPath"] = Artifact(phaseDirectory + "/supervised/nunit/" + definition.Key + ".xml"),
+            ["trxPath"] = Artifact(phaseDirectory + "/supervised/trx/results.trx"),
+            ["resultXmlSha256"] = Hash(Artifact(phaseDirectory + "/supervised/nunit/" + definition.Key + ".xml")),
+            ["trxSha256"] = Hash(Artifact(phaseDirectory + "/supervised/trx/results.trx")),
+        },
+        ["events"] = ControlEvents(definition, assemblyHash), ["warnings"] = new JsonArray(),
+        ["diagnostics"] = new JsonObject { ["deliveredWarnings"] = 0, ["writerCompleted"] = true }, ["elapsedMilliseconds"] = 32,
+        ["finalization"] = new JsonObject { ["cleanupAnchorTimestamp"] = 1032L, ["frequency"] = 1000L },
+    };
+
+    // Minimal serialized lifecycle shape accepted by the real consumer. These
+    // six records are synthetic input, not authenticated runtime observations.
+    private JsonArray ControlEvents(CaseDefinition definition, string assemblyHash)
+    {
+        var runId = _manifest["runId"]!.GetValue<string>();
+        const string nonce = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        object Host(string kind, long timestamp, string? caseId = null, string? fullName = null, string? outcome = null) => new
+        {
+            schemaVersion = 1, role = "nunit-host", nonce, runId, sourceTree = (string?)null,
+            pid = 1234, kind, timestamp, frequency = 1000L, assemblySha256 = assemblyHash, caseId, fullName,
+            ordinal = 0, queuedTimestamp = 0L, outcome, targetPid = (int?)null, exitCode = (int?)null,
+        };
+        object Launcher(string kind, long timestamp, int? exitCode = null) => new
+        {
+            schemaVersion = 1, role = "execution-launcher", nonce, runId, sourceTree = (string?)null,
+            pid = 1236, kind, timestamp, frequency = 1000L, assemblySha256 = (string?)null,
+            caseId = (string?)null, fullName = (string?)null, ordinal = 0, queuedTimestamp = 0L,
+            outcome = (string?)null, targetPid = (int?)1235, exitCode,
+        };
+        return JsonSerializer.SerializeToNode(new[]
+        {
+            Launcher("target-started", 1000), Host("ready", 1001),
+            Host("case-start", 1010, definition.Id, definition.ClassName + ".Probe"),
+            Host("case-finished", 1020, definition.Id, definition.ClassName + ".Probe", "passed"),
+            Host("cleanup-complete", 1030), Launcher("target-exited", 1031, 0),
+        })!.AsArray();
+    }
+
+    private void PrepareLegacyMetadataFixture()
+    {
+        var migrationDirectory = Path.Combine(_root, "repository/tests/Migration");
+        Directory.CreateDirectory(migrationDirectory);
+        var reference = Path.Combine(migrationDirectory, "legacy-catalog.json");
+        File.Copy(Path.Combine(_repositoryRoot, "tests/Migration/legacy-catalog.json"), reference, overwrite: false);
+        WriteJson(Path.Combine(migrationDirectory, "migrated-cases.json"), new JsonObject
+        {
+            ["schemaVersion"] = 1, ["migrations"] = new JsonArray(),
+        });
+        // The fixture deliberately declares the whole original reference as
+        // synthetic legacy-owned metadata. Its two NUnit IDs are ordinary new
+        // cases. Neither this producer nor that declaration executes a test.
+        using var original = JsonDocument.Parse(File.ReadAllBytes(reference));
+        var rows = original.RootElement.GetProperty("cases").EnumerateArray().Select(item =>
+            item.GetProperty("id").GetString()! + "\t" + item.GetProperty("partition").GetString()!).ToArray();
+        var directory = Path.Combine(_root, "repository/tests/plugin/bin/Release/net10.0-windows");
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(Path.Combine(directory, "plugin.dll"), LegacyMetadataImage.Value);
+        Write(Path.Combine(directory, "fixture-legacy-catalog.txt"), string.Join("\n", rows) + "\n");
+        WriteJson(Path.Combine(directory, "plugin.runtimeconfig.json"), new JsonObject
+        {
+            ["runtimeOptions"] = new JsonObject
+            {
+                ["tfm"] = "net10.0", ["framework"] = new JsonObject
+                {
+                    ["name"] = "Microsoft.NETCore.App", ["version"] = "10.0.0",
+                },
+            },
+        });
+    }
+
+    private static byte[] CompileLegacyMetadataImage()
+    {
+        // Lazy evaluation occurs in SetUp, never during NUnit discovery. Roslyn
+        // is already a project dependency; no build command or package install
+        // is involved. The emitted program references only the BCL and can list
+        // fixture data for this one metadata-only command, never run scenarios.
+        var platform = (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
+            ?? throw new InvalidOperationException("framework-ci-fixture-runtime-references-missing");
+        var references = platform.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Select(path => MetadataReference.CreateFromFile(path));
+        var compilation = CSharpCompilation.Create("FrameworkCiLegacyMetadataFixture",
+            [CSharpSyntaxTree.ParseText(LegacyMetadataSource, path: "/_fixture/LegacyMetadata.cs")], references,
+            new CSharpCompilationOptions(OutputKind.ConsoleApplication, optimizationLevel: OptimizationLevel.Release,
+                deterministic: true));
+        using var output = new MemoryStream();
+        var emitted = compilation.Emit(output);
+        Assert.That(emitted.Success, Is.True, "Metadata-only fixture emit must succeed: " +
+            string.Join(",", emitted.Diagnostics.Where(item => item.Severity == DiagnosticSeverity.Error).Select(item => item.Id)));
+        return output.ToArray();
+    }
 
     private static JsonObject Catalog(CaseDefinition definition, string platformId) => new()
     {
@@ -655,10 +934,23 @@ public sealed class FrameworkCiEvidenceTests
     private void ReplaceArtifact(string name, string contents)
     {
         var assembly = _manifest["assemblies"]![0]!;
-        var path = Path.Combine(_bundle, assembly[name]!.GetValue<string>());
+        var record = name == "catalog" ? assembly : FirstExecutionPhase;
+        var path = Path.Combine(_bundle, record[name]!.GetValue<string>());
         Write(path, contents);
-        assembly[name + "Sha256"] = Hash(path);
+        record[name + "Sha256"] = Hash(path);
+        if (name is "resultXml" or "trx")
+        {
+            // Keep this outer claim coherent with intentionally corrupted raw
+            // bytes so the existing negative oracle still reaches the parser.
+            var supervisorPath = Path.Combine(_bundle, record["supervisor"]!.GetValue<string>());
+            var supervisor = JsonNode.Parse(File.ReadAllText(supervisorPath))!;
+            supervisor["rawEvidence"]![name + "Sha256"] = record[name + "Sha256"]!.DeepClone();
+            WriteJson(supervisorPath, supervisor);
+            record["supervisorSha256"] = Hash(supervisorPath);
+        }
     }
+
+    private JsonObject FirstExecutionPhase => _manifest["assemblies"]![0]!["executionPhases"]![0]!.AsObject();
 
     private async Task<ProcessResult> AdmitAsync()
     {
@@ -803,17 +1095,30 @@ public sealed class FrameworkCiEvidenceTests
 
     private static string FindRepositoryRoot()
     {
+        var configured = Environment.GetEnvironmentVariable("FISHAUDIO_TEST_REPOSITORY_ROOT");
+        string? snapshot = null;
         if (Environment.GetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT") is { Length: > 0 } contextPath)
         {
             using var context = JsonDocument.Parse(File.ReadAllText(contextPath));
-            var snapshot = context.RootElement.GetProperty("root").GetString()!;
-            if (!Path.IsPathFullyQualified(snapshot) || !File.Exists(Path.Combine(snapshot, "tools/VerifyFrameworkCi.ps1")))
-                throw new InvalidOperationException("framework-ci-fixture-snapshot-helper-missing");
-            return snapshot;
+            snapshot = context.RootElement.GetProperty("root").GetString();
         }
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
-            if (File.Exists(Path.Combine(directory.FullName, "tools/VerifyFrameworkCi.ps1"))) return directory.FullName;
-        throw new InvalidOperationException("framework-ci-fixture-helper-missing");
+        foreach (var candidate in new[] { configured, snapshot }.Where(value => value is not null))
+        {
+            if (!Path.IsPathFullyQualified(candidate!))
+                throw new InvalidOperationException("framework-ci-fixture-repository-not-absolute");
+            RequireNoReparseAncestors(candidate!);
+        }
+        if (configured is not null && snapshot is not null &&
+            !Path.TrimEndingDirectorySeparator(Path.GetFullPath(configured)).Equals(
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(snapshot)), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("framework-ci-fixture-repository-context-mismatch");
+        var root = configured ?? snapshot;
+        if (root is null || !File.Exists(Path.Combine(root, "tools/VerifyFrameworkCi.ps1")) ||
+            !File.Exists(Path.Combine(root, "tools/Assert-FrameworkSupervisor.ps1")) ||
+            !File.Exists(Path.Combine(root, "tools/Assert-FrameworkExecutionPlan.ps1")) ||
+            !File.Exists(Path.Combine(root, "tests/Migration/legacy-catalog.json")))
+            throw new InvalidOperationException("framework-ci-fixture-explicit-repository-required");
+        return Path.GetFullPath(root);
     }
 
     private static string FindExecutable(string name)
@@ -829,12 +1134,14 @@ public sealed class FrameworkCiEvidenceTests
     private sealed record CaseDefinition(string Key, string Id, string ClassName);
     private sealed record ProcessResult(int ExitCode, string Output, string Error);
 
-    private static string Discovery(CaseDefinition definition) => $$"""
+    private static string Discovery(CaseDefinition definition, string platformId = "0-1") => $$"""
         <NUnitXml><test-run id="0" name="example.dll" runstate="Runnable" testcasecount="1">
           <test-suite type="Assembly" id="0-10" name="example.dll" runstate="Runnable" testcasecount="1">
-            <test-case id="0-1" name="Probe" fullname="{{definition.ClassName}}.Probe" methodname="Probe" classname="{{definition.ClassName}}" runstate="Runnable">
-              <properties><property name="FishAudioCaseId" value="{{definition.Id}}" /></properties>
-            </test-case>
+            <test-suite type="TestFixture" id="0-20" name="Fixture" fullname="{{definition.ClassName}}" runstate="Runnable" testcasecount="1">
+              <test-case id="{{platformId}}" name="Probe" fullname="{{definition.ClassName}}.Probe" methodname="Probe" classname="{{definition.ClassName}}" runstate="Runnable">
+                <properties><property name="FishAudioCaseId" value="{{definition.Id}}" /></properties>
+              </test-case>
+            </test-suite>
           </test-suite>
         </test-run></NUnitXml>
         """;
@@ -858,6 +1165,30 @@ public sealed class FrameworkCiEvidenceTests
           </UnitTest></TestDefinitions>
           <ResultSummary outcome="Completed"><Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" /></ResultSummary>
         </TestRun>
+        """;
+
+    private const string LegacyMetadataSource = """
+        using System;
+        using System.Globalization;
+        using System.IO;
+        using System.Text;
+
+        internal static class Program
+        {
+            private static int Main(string[] args)
+            {
+                if (args.Length != 2 || args[0] != "--legacy" || args[1] != "--list")
+                {
+                    Console.Error.WriteLine("fixture-metadata-only-invocation");
+                    return 2;
+                }
+                var rows = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory,
+                    "fixture-legacy-catalog.txt"), new UTF8Encoding(false, true));
+                foreach (var row in rows) Console.WriteLine(row);
+                Console.WriteLine("Selected " + rows.Length.ToString(CultureInfo.InvariantCulture) + " case(s).");
+                return 0;
+            }
+        }
         """;
 
     private const string DiscoveryBoundary = """
@@ -895,7 +1226,7 @@ public sealed class FrameworkCiEvidenceTests
         function global:dotnet {
             if ($args.Count -eq 1 -and $args[0] -ceq '--version') { $global:LASTEXITCODE = 0; return '10.0.403' }
             $expected = Join-Path $global:fixtureRoot 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll'
-            if ($args.Count -lt 2 -or $args[0] -cne $expected -or $args[1] -cnotin @('evidence-catalog', 'evidence-verify')) { throw 'fixture-unexpected-dotnet' }
+            if ($args.Count -lt 2 -or $args[0] -cne $expected -or $args[1] -cnotin @('evidence-catalog', 'evidence-execution-plan', 'evidence-verify', 'evidence-migration')) { throw 'fixture-unexpected-dotnet' }
             [IO.File]::AppendAllText((Join-Path $global:fixtureRoot 'invocations.txt'), ([string]$args[1] + "`n"))
             $forward = @($args[1..($args.Count - 1)])
             & $global:fixtureDotnet $global:fixtureTool @forward

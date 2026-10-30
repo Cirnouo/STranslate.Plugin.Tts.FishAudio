@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -14,9 +15,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class RepositoryContractSuite
 {
-    internal static void UiLocalesHaveCompleteResourcesAndMetadata()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/ui-locales-have-complete-resources-and-metadata")]
+    [Order(58)]
+    public static void UiLocalesHaveCompleteResourcesAndMetadata()
     {
         const string prefix = "STranslate_Plugin_Tts_FishAudio_";
         var keyName = System.Xml.Linq.XName.Get("Key", "http://schemas.microsoft.com/winfx/2006/xaml");
@@ -68,7 +74,10 @@ internal static class RepositoryContractSuite
         }
     }
 
-    internal static void Release112MetadataIsComplete()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/release112-metadata-is-complete")]
+    [Order(59)]
+    public static void Release112MetadataIsComplete()
     {
         var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
@@ -107,7 +116,10 @@ internal static class RepositoryContractSuite
             "Design decisions should document dual-format API Key preflight");
     }
 
-    internal static void Release111MetadataIsComplete()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/release111-metadata-is-complete")]
+    [Order(60)]
+    public static void Release111MetadataIsComplete()
     {
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
@@ -147,7 +159,10 @@ internal static class RepositoryContractSuite
         AssertEqual(true, dd045Content.Contains("DD-036", StringComparison.Ordinal), "DD-045 should identify the superseded cutoff decision");
     }
 
-    internal static void Release110MetadataIsComplete()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/release110-metadata-is-complete")]
+    [Order(61)]
+    public static void Release110MetadataIsComplete()
     {
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var releaseIndex = changelog.IndexOf("## [1.1.0] - 2026-07-24", StringComparison.Ordinal);
@@ -234,7 +249,10 @@ internal static class RepositoryContractSuite
         }
     }
 
-    internal static void PackageReferenceUsesSdk1015()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/package-reference-uses-sdk1015")]
+    [Order(62)]
+    public static void PackageReferenceUsesSdk1015()
     {
         var project = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
@@ -246,7 +264,10 @@ internal static class RepositoryContractSuite
             "Plugin project should reference STranslate.Plugin SDK 1.0.15");
     }
 
-    internal static void ReleaseOutputIsIsolatedFromDebugArtifacts()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/release-output-is-isolated-from-debug-artifacts")]
+    [Order(63)]
+    public static void ReleaseOutputIsIsolatedFromDebugArtifacts()
     {
         var project = File.ReadAllText(FindRepoFile(Path.Combine(
             "STranslate.Plugin.Tts.FishAudio",
@@ -258,7 +279,10 @@ internal static class RepositoryContractSuite
             "Release output should use its own directory so automatic packaging cannot include stale Debug artifacts");
     }
 
-    internal static void ReleaseBuildUsesSingleReleaseSwitch()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/release-build-uses-single-release-switch")]
+    [Order(64)]
+    public static void ReleaseBuildUsesSingleReleaseSwitch()
     {
         var buildScript = File.ReadAllText(FindRepoFile("build.ps1"));
         AssertEqual(
@@ -280,18 +304,19 @@ internal static class RepositoryContractSuite
         AssertEqual(
             true,
             Regex.IsMatch(validationWorkflow, @"(?m)^\s+run: \.\\build\.ps1 -Release\r?$"),
-            "The shared gate should build the current Release package after partition evidence verification");
+            "The shared gate should build the current Release package after complete hybrid evidence verification");
         AssertEqual(
             true,
-            validationWorkflow.Contains("-- --legacy --all --partition $env:REGRESSION_PARTITION", StringComparison.Ordinal) &&
-            validationWorkflow.Contains("--verify-reports", StringComparison.Ordinal) && validationWorkflow.Contains("--job-attempts", StringComparison.Ordinal) &&
-            validationWorkflow.Contains(".\\tools\\Test.ps1 -Mode Full -ResultsDirectory", StringComparison.Ordinal) &&
-            validationWorkflow.Contains("VerifyFrameworkCi.ps1", StringComparison.Ordinal),
-            "Shared CI validation executes complete legacy partitions and NUnit foundation cases and verifies both evidence obligations");
+            validationWorkflow.Contains(".\\tools\\TestHybrid.ps1 -RepositoryRoot", StringComparison.Ordinal) &&
+            validationWorkflow.Contains(".\\tools\\Assert-HybridSession.ps1 -RepositoryRoot", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("GetRegressionJobAttempts.ps1", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("VerifyHybridCi.ps1", StringComparison.Ordinal) &&
+            validationWorkflow.Contains("needs: [supply-chain-security, commit-messages, hybrid-validation]", StringComparison.Ordinal),
+            "Shared CI validation executes the complete hybrid plan and independently admits every current owner from raw evidence");
         AssertEqual(
             false,
             validationWorkflow.Contains($"run: {recommendedCommand}", StringComparison.Ordinal),
-            "The final gate must consume complete partition evidence without repeating the monolithic regression run");
+            "The final gate must consume complete hybrid evidence without repeating scenario execution");
         AssertEqual(
             false,
             (workflow + validationWorkflow).Contains("-Configuration", StringComparison.Ordinal),
@@ -335,7 +360,10 @@ internal static class RepositoryContractSuite
         }
     }
 
-    internal static void FreeModelDeadlineDocumentationIsConsistent()
+    [Test]
+    [Property("FishAudioCaseId", "repository.contract/free-model-deadline-documentation-is-consistent")]
+    [Order(133)]
+    public static void FreeModelDeadlineDocumentationIsConsistent()
     {
         const string staleFreeDate = "2026-08-31";
         const string lastFreeDate = "2026-11-30";

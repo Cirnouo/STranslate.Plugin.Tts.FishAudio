@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -8,9 +9,14 @@ using static FavoriteVoicesSuite;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class FavoriteStorageCacheSuite
 {
-    internal static async Task SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/same-path-writers-keep-ids-and-corrupt-files-remain-untouched")]
+    [Order(178)]
+    public static async Task SamePathWritersKeepIdsAndCorruptFilesRemainUntouchedAsync()
     {
         var directory = CreateTempDirectory();
         using var first = new FavoriteVoiceStore(directory);
@@ -32,7 +38,10 @@ internal static class FavoriteStorageCacheSuite
         }
     }
 
-    internal static async Task LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/lease-retirement-linearizes-id-writes-without-blocking-snapshots")]
+    [Order(179)]
+    public static async Task LeaseRetirementLinearizesIdWritesWithoutBlockingSnapshotsAsync()
     {
         var directory = CreateTempDirectory();
         var context = CreateContext();
@@ -64,7 +73,10 @@ internal static class FavoriteStorageCacheSuite
         finally { release.Set(); }
     }
 
-    internal static void MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/metadata-cache-is-bounded-detached-and-uses-an-independent-client-ttl")]
+    [Order(180)]
+    public static void MetadataCacheIsBoundedDetachedAndUsesAnIndependentClientTtl()
     {
         var clock = new MetadataTestClock();
         var cache = new VoiceMetadataCache(clock);
@@ -84,54 +96,87 @@ internal static class FavoriteStorageCacheSuite
         AssertEqual(false, cache.TryGet(Id(1), out _), "The explicit fifteen-minute client TTL must expire metadata independently of sample URL shape");
     }
 
-    internal static async Task FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/favorite-misses-load-only-visible-page-and-reject-removed-card-results")]
+    [Property("OriginalOrdinal", 182)]
+    [Order(182)]
+    public static Task FavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync() => RunFavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync();
+
+    internal static async Task RunFavoriteMissesLoadOnlyVisiblePageAndRejectRemovedCardResultsAsync(
+        Action<NUnitCompatibility.HeldFavoritePageObservation>? onHeldWork = null)
     {
-        var directory = CreateTempDirectory();
-        File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 7).Select(Id)));
-        var (service, http) = TestHttpServiceProxy.Create();
-        var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var tokens = new List<CancellationToken>();
-        http.GetAsyncHandler = (_, _, token) => { tokens.Add(token); return pending.Task; };
-        var settings = SelectedSettings();
-        var cache = new VoiceMetadataCache();
-        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings, null, null, voiceMetadataCache: cache);
-        AssertEqual(0, http.GetCallCount, "Opening Search must not fetch all bookmarked voices");
-        view.SwitchToFavoritesCommand.Execute(null);
-        var oldPage = view.PendingFavoriteMetadataTask;
-        AssertEqual(6, http.GetCallCount, "Only the six visible cache misses should issue public detail requests");
-        var removed = view.FavoriteResults[0];
-        AssertEqual(Id(7), removed.Id, "The initial loading page starts with the newest durable addition");
-        AssertEqual(true, removed.IsLoadingMetadata && !removed.HasMetadata && removed.IsFavorite, "A miss must be a loading, removable ID placeholder");
-        view.SelectVoiceCommand.Execute(removed);
-        AssertEqual(Id(99), settings.VoiceId, "A metadata placeholder cannot Apply a selection");
-        view.FavoriteNextPageCommand.Execute(null);
-        var newPage = view.PendingFavoriteMetadataTask;
-        AssertEqual(true, tokens.Take(6).All(token => token.IsCancellationRequested), "Changing pages must cancel the previous page's requests");
-        AssertEqual(7, http.GetCallCount, "The new page should fetch only its single visible cache miss");
-        AssertEqual(Id(1), view.FavoriteResults.Single().Id, "The held final-page request belongs to the oldest addition");
-        view.ToggleFavoriteCommand.Execute(view.FavoriteResults[0]);
-        var afterRemoval = view.PendingFavoriteMetadataTask;
-        AssertEqual(1, view.FavoritePage, "Removing the only final-page placeholder must immediately clamp");
-        pending.SetResult(Detail(1, "Late detail"));
-        await Task.WhenAll(oldPage, newPage, afterRemoval).WaitAsync(RegressionExecution.Timeout);
-        AssertEnumerableEqual(new[] { 7, 6, 5, 4, 3, 2 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Metadata completions fill the established newest-first slots without reordering IDs");
-        AssertEqual(false, cache.TryGet(Id(1), out _), "Removed originating-card results may not publish metadata into the shared cache");
-        using var store = new FavoriteVoiceStore(directory);
-        AssertEqual(false, store.Read().Contains(Id(1)), "Late metadata cannot restore a removed bookmark");
-        http.GetAsyncHandler = null;
-        http.GetException = new HttpRequestException("Synthetic unavailable voice", null, System.Net.HttpStatusCode.NotFound);
-        view.SwitchToSearchCommand.Execute(null);
-        view.SwitchToFavoritesCommand.Execute(null);
-        await view.PendingFavoriteMetadataTask;
-        AssertEqual(6, view.FavoriteCount, "A metadata failure must not delete favorite IDs");
-        // The prior successful current-page responses populated entries 2..7. Use a cold cache below.
-        using var cold = new SettingsViewModel(CreateContext(httpService: service, pluginSettingsDirectoryPath: directory), new Settings());
-        cold.SwitchToFavoritesCommand.Execute(null);
-        await cold.PendingFavoriteMetadataTask;
-        AssertEqual(true, cold.FavoriteResults.All(card => !card.HasMetadata && card.MetadataError is not null && card.IsFavorite), "Failed metadata keeps unavailable but removable ID cards");
+        var owner = new HeldFavoritePageFixtureOwner();
+        await owner.RunAsync(async () =>
+        {
+            var directory = CreateTempDirectory();
+            owner.DirectoryPath = directory;
+            File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 7).Select(Id)));
+            var (service, http) = TestHttpServiceProxy.Create();
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Response = pending.Task;
+            owner.ReleaseHeldResponse = () => pending.TrySetResult(Detail(1, "Late detail"));
+            var tokens = new List<CancellationToken>();
+            http.GetAsyncHandler = (_, _, token) => { tokens.Add(token); return pending.Task; };
+            var settings = SelectedSettings();
+            var cache = new VoiceMetadataCache();
+            var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings, null, null, voiceMetadataCache: cache);
+            owner.Track(view);
+            AssertEqual(0, http.GetCallCount, "Opening Search must not fetch all bookmarked voices");
+            view.SwitchToFavoritesCommand.Execute(null);
+            var oldPage = view.PendingFavoriteMetadataTask;
+            owner.OldPage = oldPage;
+            owner.Track(oldPage);
+            onHeldWork?.Invoke(new NUnitCompatibility.HeldFavoritePageObservation(owner));
+            AssertEqual(6, http.GetCallCount, "Only the six visible cache misses should issue public detail requests");
+            var removed = view.FavoriteResults[0];
+            AssertEqual(Id(7), removed.Id, "The initial loading page starts with the newest durable addition");
+            AssertEqual(true, removed.IsLoadingMetadata && !removed.HasMetadata && removed.IsFavorite, "A miss must be a loading, removable ID placeholder");
+            view.SelectVoiceCommand.Execute(removed);
+            AssertEqual(Id(99), settings.VoiceId, "A metadata placeholder cannot Apply a selection");
+            view.FavoriteNextPageCommand.Execute(null);
+            var newPage = view.PendingFavoriteMetadataTask;
+            owner.NewPage = newPage;
+            owner.Track(newPage);
+            onHeldWork?.Invoke(new NUnitCompatibility.HeldFavoritePageObservation(owner));
+            AssertEqual(true, tokens.Take(6).All(token => token.IsCancellationRequested), "Changing pages must cancel the previous page's requests");
+            AssertEqual(7, http.GetCallCount, "The new page should fetch only its single visible cache miss");
+            AssertEqual(Id(1), view.FavoriteResults.Single().Id, "The held final-page request belongs to the oldest addition");
+            view.ToggleFavoriteCommand.Execute(view.FavoriteResults[0]);
+            var afterRemoval = view.PendingFavoriteMetadataTask;
+            owner.AfterRemoval = afterRemoval;
+            owner.Track(afterRemoval);
+            onHeldWork?.Invoke(new NUnitCompatibility.HeldFavoritePageObservation(owner));
+            AssertEqual(1, view.FavoritePage, "Removing the only final-page placeholder must immediately clamp");
+            pending.SetResult(Detail(1, "Late detail"));
+            await Task.WhenAll(oldPage, newPage, afterRemoval).WaitAsync(RegressionExecution.Timeout);
+            AssertEnumerableEqual(new[] { 7, 6, 5, 4, 3, 2 }.Select(Id), view.FavoriteResults.Select(card => card.Id), "Metadata completions fill the established newest-first slots without reordering IDs");
+            AssertEqual(false, cache.TryGet(Id(1), out _), "Removed originating-card results may not publish metadata into the shared cache");
+            var store = new FavoriteVoiceStore(directory);
+            owner.Track(store);
+            AssertEqual(false, store.Read().Contains(Id(1)), "Late metadata cannot restore a removed bookmark");
+            http.GetAsyncHandler = null;
+            http.GetException = new HttpRequestException("Synthetic unavailable voice", null, System.Net.HttpStatusCode.NotFound);
+            view.SwitchToSearchCommand.Execute(null);
+            view.SwitchToFavoritesCommand.Execute(null);
+            var retryPage = view.PendingFavoriteMetadataTask;
+            owner.Track(retryPage);
+            await retryPage;
+            AssertEqual(6, view.FavoriteCount, "A metadata failure must not delete favorite IDs");
+            // The prior successful current-page responses populated entries 2..7. Use a cold cache below.
+            var cold = new SettingsViewModel(CreateContext(httpService: service, pluginSettingsDirectoryPath: directory), new Settings());
+            owner.Track(cold);
+            cold.SwitchToFavoritesCommand.Execute(null);
+            var coldPage = cold.PendingFavoriteMetadataTask;
+            owner.Track(coldPage);
+            await coldPage;
+            AssertEqual(true, cold.FavoriteResults.All(card => !card.HasMetadata && card.MetadataError is not null && card.IsFavorite), "Failed metadata keeps unavailable but removable ID cards");
+        });
     }
 
-    internal static void BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/bookmark-mutations-cannot-refresh-or-replace-remote-metadata")]
+    [Order(181)]
+    public static void BookmarkMutationsCannotRefreshOrReplaceRemoteMetadata()
     {
         var clock = new MetadataTestClock();
         var cache = new VoiceMetadataCache(clock);
@@ -153,7 +198,10 @@ internal static class FavoriteStorageCacheSuite
         AssertEqual(false, cache.TryGet(Id(1), out _), "Adding a favorite without a cache hit must not promote stale card metadata");
     }
 
-    internal static async Task PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/plugin-cache-is-shared-across-search-by-id-and-reinitialization")]
+    [Order(183)]
+    public static async Task PluginCacheIsSharedAcrossSearchByIdAndReinitializationAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var directory = CreateTempDirectory();
@@ -181,7 +229,10 @@ internal static class FavoriteStorageCacheSuite
         AssertEnumerableEqual(new[] { Id(1) }, store.Read(), "Retired views cannot mutate the shared persistent ID file");
     }
 
-    internal static async Task SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-cache/search-and-favorites-reuse-existing-cover-cache-and-clear-keeps-ids")]
+    [Order(184)]
+    public static async Task SearchAndFavoritesReuseExistingCoverCacheAndClearKeepsIdsAsync()
     {
         var directory = CreateTempDirectory();
         var cacheDirectory = CreateTempDirectory();

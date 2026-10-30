@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using FishAudio.Testing.Evidence;
 
@@ -13,7 +14,8 @@ internal static class EvidenceCommands
     };
 
     internal static bool IsInvocation(string[] args)
-        => args.Length != 0 && args[0] is "evidence-catalog" or "evidence-verify" or "evidence-binary";
+        => args.Length != 0 && args[0] is "evidence-catalog" or "evidence-verify" or "evidence-binary"
+            or "evidence-execution-metadata" or "evidence-execution-plan" or "evidence-hybrid-plan";
 
     internal static int Run(string[] args)
     {
@@ -26,6 +28,29 @@ internal static class EvidenceCommands
                 RequireKeys(options, "--discovery", "--output");
                 result = new CatalogDocument(1, "nunit-catalog", true,
                     NUnitEvidence.ReadCatalog(options["--discovery"]));
+            }
+            else if (args[0] == "evidence-execution-metadata")
+            {
+                RequireKeys(options, "--discovery", "--output");
+                using var raw = new FileStream(options["--discovery"], FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (raw.Length is <= 0 or > 64 * 1024 * 1024) throw new InvalidDataException();
+                var cases = NUnitExecutionMetadata.ReadValidated(options["--discovery"]);
+                result = new { schemaVersion = 1, kind = "nunit-execution-metadata", complete = true,
+                    discoverySha256 = Convert.ToHexStringLower(SHA256.HashData(raw)), cases };
+            }
+            else if (args[0] == "evidence-execution-plan")
+            {
+                RequireKeys(options, "--discovery", "--selection", "--output");
+                var request = Read<ExecutionSelection>(options["--selection"]);
+                if (request.SchemaVersion != 1 || request.Ids is null) throw new InvalidDataException();
+                result = new { schemaVersion = 1, kind = "nunit-execution-plan", complete = true,
+                    plan = NUnitExecutionPlan.ReadValidated(options["--discovery"], request.Ids, request.MaximumConcurrency) };
+            }
+            else if (args[0] == "evidence-hybrid-plan")
+            {
+                RequireKeys(options, "--reference", "--legacy", "--discoveries", "--migrations", "--output");
+                result = HybridExecutionSlotInput.ReadValidated(options["--reference"], options["--legacy"],
+                    options["--discoveries"], options["--migrations"]);
             }
             else if (args[0] == "evidence-binary")
             {
@@ -53,6 +78,21 @@ internal static class EvidenceCommands
             Console.WriteLine(args[0] + ": passed.");
             return 0;
         }
+        catch (HybridExecutionSlotPlanException error)
+        {
+            Console.Error.WriteLine("hybrid-slot-evidence: " + error.Code);
+            return 1;
+        }
+        catch (NUnitExecutionMetadataException error)
+        {
+            Console.Error.WriteLine("execution-metadata: " + error.Code);
+            return 1;
+        }
+        catch (NUnitExecutionPlanException error)
+        {
+            Console.Error.WriteLine("execution-plan: " + error.Code);
+            return 1;
+        }
         catch (NUnitEvidenceException error)
         {
             Console.Error.WriteLine("nunit-evidence: " + error.Code);
@@ -69,6 +109,8 @@ internal static class EvidenceCommands
             return 2;
         }
     }
+
+    private sealed record ExecutionSelection(int SchemaVersion, IReadOnlyList<string> Ids, int MaximumConcurrency);
 
     private static Dictionary<string, string> ReadOptions(string[] args)
     {

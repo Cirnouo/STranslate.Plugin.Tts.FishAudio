@@ -4,7 +4,7 @@ using static TestAssertions;
 
 internal static class RegressionExecutionSuite
 {
-    internal static async Task RunAsync()
+    internal static async Task InvalidGuardsDoNotDispatchOrWarmStaAsync()
     {
         // Inspect Lazy state without asking it to construct a native dispatcher.
         var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
@@ -30,50 +30,64 @@ internal static class RegressionExecutionSuite
         await RegressionExecution.WaitAsync(Task.CompletedTask, TimeSpan.FromTicks(1));
         AssertEqual(42, await RegressionExecution.WaitAsync(Task.FromResult(42), TimeSpan.FromTicks(1)), "A positive explicit API guard accepts completed generic work");
         AssertEqual(TimeSpan.FromSeconds(120), RegressionExecution.Timeout, "The shared regression execution and startup guard is two minutes");
+        AssertEqual(wasCreated, shared.IsValueCreated, "All execution contracts remain pure and do not warm the shared STA");
+    }
 
-        foreach (var generic in new[] { false, true })
-        {
-            var clock = new ManualStreamingTimeProvider();
-            var work = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-            Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock) : RegressionExecution.WaitAsync((Task)work.Task, clock);
-            clock.Advance(TimeSpan.FromSeconds(5));
-            AssertEqual(false, guarded.IsCompleted, "The actual execution primitive cannot expire at the historical five-second guard");
-            clock.Advance(TimeSpan.FromMilliseconds(114999));
-            AssertEqual(false, guarded.IsCompleted, "The actual execution primitive remains incomplete at 119999ms");
-            clock.Advance(TimeSpan.FromMilliseconds(1));
-            AssertEqual(true, guarded.IsCompleted, "The actual execution primitive expires at exactly 120000ms");
-            Exception? deadline = null;
-            try { await guarded; }
-            catch (Exception error) { deadline = error; }
-            AssertEqual(true, deadline is RegressionExecutionTimeoutException, "The actual generic and nongeneric guards distinguish their hard deadline");
-            AssertEqual(false, work.Task.IsCompleted, "Execution expiry cannot cancel, replace or complete the original work");
-            work.SetResult(42);
-            AssertEqual(42, await work.Task, "The same original work may complete once after its guard expires");
-            Exception? late = null;
-            try { await guarded; }
-            catch (Exception error) { late = error; }
-            AssertEqual(true, ReferenceEquals(deadline, late), "Late original completion must retain the same failed guard and exception");
-        }
+    internal static async Task OriginalDeadlineAndLateCompletionKeepTheSameTaskAsync(bool generic)
+    {
+        var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = shared.IsValueCreated;
 
-        foreach (var generic in new[] { false, true })
-        {
-            var clock = new ManualStreamingTimeProvider();
-            var work = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var notices = 0;
-            Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock, () => notices++) : RegressionExecution.WaitAsync((Task)work.Task, clock, () => notices++);
-            clock.Advance(TimeSpan.FromMilliseconds(19999));
-            AssertEqual(0, notices, "A slow-run notice cannot fire before twenty seconds");
-            clock.Advance(TimeSpan.FromMilliseconds(1));
-            AssertEqual(1, notices, "A slow-run notice fires once at twenty seconds");
-            AssertEqual(false, guarded.IsCompleted, "A warning keeps waiting for the same original task");
-            clock.Advance(TimeSpan.FromSeconds(1));
-            work.SetResult(42);
-            await guarded;
-            AssertEqual(42, await work.Task, "A slow finite action can pass after the warning");
-            clock.Advance(TimeSpan.FromMinutes(3));
-            AssertEqual(1, notices, "Completion retires warning and hard-deadline timers without a retry");
-        }
+        var clock = new ManualStreamingTimeProvider();
+        var work = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock) : RegressionExecution.WaitAsync((Task)work.Task, clock);
+        clock.Advance(TimeSpan.FromSeconds(5));
+        AssertEqual(false, guarded.IsCompleted, "The actual execution primitive cannot expire at the historical five-second guard");
+        clock.Advance(TimeSpan.FromMilliseconds(114999));
+        AssertEqual(false, guarded.IsCompleted, "The actual execution primitive remains incomplete at 119999ms");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        AssertEqual(true, guarded.IsCompleted, "The actual execution primitive expires at exactly 120000ms");
+        Exception? deadline = null;
+        try { await guarded; }
+        catch (Exception error) { deadline = error; }
+        AssertEqual(true, deadline is RegressionExecutionTimeoutException, "The actual generic and nongeneric guards distinguish their hard deadline");
+        AssertEqual(false, work.Task.IsCompleted, "Execution expiry cannot cancel, replace or complete the original work");
+        work.SetResult(42);
+        AssertEqual(42, await work.Task, "The same original work may complete once after its guard expires");
+        Exception? late = null;
+        try { await guarded; }
+        catch (Exception error) { late = error; }
+        AssertEqual(true, ReferenceEquals(deadline, late), "Late original completion must retain the same failed guard and exception");
+        AssertEqual(wasCreated, shared.IsValueCreated, "All execution contracts remain pure and do not warm the shared STA");
+    }
 
+    internal static async Task WarningRetiresWithoutRenewingTheDeadlineAsync(bool generic)
+    {
+        var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = shared.IsValueCreated;
+
+        var clock = new ManualStreamingTimeProvider();
+        var work = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var notices = 0;
+        Task guarded = generic ? RegressionExecution.WaitAsync(work.Task, clock, () => notices++) : RegressionExecution.WaitAsync((Task)work.Task, clock, () => notices++);
+        clock.Advance(TimeSpan.FromMilliseconds(19999));
+        AssertEqual(0, notices, "A slow-run notice cannot fire before twenty seconds");
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        AssertEqual(1, notices, "A slow-run notice fires once at twenty seconds");
+        AssertEqual(false, guarded.IsCompleted, "A warning keeps waiting for the same original task");
+        clock.Advance(TimeSpan.FromSeconds(1));
+        work.SetResult(42);
+        await guarded;
+        AssertEqual(42, await work.Task, "A slow finite action can pass after the warning");
+        clock.Advance(TimeSpan.FromMinutes(3));
+        AssertEqual(1, notices, "Completion retires warning and hard-deadline timers without a retry");
+        AssertEqual(wasCreated, shared.IsValueCreated, "All execution contracts remain pure and do not warm the shared STA");
+    }
+
+    internal static async Task WarningFailureCannotReplaceTheDeadlineAsync()
+    {
+        var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = shared.IsValueCreated;
         var warningClock = new ManualStreamingTimeProvider();
         var held = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var throwingWarning = RegressionExecution.WaitAsync(held.Task, warningClock, () => throw new IOException("Synthetic notice fault"));
@@ -85,17 +99,29 @@ internal static class RegressionExecutionSuite
         AssertEqual(false, held.Task.IsCompleted, "A warning cannot renew the original hard deadline or cancel work");
         held.SetResult();
 
+        AssertEqual(wasCreated, shared.IsValueCreated, "All execution contracts remain pure and do not warm the shared STA");
+    }
+
+    internal static async Task CompletedFaultRetainsItsOriginalExceptionAsync(bool generic)
+    {
+        var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = shared.IsValueCreated;
         await RegressionExecution.WaitAsync(Task.CompletedTask);
         AssertEqual(42, await RegressionExecution.WaitAsync(Task.FromResult(42)), "Immediate generic completion keeps its value");
         var owned = new IOException("Synthetic owned failure");
-        foreach (var generic in new[] { false, true })
-        {
-            Task guarded = generic ? RegressionExecution.WaitAsync(Task.FromException<int>(owned)) : RegressionExecution.WaitAsync(Task.FromException(owned));
-            Exception? caught = null;
-            try { await guarded; }
-            catch (Exception error) { caught = error; }
-            AssertEqual(true, ReferenceEquals(owned, caught), "Completed owned faults preserve exception identity in both actual wait paths");
-        }
+
+        Task guarded = generic ? RegressionExecution.WaitAsync(Task.FromException<int>(owned)) : RegressionExecution.WaitAsync(Task.FromException(owned));
+        Exception? caught = null;
+        try { await guarded; }
+        catch (Exception error) { caught = error; }
+        AssertEqual(true, ReferenceEquals(owned, caught), "Completed owned faults preserve exception identity in both actual wait paths");
+        AssertEqual(wasCreated, shared.IsValueCreated, "All execution contracts remain pure and do not warm the shared STA");
+    }
+
+    internal static async Task GuardFollowsTheOriginalTaskAcrossAwaitAsync()
+    {
+        var shared = (Lazy<Task<Dispatcher>>)typeof(StaTestHost).GetField("SharedDispatcher", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
+        var wasCreated = shared.IsValueCreated;
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var completed = false;
         async Task WorkAsync() { await release.Task; completed = true; }

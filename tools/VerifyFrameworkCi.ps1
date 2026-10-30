@@ -149,6 +149,123 @@ function Invoke-FrameworkTool([string[]]$Arguments) {
     Require-Framework ($LASTEXITCODE -eq 0) 'framework-ci-parser-rejected'
 }
 
+function Write-FrameworkNewJson([string]$Path, $Value) {
+    $stream = [IO.FileStream]::new($Path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+    try {
+        $bytes = [Text.UTF8Encoding]::new($false, $true).GetBytes(($Value | ConvertTo-Json -Depth 20))
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush($true)
+    } finally { $stream.Dispose() }
+}
+
+function Read-FrameworkLegacyCatalog([string]$Assembly, [string]$AssemblySha256, [string]$Directory) {
+    $script:failureCode = 'framework-ci-legacy-list-process'
+    $executable = (Get-Command dotnet -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    Require-Framework ([IO.Path]::IsPathFullyQualified($executable)) 'framework-ci-legacy-list-executable'
+    $stdoutPath = Join-Path $Directory 'legacy-catalog.stdout.bin'
+    $stderrPath = Join-Path $Directory 'legacy-catalog.stderr.bin'
+    $process = [Diagnostics.Process]::new()
+    $start = [Diagnostics.ProcessStartInfo]::new($executable)
+    $start.WorkingDirectory = $root
+    $start.UseShellExecute = $false
+    $start.CreateNoWindow = $true
+    $start.RedirectStandardOutput = $true
+    $start.RedirectStandardError = $true
+    foreach ($argument in @($Assembly, '--legacy', '--list')) { $start.ArgumentList.Add($argument) }
+    $process.StartInfo = $start
+    $stdoutFile = $null; $stderrFile = $null; $assemblyGuard = $null
+    $stdout = $null; $stderr = $null; $exitTask = $null
+    $started = $false; $exited = $false; $drained = $false; $exitCode = $null
+    $primary = $null; $primaryCode = $null; $cleanupFailed = $false; $cleanupClock = $null
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    try {
+        $assemblyGuard = [IO.File]::Open($Assembly, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+        Require-Framework ([Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($assemblyGuard)).ToLowerInvariant() -ceq
+            $AssemblySha256) 'framework-ci-legacy-list-assembly'
+        $stdoutFile = [IO.FileStream]::new($stdoutPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read, 65536, $true)
+        $stderrFile = [IO.FileStream]::new($stderrPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read, 65536, $true)
+        $started = $process.Start()
+        Require-Framework $started 'framework-ci-legacy-list-start'
+        $stdout = $process.StandardOutput.BaseStream.CopyToAsync($stdoutFile)
+        $stderr = $process.StandardError.BaseStream.CopyToAsync($stderrFile)
+        $exitTask = $process.WaitForExitAsync()
+        while (-not $exitTask.IsCompleted) {
+            foreach ($task in @($stdout, $stderr)) {
+                if ($task.IsFaulted -or $task.IsCanceled) { [void]$task.GetAwaiter().GetResult() }
+            }
+            Require-Framework ($clock.ElapsedMilliseconds -lt 120000) 'framework-ci-legacy-list-deadline'
+            [Threading.Thread]::Sleep(25)
+        }
+        [void]$exitTask.GetAwaiter().GetResult()
+        $exited = $true
+        $exitCode = $process.ExitCode
+        Require-Framework ($clock.ElapsedMilliseconds -lt 120000) 'framework-ci-legacy-list-deadline'
+        $cleanupClock = [Diagnostics.Stopwatch]::StartNew()
+        $script:failureCode = 'framework-ci-legacy-list-drain'
+        [void][Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($stdout, $stderr)).WaitAsync([TimeSpan]::FromSeconds(10)).GetAwaiter().GetResult()
+        $drained = $true
+        Require-Framework ($exitCode -eq 0) 'framework-ci-legacy-list-exit'
+    } catch { $primary = $_; $primaryCode = $script:failureCode }
+    finally {
+        if ($null -ne $primary -and $started) {
+            if ($null -eq $cleanupClock) { $cleanupClock = [Diagnostics.Stopwatch]::StartNew() }
+            try {
+                if (-not $process.HasExited) { $process.Kill($true) }
+                $remaining = [TimeSpan]::FromSeconds(10) - $cleanupClock.Elapsed
+                Require-Framework ($remaining -gt [TimeSpan]::Zero) 'framework-ci-legacy-list-cleanup-deadline'
+                $tasks = [Threading.Tasks.Task[]]@(@($exitTask, $stdout, $stderr) | Where-Object { $null -ne $_ })
+                [void][Threading.Tasks.Task]::WhenAll($tasks).WaitAsync($remaining).GetAwaiter().GetResult()
+                $exited = $process.HasExited
+                $exitCode = $process.ExitCode
+                $drained = $stdout.IsCompletedSuccessfully -and $stderr.IsCompletedSuccessfully
+            } catch { $cleanupFailed = $true }
+        }
+        foreach ($resource in @($stdoutFile, $stderrFile, $assemblyGuard, $process)) {
+            if ($null -ne $resource) {
+                try { $resource.Dispose() }
+                catch { if ($null -eq $primary) { $primary = $_; $primaryCode = 'framework-ci-legacy-list-dispose' } }
+            }
+        }
+        try {
+            Write-FrameworkNewJson (Join-Path $Directory 'legacy-catalog-process.json') ([ordered]@{
+                schemaVersion = 1; kind = 'legacy-catalog-metadata-process'; complete = ($null -eq $primary -and $exited -and $drained)
+                assemblySha256 = $AssemblySha256; arguments = @('--legacy', '--list'); exitCode = $exitCode
+                exited = $exited; stdoutDrained = $drained; stderrDrained = $drained; cleanupFailed = $cleanupFailed
+                elapsedMilliseconds = $clock.ElapsedMilliseconds; scenarioExecutionClaim = $false; baselineClaim = $false
+            })
+        } catch { if ($null -eq $primary) { $primary = $_; $primaryCode = 'framework-ci-legacy-list-evidence' } }
+    }
+    if ($null -ne $primary) { $script:failureCode = $primaryCode; throw $primary }
+    Require-Framework (([IO.FileInfo]::new($stderrPath)).Length -eq 0) 'framework-ci-legacy-list-stderr'
+    Require-Framework (([IO.FileInfo]::new($stdoutPath)).Length -gt 0 -and
+        ([IO.FileInfo]::new($stdoutPath)).Length -le 67108864) 'framework-ci-legacy-list-size'
+    $script:failureCode = 'framework-ci-legacy-list-invalid-utf8'
+    $reader = [IO.StreamReader]::new($stdoutPath, [Text.UTF8Encoding]::new($false, $true), $false)
+    $cases = [Collections.Generic.List[object]]::new()
+    $ids = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $footer = $false
+    try {
+        while ($null -ne ($line = $reader.ReadLine())) {
+            Require-Framework (-not $footer) 'framework-ci-legacy-list-trailing-output'
+            if ($line -cmatch '^Selected ([1-9][0-9]{0,5}) case\(s\)\.\z') {
+                Require-Framework ([int]$Matches[1] -eq $cases.Count) 'framework-ci-legacy-list-count'
+                $footer = $true
+            } else {
+                Require-Framework ($line -cmatch '^([a-z0-9][a-z0-9./_-]{0,239})\t([a-z0-9][a-z0-9./_-]{0,239})\z' -and
+                    $cases.Count -lt 100000) 'framework-ci-legacy-list-row'
+                $id = [string]$Matches[1]; $partition = [string]$Matches[2]
+                Require-Framework ($ids.Add($id)) 'framework-ci-legacy-list-duplicate'
+                $cases.Add([ordered]@{ id = $id; partition = $partition })
+            }
+        }
+        Require-Framework ($footer -and $cases.Count -gt 0) 'framework-ci-legacy-list-missing-footer'
+    } finally { $reader.Dispose() }
+    $path = Join-Path $Directory 'current-legacy-catalog.json'
+    # Identity-only metadata: no outcome or completed regression report is made.
+    Write-FrameworkNewJson $path ([ordered]@{ schemaVersion = 1; cases = $cases.ToArray() })
+    return $path
+}
+
 try {
     foreach ($path in @($ArtifactDirectory, $JobAttemptsPath, $ResultsDirectory)) {
         Require-Framework ([IO.Path]::IsPathFullyQualified($path)) 'framework-ci-path-must-be-absolute'
@@ -281,7 +398,11 @@ try {
         [long]$owner.workflowRunId -eq $runId -and [int]$owner.attempt -eq $latest -and
         $owner.job -ceq 'nunit-foundation' -and $owner.sdk -ceq '10.0.403') 'framework-ci-artifact-owner'
     $manifest = Read-FrameworkJson (Resolve-FrameworkFile $bundle 'manifest.json' '')
-    Require-Framework ($manifest.schemaVersion -eq 1 -and $manifest.kind -ceq 'unified-test-session' -and $manifest.complete -eq $true -and
+    $frameworkRunId = [Guid]::Empty
+    Require-Framework ($null -ne $manifest.PSObject.Properties['runId'] -and $manifest.runId -is [string] -and
+        [Guid]::TryParseExact($manifest.runId, 'N', [ref]$frameworkRunId) -and $frameworkRunId -ne [Guid]::Empty -and
+        $frameworkRunId.ToString('N') -ceq $manifest.runId) 'framework-ci-session-identity'
+    Require-Framework ($manifest.schemaVersion -eq 2 -and $manifest.kind -ceq 'unified-test-session' -and $manifest.complete -eq $true -and
         $manifest.mode -ceq 'Full' -and $manifest.platform -ceq 'VSTest' -and $manifest.configuration -ceq 'Release' -and
         $manifest.selection -ceq 'all-discovered' -and $manifest.baselineClaim -eq $false -and
         $manifest.source.snapshot -eq $false -and $manifest.source.dirty -eq $false -and $null -eq $manifest.source.tree -and
@@ -307,6 +428,11 @@ try {
     $script:tool = Join-Path $root 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll'
     $keys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     $globalIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $freshDiscoveries = [Collections.Generic.List[string]]::new()
+    $legacyAssembly = $null
+    $legacyAssemblySha256 = $null
+    $supervisorHelper = Resolve-FrameworkFile $root 'tools/Assert-FrameworkSupervisor.ps1' ''
+    $planHelper = Resolve-FrameworkFile $root 'tools/Assert-FrameworkExecutionPlan.ps1' ''
     foreach ($phase in $manifest.phases) {
         Require-Framework ($phase.complete -eq $true -and $phase.exitCode -eq 0) 'framework-ci-incomplete-phase'
     }
@@ -320,31 +446,46 @@ try {
             $assembly.passedCount -eq $assembly.discoveredCount -and
             $assembly.discoveredCount -eq $current[0].discoveredCount) 'framework-ci-assembly-identity-or-count'
         $paths = @{}
-        foreach ($name in @('catalog', 'selection', 'terminal', 'resultXml', 'trx')) {
+        foreach ($name in @('catalog', 'selection', 'requestedSelection', 'executionPlan')) {
             $digest = [string]$assembly.($name + 'Sha256')
             Require-Framework ($digest -cmatch '^[a-f0-9]{64}$') 'framework-ci-missing-artifact-digest'
             $paths[$name] = Resolve-FrameworkFile $bundle ([string]$assembly.$name) $digest
         }
         $catalog = Read-FrameworkJson $paths.catalog
-        $currentCatalog = Read-FrameworkJson (Join-Path $freshDirectory $current[0].catalog)
+        $currentCatalogPath = Join-Path $freshDirectory $current[0].catalog
+        $currentCatalog = Read-FrameworkJson $currentCatalogPath
         $selection = Read-FrameworkJson $paths.selection
-        $terminal = Read-FrameworkJson $paths.terminal
+        $requestedSelection = Read-FrameworkJson $paths.requestedSelection
         Require-Framework ($catalog.schemaVersion -eq 1 -and $catalog.kind -ceq 'nunit-catalog' -and $catalog.complete -eq $true -and
-            $selection.schemaVersion -eq 1 -and $terminal.schemaVersion -eq 1 -and $terminal.kind -ceq 'nunit-terminal' -and
-            $terminal.complete -eq $true -and $terminal.passedCount -eq $assembly.passedCount) 'framework-ci-catalog-or-terminal'
-        $ids = @($currentCatalog.cases | ForEach-Object canonicalId)
+            $selection.schemaVersion -eq 1 -and $requestedSelection.schemaVersion -eq 1) 'framework-ci-catalog-or-selection'
+        $workerCount = Read-FrameworkNumber $manifest.workers
+        Require-Framework ($workerCount -le 4 -and
+            (Read-FrameworkNumber $requestedSelection.maximumConcurrency) -eq [Math]::Max(1, $workerCount)) 'framework-ci-workers'
+        $ids = [string[]]@($currentCatalog.cases | ForEach-Object canonicalId)
         Assert-FrameworkCaseSet @($catalog.cases | ForEach-Object canonicalId) $ids
         Assert-FrameworkCaseSet @($assembly.selectedIds) $ids
         Assert-FrameworkCaseSet @($selection.ids) $ids
-        Assert-FrameworkCaseSet @($terminal.cases | ForEach-Object canonicalId) $ids
+        Assert-FrameworkCaseSet @($requestedSelection.ids) $ids
+        Require-Framework ((@($requestedSelection.ids) -join "`n") -ceq ($ids -join "`n")) 'framework-ci-request-order'
+        $currentNames = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
         foreach ($case in $catalog.cases) {
             $match = @($currentCatalog.cases | Where-Object canonicalId -CEQ $case.canonicalId)
             Require-Framework ($match.Count -eq 1 -and $match[0].fullName -ceq $case.fullName -and
                 $match[0].className -ceq $case.className -and $match[0].methodName -ceq $case.methodName -and
                 $globalIds.Add([string]$case.canonicalId)) 'framework-ci-current-catalog-mismatch'
+            $currentNames.Add([string]$case.canonicalId, [string]$match[0].fullName)
         }
-        foreach ($name in @('build', 'discover', 'catalog', 'execute', 'verify')) {
+        foreach ($name in @('build', 'discover', 'catalog', 'plan')) {
             Require-Framework (@($manifest.phases | Where-Object name -CEQ ($name + '-' + $key)).Count -eq 1) 'framework-ci-required-phase'
+        }
+        $currentDiscoveries = @($fresh.phases | Where-Object name -CEQ ('discover-' + $key))
+        Require-Framework ($currentDiscoveries.Count -eq 1 -and $currentDiscoveries[0].complete -eq $true -and
+            $currentDiscoveries[0].exitCode -eq 0) 'framework-ci-current-discovery-phase'
+        $currentDump = Resolve-FrameworkFile $freshDirectory ($currentDiscoveries[0].directory + '/discovery.dump') ''
+        $freshDiscoveries.Add($currentDump)
+        if ($key -ceq 'plugin') {
+            $legacyAssembly = Resolve-FrameworkFile $root ([string]$current[0].assembly) ([string]$current[0].sha256)
+            $legacyAssemblySha256 = [string]$current[0].sha256
         }
         $discovery = @($manifest.phases | Where-Object name -CEQ ('discover-' + $key))[0]
         $dump = Resolve-FrameworkFile $bundle ($discovery.directory + '/discovery.dump') ''
@@ -357,27 +498,99 @@ try {
             Require-Framework ($match.Count -eq 1 -and $match[0].fullName -ceq $case.fullName -and
                 $match[0].className -ceq $case.className -and $match[0].methodName -ceq $case.methodName) 'framework-ci-raw-discovery-mismatch'
         }
-        $verifiedPath = Join-Path $ResultsDirectory ($key + '-terminal.json')
-        $currentCatalogPath = Join-Path $freshDirectory $current[0].catalog
-        Invoke-FrameworkTool @('evidence-verify', '--catalog', $currentCatalogPath, '--selection', $paths.selection,
-            '--result', $paths.resultXml, '--trx', $paths.trx, '--output', $verifiedPath)
-        $verified = Read-FrameworkJson $verifiedPath
-        Require-Framework ($verified.complete -eq $true -and $verified.passedCount -eq $ids.Count) 'framework-ci-unverified-terminal'
-        Assert-FrameworkCaseSet @($verified.cases | ForEach-Object canonicalId) $ids
-        $markerRequired = $key -ceq 'plugin' -and
-            @($currentCatalog.cases | Where-Object className -CEQ 'NUnitCompatibility.CompatibilityCases').Count -gt 0
-        Require-Framework ($assembly.markerRequired -eq $markerRequired -and
-            (-not $markerRequired -or $assembly.markerObserved -eq $true)) 'framework-ci-execution-marker'
-        if ($markerRequired) {
-            $markers = @(Get-ChildItem -LiteralPath (Join-Path $bundle 'runtime-evidence') -File -Filter 'fixture-created-*.txt')
-            Require-Framework ($markers.Count -eq 1 -and $markers[0].Name -cmatch '^fixture-created-[1-9][0-9]*\.txt$') 'framework-ci-execution-marker'
-            $marker = Resolve-FrameworkFile $bundle ('runtime-evidence/' + $markers[0].Name) ''
-            Require-Framework ([IO.File]::ReadAllText($marker) -ceq 'constructed') 'framework-ci-execution-marker'
+        $expectedSelectionPath = Join-Path $ResultsDirectory ($key + '-requested.json')
+        Write-FrameworkNewJson $expectedSelectionPath @{ schemaVersion = 1; ids = $ids; maximumConcurrency = [Math]::Max(1, $workerCount) }
+        $capturedPlan = Join-Path $ResultsDirectory ($key + '-plan-captured.json')
+        $currentPlan = Join-Path $ResultsDirectory ($key + '-plan-current.json')
+        Invoke-FrameworkTool @('evidence-execution-plan', '--discovery', $dump, '--selection', $expectedSelectionPath, '--output', $capturedPlan)
+        Invoke-FrameworkTool @('evidence-execution-plan', '--discovery', $currentDump, '--selection', $expectedSelectionPath, '--output', $currentPlan)
+        $dumpDigest = (Get-FileHash -LiteralPath $dump -Algorithm SHA256).Hash.ToLowerInvariant()
+        foreach ($expected in @($capturedPlan, $currentPlan)) {
+            try {
+                & $planHelper -PlanPath $paths.executionPlan -ExpectedPlanPath $expected -RawDiscoverySha256 $dumpDigest `
+                    -RequestedIds $ids -SelectionIds ([string[]]$selection.ids) -PhaseRecords ([object[]]$assembly.executionPhases)
+            } catch { $script:failureCode = 'framework-ci-execution-plan-rejected'; throw }
         }
+        $passed = [Collections.Generic.List[string]]::new()
+        foreach ($group in $assembly.executionPhases) {
+            $prefix = $key + '/execution/' + $group.id + '/'
+            Require-Framework ($group.runtimeEvidence -ceq ($prefix + 'runtime-evidence')) 'framework-ci-phase-directory'
+            $phasePaths = @{}
+            foreach ($name in @('selection', 'request', 'runSettings', 'terminal', 'resultXml', 'trx', 'supervisor')) {
+                Require-Framework ($group.$name -is [string] -and $group.$name.StartsWith($prefix, [StringComparison]::Ordinal)) 'framework-ci-phase-directory'
+                $seal = $group.PSObject.Properties[$name + 'Sha256']
+                Require-Framework ($null -ne $seal -and $seal.Value -is [string] -and
+                    $seal.Value -cmatch '^[a-f0-9]{64}$') 'framework-ci-missing-artifact-digest'
+                $phasePaths[$name] = Resolve-FrameworkFile $bundle $group.$name $seal.Value
+            }
+            foreach ($name in @('execute', 'verify')) {
+                Require-Framework (@($manifest.phases | Where-Object name -CEQ ($name + '-' + $key + '-' + $group.id)).Count -eq 1) 'framework-ci-required-phase'
+            }
+            $phaseIds = [string[]]$group.selectedIds
+            $phaseRequest = Read-FrameworkJson $phasePaths.request
+            Require-Framework ($phaseRequest.cases -is [Array] -and
+                $phaseRequest.cases.Count -eq $phaseIds.Count) 'framework-ci-phase-request-binding'
+            for ($index = 0; $index -lt $phaseIds.Count; $index++) {
+                $binding = $phaseRequest.cases[$index]
+                Require-Framework ($currentNames.ContainsKey($phaseIds[$index]) -and
+                    $binding.canonicalId -is [string] -and $binding.fullName -is [string] -and
+                    $binding.canonicalId.Equals($phaseIds[$index], [StringComparison]::Ordinal) -and
+                    $binding.fullName.Equals($currentNames[$phaseIds[$index]], [StringComparison]::Ordinal)) 'framework-ci-phase-request-binding'
+            }
+            $phaseSelection = Read-FrameworkJson $phasePaths.selection
+            $terminal = Read-FrameworkJson $phasePaths.terminal
+            Require-Framework ($phaseSelection.schemaVersion -eq 1 -and $terminal.schemaVersion -eq 1 -and
+                $terminal.kind -ceq 'nunit-terminal' -and $terminal.complete -eq $true -and
+                $terminal.passedCount -eq $phaseIds.Count) 'framework-ci-phase-terminal'
+            Assert-FrameworkCaseSet @($phaseSelection.ids) $phaseIds
+            Require-Framework ((@($phaseSelection.ids) -join "`n") -ceq ($phaseIds -join "`n")) 'framework-ci-phase-selection-order'
+            Assert-FrameworkCaseSet @($terminal.cases | ForEach-Object canonicalId) $phaseIds
+            $verifiedPath = Join-Path $ResultsDirectory ($key + '-' + $group.id + '-terminal.json')
+            Invoke-FrameworkTool @('evidence-verify', '--catalog', $currentCatalogPath, '--selection', $phasePaths.selection,
+                '--result', $phasePaths.resultXml, '--trx', $phasePaths.trx, '--output', $verifiedPath)
+            $verified = Read-FrameworkJson $verifiedPath
+            Require-Framework ($verified.complete -eq $true -and $verified.passedCount -eq $phaseIds.Count) 'framework-ci-unverified-terminal'
+            Assert-FrameworkCaseSet @($verified.cases | ForEach-Object canonicalId) $phaseIds
+            try {
+                & $supervisorHelper -Path $phasePaths.supervisor -RunId $manifest.runId -SourceTree $manifest.source.tree `
+                    -SourceFingerprint $manifest.source.fingerprint -AssemblySha256 $assembly.sha256 -CaseIds $phaseIds `
+                    -ResultXmlSha256 $group.resultXmlSha256 -TrxSha256 $group.trxSha256 `
+                    -ExecutionRequestPath $phasePaths.request -ExecutionRequestSha256 $group.requestSha256 `
+                    -ExpectedMaximumConcurrency $group.maximumConcurrency -ExpectedRequireOrder $group.requireOrder
+            } catch { $script:failureCode = 'framework-ci-supervisor-rejected'; throw }
+            $markerRequired = $key -ceq 'plugin' -and @($currentCatalog.cases | Where-Object {
+                $_.className -ceq 'NUnitCompatibility.CompatibilityCases' -and $_.canonicalId -cin $phaseIds
+            }).Count -gt 0
+            Require-Framework ($group.markerRequired -eq $markerRequired -and
+                (-not $markerRequired -or $group.markerObserved -eq $true)) 'framework-ci-execution-marker'
+            if ($markerRequired) {
+                $markers = @(Get-ChildItem -LiteralPath (Join-Path $bundle $group.runtimeEvidence) -File -Filter 'fixture-created-*.txt')
+                Require-Framework ($markers.Count -eq 1 -and $markers[0].Name -cmatch '^fixture-created-[1-9][0-9]*\.txt$') 'framework-ci-execution-marker'
+                $marker = Resolve-FrameworkFile $bundle ($group.runtimeEvidence + '/' + $markers[0].Name) ''
+                Require-Framework ([IO.File]::ReadAllText($marker) -ceq 'constructed') 'framework-ci-execution-marker'
+            }
+            foreach ($id in $phaseIds) { $passed.Add($id) }
+        }
+        Assert-FrameworkCaseSet $passed.ToArray() $ids
     }
+    Require-Framework ($freshDiscoveries.Count -eq 2 -and -not [string]::IsNullOrWhiteSpace($legacyAssembly)) 'framework-ci-migration-inputs'
+    $legacyCatalogPath = Read-FrameworkLegacyCatalog $legacyAssembly $legacyAssemblySha256 $freshDirectory
+    $migrationDiscoveriesPath = Join-Path $freshDirectory 'migration-discoveries.json'
+    Write-FrameworkNewJson $migrationDiscoveriesPath ([ordered]@{ schemaVersion = 1; paths = $freshDiscoveries.ToArray() })
+    $migrationPath = Join-Path $freshDirectory 'migration-conservation.json'
+    $referencePath = Resolve-FrameworkFile $root 'tests/Migration/legacy-catalog.json' ''
+    $migrationsPath = Resolve-FrameworkFile $root 'tests/Migration/migrated-cases.json' ''
+    Invoke-FrameworkTool @('evidence-migration', '--reference', $referencePath, '--legacy', $legacyCatalogPath,
+        '--discoveries', $migrationDiscoveriesPath, '--migrations', $migrationsPath, '--output', $migrationPath)
+    $migration = Read-FrameworkJson $migrationPath
+    Require-Framework ($migration.schemaVersion -eq 1 -and $migration.kind -ceq 'migration-conservation' -and
+        $migration.complete -eq $true -and $migration.originalCount -eq 1580 -and $migration.baselineClaim -eq $false -and
+        $migration.evidence.assertionConservationProven -eq $false -and $migration.evidence.lifecycleConservationProven -eq $false -and
+        $migration.evidence.sourceCorrespondenceProven -eq $false -and $migration.evidence.completeBaseline -eq $false) 'framework-ci-migration-conservation'
     Write-Output ('framework-ci: verified checkout ' + $commit + ' with API job head ' + $executionHead + '.')
     Write-Output ('framework-ci: verified artifact layout ' + $artifactLayout + '.')
     Write-Output ('framework-ci: verified complete NUnit foundation attempt ' + $latest + ' (' + $globalIds.Count + ' cases).')
+    Write-Output 'framework-ci: reconciled original legacy identity ownership; assertion and lifecycle review remain separate.'
 } catch {
     [Console]::Error.WriteLine('framework-ci: rejected (' + $failureCode + '; ' + $_.Exception.GetType().Name + ').')
     exit 1

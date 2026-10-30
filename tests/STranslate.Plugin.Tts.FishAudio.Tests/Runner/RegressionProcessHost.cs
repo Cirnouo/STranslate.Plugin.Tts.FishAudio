@@ -49,6 +49,8 @@ internal sealed class RegressionProcessHost : IDisposable
     internal static async Task<int?> TryRunLegacyAsync(string[] args, RegressionProcessHost? host = null)
     {
         if (!LegacyRegressionSelectors.ContainsSelector(args)) return null;
+        if (LegacyRegressionSelectors.ContainsRetiredSelector(args))
+            return await LegacyRegressionSelectors.TryRunAsync(args);
         if (!LegacyRegressionSelectors.AreArgumentsValid(args)) return 2;
         var source = await RegressionSource.CaptureAsync();
         source.RecordDirtyScope(RegressionCatalog.Create());

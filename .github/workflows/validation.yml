@@ -85,60 +85,8 @@ jobs:
             }
           }
 
-  regression:
-    name: Regression (${{ matrix.partition }})
-    runs-on: windows-latest
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        partition: [core, native-settings, native-input, native-popups, native-cards]
-    env:
-      REGRESSION_PARTITION: ${{ matrix.partition }}
-    steps:
-      - name: Checkout exact validation commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Set up exact .NET SDK
-        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
-        env:
-          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
-        with:
-          dotnet-version: '10.0.403'
-      - name: Fresh-build regression runner with the required SDK
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected regression build SDK.' }
-          dotnet build tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj -c Release --no-incremental
-          if ($LASTEXITCODE -ne 0) { throw 'Regression runner build failed.' }
-      - name: Run complete regression partition
-        shell: pwsh
-        run: |
-          $report = Join-Path $env:RUNNER_TEMP "reports/$env:REGRESSION_PARTITION/report.json"
-          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --legacy --all --partition $env:REGRESSION_PARTITION --results $report
-          if ($LASTEXITCODE -ne 0) { throw 'Regression partition failed.' }
-      - name: Collect immutable regression evidence
-        if: always()
-        shell: pwsh
-        run: |
-          .\tools\CollectRegressionEvidence.ps1 -ReportPath (Join-Path $env:RUNNER_TEMP "reports/$env:REGRESSION_PARTITION/report.json") -Destination (Join-Path $env:RUNNER_TEMP "regression-evidence/$env:REGRESSION_PARTITION")
-      - name: Preserve this regression attempt
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: regression-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.partition }}
-          path: ${{ runner.temp }}/regression-evidence/${{ matrix.partition }}
-          if-no-files-found: error
-          retention-days: 30
-          overwrite: false
-
-  nunit-foundation:
-    name: NUnit foundation
+  hybrid-validation:
+    name: Hybrid validation
     runs-on: windows-latest
     timeout-minutes: 90
     steps:
@@ -154,41 +102,38 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: '10.0.403'
-      - name: Run all discovered NUnit foundation cases in both assemblies
+      - name: Reserve this attempt bundle
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected framework build SDK.' }
-          .\tools\Test.ps1 -Mode Full -ResultsDirectory (Join-Path $env:RUNNER_TEMP 'framework-evidence')
-          if ($LASTEXITCODE -ne 0) { throw 'NUnit foundation execution failed.' }
-      - name: Record this framework attempt owner
-        if: always()
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $directory = Join-Path $env:RUNNER_TEMP 'framework-evidence'
-          [IO.Directory]::CreateDirectory($directory) | Out-Null
-          $head = (git rev-parse --verify HEAD).Trim()
-          if ($LASTEXITCODE -ne 0 -or $head -cne $env:GITHUB_SHA) { throw 'Framework owner checkout mismatch.' }
-          $tree = (git rev-parse 'HEAD^{tree}').Trim()
-          if ($LASTEXITCODE -ne 0) { throw 'Framework owner tree unavailable.' }
-          $sdk = (dotnet --version).Trim()
-          if ($LASTEXITCODE -ne 0 -or $sdk -cne '10.0.403') { throw 'Framework owner SDK mismatch.' }
-          $owner = @{ schemaVersion = 1; repository = $env:GITHUB_REPOSITORY; commit = $env:GITHUB_SHA;
-            workflowRunId = $env:GITHUB_RUN_ID; attempt = $env:GITHUB_RUN_ATTEMPT; job = $env:GITHUB_JOB;
-            head = $head; tree = $tree; sdk = $sdk }
-          $stream = [IO.File]::Open((Join-Path $directory 'ci-owner.json'), [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+          . .\tools\HybridCi.Common.ps1
           try {
-            $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($owner | ConvertTo-Json))
-            $stream.Write($bytes, 0, $bytes.Length)
-            $stream.Flush($true)
-          } finally { $stream.Dispose() }
-      - name: Preserve this framework attempt
+            $context = Get-HybridCiContext $env:GITHUB_WORKSPACE
+            $bundle = Get-HybridCiBundlePath $context $context.attempt
+            if ([IO.Directory]::Exists($bundle) -or [IO.File]::Exists($bundle)) { throw 'hybrid-ci-producer-not-fresh' }
+            [IO.Directory]::CreateDirectory($bundle) | Out-Null
+            Assert-HybridCiRegular $bundle -Directory
+            "HYBRID_CI_BUNDLE=$bundle" >> $env:GITHUB_ENV
+          } finally { Close-HybridCiLocks }
+      - name: Run complete hybrid validation
+        shell: pwsh
+        run: |
+          .\tools\TestHybrid.ps1 -RepositoryRoot $env:GITHUB_WORKSPACE -ResultsDirectory (Join-Path $env:HYBRID_CI_BUNDLE 'session')
+          if ($LASTEXITCODE -ne 0) { throw 'Complete hybrid execution failed.' }
+      - name: Independently admit complete hybrid session
+        shell: pwsh
+        run: |
+          .\tools\Assert-HybridSession.ps1 -RepositoryRoot $env:GITHUB_WORKSPACE -SessionDirectory (Join-Path $env:HYBRID_CI_BUNDLE 'session') -OutputDirectory (Join-Path $env:HYBRID_CI_BUNDLE 'producer-admission')
+          if ($LASTEXITCODE -ne 0) { throw 'Independent hybrid admission failed.' }
+      - name: Record this hybrid attempt owner
         if: always()
+        shell: pwsh
+        run: .\tools\Write-HybridCiOwner.ps1 -RepositoryRoot $env:GITHUB_WORKSPACE
+      - name: Preserve this complete hybrid attempt
+        if: ${{ always() && env.HYBRID_CI_BUNDLE != '' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: framework-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/framework-evidence
+          name: hybrid-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.HYBRID_CI_BUNDLE }}
           if-no-files-found: error
           retention-days: 30
           overwrite: false
@@ -197,7 +142,7 @@ jobs:
     outputs:
       package-artifact: ${{ steps.package-artifact.outputs.name }}
     if: ${{ always() }}
-    needs: [supply-chain-security, commit-messages, regression, nunit-foundation]
+    needs: [supply-chain-security, commit-messages, hybrid-validation]
     runs-on: windows-latest
     timeout-minutes: 90
     permissions:
@@ -209,10 +154,9 @@ jobs:
         env:
           SUPPLY_CHAIN_RESULT: ${{ needs.supply-chain-security.result }}
           COMMITS_RESULT: ${{ needs.commit-messages.result }}
-          REGRESSION_RESULT: ${{ needs.regression.result }}
-          FRAMEWORK_RESULT: ${{ needs.nunit-foundation.result }}
+          HYBRID_RESULT: ${{ needs.hybrid-validation.result }}
         run: |
-          if ($env:SUPPLY_CHAIN_RESULT -cne 'success' -or $env:COMMITS_RESULT -cne 'success' -or $env:REGRESSION_RESULT -cne 'success' -or $env:FRAMEWORK_RESULT -cne 'success') {
+          if ($env:SUPPLY_CHAIN_RESULT -cne 'success' -or $env:COMMITS_RESULT -cne 'success' -or $env:HYBRID_RESULT -cne 'success') {
             throw 'Validation prerequisites did not all succeed.'
           }
       - name: Checkout exact validation commit
@@ -227,19 +171,11 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
         with:
           dotnet-version: '10.0.403'
-      - name: Download all regression attempts from this workflow run
+      - name: Download all hybrid attempts from this workflow run
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
-          pattern: regression-report-${{ github.sha }}-${{ github.run_id }}-*
-          path: ${{ runner.temp }}/regression-reports
-          merge-multiple: false
-          github-token: ${{ github.token }}
-          run-id: ${{ github.run_id }}
-      - name: Download all framework attempts from this workflow run
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
-        with:
-          pattern: framework-report-${{ github.sha }}-${{ github.run_id }}-*
-          path: ${{ runner.temp }}/framework-reports
+          pattern: hybrid-report-${{ github.sha }}-${{ github.run_id }}-*
+          path: ${{ runner.temp }}/hybrid-reports
           merge-multiple: false
           github-token: ${{ github.token }}
           run-id: ${{ github.run_id }}
@@ -247,21 +183,23 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: .\tools\GetRegressionJobAttempts.ps1 -OutputPath (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json')
-      - name: Fresh-build verifier and require complete partition coverage
+        run: .\tools\GetRegressionJobAttempts.ps1 -OutputPath (Join-Path $env:RUNNER_TEMP 'hybrid-job-attempts.json')
+      - name: Rebuild current verifiers and independently admit complete hybrid evidence
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          if ((dotnet --version).Trim() -cne '10.0.403') { throw 'Unexpected verification build SDK.' }
-          dotnet build tests/STranslate.Plugin.Tts.FishAudio.Tests/STranslate.Plugin.Tts.FishAudio.Tests.csproj -c Release --no-incremental
-          if ($LASTEXITCODE -ne 0) { throw 'Regression verifier build failed.' }
-          dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release --no-build -- --verify-reports (Join-Path $env:RUNNER_TEMP 'regression-reports') --job-attempts (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json')
-          if ($LASTEXITCODE -ne 0) { throw 'Regression evidence verification failed.' }
-      - name: Require complete current NUnit foundation evidence
-        shell: pwsh
-        run: |
-          .\tools\VerifyFrameworkCi.ps1 -ArtifactDirectory (Join-Path $env:RUNNER_TEMP 'framework-reports') -JobAttemptsPath (Join-Path $env:RUNNER_TEMP 'regression-job-attempts.json') -ResultsDirectory (Join-Path $env:RUNNER_TEMP 'framework-verification')
-          if ($LASTEXITCODE -ne 0) { throw 'Framework evidence verification failed.' }
+          .\tools\VerifyHybridCi.ps1 -ArtifactDirectory (Join-Path $env:RUNNER_TEMP 'hybrid-reports') -JobAttemptsPath (Join-Path $env:RUNNER_TEMP 'hybrid-job-attempts.json') -ResultsDirectory (Join-Path $env:RUNNER_TEMP 'hybrid-verification')
+          if ($LASTEXITCODE -ne 0) { throw 'Hybrid evidence verification failed.' }
+      - name: Preserve independent hybrid aggregate evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hybrid-admission-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/hybrid-verification
+            ${{ runner.temp }}/hybrid-job-attempts.json
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: false
       - name: Build and verify fresh Release package
         shell: pwsh
         run: .\build.ps1 -Release

@@ -8,6 +8,8 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using static ContextProxy;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class VoiceCreationDateSuite
 {
     internal static readonly DateTimeOffset Date = DateTimeOffset.Parse("2026-09-18T01:02:03.1234567+08:00", CultureInfo.InvariantCulture);
@@ -19,6 +21,24 @@ internal static class VoiceCreationDateSuite
         LocalPresentationPreservesFullInstant();
         return Task.CompletedTask;
     }
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "cards.creation-date/provider-date-is-optional-and-property-scoped")]
+    [NUnit.Framework.Property("OriginalOrdinal", 525)]
+    public static void ProviderDateIsOptionalAndPropertyScopedCase() =>
+        ProviderDateIsOptionalAndPropertyScoped();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "cards.creation-date/settings-migration-copies-leases-and-rollback")]
+    [NUnit.Framework.Property("OriginalOrdinal", 525)]
+    public static void SettingsMigrationCopiesLeasesAndRollbackCase() =>
+        SettingsMigrationCopiesLeasesAndRollback();
+
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "cards.creation-date/local-presentation-preserves-full-instant")]
+    [NUnit.Framework.Property("OriginalOrdinal", 525)]
+    public static void LocalPresentationPreservesFullInstantCase() =>
+        LocalPresentationPreservesFullInstant();
 
     private static void ProviderDateIsOptionalAndPropertyScoped()
     {

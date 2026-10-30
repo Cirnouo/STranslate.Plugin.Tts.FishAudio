@@ -2,6 +2,8 @@ using System.Text;
 using STranslate.Plugin.Tts.FishAudio.Streaming;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class StreamingTextSuite
 {
     internal static Task FirstWindowIsLazyAndCutsOrdinaryLongSentencesAsync()
@@ -16,7 +18,10 @@ internal static class StreamingTextSuite
         return Task.CompletedTask;
     }
 
-    internal static Task MarkupStaysOrderedAcrossWindowsWithoutDuplicateDirectionsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "streaming.text/markup-stays-ordered-across-windows-without-duplicate-directions")]
+    [NUnit.Framework.Order(40)]
+    public static Task MarkupStaysOrderedAcrossWindowsWithoutDuplicateDirectionsAsync()
     {
         foreach (var text in new[]
         {
@@ -40,7 +45,10 @@ internal static class StreamingTextSuite
         return Task.CompletedTask;
     }
 
-    internal static Task ControlOnlyAndIncompleteInputNeverClaimsReadablePrefixAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "streaming.text/control-only-and-incomplete-input-never-claims-readable-prefix")]
+    [NUnit.Framework.Order(41)]
+    public static Task ControlOnlyAndIncompleteInputNeverClaimsReadablePrefixAsync()
     {
         foreach (var text in new[] { " \r\n\t", "[whisper]", "<|speaker:0|>", "<whisper>", "<|phoneme_start|>abc", "[unfinished" })
         {
@@ -53,7 +61,10 @@ internal static class StreamingTextSuite
         return Task.CompletedTask;
     }
 
-    internal static Task BoundaryPriorityAndHugeTailDoNotChangeFirstPrefixAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "streaming.text/boundary-priority-and-huge-tail-do-not-change-first-prefix")]
+    [NUnit.Framework.Order(42)]
+    public static Task BoundaryPriorityAndHugeTailDoNotChangeFirstPrefixAsync()
     {
         const string beginning = "First sentence. Second line\nthird word ";
         var text = beginning + new string('x', 1000);

@@ -7,7 +7,10 @@ using static TestAssertions;
 
 internal static partial class PreviewSuite
 {
-    internal static async Task PreviewPublishesPreparationBeforeFirstAwaitAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-publishes-preparation-before-first-await")]
+    [NUnit.Framework.Order(226)]
+    public static async Task PreviewPublishesPreparationBeforeFirstAwaitAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string id = "11111111111111111111111111111111";

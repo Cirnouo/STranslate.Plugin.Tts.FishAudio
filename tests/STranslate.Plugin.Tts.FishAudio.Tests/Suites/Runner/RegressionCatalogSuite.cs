@@ -2,14 +2,19 @@ using static TestAssertions;
 
 internal static class RegressionCatalogSuite
 {
-    internal static async Task RunAsync()
+    internal static void RemainingLegacyIdsAndPartitionsAreComplete()
     {
         var cases = RegressionCatalog.Create();
         AssertEqual(cases.Count, cases.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count(), "Catalog IDs are unique");
-        var partitions = new[] { "core", "native-settings", "native-input", "native-popups", "native-cards" };
+        var partitions = new[] { "native-popups", "native-cards" };
         AssertEqual(true, partitions.All(partition => cases.Any(item => item.Partition == partition)), "Every supported partition has registered work");
         AssertEqual(true, cases.All(item => partitions.Contains(item.Partition, StringComparer.Ordinal)), "Every case belongs to one supported partition");
 
+    }
+
+    internal static void StaticCardContextsKeepEveryOriginalBoundary()
+    {
+        var cases = RegressionCatalog.Create();
         var cards = cases.Where(item => item.Id.StartsWith("cards.layout/", StringComparison.Ordinal)).ToArray();
         AssertEqual(505, cards.Length, "Voice card layout exposes its cold action and all 504 independent contexts");
         var expected = new List<string> { "cards.layout/cold-construction" };
@@ -22,6 +27,12 @@ internal static class RegressionCatalogSuite
         AssertEqual(true, expected.SequenceEqual(cards.Select(item => item.Id), StringComparer.Ordinal), "The card context coverage and native first-use order remain complete");
         AssertEqual(true, cards.All(item => item.Partition == "native-cards"), "Each card context retains native-card ownership");
 
+    }
+
+    internal static void DynamicCardBehaviorsKeepEveryOriginalBoundary()
+    {
+        var cases = RegressionCatalog.Create();
+        var cards = cases.Where(item => item.Id.StartsWith("cards.layout/", StringComparison.Ordinal)).ToArray();
         var behaviorIds = new List<string>();
         AddBehavior("description", [false, true], ["1", "1-25", "1-5"], ["320", "400", "480", "640"]);
         AddBehavior("headers", [false, true], ["1", "1-25", "1-5"], ["320", "400", "480", "640"]);
@@ -37,16 +48,25 @@ internal static class RegressionCatalogSuite
             cases.ToList().FindIndex(item => item.Id == behaviors[0].Id) > cases.ToList().FindIndex(item => item.Id == cards[^1].Id),
             "Behavior owners remain after the complete original static contexts in native-cards");
 
+        void AddBehavior(string group, bool[] themes, string[] scales, string[] widths)
+        {
+            foreach (var dark in themes)
+            foreach (var scale in scales)
+            foreach (var width in widths)
+            foreach (var mode in new[] { "search", "by-id", "favorites" })
+                behaviorIds.Add($"cards.layout.{group}/en/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width}/{mode}");
+        }
+
+    }
+
+    internal static void RemainingNativeAliasesKeepTheirExactOrderedOwners()
+    {
+        var cases = RegressionCatalog.Create();
         foreach (var (oldId, count, partition) in new[]
         {
             ("cards.like/run-all", 87, "native-cards"),
             ("cards.avatar/run-all", 36, "native-cards"),
             ("cards.description/run", 25, "native-cards"),
-            ("input.cursor/run", 31, "native-input"),
-            ("input.settings/run-all", 142, "native-input"),
-            ("numeric.geometry/compact-numeric-geometry", 48, "native-settings"),
-            ("numeric.bottom/run", 12, "native-settings"),
-            ("cards.ink/run", 25, "native-settings"),
             ("popup.search-adjustment/run-all", 60, "native-popups"),
             ("popup.language-tags/run-all", 84, "native-popups"),
             ("preview.search-retention/run-all", 7, "native-cards"),
@@ -68,48 +88,30 @@ internal static class RegressionCatalogSuite
         AssertEqual(true, cases.ToList().FindIndex(item => item.Id == searchLast) < cases.ToList().FindIndex(item => item.Id == "popup.keyboard-state/run"),
             "The complete Search owner sequence remains before native keyboard first use");
 
-        var anchors = new[]
-        {
-            "cards.ink/run",
-            "numeric.glyph/equivalent-native-run-grouping",
-            "numeric.geometry/compact-numeric-geometry",
-            "numeric.bottom/run",
-            "numeric.lifecycle/run",
-            "input.clear/run-requests",
-            "input.clear/run",
-        };
-        var previous = -1;
-        foreach (var id in anchors)
-        {
-            var owned = RegressionCaseAliases.Resolve(id, cases);
-            var indices = owned.Select(owner => cases.ToList().FindIndex(item => item.Id == owner)).ToArray();
-            AssertEqual(true, indices.Min() > previous, "Ink and numeric native first-use anchors retain their original dispatch order");
-            previous = indices.Max();
-        }
-        AssertEqual(true, cases.Single(item => item.Id == "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry").Partition == "core", "Injected dispatcher diagnostics stay offline core work");
-        AssertEqual(true, cases.Single(item => item.Id == "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread").Partition == "native-settings", "Real command listeners retain native-settings ownership");
+    }
 
+    internal static void OriginalLegacyArgumentShapesRemainValid()
+    {
         foreach (var valid in new[]
         {
             new[] { "--accepted-preview-continuity-tests", "selection" },
             new[] { "--accepted-preview-continuity-tests", "lease" },
-            new[] { "--page-entry-tests", "fields" },
-            new[] { "--search-adjustment-control-tests", "titles" },
-            new[] { "--settings-input-tests", "fold-focus" },
             new[] { "--popup-proof-tests", "private-proof-directory" },
             new[] { "--voice-card-layout-tests", "private-proof-directory" },
         })
             AssertEqual(true, LegacyRegressionSelectors.AreArgumentsValid(valid), "Original focused groups and private proof-directory parameters stay valid without executing fixtures");
 
-        void AddBehavior(string group, bool[] themes, string[] scales, string[] widths)
-        {
-            foreach (var dark in themes)
-            foreach (var scale in scales)
-            foreach (var width in widths)
-            foreach (var mode in new[] { "search", "by-id", "favorites" })
-                behaviorIds.Add($"cards.layout.{group}/en/{(dark ? "dark" : "light")}/dpi-{scale}/width-{width}/{mode}");
-        }
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--search-adjustment-control-tests", "titles"]),
+            "The former mixed Search selector retires when its diagnostic responsibility moves to NUnit; native owners remain selectable through current case IDs");
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--page-entry-tests", "fields"]),
+            "The former PageEntry fields shape retires with its complete five-workflow NUnit owner");
+        AssertEqual(false, LegacyRegressionSelectors.AreArgumentsValid(["--settings-input-tests", "fold-focus"]),
+            "The former settings fold-focus shape retires with its complete native-input profile");
 
+    }
+
+    internal static async Task InvalidLegacyArgumentCombinationsRejectBeforeFixtureAsync()
+    {
         using var diagnostics = new StringWriter();
         var previousError = Console.Error;
         try
@@ -131,4 +133,5 @@ internal static class RegressionCatalogSuite
         }
         finally { Console.SetError(previousError); }
     }
+
 }

@@ -25,7 +25,7 @@ internal static class ProjectRepositoryLinkSuite
             await RunOnStaThreadAsync(() => CompiledSupportUsesProjectRepository(language));
     }
 
-    private static void CompiledSupportUsesProjectRepository(string language)
+    internal static void CompiledSupportUsesProjectRepository(string language)
     {
         var settings = new Settings();
         var snackbar = new TestSnackbar();

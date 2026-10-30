@@ -20,6 +20,10 @@
 
     <ItemGroup>
         <Compile Include="..\Shared\CoverageHostEvidence.cs" Link="Shared\CoverageHostEvidence.cs" />
+        <Compile Include="..\Shared\FrameworkControlProtocol.cs" Link="Shared\FrameworkControlProtocol.cs" />
+        <Compile Include="..\Shared\FrameworkLifecycleClient.cs" Link="Shared\FrameworkLifecycleClient.cs" />
+        <Compile Include="..\..\tools\FishAudio.Testing\Execution\CaseWatchdog.cs" Link="Shared\CaseWatchdog.cs" />
+        <Compile Include="..\..\tools\FishAudio.Testing\Fixtures\GitFixtureSigning.cs" Link="Shared\GitFixtureSigning.cs" />
         <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
             <_Parameter1>RegressionBuildSdk</_Parameter1>
             <_Parameter2>$(NETCoreSdkVersion)</_Parameter2>

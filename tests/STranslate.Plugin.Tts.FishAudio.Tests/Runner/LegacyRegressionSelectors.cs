@@ -24,6 +24,7 @@ internal static class LegacyRegressionSelectors
         ["--numeric-bottom-tests"] = true,
         ["--numeric-bottom-lifecycle-tests"] = false,
         ["--numeric-typography-tests"] = true,
+        ["--numeric-typography-proof-tests"] = true,
         ["--numeric-glyph-observation-tests"] = false,
         ["--search-adjustment-diagnostic-tests"] = false,
         ["--streaming-cancellation-probe-tests"] = false,
@@ -62,11 +63,44 @@ internal static class LegacyRegressionSelectors
         ["--settings-input-tests"] = ["tabs", "baseline", "wheel", "tooltip", "precision", "favorites", "copy", "fold-focus", "zero", "hover", "point"],
     };
 
+    // Direct aliases containing migrated work must not execute a partial or unrelated legacy set.
+    private static readonly HashSet<string> RetiredSelectors = new(StringComparer.Ordinal)
+    {
+        "--execution-guard-tests",
+        "--runner-contract-tests",
+        "--input-clear-compatibility-tests",
+        "--input-clear-control-tests",
+        "--numeric-bottom-tests",
+        "--numeric-bottom-lifecycle-tests",
+        "--numeric-typography-tests",
+        "--numeric-glyph-observation-tests",
+        "--activity-dispatcher-tests",
+        "--voice-card-ink-tests",
+        "--settings-layout-tests",
+        "--settings-control-tests",
+        "--inline-numeric-tests",
+        "--input-clear-request-tests",
+        "--search-adjustment-request-tests",
+        "--preview-ownership-compatibility-tests",
+        "--voice-auth-tests",
+        "--search-adjustment-diagnostic-tests",
+        "--numeric-tooltip-diagnostics-tests",
+        "--search-adjustment-control-tests",
+        "--settings-input-tests",
+        "--repository-link-tests",
+        "--control-cursor-tests",
+        "--control-cursor-late-combo-tests",
+        "--control-cursor-lifecycle-tests",
+        "--page-entry-tests",
+    };
+
+    internal static bool ContainsRetiredSelector(string[] args) => args.Any(RetiredSelectors.Contains);
+
     internal static bool ContainsSelector(string[] args) => args.Any(Selectors.ContainsKey);
 
     internal static bool AreArgumentsValid(string[] args)
     {
-        if (args.Length == 0 || !Selectors.TryGetValue(args[0], out var allowsValue)
+        if (ContainsRetiredSelector(args) || args.Length == 0 || !Selectors.TryGetValue(args[0], out var allowsValue)
             || args.Length > (allowsValue ? 2 : 1)
             || (args.Length == 2 && (string.IsNullOrWhiteSpace(args[1]) || args[1].StartsWith("--", StringComparison.Ordinal)))
             || (args[0] == "--popup-proof-tests" && args.Length != 2))
@@ -76,22 +110,20 @@ internal static class LegacyRegressionSelectors
     }
 
     // Null means that the new metadata selector owns the command line.
-    internal static async Task<int?> TryRunAsync(string[] args)
+    internal static async Task<int?> TryRunAsync(string[] args, Func<string?, Task>? numericTypographyProof = null)
     {
         if (!args.Any(Selectors.ContainsKey)) return null;
+        if (ContainsRetiredSelector(args))
+        {
+            Console.Error.WriteLine("Retired legacy regression selector; use NUnit case selection.");
+            return 2;
+        }
         if (!AreArgumentsValid(args))
         {
             Console.Error.WriteLine("Invalid legacy regression selector arguments.");
             return 2;
         }
         var selector = args[0];
-
-        if (selector == "--execution-guard-tests")
-        {
-            await RegressionExecutionSuite.RunAsync();
-            Console.WriteLine("Regression execution guard contracts passed.");
-            return 0;
-        }
 
         if (selector == "--native-key-state-tests")
         {
@@ -143,21 +175,6 @@ internal static class LegacyRegressionSelectors
         {
             await PopupHeadingSuite.RunAsync();
             Console.WriteLine("Popup native-heading regressions passed.");
-            return 0;
-        }
-
-        if (selector == "--input-clear-compatibility-tests")
-        {
-            await ApiKeySettingsCardSuite.RunAllAsync();
-            await StaTestHost.RunOnStaThreadAsync(SettingsLayoutSuite.PasteButtonsReserveInputSpace);
-            Console.WriteLine("Input clear native peer compatibility passed.");
-            return 0;
-        }
-
-        if (selector == "--input-clear-control-tests")
-        {
-            await InputClearControlSuite.RunAsync();
-            Console.WriteLine("Input clear compiled-control regressions passed.");
             return 0;
         }
 
@@ -279,31 +296,13 @@ internal static class LegacyRegressionSelectors
             return 0;
         }
 
-        if (selector == "--numeric-bottom-tests")
+        // Retained manual proof operation only. The retired mixed selector's
+        // migrated Glyph operation is never implicit setup for these scenes.
+        if (selector == "--numeric-typography-proof-tests")
         {
-            await NumericBottomSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-bottom-tests") + 1));
-            Console.WriteLine("Numeric visible-bottom regressions passed.");
-            return 0;
-        }
-
-        if (selector == "--numeric-bottom-lifecycle-tests")
-        {
-            await NumericAlignmentLifecycleSuite.RunAsync();
-            return 0;
-        }
-
-        if (selector == "--numeric-typography-tests")
-        {
-            await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
-            await NumericTypographySuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--numeric-typography-tests") + 1));
-            Console.WriteLine("Numeric typography regressions passed.");
-            return 0;
-        }
-
-        if (selector == "--numeric-glyph-observation-tests")
-        {
-            await NumericGlyphObservationSuite.EquivalentNativeRunGroupingAsync();
-            Console.WriteLine("Numeric glyph observation regressions passed.");
+            var run = numericTypographyProof ?? NumericTypographySuite.RunAsync;
+            await run(args.ElementAtOrDefault(1));
+            Console.WriteLine("Numeric typography proof diagnostics passed (manual diagnostic only).");
             return 0;
         }
 
@@ -430,15 +429,6 @@ internal static class LegacyRegressionSelectors
             return 0;
         }
 
-        if (selector == "--activity-dispatcher-tests")
-        {
-            await OperationActivityDispatcherSuite.DeadlineDiagnosticsPreserveOriginalFailureWithoutRetryAsync();
-            await OperationActivityDispatcherSuite.PlaybackFailureAndCancellationRetireBoundCommandsOnUiThreadAsync();
-            await OperationActivityDispatcherSuite.QueuedRetirementCannotUnlockNewUiOperationAsync();
-            Console.WriteLine("Activity dispatcher regression tests passed.");
-            return 0;
-        }
-
         if (selector == "--repository-link-tests")
         {
             await ProjectRepositoryLinkSuite.RunAllAsync();
@@ -487,20 +477,6 @@ internal static class LegacyRegressionSelectors
             return 0;
         }
 
-        if (selector == "--voice-card-ink-tests")
-        {
-            await VoiceCardInkSuite.RunAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--voice-card-ink-tests") + 1));
-            return 0;
-        }
-
-        if (selector == "--settings-layout-tests")
-        {
-            await ApiKeySettingsCardSuite.RunAllAsync();
-            await SettingsLayoutSuite.CompiledViewAudioNetworkAndFoldInteractionsAsync();
-            Console.WriteLine("Compiled settings layout tests passed.");
-            return 0;
-        }
-
         if (selector == "--settings-input-tests")
         {
             await SettingsInputInteractionSuite.RunAllAsync(args.ElementAtOrDefault(Array.IndexOf(args, "--settings-input-tests") + 1));
@@ -515,29 +491,6 @@ internal static class LegacyRegressionSelectors
             return 0;
         }
 
-        if (selector == "--settings-control-tests")
-        {
-            await SettingsControlAlignmentSuite.RunAllAsync();
-            await FavoriteVoicesSuite.ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync();
-            Console.WriteLine("Settings control alignment tests passed.");
-            return 0;
-        }
-
-        if (selector == "--inline-numeric-tests")
-        {
-            await SettingsLayoutSuite.CompactNumericGeometryAsync();
-            await SettingsLayoutSuite.InlineNumericInteractionsAsync();
-            Console.WriteLine("Inline numeric regression tests passed.");
-            return 0;
-        }
-
-        if (selector == "--runner-contract-tests")
-        {
-            await RunnerContractSuite.RunAsync();
-            await RegressionCatalogSuite.RunAsync();
-            Console.WriteLine("Regression runner contracts passed.");
-            return 0;
-        }
         if (selector == "--build-selection-tests")
         {
             BuildScriptSuite.TestSelectionArgumentsReachRunner();

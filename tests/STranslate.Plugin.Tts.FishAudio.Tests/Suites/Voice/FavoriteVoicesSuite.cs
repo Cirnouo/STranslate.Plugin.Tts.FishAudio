@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Net;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -7,9 +8,14 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class FavoriteVoicesSuite
 {
-    internal static void NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/new-likes-and-relikes-display-first-without-rewriting-durable-order")]
+    [Order(170)]
+    public static void NewLikesAndRelikesDisplayFirstWithoutRewritingDurableOrder()
     {
         var directory = CreateTempDirectory();
         var cache = new VoiceMetadataCache();
@@ -49,7 +55,10 @@ internal static class FavoriteVoicesSuite
         AssertEqual(0, ((ContextProxy)(object)context).SaveCount, "Like ordering never writes host Settings");
     }
 
-    internal static void LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/legacy-favorites-reverse-globally-and-adding-keeps-the-current-page")]
+    [Order(171)]
+    public static void LegacyFavoritesReverseGloballyAndAddingKeepsTheCurrentPage()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 12).Select(Id)));
@@ -79,7 +88,10 @@ internal static class FavoriteVoicesSuite
         AssertEnumerableEqual(Enumerable.Range(2, 12).Select(Id), store.Read(), "Global display reversal never reverses durable writes");
     }
 
-    internal static async Task FavoriteRequestsUseCurrentCredentialAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorite-requests-use-current-credential")]
+    [Order(201)]
+    public static async Task FavoriteRequestsUseCurrentCredentialAsync()
     {
         foreach (var key in new[] { "configured-favorite-key", "", " \t" })
         {
@@ -107,7 +119,10 @@ internal static class FavoriteVoicesSuite
         }
     }
 
-    internal static void FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorite-voice-ids-reject-whitespace-and-retain-canonical-deduplication")]
+    [Order(167)]
+    public static void FavoriteVoiceIdsRejectWhitespaceAndRetainCanonicalDeduplication()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) + "\n", Id(1), Id(1), Id(2) }));
@@ -119,7 +134,10 @@ internal static class FavoriteVoicesSuite
         AssertEqual(true, SettingsValidation.IsValidVoiceIdFormat(Id(1)), "Canonical IDs remain valid");
     }
 
-    internal static async Task ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/by-id-lookup-rejects-whitespace-without-request-or-selection-change")]
+    [Order(164)]
+    public static async Task ByIdLookupRejectsWhitespaceWithoutRequestOrSelectionChangeAsync()
     {
         var settings = SelectedSettings();
         var directory = CreateTempDirectory();
@@ -147,7 +165,10 @@ internal static class FavoriteVoicesSuite
         view.SelectVoiceCommand.Execute(view.ByIdResults[0]);
         AssertEqual(Id(1), settings.VoiceId, "Only Apply selects the canonical By-ID result");
     }
-    internal static async Task ByIdLookupKeepsSelectedVoiceUntilApplyAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/by-id-lookup-keeps-selected-voice-until-apply")]
+    [Order(168)]
+    public static async Task ByIdLookupKeepsSelectedVoiceUntilApplyAsync()
     {
         var settings = SelectedSettings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -164,7 +185,10 @@ internal static class FavoriteVoicesSuite
         AssertEqual("Looked up", view.CachedVoiceTitle, "Apply should update selected metadata");
     }
 
-    internal static void FavoriteMetadataMigratesBoundsAndRoundTrips()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorite-metadata-migrates-bounds-and-round-trips")]
+    [Order(169)]
+    public static void FavoriteMetadataMigratesBoundsAndRoundTrips()
     {
         var directory = CreateTempDirectory();
         using (var store = new FavoriteVoiceStore(directory))
@@ -182,7 +206,10 @@ internal static class FavoriteVoicesSuite
         AssertEqual(2, SettingsSchema.Current, "Independent ID storage must not introduce schema 3");
     }
 
-    internal static void FavoritesSyncAcrossCardsPersistAndClampPages()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorites-sync-across-cards-persist-and-clamp-pages")]
+    [Order(172)]
+    public static void FavoritesSyncAcrossCardsPersistAndClampPages()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(Enumerable.Range(1, 12).Select(Id)));
@@ -227,7 +254,10 @@ internal static class FavoriteVoicesSuite
         AssertEqual(0, ((ContextProxy)(object)context).SaveCount, "Bookmarking must not write host Settings");
     }
 
-    internal static void FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorite-saves-rollback-and-respect-read-only-and-retired-leases")]
+    [Order(173)]
+    public static void FavoriteSavesRollbackAndRespectReadOnlyAndRetiredLeases()
     {
         var directory = CreateTempDirectory();
         File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) }));
@@ -257,30 +287,48 @@ internal static class FavoriteVoicesSuite
         AssertEqual(300, full.Read().Count, "Adding beyond the cap must preserve every existing ID");
     }
 
-    internal static async Task ByIdReplacementAndInputEditsRejectLateResultsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/by-id-replacement-and-input-edits-reject-late-results")]
+    [Order(174)]
+    public static async Task ByIdReplacementAndInputEditsRejectLateResultsAsync()
     {
-        var settings = SelectedSettings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        var release = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var canceled = false;
-        http.GetAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return release.Task; };
-        using var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings) { VoiceIdInput = Id(1) };
-        var old = view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        view.VoiceIdInput = Id(2);
-        http.GetAsyncHandler = null;
-        http.GetResponseJson = Detail(2, "Current");
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        release.SetResult(Detail(1, "Late"));
-        await old.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(true, canceled, "Editing lookup input must cancel previous metadata work");
-        AssertEqual("Current", view.ByIdResults.Single().Title, "A replaced response cannot overwrite the current card");
-        view.VoiceIdInput = "invalid";
-        await view.SubmitVoiceIdCommand.ExecuteAsync(null);
-        AssertEqual(0, view.ByIdResults.Count, "Invalid input removes the prior Apply card");
-        AssertEqual(Id(99), settings.VoiceId, "Successful and failed queries preserve current selection");
+        SettingsViewModel? ownedView = null;
+        TaskCompletionSource<string>? ownedResponse = null;
+        Task? ownedLookup = null;
+        await RegressionFixtureOwner.RunAsync(async () =>
+        {
+            var settings = SelectedSettings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            var release = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ownedResponse = release;
+            var canceled = false;
+            http.GetAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return release.Task; };
+            var view = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings) { VoiceIdInput = Id(1) };
+            ownedView = view;
+            var old = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            ownedLookup = old;
+            view.VoiceIdInput = Id(2);
+            http.GetAsyncHandler = null;
+            http.GetResponseJson = Detail(2, "Current");
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            release.SetResult(Detail(1, "Late"));
+            await old.WaitAsync(RegressionExecution.Timeout);
+            AssertEqual(true, canceled, "Editing lookup input must cancel previous metadata work");
+            AssertEqual("Current", view.ByIdResults.Single().Title, "A replaced response cannot overwrite the current card");
+            view.VoiceIdInput = "invalid";
+            await view.SubmitVoiceIdCommand.ExecuteAsync(null);
+            AssertEqual(0, view.ByIdResults.Count, "Invalid input removes the prior Apply card");
+            AssertEqual(Id(99), settings.VoiceId, "Successful and failed queries preserve current selection");
+        },
+        () => { ownedView?.Dispose(); return Task.CompletedTask; },
+        () => { ownedResponse?.TrySetResult(Detail(1, "Late")); return Task.CompletedTask; },
+        () => ownedLookup ?? Task.CompletedTask);
     }
 
-    internal static async Task FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/favorite-and-by-id-preview-refreshes-metadata-without-applying")]
+    [Order(175)]
+    public static async Task FavoriteAndByIdPreviewRefreshesMetadataWithoutApplyingAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var byId in new[] { false, true })
@@ -315,40 +363,107 @@ internal static class FavoriteVoicesSuite
         }
     }
 
-    internal static async Task UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorites/unfavorite-cancels-originating-preview-and-rejects-late-work")]
+    [Order(176)]
+    public static async Task UnfavoriteCancelsOriginatingPreviewAndRejectsLateWorkAsync()
     {
-        using var network = OverrideNetworkAvailability(true);
-        foreach (var refresh in new[] { false, true })
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            var directory = CreateTempDirectory();
-            File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) }));
-            var cache = new VoiceMetadataCache();
-            var url = refresh ? "https://platform.r2.fish.audio/old.mp3?X-Amz-Date=20000101T000000Z&X-Amz-Expires=60" : "https://platform.r2.fish.audio/fresh.mp3";
-            cache.Put(VoiceMetadata.FromCachedVoice(Id(1), new() { Title = "Cached", SampleAudioUrl = url }));
-            var (service, http) = TestHttpServiceProxy.Create();
-            var detail = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var audio = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var canceled = false;
-            http.GetAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return detail.Task; };
-            http.GetAsStreamAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return audio.Task; };
-            var player = new TestPreviewAudioPlayer();
-            using var view = new SettingsViewModel(CreateContext(httpService: service, pluginSettingsDirectoryPath: directory), new Settings(), null, null,
-                previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
-            view.SearchResults = [new VoiceSearchItem { Id = Id(1), Title = "Matching search", SampleAudioUrl = url }];
-            var source = view.FavoriteResults[0];
-            var pending = view.ToggleSearchItemPreviewCommand.ExecuteAsync(source);
-            view.ToggleFavoriteCommand.Execute(source);
-            AssertEqual(true, canceled, "Removing the originating favorite must cancel its request even when a matching search card remains");
-            AssertEqual(null, view.PreparingPreviewVoiceId, "Removing the originating card clears preparation");
-            detail.TrySetResult(Detail(1, "Late", "https://platform.r2.fish.audio/late.mp3"));
-            var late = new MemoryStream([1, 2, 3]);
-            audio.TrySetResult(late);
-            await pending.WaitAsync(RegressionExecution.Timeout);
-            AssertEqual(0, player.PlayCallCount, "Late removed-card work cannot start playback");
-            AssertEqual(0, view.FavoriteCount, "Late metadata must not restore a deleted favorite ID");
-            if (!refresh) AssertEqual(false, late.CanRead, "Late audio must be disposed");
-            else late.Dispose();
+            using var network = OverrideNetworkAvailability(true);
+            foreach (var refresh in new[] { false, true })
+            {
+                string? ownedDirectory = null;
+                SettingsViewModel? ownedView = null;
+                TaskCompletionSource<string>? ownedDetail = null;
+                TaskCompletionSource<Stream>? ownedAudio = null;
+                MemoryStream? ownedLateAudio = null;
+                Task? ownedPreview = null;
+                await RegressionFixtureOwner.RunAsync(async () =>
+                {
+                    var directory = CreateTempDirectory();
+                    ownedDirectory = directory;
+                    File.WriteAllText(FilePath(directory), JsonSerializer.Serialize(new[] { Id(1) }));
+                    var cache = new VoiceMetadataCache();
+                    var url = refresh ? "https://platform.r2.fish.audio/old.mp3?X-Amz-Date=20000101T000000Z&X-Amz-Expires=60" : "https://platform.r2.fish.audio/fresh.mp3";
+                    cache.Put(VoiceMetadata.FromCachedVoice(Id(1), new() { Title = "Cached", SampleAudioUrl = url }));
+                    var (service, http) = TestHttpServiceProxy.Create();
+                    var detail = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ownedDetail = detail;
+                    var audio = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ownedAudio = audio;
+                    var canceled = false;
+                    http.GetAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return detail.Task; };
+                    http.GetAsStreamAsyncHandler = (_, _, token) => { token.Register(() => canceled = true); return audio.Task; };
+                    var player = new TestPreviewAudioPlayer();
+                    var view = new SettingsViewModel(CreateContext(httpService: service, pluginSettingsDirectoryPath: directory), new Settings(), null, null,
+                        previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
+                    ownedView = view;
+                    view.SearchResults = [new VoiceSearchItem { Id = Id(1), Title = "Matching search", SampleAudioUrl = url }];
+                    var source = view.FavoriteResults[0];
+                    var pending = view.ToggleSearchItemPreviewCommand.ExecuteAsync(source);
+                    ownedPreview = pending;
+                    view.ToggleFavoriteCommand.Execute(source);
+                    AssertEqual(true, canceled, "Removing the originating favorite must cancel its request even when a matching search card remains");
+                    AssertEqual(null, view.PreparingPreviewVoiceId, "Removing the originating card clears preparation");
+                    detail.TrySetResult(Detail(1, "Late", "https://platform.r2.fish.audio/late.mp3"));
+                    var late = new MemoryStream([1, 2, 3]);
+                    ownedLateAudio = late;
+                    audio.TrySetResult(late);
+                    await pending.WaitAsync(RegressionExecution.Timeout);
+                    AssertEqual(0, player.PlayCallCount, "Late removed-card work cannot start playback");
+                    AssertEqual(0, view.FavoriteCount, "Late metadata must not restore a deleted favorite ID");
+                    if (!refresh) AssertEqual(false, late.CanRead, "Late audio must be disposed");
+                    else late.Dispose();
+                },
+                () => { ownedView?.Dispose(); return Task.CompletedTask; },
+                () => { ownedDetail?.TrySetResult(Detail(1, "Late", "https://platform.r2.fish.audio/late.mp3")); return Task.CompletedTask; },
+                () =>
+                {
+                    if (ownedAudio is { Task.IsCompleted: false })
+                    {
+                        ownedLateAudio ??= new MemoryStream([1, 2, 3]);
+                        ownedAudio.TrySetResult(ownedLateAudio);
+                    }
+                    return Task.CompletedTask;
+                },
+                () => ownedPreview ?? Task.CompletedTask,
+                () => { ownedLateAudio?.Dispose(); return Task.CompletedTask; },
+                () => { DeleteOwnedHeldWorkDirectory(ownedDirectory); return Task.CompletedTask; });
+            }
+        });
+    }
+
+
+    private static void DeleteOwnedHeldWorkDirectory(string? root)
+    {
+        if (root is null) return;
+        var fullRoot = Path.GetFullPath(root);
+        var parent = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "FishAudioTests"));
+        var name = Path.GetFileName(fullRoot);
+        if (!Path.IsPathFullyQualified(root)
+            || !string.Equals(Path.GetDirectoryName(fullRoot), parent, StringComparison.OrdinalIgnoreCase)
+            || !Guid.TryParseExact(name, "N", out var owner)
+            || !string.Equals(name, owner.ToString("N"), StringComparison.Ordinal))
+            throw new InvalidOperationException("held-work-cleanup-owner-invalid");
+        for (DirectoryInfo? directory = new(fullRoot); directory is not null; directory = directory.Parent)
+        {
+            if (!directory.Exists || (directory.Attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                throw new InvalidOperationException("held-work-cleanup-directory-invalid");
         }
+        var pending = new Stack<string>();
+        pending.Push(fullRoot);
+        while (pending.Count != 0)
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(pending.Pop()))
+            {
+                var attributes = File.GetAttributes(entry);
+                if ((attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                    throw new InvalidOperationException("held-work-cleanup-entry-invalid");
+                if ((attributes & FileAttributes.Directory) != 0) pending.Push(entry);
+            }
+        }
+        Directory.Delete(fullRoot, recursive: true);
     }
 
     internal static Settings SelectedSettings() => new() { VoiceId = Id(99), CachedVoice = new() { Title = "Selected" } };

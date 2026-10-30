@@ -1,8 +1,11 @@
+using NUnit.Framework;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class BuildScriptSuite
 {
     private const string ProjectName = "STranslate.Plugin.Tts.FishAudio";
@@ -20,7 +23,10 @@ internal static class BuildScriptSuite
         Path.Combine("tests", TestProjectName, "bin"),
     ];
 
-    internal static void ConfigurationParameterIsRejected()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/configuration-parameter-is-rejected")]
+    [Order(67)]
+    public static void ConfigurationParameterIsRejected()
     {
         using var repository = BuildScriptTestRepository.Create();
 
@@ -36,7 +42,10 @@ internal static class BuildScriptSuite
             "A rejected -Configuration parameter should stop before dotnet is invoked");
     }
 
-    internal static void TestSelectionArgumentsReachRunner()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/test-selection-arguments-reach-runner")]
+    [Order(76)]
+    public static void TestSelectionArgumentsReachRunner()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuild("-Release", "-Test", "-TestGroup", "settings.storage",
@@ -51,7 +60,10 @@ internal static class BuildScriptSuite
             "Full legacy validation explicitly selects the legacy entry before forwarding selectors");
     }
 
-    internal static void TestSelectionWithoutTestIsRejected()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/test-selection-without-test-is-rejected")]
+    [Order(77)]
+    public static void TestSelectionWithoutTestIsRejected()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuild("-TestGroup", "settings.storage");
@@ -59,7 +71,10 @@ internal static class BuildScriptSuite
         AssertEqual(false, repository.DotnetWasInvoked(), "Invalid selection stops before build or cleanup work");
     }
 
-    internal static void FailedSelectedTestsKeepExitCode()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/failed-selected-tests-keep-exit-code")]
+    [Order(78)]
+    public static void FailedSelectedTestsKeepExitCode()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithFailedTests("-Release", "-Test", "-Clean", "-TestGroup", "settings.storage");
@@ -68,13 +83,17 @@ internal static class BuildScriptSuite
         AssertEqual(true, ArtifactDirectories.All(path => !repository.ArtifactDirectoryExists(path)), "Cleanup still runs after selected failure");
     }
 
-    internal static void ReleaseSwitchSelectsReleaseWithoutDebugPackaging()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/release-switch-selects-release-without-debug-packaging")]
+    [Order(68)]
+    public static void ReleaseSwitchSelectsReleaseWithoutDebugPackaging()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedDebugOnlyArtifact();
 
         var result = repository.RunBuild("-Release", "-Clean");
         var invocations = repository.ReadDotnetInvocations();
+        AssertBuildProcessesRetireWithTheirOwner(invocations);
 
         AssertEqual(0, result.ExitCode, $"-Release build should succeed with the fake dotnet host. Output: {result.Output}");
         AssertEqual(
@@ -91,7 +110,10 @@ internal static class BuildScriptSuite
             "-Release should discover and copy only the isolated Release package");
     }
 
-    internal static void PackageMissingAudioRuntimeDependencyFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-audio-runtime-dependency-fails")]
+    [Order(69)]
+    public static void PackageMissingAudioRuntimeDependencyFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutAudioDependency();
@@ -101,7 +123,10 @@ internal static class BuildScriptSuite
             "The failure should identify the missing runtime dependency");
     }
 
-    internal static void PackageMissingStreamingRuntimeDependencyFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-streaming-runtime-dependency-fails")]
+    [Order(72)]
+    public static void PackageMissingStreamingRuntimeDependencyFails()
     {
         string[] dependencies = ["MessagePack.dll", "MessagePack.Annotations.dll", "Microsoft.NET.StringTools.dll"];
         foreach (var dependency in dependencies)
@@ -115,9 +140,15 @@ internal static class BuildScriptSuite
         }
     }
 
-    internal static void PackageMissingRussianXamlFails() => PackageMissingLocaleFails("Languages/ru.xaml");
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-russian-xaml-fails")]
+    [Order(65)]
+    public static void PackageMissingRussianXamlFails() => PackageMissingLocaleFails("Languages/ru.xaml");
 
-    internal static void PackageMissingTurkishMetadataFails() => PackageMissingLocaleFails("Languages/tr.json");
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-turkish-metadata-fails")]
+    [Order(66)]
+    public static void PackageMissingTurkishMetadataFails() => PackageMissingLocaleFails("Languages/tr.json");
 
     private static void PackageMissingLocaleFails(string resource)
     {
@@ -128,7 +159,10 @@ internal static class BuildScriptSuite
             "The package failure must identify the omitted locale resource");
     }
 
-    internal static void PackageMissingOcticonsNoticeFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-octicons-notice-fails")]
+    [Order(70)]
+    public static void PackageMissingOcticonsNoticeFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutOcticonsNotice();
@@ -136,7 +170,10 @@ internal static class BuildScriptSuite
         AssertEqual(true, result.Output.Contains("Octicons.LICENSE.txt", StringComparison.Ordinal), "Package rejection must identify the missing icon license");
     }
 
-    internal static void PackageMissingFlagIconsNoticeFails()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/package-missing-flag-icons-notice-fails")]
+    [Order(71)]
+    public static void PackageMissingFlagIconsNoticeFails()
     {
         using var repository = BuildScriptTestRepository.Create();
         var result = repository.RunBuildWithoutFlagIconsNotice();
@@ -144,13 +181,17 @@ internal static class BuildScriptSuite
         AssertEqual(true, result.Output.Contains("flag-icons.LICENSE.txt", StringComparison.Ordinal), "Package rejection identifies the missing flag license");
     }
 
-    internal static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/ordinary-build-cleans-every-artifact-directory-before-building")]
+    [Order(73)]
+    public static void OrdinaryBuildCleansEveryArtifactDirectoryBeforeBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();
 
         var result = repository.RunBuild();
         var invocations = repository.ReadDotnetInvocations();
+        AssertBuildProcessesRetireWithTheirOwner(invocations);
 
         AssertEqual(0, result.ExitCode, $"Ordinary build should succeed with the fake dotnet host. Output: {result.Output}");
         AssertEqual(
@@ -175,7 +216,10 @@ internal static class BuildScriptSuite
             "Ordinary build should retain the copied root package");
     }
 
-    internal static void CleanBuildCleansEveryArtifactDirectoryAfterBuilding()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/clean-build-cleans-every-artifact-directory-after-building")]
+    [Order(74)]
+    public static void CleanBuildCleansEveryArtifactDirectoryAfterBuilding()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();
@@ -197,7 +241,10 @@ internal static class BuildScriptSuite
             "-Clean should retain the copied root package");
     }
 
-    internal static void CleanBuildCleansAfterFailedRegressionTests()
+    [Test]
+    [Property("FishAudioCaseId", "repository.build/clean-build-cleans-after-failed-regression-tests")]
+    [Order(75)]
+    public static void CleanBuildCleansAfterFailedRegressionTests()
     {
         using var repository = BuildScriptTestRepository.Create();
         repository.SeedArtifactDirectories();
@@ -215,7 +262,7 @@ internal static class BuildScriptSuite
             "-Clean should retain the copied root package when later regression tests fail");
     }
 
-    // NUnit discovers these three orchestration cases independently. They do not
+    // NUnit discovers these orchestration cases independently. They do not
     // add entries to, or replace assertions in, the legacy repository catalog.
     internal static Task FullReleaseRunsLegacyAndFrameworkOnceAsync() =>
         ExerciseFrameworkBuildAsync(legacyOnly: false, failFramework: false);
@@ -226,7 +273,10 @@ internal static class BuildScriptSuite
     internal static Task LegacyOnlyCoordinatorSkipsFrameworkAsync() =>
         ExerciseFrameworkBuildAsync(legacyOnly: true, failFramework: false);
 
-    private static async Task ExerciseFrameworkBuildAsync(bool legacyOnly, bool failFramework)
+    internal static Task AdmissionFailureKeepsExitCodePackageAndCleanupAsync() =>
+        ExerciseFrameworkBuildAsync(legacyOnly: false, failFramework: false, failAdmission: true);
+
+    private static async Task ExerciseFrameworkBuildAsync(bool legacyOnly, bool failFramework, bool failAdmission = false)
     {
         var clock = Stopwatch.StartNew();
         BuildScriptTestRepository? repository = null;
@@ -237,25 +287,37 @@ internal static class BuildScriptSuite
             repository.SeedArtifactDirectories();
             var arguments = new List<string> { "-Release", "-Clean", "-Test" };
             if (legacyOnly) arguments.Add("-LegacyOnly");
-            var result = await repository.RunFrameworkBuildAsync(clock, failFramework, arguments.ToArray());
-            AssertEqual(failFramework ? 31 : 0, result.ExitCode, "Combined build preserves the framework outcome");
+            var result = await repository.RunFrameworkBuildAsync(clock, failFramework, failAdmission, arguments.ToArray());
+            AssertEqual(failFramework ? 31 : failAdmission ? 37 : 0, result.ExitCode, "Combined build preserves the actual producer or independent admission outcome");
             var legacy = repository.ReadDotnetInvocations().Where(line => line.StartsWith("run ", StringComparison.Ordinal)).ToArray();
-            AssertEqual(1, legacy.Length, "Combined build executes the legacy runner exactly once");
-            AssertEqual(true, legacy[0].Contains("-c Release -- --legacy|", StringComparison.Ordinal),
-                "The unfiltered Release invocation uses the explicit legacy entry without selectors");
+            AssertEqual(legacyOnly ? 1 : 0, legacy.Length, "Full hybrid delegates every owner once; only explicit diagnostics invoke legacy directly");
+            if (legacyOnly)
+                AssertEqual(true, legacy[0].Contains("-c Release -- --legacy|", StringComparison.Ordinal),
+                    "The explicit legacy diagnostic retains its original runner arguments");
             var framework = repository.ReadFrameworkInvocations();
-            AssertEqual(legacyOnly ? 0 : 1, framework.Length, "The framework driver runs exactly once unless the outer coordinator owns it");
+            AssertEqual(legacyOnly ? 0 : failFramework ? 1 : 2, framework.Length,
+                "One producer precedes one independent consumer; producer failure cannot reach admission");
             if (!legacyOnly)
             {
                 var fields = framework[0].Split('|');
-                AssertEqual(4, fields.Length, "The framework process records its invocation and actual host");
-                AssertEqual("Full", fields[0], "The combined build requests both complete framework catalogs");
-                AssertEqual("Core", fields[1], "Windows PowerShell launches the framework phase in PowerShell Core");
-                AssertEqual(true, int.TryParse(fields[2], out var major) && major >= 7, "The framework phase uses PowerShell 7 or later");
-                AssertEqual("True", fields[3], "The inspected package exists before framework execution");
+                AssertEqual(7, fields.Length, "The producer records its actual route, host, package and fresh explicit roots");
+                AssertEqual("producer", fields[0], "The combined build uses TestHybrid for the full owner union");
+                AssertEqual("Core", fields[1], "Windows PowerShell launches the hybrid phase in PowerShell Core");
+                AssertEqual(true, int.TryParse(fields[2], out var major) && major >= 7, "The hybrid phase uses PowerShell 7 or later");
+                AssertEqual("True", fields[3], "The inspected package exists before hybrid execution");
+                AssertEqual("True", fields[4], "The producer receives the actual explicit repository root");
+                AssertEqual("True", fields[5], "The producer owns a fresh external result directory");
+                AssertEqual("False", fields[6], "The manual producer retains the standard build/Discover preparation");
+                if (!failFramework)
+                {
+                    var admission = framework[1].Split('|');
+                    AssertEqual("admission", admission[0], "The independent consumer follows the same producer session");
+                    AssertEqual("True", admission[4], "The consumer receives the same explicit repository root");
+                    AssertEqual("True", admission[5], "The consumer receives the actual fresh producer session");
+                }
                 var inspected = result.Output.IndexOf("All required files present.", StringComparison.Ordinal);
-                var invoked = result.Output.IndexOf("framework-fixture: invoked", StringComparison.Ordinal);
-                AssertEqual(true, inspected >= 0 && invoked > inspected, "Package inspection completes before framework execution");
+                var invoked = result.Output.IndexOf("hybrid-build-fixture: producer", StringComparison.Ordinal);
+                AssertEqual(true, inspected >= 0 && invoked > inspected, "Package inspection completes before the hybrid producer");
             }
             AssertEqual(true, repository.RootPackageContains("plugin.json"), "The current inspected package remains available after the framework outcome");
             AssertEqual(true, ArtifactDirectories.All(path => !repository.ArtifactDirectoryExists(path)), "Deferred cleanup completes after the framework outcome");
@@ -334,7 +396,17 @@ internal static class BuildScriptSuite
                 $logPath = $env:FISH_AUDIO_BUILD_TEST_LOG
                 $projectName = 'STranslate.Plugin.Tts.FishAudio'
                 $testProjectName = 'STranslate.Plugin.Tts.FishAudio.Tests'
-                $argumentsText = $args -join ' '
+                # The -File binder splits colon-bearing options; observe the original native argv.
+                $nativeHostArguments = [Environment]::GetCommandLineArgs()
+                $fileOptionIndex = [Array]::IndexOf($nativeHostArguments, '-File')
+                if ($fileOptionIndex -lt 0 -or $fileOptionIndex + 2 -ge $nativeHostArguments.Length -or
+                    -not [string]::Equals(
+                        [IO.Path]::GetFullPath($nativeHostArguments[$fileOptionIndex + 1]),
+                        [IO.Path]::GetFullPath($PSCommandPath), [StringComparison]::OrdinalIgnoreCase)) {
+                    throw 'build-fixture-native-arguments-invalid'
+                }
+                $nativeArguments = @($nativeHostArguments[($fileOptionIndex + 2)..($nativeHostArguments.Length - 1)])
+                $argumentsText = $nativeArguments -join ' '
                 $configuration = if (
                     $argumentsText -match '(?i)(?:-c\s+Release|Configuration(?:=|:|\s)+Release)'
                 ) {
@@ -355,15 +427,16 @@ internal static class BuildScriptSuite
                     (Join-Path (Join-Path 'tests' $testProjectName) 'bin')
                 )
 
-                if ($args.Count -gt 0 -and $args[0] -eq 'msbuild') {
-                    Write-Output $packageDirectory
-                    exit 0
-                }
 
                 $seedStates = foreach ($relativeDir in $relativeDirs) {
                     Test-Path -LiteralPath (Join-Path (Join-Path $repoRoot $relativeDir) 'seed.txt')
                 }
-                Add-Content -LiteralPath $logPath -Value "$($args -join ' ')|$($seedStates -join ',')"
+                Add-Content -LiteralPath $logPath -Value "$argumentsText|$($seedStates -join ',')"
+
+                if ($args.Count -gt 0 -and $args[0] -eq 'msbuild') {
+                    Write-Output $packageDirectory
+                    exit 0
+                }
 
                 foreach ($relativeDir in $relativeDirs) {
                     $directory = Join-Path $repoRoot $relativeDir
@@ -439,23 +512,44 @@ internal static class BuildScriptSuite
                 }
                 """);
 
-            File.WriteAllText(Path.Combine(rootPath, "tools", "Test.ps1"),
+            File.WriteAllText(Path.Combine(rootPath, "tools", "TestHybrid.ps1"),
                 """
-                param([string]$Mode)
+                param([string]$RepositoryRoot,[string]$ResultsDirectory,[int]$Workers,[switch]$NoBuild)
                 Set-StrictMode -Version Latest
                 $ErrorActionPreference = 'Stop'
                 $package = Join-Path $env:FISH_AUDIO_BUILD_TEST_REPO 'STranslate.Plugin.Tts.FishAudio.spkg'
-                $fields = @($Mode, $PSVersionTable.PSEdition, [string]$PSVersionTable.PSVersion.Major, [string][IO.File]::Exists($package))
-                [IO.File]::AppendAllText($env:FISH_AUDIO_BUILD_TEST_FRAMEWORK_LOG, (($fields -join '|') + "`n"), [Text.UTF8Encoding]::new($false))
-                foreach ($project in @('tools/FishAudio.Testing', 'tests/FishAudio.Testing.Tests')) {
-                    foreach ($output in @('bin', 'obj', '.artifacts')) {
-                        $directory = Join-Path $env:FISH_AUDIO_BUILD_TEST_REPO ($project + '/' + $output)
-                        [IO.Directory]::CreateDirectory($directory) | Out-Null
-                        [IO.File]::WriteAllText((Join-Path $directory 'framework-produced.txt'), 'produced')
+                $sameRoot = $RepositoryRoot -ceq $env:FISH_AUDIO_BUILD_TEST_REPO
+                $fresh = -not [IO.Directory]::Exists($ResultsDirectory) -and -not $ResultsDirectory.StartsWith($RepositoryRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)
+                $fields = @('producer',$PSVersionTable.PSEdition,[string]$PSVersionTable.PSVersion.Major,[string][IO.File]::Exists($package),[string]$sameRoot,[string]$fresh,[string][bool]$NoBuild)
+                [IO.File]::AppendAllText($env:FISH_AUDIO_BUILD_TEST_FRAMEWORK_LOG,(($fields -join '|')+[char]10),[Text.UTF8Encoding]::new($false))
+                if(-not $sameRoot -or -not $fresh -or $Workers -ne 4){throw 'build-fixture-producer-contract'}
+                [IO.Directory]::CreateDirectory($ResultsDirectory)|Out-Null
+                [IO.File]::WriteAllText((Join-Path $ResultsDirectory 'owner.txt'),'synthetic-build-boundary')
+                foreach ($project in @('tools/FishAudio.Testing','tests/FishAudio.Testing.Tests')) {
+                    foreach ($output in @('bin','obj','.artifacts')) {
+                        $directory=Join-Path $RepositoryRoot ($project+'/'+$output)
+                        [IO.Directory]::CreateDirectory($directory)|Out-Null
+                        [IO.File]::WriteAllText((Join-Path $directory 'framework-produced.txt'),'produced')
                     }
                 }
-                Write-Output 'framework-fixture: invoked'
-                if ($env:FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK -eq '1') { exit 31 }
+                Write-Output 'hybrid-build-fixture: producer'
+                if($env:FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK -ceq '1'){exit 31}
+                exit 0
+                """, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            File.WriteAllText(Path.Combine(rootPath, "tools", "Assert-HybridSession.ps1"),
+                """
+                param([string]$RepositoryRoot,[string]$SessionDirectory,[string]$OutputDirectory)
+                Set-StrictMode -Version Latest
+                $ErrorActionPreference = 'Stop'
+                $package=Join-Path $env:FISH_AUDIO_BUILD_TEST_REPO 'STranslate.Plugin.Tts.FishAudio.spkg'
+                $sameRoot=$RepositoryRoot -ceq $env:FISH_AUDIO_BUILD_TEST_REPO
+                $sameSession=[IO.File]::Exists((Join-Path $SessionDirectory 'owner.txt')) -and -not [IO.Directory]::Exists($OutputDirectory)
+                $fields=@('admission',$PSVersionTable.PSEdition,[string]$PSVersionTable.PSVersion.Major,[string][IO.File]::Exists($package),[string]$sameRoot,[string]$sameSession,'False')
+                [IO.File]::AppendAllText($env:FISH_AUDIO_BUILD_TEST_FRAMEWORK_LOG,(($fields -join '|')+[char]10),[Text.UTF8Encoding]::new($false))
+                if(-not $sameRoot -or -not $sameSession){throw 'build-fixture-admission-contract'}
+                [IO.Directory]::CreateDirectory($OutputDirectory)|Out-Null
+                Write-Output 'hybrid-build-fixture: admission'
+                if($env:FISH_AUDIO_BUILD_TEST_FAIL_ADMISSION -ceq '1'){exit 37}
                 exit 0
                 """, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
 
@@ -586,11 +680,12 @@ internal static class BuildScriptSuite
             return (process.ExitCode, $"{standardOutput}{Environment.NewLine}{standardError}");
         }
 
-        internal async Task<(int ExitCode, string Output)> RunFrameworkBuildAsync(Stopwatch clock, bool failFramework, params string[] arguments)
+        internal async Task<(int ExitCode, string Output)> RunFrameworkBuildAsync(Stopwatch clock, bool failFramework, bool failAdmission, params string[] arguments)
         {
             var startInfo = CreateBuildStartInfo(failTests: false, arguments);
             startInfo.CreateNoWindow = true;
             startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_FRAMEWORK"] = failFramework ? "1" : "0";
+            startInfo.Environment["FISH_AUDIO_BUILD_TEST_FAIL_ADMISSION"] = failAdmission ? "1" : "0";
             _ = RemainingFixtureTime(clock);
             using var process = Process.Start(startInfo) ?? throw new InvalidOperationException("build-compatibility-process-start");
             var stdout = process.StandardOutput.ReadToEndAsync();
@@ -701,6 +796,23 @@ internal static class BuildScriptSuite
         }
     }
 
+    private static void AssertBuildProcessesRetireWithTheirOwner(IReadOnlyList<string> invocations)
+    {
+        var owned = invocations.Where(command => command.StartsWith("build ", StringComparison.Ordinal) ||
+            command.StartsWith("msbuild ", StringComparison.Ordinal)).ToArray();
+        AssertEqual(true, owned.Length > 0, "A build must execute its owned tool commands");
+        AssertEqual(1, owned.Count(command => command.StartsWith("msbuild ", StringComparison.Ordinal)),
+            "The output-path query must be observed once without creating build artifacts");
+        foreach (var command in owned)
+        {
+            AssertEqual(true, command.Contains("-nodeReuse:false", StringComparison.Ordinal),
+                "Owned build and property-query nodes must not survive their process owner");
+            if (!command.StartsWith("build ", StringComparison.Ordinal)) continue;
+            AssertEqual(true, command.Contains("--disable-build-servers", StringComparison.Ordinal) &&
+                command.Contains("-p:UseSharedCompilation=false", StringComparison.Ordinal),
+                "Owned compilation must not launch a reusable compiler or MSBuild server");
+        }
+    }
     private static bool InvokesDebugPackagingTarget(string invocation) =>
         invocation.Contains("-t:PackageAsSpkg", StringComparison.Ordinal)
         || invocation.Contains("-t PackageAsSpkg", StringComparison.Ordinal);
