@@ -247,11 +247,17 @@ internal static class SettingsLayoutSuite
         }
     }
 
-    internal static void SelectedVoiceHeartSharesFavoriteState()
+    internal static void SelectedVoiceHeartSharesFavoriteState() =>
+        SelectedVoiceHeartSharesFavoriteState(ordinaryOwner: null);
+
+    internal static void SelectedVoiceHeartSharesFavoriteState(NativeCardsTempFixtureOwner? ordinaryOwner)
     {
         var id = "0123456789abcdef0123456789abcdef";
         var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected voice" } };
-        using var viewModel = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: CreateTempDirectory()), settings);
+        var directory = ordinaryOwner?.CreateSettingsDirectory() ?? CreateTempDirectory();
+        var viewModel = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: directory), settings);
+        ordinaryOwner?.Own(viewModel);
+        using var legacyViewModel = ordinaryOwner is null ? viewModel : null;
         var matching = new VoiceSearchItem { Id = id, Title = "Matching search result" };
         viewModel.SearchResults = [matching];
         var view = CreateThemedView(viewModel);

@@ -65,6 +65,8 @@ public sealed record IsolatedCoverageAdmission(int SchemaVersion, CoverageSessio
     bool RequireOwnedAppHost, CoverageSupervisorReceipt Supervisor)
 {
     public bool RequireFrameworkSupervision { get; init; }
+    public string? InstrumentationPolicyVersion { get; init; }
+    public CoverageDependencyObservation? Dependencies { get; init; }
 }
 public sealed record AdmittedCoverageBinary(CoverageBinaryRole Role, BinaryIdentityRecord Identity);
 public sealed record UnresolvedCaseCoverageSymbol(DotCoverMemberRecord Observation);
@@ -77,6 +79,8 @@ public sealed record CaseCoverage(int SchemaVersion, CoverageSessionIdentity Ide
     public bool CompleteBaseline => false;
     public string AttributionMode => "isolated-case";
     public bool SourceMappingsResolved => false;
+    public string? InstrumentationPolicyVersion { get; init; }
+    public CoverageDependencyRecord? Dependencies { get; init; }
 }
 
 public sealed class IsolatedCoverageSessionException : Exception
@@ -109,6 +113,9 @@ public static partial class IsolatedCoverageSession
                 "supervisor-identity-mismatch");
             Require(!expected.RequireFrameworkSupervision || supervisor.FrameworkEnvelope is not null,
                 "framework-supervision-required");
+            Require(CoverageInstrumentationPolicy.IsSupported(expected.InstrumentationPolicyVersion) &&
+                (expected.InstrumentationPolicyVersion is null || supervisor.FrameworkEnvelope is not null),
+                "instrumentation-policy-supervision");
             ValidateCompletion(supervisor, expected.RequireOwnedAppHost);
             Require(expected.DotCoverVersion == DotCoverAggregate.SupportedToolVersion, "unsupported-tool-version");
             Require(IsHash(expected.ToolSha256), "invalid-tool-hash");
@@ -196,6 +203,12 @@ public static partial class IsolatedCoverageSession
             ValidateProcessRecord(paths[CoverageArtifactKind.ExportProcess], supervisor.Export);
             ValidateInvocation(paths[CoverageArtifactKind.CoverInvocation], expected.Identity, "cover",
                 "--snapshot-output", paths[CoverageArtifactKind.Snapshot], testDll!, expected.ToolFile);
+            if (expected.InstrumentationPolicyVersion is null)
+            {
+                using var coverInvocation = ReadJson(paths[CoverageArtifactKind.CoverInvocation]);
+                Require(!Arguments(coverInvocation.RootElement).Any(item => item.StartsWith("--exclude-", StringComparison.OrdinalIgnoreCase)),
+                    "instrumentation-policy-v0-argv");
+            }
             ValidateInvocation(paths[CoverageArtifactKind.ExportInvocation], expected.Identity, "report",
                 "--snapshot-source", paths[CoverageArtifactKind.Snapshot], testDll: null, expectedToolFile: expected.ToolFile);
             using (var invocation = ReadJson(paths[CoverageArtifactKind.ExportInvocation]))
@@ -205,15 +218,30 @@ public static partial class IsolatedCoverageSession
             var result = NUnitEvidence.VerifyResults(catalog, [expected.Identity.CanonicalId],
                 paths[CoverageArtifactKind.NUnitXml], paths[CoverageArtifactKind.Trx]);
             Require(result.PassedCount == 1 && result.Cases.Count == 1, "terminal-case-set-mismatch");
+            ValidatedDependencyFramework? framework = null;
             if (supervisor.FrameworkEnvelope is { } frameworkEnvelope)
-                ValidateFrameworkEnvelope(frameworkEnvelope, expected, artifactRoot, buildRoot, sourceRoot, testDll!,
+                framework = ValidatedDependencyFramework.ReadIsolatedValidated(frameworkEnvelope, expected, artifactRoot, buildRoot, sourceRoot, testDll!,
                     paths, relativePaths, binaryPaths, catalog, locks);
+            CoverageDependencyRecord? dependencies = null;
+            if (expected.Dependencies is { } dependencyExpectation)
+            {
+                var testsBinding = expected.Binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+                dependencies = CoverageDependencies.Validate(dependencyExpectation, expected.Identity.Source, expected.Identity.BuildId,
+                    sourceRoot, testDll!, Child(buildRoot, testsBinding.PdbRelativePath), paths[CoverageArtifactKind.Discovery],
+                    catalog.Where(item => item.CanonicalId == expected.Identity.CanonicalId).ToArray(), "isolated-case",
+                    expected.Identity.RunId, expected.Identity.SessionId, framework, locks);
+            }
             var aggregate = DotCoverAggregate.ReadValidated(paths[CoverageArtifactKind.AggregateJson], product.AssemblyName,
                 expected.DotCoverVersion);
             Require(aggregate.ReportSha256 == input.Artifacts.Single(item => item.Kind == CoverageArtifactKind.AggregateJson).Sha256,
                 "aggregate-digest-mismatch");
             var empty = aggregate.TargetAssembly is null || aggregate.TargetAssembly.CoveredStatements == 0;
-            if (empty)
+            if (empty && dependencies is not null)
+                Require(dependencies.Observation.Cases.All(item => item.Responsibility != CoverageResponsibility.ProductExpected),
+                    "empty-product-expected-hit-required");
+            var frameworkOnly = dependencies is not null && CoverageDependencies.AllowsEmpty(dependencies) &&
+                dependencies.Observation.Cases.All(item => item.Responsibility == CoverageResponsibility.FrameworkLifecycleOnly);
+            if (empty && !(frameworkOnly && input.EmptyProduct is null))
             {
                 // Keep the established explanation/hash checks first. The same
                 // already-hashed discovery remains held in locks while its
@@ -222,13 +250,20 @@ public static partial class IsolatedCoverageSession
                 var metadata = NUnitEvidence.ReadCaseMetadata(paths[CoverageArtifactKind.Discovery], expected.Identity.CanonicalId);
                 ValidateEmptyProductDeclaration(metadata, input.EmptyProduct!, sourceRoot);
             }
-            else Require(input.EmptyProduct is null, "unexpected-empty-product-explanation");
+            else if (!empty)
+            {
+                Require(input.EmptyProduct is null, "unexpected-empty-product-explanation");
+                CoverageDependencies.ValidateNonempty(dependencies);
+            }
+            if (dependencies is not null) CoverageDependencies.Recheck(dependencies, sourceRoot, locks);
             var observations = aggregate.Members.Select(member => new UnresolvedCaseCoverageSymbol(member)).ToArray();
             admitted = true;
             return new(1, expected.Identity, result.Cases[0], binaries.AsReadOnly(), Array.AsReadOnly(input.Artifacts.ToArray()),
-                aggregate, Array.AsReadOnly(observations), supervisor, input.EmptyProduct);
+                aggregate, Array.AsReadOnly(observations), supervisor, input.EmptyProduct)
+                { Dependencies = dependencies, InstrumentationPolicyVersion = expected.InstrumentationPolicyVersion };
         }
         catch (IsolatedCoverageSessionException) { throw; }
+        catch (CoverageDependencyException error) { throw Rejected(error.Code); }
         catch (NUnitEvidenceException) { throw Rejected("test-evidence-rejected"); }
         catch (BinaryIdentityException) { throw Rejected("binary-evidence-rejected"); }
         catch (DotCoverAggregateException) { throw Rejected("aggregate-evidence-rejected"); }

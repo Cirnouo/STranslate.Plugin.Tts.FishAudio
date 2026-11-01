@@ -14,6 +14,146 @@ public sealed record CoverageFrameworkEnvelope(int SchemaVersion,
 
 public static partial class IsolatedCoverageSession
 {
+    // This capability cannot be deserialized or constructed from an arbitrary
+    // supervisor descriptor. Its only factories run the existing raw envelope
+    // validators and retain the exact live owner's still-held file guards.
+    internal sealed class ValidatedDependencyFramework
+    {
+        private readonly CoverageSourceIdentity _source;
+        private readonly string _buildId, _sourceDirectory, _testsDll, _testsPdb, _discovery, _ownerKind, _runId, _sessionId;
+        private readonly DiscoveredNUnitCase[] _cases;
+        private readonly List<FileStream> _guards;
+        private readonly FileStream[] _validatedGuards;
+        private readonly string[] _requiredFiles;
+        internal BinaryIdentityRecord TestsBinary { get; }
+        internal string DiscoverySha256 { get; }
+        internal string SupervisorSha256 { get; }
+
+        private ValidatedDependencyFramework(CoverageSourceIdentity source, string buildId, string sourceDirectory,
+            string testsDll, string testsPdb, string discovery, IReadOnlyList<DiscoveredNUnitCase> cases,
+            string ownerKind, string runId, string sessionId, BinaryIdentityRecord testsBinary,
+            string discoverySha256, CoverageOwnedProcessEvidence supervisor, string supervisorPath, List<FileStream> guards)
+        {
+            _source = source; _buildId = buildId; _sourceDirectory = sourceDirectory; _testsDll = testsDll;
+            _testsPdb = testsPdb; _discovery = discovery; _cases = cases.ToArray(); _ownerKind = ownerKind;
+            _runId = runId; _sessionId = sessionId; TestsBinary = testsBinary; DiscoverySha256 = discoverySha256;
+            SupervisorSha256 = supervisor.Sha256; _guards = guards; _validatedGuards = guards.ToArray();
+            _requiredFiles = [testsDll, testsPdb, discovery, supervisorPath];
+        }
+
+        internal static ValidatedDependencyFramework ReadIsolatedValidated(CoverageFrameworkEnvelope envelope,
+            IsolatedCoverageAdmission expected, string artifactRoot, string buildRoot, string sourceRoot,
+            string testDll, IReadOnlyDictionary<CoverageArtifactKind, string> paths, HashSet<string> relativePaths,
+            HashSet<string> binaryPaths, IReadOnlyList<DiscoveredNUnitCase> catalog, List<FileStream> guards)
+        {
+            foreach (var path in paths.Values) _ = OpenAbsolute(path, guards);
+            ValidateFrameworkEnvelope(envelope, expected, artifactRoot, buildRoot, sourceRoot, testDll,
+                paths, relativePaths, binaryPaths, catalog, guards);
+            var tests = expected.Binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+            var actualCatalog = ValidateDependencyInputs(paths, expected.Supervisor.Artifacts, expected.DiscoverySha256, tests, buildRoot, testDll, guards,
+                [expected.Identity.CanonicalId]);
+            Require(actualCatalog.SequenceEqual(catalog), "framework-dependency-catalog-mismatch");
+            return new(expected.Identity.Source, expected.Identity.BuildId, sourceRoot, testDll,
+                Child(buildRoot, tests.PdbRelativePath), paths[CoverageArtifactKind.Discovery],
+                actualCatalog.Where(item => item.CanonicalId == expected.Identity.CanonicalId).ToArray(), "isolated-case",
+                expected.Identity.RunId, expected.Identity.SessionId, tests.ExpectedIdentity, expected.DiscoverySha256,
+                envelope.Supervisor, Child(artifactRoot, envelope.Supervisor.RelativePath), guards);
+        }
+
+        internal static (OrderedProfileFrameworkEvidenceRecord Execution, ValidatedDependencyFramework Binding) ReadOrderedValidated(
+            OrderedProfileCoverageGroupAdmission expected, OrderedProfileCoveragePlanRecord plan, string artifactRoot,
+            string buildRoot, string sourceRoot, string testDll, IReadOnlyDictionary<CoverageArtifactKind, string> paths,
+            HashSet<string> relativePaths, HashSet<string> binaryPaths, List<FileStream> guards)
+        {
+            foreach (var path in paths.Values) _ = OpenAbsolute(path, guards);
+            var execution = IsolatedCoverageSession.ValidateOrderedProfileEnvelope(expected, plan, artifactRoot,
+                buildRoot, sourceRoot, testDll, paths, relativePaths, binaryPaths, guards);
+            var tests = expected.Binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+            var supervisor = expected.Supervisor.FrameworkEnvelope.Supervisor;
+            var selected = plan.Members.Select(item => item.Case).ToArray();
+            var actualCatalog = ValidateDependencyInputs(paths, expected.Supervisor.Artifacts, expected.DiscoverySha256, tests, buildRoot, testDll, guards,
+                selected.Select(item => item.CanonicalId).ToArray()).ToDictionary(item => item.CanonicalId, StringComparer.Ordinal);
+            Require(selected.All(item => actualCatalog.TryGetValue(item.CanonicalId, out var actual) && actual == item),
+                "framework-dependency-catalog-mismatch");
+            return (execution, new ValidatedDependencyFramework(expected.Identity.Source, expected.Identity.BuildId, sourceRoot, testDll,
+                Child(buildRoot, tests.PdbRelativePath), paths[CoverageArtifactKind.Discovery],
+                selected, "ordered-profile-group", expected.Identity.RunId,
+                expected.Identity.SessionId, tests.ExpectedIdentity, expected.DiscoverySha256, supervisor,
+                Child(artifactRoot, supervisor.RelativePath), guards));
+        }
+
+        private static IReadOnlyList<DiscoveredNUnitCase> ValidateDependencyInputs(
+            IReadOnlyDictionary<CoverageArtifactKind, string> paths, IReadOnlyList<CoverageArtifact> artifacts,
+            string discoverySha256, CoverageBinaryBinding tests,
+            string buildRoot, string testDll, List<FileStream> guards, IReadOnlyList<string> selectedIds)
+        {
+            Require(Digest(OpenAbsolute(paths[CoverageArtifactKind.Discovery], guards)) == discoverySha256,
+                "framework-dependency-discovery-mismatch");
+            foreach (var kind in new[] { CoverageArtifactKind.NUnitXml, CoverageArtifactKind.Trx })
+                Require(Digest(OpenAbsolute(paths[kind], guards)) == artifacts.Single(item => item.Kind == kind).Sha256,
+                    "framework-dependency-results-digest-mismatch");
+            _ = OpenAbsolute(testDll, guards);
+            var testPdb = Child(buildRoot, tests.PdbRelativePath);
+            _ = OpenAbsolute(testPdb, guards);
+            Require(BinaryIdentity.ReadValidated(testDll, testPdb) == tests.ExpectedIdentity, "framework-dependency-binary-mismatch");
+            var actual = NUnitEvidence.ReadCatalog(paths[CoverageArtifactKind.Discovery]);
+            var result = NUnitEvidence.VerifyResults(actual, selectedIds, paths[CoverageArtifactKind.NUnitXml], paths[CoverageArtifactKind.Trx]);
+            Require(result.PassedCount == selectedIds.Count && result.Cases.Count == selectedIds.Count,
+                "framework-dependency-results-mismatch");
+            return actual;
+        }
+
+        internal bool Matches(CoverageSourceIdentity source, string buildId, string sourceDirectory,
+            string testsDll, string testsPdb, string discovery, IReadOnlyList<DiscoveredNUnitCase> cases,
+            string ownerKind, string runId, string sessionId, List<FileStream> guards) =>
+            ReferenceEquals(_guards, guards) && _source == source && _buildId == buildId && _ownerKind == ownerKind &&
+            _runId == runId && _sessionId == sessionId && _cases.SequenceEqual(cases) &&
+            SameFrameworkPath(_sourceDirectory, sourceDirectory) && SameFrameworkPath(_testsDll, testsDll) &&
+            SameFrameworkPath(_testsPdb, testsPdb) && SameFrameworkPath(_discovery, discovery) &&
+            _validatedGuards.All(guard => guard.CanRead && guards.Contains(guard)) &&
+            _requiredFiles.All(path => _validatedGuards.Any(guard => guard.CanRead && SameFrameworkPath(guard.Name, path)));
+    }
+
+    private static bool IsBoundFrameworkToolProductDriver(string driver, string driverSha256, string buildRoot,
+        IReadOnlyList<CoverageBinaryBinding> binaries, List<FileStream> locks)
+    {
+        // The framework tool may itself be the observed Product. This exception
+        // binds the exact independently admitted DLL and adjacent matched PDB;
+        // a familiar file name or a second copy of that pair is insufficient.
+        var product = binaries.Single(item => item.Role == CoverageBinaryRole.Product);
+        var tests = binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+        var productDll = Child(buildRoot, product.DllRelativePath);
+        var productPdb = Child(buildRoot, product.PdbRelativePath);
+        if (!SameFrameworkPath(driver, productDll) ||
+            !SameFrameworkPath(productPdb, Path.ChangeExtension(driver, ".pdb")) ||
+            SameFrameworkPath(driver, Child(buildRoot, tests.DllRelativePath)) ||
+            SameFrameworkPath(driver, Child(buildRoot, tests.PdbRelativePath)) ||
+            product.ExpectedIdentity.AssemblyName != "FishAudio.Testing" ||
+            product.ExpectedIdentity.DllSha256 != driverSha256)
+            return false;
+        _ = OpenAbsolute(productDll, locks);
+        _ = OpenAbsolute(productPdb, locks);
+        return BinaryIdentity.ReadValidated(productDll, productPdb) == product.ExpectedIdentity;
+    }
+
+    private static void ValidateInstrumentationBinding(DotCoverSdkVstestLaunch launch, string? expectedVersion,
+        string buildRoot, IReadOnlyList<CoverageBinaryBinding> binaries)
+    {
+        Require(CoverageInstrumentationPolicy.IsSupported(expectedVersion) &&
+            launch.InstrumentationPolicyVersion == expectedVersion, "framework-instrumentation-policy");
+        if (expectedVersion is null)
+        {
+            Require(launch.ProductAssembly is null && launch.ProductAssemblySha256 is null, "framework-instrumentation-policy-v0-fields");
+            return;
+        }
+        var product = binaries.Single(item => item.Role == CoverageBinaryRole.Product);
+        var tests = binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+        Require(SameFrameworkPath(launch.ProductAssembly, Child(buildRoot, product.DllRelativePath)) &&
+            launch.ProductAssemblySha256 == product.ExpectedIdentity.DllSha256 &&
+            CoverageInstrumentationPolicy.RetainsProtectedNames(product.ExpectedIdentity.AssemblyName, tests.ExpectedIdentity.AssemblyName),
+            "framework-instrumentation-policy-product");
+    }
+
     private static void ValidateFrameworkEnvelope(CoverageFrameworkEnvelope envelope,
         IsolatedCoverageAdmission expected, string artifactRoot, string buildRoot, string sourceRoot,
         string testDll, IReadOnlyDictionary<CoverageArtifactKind, string> paths,
@@ -65,7 +205,9 @@ public static partial class IsolatedCoverageSession
         Require(IsHash(envelope.DriverAssemblySha256), "framework-driver-identity");
         var driver = Child(buildRoot, envelope.DriverAssemblyRelativePath);
         Require(Path.GetFileName(driver).Equals("FishAudio.Testing.dll", StringComparison.OrdinalIgnoreCase) &&
-            !occupied.Contains(driver) && !binaryPaths.Contains(driver), "framework-driver-identity");
+            !occupied.Contains(driver) && (!binaryPaths.Contains(driver) ||
+                IsBoundFrameworkToolProductDriver(driver, envelope.DriverAssemblySha256, buildRoot, expected.Binaries, locks)),
+            "framework-driver-identity");
         Require(Digest(OpenAbsolute(driver, locks)) == envelope.DriverAssemblySha256, "framework-driver-mismatch");
 
         using var requestDocument = ReadJson(executionRequest);
@@ -87,6 +229,7 @@ public static partial class IsolatedCoverageSession
             string.Equals(Path.GetFileName(launch.ToolAssembly), "dotCover.dll", StringComparison.OrdinalIgnoreCase) &&
             string.Equals(Path.GetFileName(launch.VstestConsoleAssembly), "vstest.console.dll", StringComparison.OrdinalIgnoreCase),
             "framework-profiled-launch-mismatch");
+        ValidateInstrumentationBinding(launch, expected.InstrumentationPolicyVersion, buildRoot, expected.Binaries);
         // This is live producer admission: the installed SDK input must still
         // exist with its declared bytes. No portable consumer admission is claimed.
         Require(Digest(OpenAbsolute(launch.VstestConsoleAssembly, locks)) == launch.VstestConsoleSha256,
@@ -152,7 +295,8 @@ public static partial class IsolatedCoverageSession
         // Keep this bounded argv contract identical to the existing driver's
         // direct SDK VSTest route; no arbitrary command descriptor is admitted.
         string[] target = [launch.ToolAssembly, "cover", "--target-executable", request.DotnetExecutable,
-            "--snapshot-output", launch.SnapshotPath, "--log-file", launch.LogPath, "--", "exec",
+            "--snapshot-output", launch.SnapshotPath, "--log-file", launch.LogPath,
+            .. CoverageInstrumentationPolicy.Arguments(launch.InstrumentationPolicyVersion), "--", "exec",
             launch.VstestConsoleAssembly, request.TestAssembly, "--Settings:" + request.RunSettings,
             "--logger:trx;LogFileName=" + Path.GetFileName(request.TrxPath),
             "--ResultsDirectory:" + Path.GetDirectoryName(request.TrxPath)];
@@ -226,7 +370,8 @@ public static partial class IsolatedCoverageSession
             evidence.GetProperty("trxSha256").GetString() == ArtifactHash(expected, CoverageArtifactKind.Trx),
             "framework-supervisor-raw-evidence-mismatch");
         var launch = root.GetProperty("launch");
-        Require(launch.GetProperty("kind").GetString() == "dotcover-sdk-vstest" &&
+        Require(CoverageInstrumentationPolicy.RecordedVersionMatches(launch, expected.InstrumentationPolicyVersion) &&
+            launch.GetProperty("kind").GetString() == "dotcover-sdk-vstest" &&
             launch.GetProperty("sessionId").GetString() == expected.Identity.SessionId &&
             launch.GetProperty("invocationSha256").GetString() == ArtifactHash(expected, CoverageArtifactKind.CoverInvocation) &&
             launch.GetProperty("toolSha256").GetString() == expected.ToolSha256 &&

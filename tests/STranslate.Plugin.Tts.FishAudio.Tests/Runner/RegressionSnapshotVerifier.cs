@@ -3,14 +3,18 @@ internal static class RegressionSnapshotVerifier
     internal static bool IsInvocation(string[] args) => args.Length > 0 && args[0] is "--verify-snapshot-report" or "--verify-snapshot-partition-report";
 
     // Metadata only: never invoke a scenario while checking completed evidence.
-    internal static int Run(string[] args)
+    internal static int Run(string[] args) => RunForCatalog(args, RegressionCatalog.Create());
+
+    // Internal synthetic/historical contract input. Program never accepts a
+    // caller-supplied catalog; production always uses the actual empty catalog.
+    internal static int RunForCatalog(string[] args, IReadOnlyList<RegressionCase> catalog)
     {
-        if (args.Length > 0 && args[0] == "--verify-snapshot-partition-report") return RunPartition(args);
+        if (args.Length > 0 && args[0] == "--verify-snapshot-partition-report") return RunPartition(args, catalog);
         if (args.Length != 3 && (args.Length != 5 || args[3] != "--catalog-output" ||
             !Path.IsPathFullyQualified(args[4]))) return 2;
+        if (catalog.Count == 0) throw new InvalidDataException("Retired legacy execution has no snapshot catalog evidence.");
         var snapshot = SnapshotContext.Read() ?? throw new InvalidDataException("Missing snapshot owner.");
         var report = RegressionReport.Read(args[1]);
-        var catalog = RegressionCatalog.Create();
         if (snapshot.Tree != args[2] || !report.Complete || report.FinishedUtc is null || report.Generation <= 0 ||
             !RegressionProcessProtocol.SameSource(report.Source, snapshot.Identity()) ||
             report.Configuration != "Release" || report.Configuration != RegressionReport.BuildMetadata("RegressionBuildConfiguration") ||
@@ -36,13 +40,13 @@ internal static class RegressionSnapshotVerifier
 
     // Admit one unchanged authoritative report generation for one current
     // nonempty legacy slot. The outer consumer owns the complete hybrid union.
-    private static int RunPartition(string[] args)
+    private static int RunPartition(string[] args, IReadOnlyList<RegressionCase> fullCatalog)
     {
         if ((args.Length != 5 && args.Length != 7) || args[3] != "--partition" ||
             !RegressionProcessProtocol.Partitions.Contains(args[4], StringComparer.Ordinal) ||
             !Path.IsPathFullyQualified(args[1]) ||
             (args.Length == 7 && (args[5] != "--catalog-output" || !Path.IsPathFullyQualified(args[6])))) return 2;
-        var fullCatalog = RegressionCatalog.Create();
+        if (fullCatalog.Count == 0) throw new InvalidDataException("Retired legacy execution has no snapshot partition evidence.");
         var source = RegressionSource.CaptureAsync().GetAwaiter().GetResult();
         // Match the actual producer: dirty scope describes the full current
         // legacy catalog before any partition selection, not this report slice.

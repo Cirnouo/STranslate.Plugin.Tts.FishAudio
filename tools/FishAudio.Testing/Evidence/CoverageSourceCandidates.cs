@@ -181,8 +181,9 @@ public static class CoverageSourceCandidates
             var root = document.RootElement;
             var summary = new CoverageContainerRootSummary(root.GetProperty("CoveredStatements").GetInt64(),
                 root.GetProperty("TotalStatements").GetInt64(), root.GetProperty("CoveragePercent").GetInt32());
-            var builder = new CandidateBuilder(pe, sources, budget);
-            var result = builder.Build(admitted, digest, summary);
+            var graph = ConstructGraph(pe, sources, admitted.Aggregate, admitted.EmptyProduct, digest, summary, budget);
+            var result = new CoverageSourceCandidatesEvidence(1, admitted.Identity, graph.Product, graph.AggregateSha256,
+                graph.RootSummary, graph.Scopes, graph.Documents, graph.Methods, graph.Observations, graph.EmptyProduct);
             completed = true;
             return result;
         }
@@ -202,6 +203,17 @@ public static class CoverageSourceCandidates
             }
             if (failed && completed) throw Rejected("file-release-failed");
         }
+    }
+
+    // Pure construction only. Callers first bind raw evidence and hold their
+    // Product/aggregate guards; this seam accepts no case or group identity.
+    internal static CoverageSourceCandidateGraph ConstructGraph(PeMethodInventoryEvidence pe,
+        BuildSourceInventoryEvidence sources, DotCoverAggregateReport aggregate, EmptyProductCoverage? emptyProduct,
+        string digest, CoverageContainerRootSummary root, CoverageSourceCandidateBudget budget)
+    {
+        Require(budget.MaximumCandidateReferences is > 0 and <= MaximumCandidateReferences &&
+            budget.MaximumSequencePointAssociations is > 0 and <= MaximumSequencePointAssociations, "invalid-budget");
+        return new CandidateBuilder(pe, sources, budget).Build(aggregate, emptyProduct, digest, root);
     }
 
     private sealed class CandidateBuilder
@@ -272,10 +284,11 @@ public static class CoverageSourceCandidates
             Require(compilerDocuments.Count == 0, "pe-source-document-mismatch");
         }
 
-        internal CoverageSourceCandidatesEvidence Build(CaseCoverage session, string digest, CoverageContainerRootSummary root)
+        internal CoverageSourceCandidateGraph Build(DotCoverAggregateReport aggregate, EmptyProductCoverage? emptyProduct,
+            string digest, CoverageContainerRootSummary root)
         {
             var observations = new List<CoverageObservationCandidates>();
-            var raw = session.Aggregate.Members;
+            var raw = aggregate.Members;
             for (var index = 0; index < raw.Count; index++)
             {
                 var observation = raw[index];
@@ -319,13 +332,13 @@ public static class CoverageSourceCandidates
                 observations.Add(new(observation, role, scope.Id, Array.AsReadOnly(candidates), fallback, reasons.AsReadOnly()));
             }
             EmptyProductCoverage? empty = null;
-            if (session.EmptyProduct is { } explanation)
+            if (emptyProduct is { } explanation)
             {
                 foreach (var dependency in explanation.Dependencies)
                 { _work.Text(dependency.RelativePath); _work.Text(dependency.Sha256); }
                 empty = new(explanation.Reason, Array.AsReadOnly(explanation.Dependencies.ToArray()));
             }
-            return new(1, session.Identity, _pe.Assembly, digest, root, _scopes.AsReadOnly(),
+            return new(1, _pe.Assembly, digest, root, _scopes.AsReadOnly(),
                 _documents.AsReadOnly(), Array.AsReadOnly(_methods.Values.OrderBy(item => item.MetadataToken).ToArray()),
                 observations.AsReadOnly(), empty);
         }

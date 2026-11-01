@@ -36,18 +36,18 @@ internal static class VoiceLanguageTagsSuite
     {
         var cases = new List<(string Id, Func<Task> Run)>
         {
-            ("popup.language-tags/compiled-selected-card", () => RunOnStaThreadAsync(() =>
+            ("popup.language-tags/compiled-selected-card", () => RunOnStaThreadAsync((Func<Task>)(() => new LanguageViewModelFixtureOwner().RunAsync(owner =>
             {
                 var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja" } } };
-                using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+                var vm = owner.Acquire(() => new SettingsViewModel(CreateContext(settings: settings), settings));
                 var view = SettingsLayoutSuite.CreateThemedView(vm);
                 SettingsLayoutSuite.Layout(view, 480);
                 AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
                     "Selected compiled card must render its language metadata in the reusable control");
-            }, RegressionExecution.Timeout)),
+            })), RegressionExecution.Timeout)),
             ("popup.language-tags/labels-explicit-culture-trusted-flags", () => RunOnStaThreadAsync(LabelsUseExplicitCultureAndTrustedFlags)),
             ("popup.language-tags/partition-dictionary-replacement", () => RunOnStaThreadAsync(PartitionAndDictionaryReplacement)),
-            ("popup.language-tags/overflow-keeps-language-row", () => RunOnStaThreadAsync(OverflowDoesNotRaiseLanguageRow)),
+            ("popup.language-tags/overflow-keeps-language-row", () => RunOnStaThreadAsync((Func<Task>)OverflowDoesNotRaiseLanguageRow)),
             ("popup.language-tags/responsive-prefix", () => RunOnStaThreadAsync(ResponsivePrefixFitsOneRowWithoutACap)),
             ("popup.language-tags/fit-thresholds-long-labels", () => RunOnStaThreadAsync(FitThresholdsAndLongLabels)),
             ("popup.language-tags/inherited-font-metrics", () => RunOnStaThreadAsync(InheritedFontMetricsRefreshTheSameInstance)),
@@ -66,6 +66,24 @@ internal static class VoiceLanguageTagsSuite
         return cases;
     }
 
+    // Direct typed binding of the original separately guarded construction callback.
+    internal static Task ObserveCompiledSelectedCardAsync() => RunOnStaThreadAsync(
+        (Func<Task>)(() => RunCompiledSelectedCardAsync()), RegressionExecution.Timeout);
+
+    internal static Task RunLanguageViewModelOwnershipControlAsync(int scene, LanguageViewModelFixtureHooks hooks) =>
+        scene == 0 ? RunCompiledSelectedCardAsync(hooks) : RunOverflowLanguageRowAsync(hooks);
+
+    private static Task RunCompiledSelectedCardAsync(LanguageViewModelFixtureHooks? hooks = null) =>
+        new LanguageViewModelFixtureOwner(hooks).RunAsync(owner =>
+        {
+            var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja" } } };
+            var vm = owner.Acquire(() => new SettingsViewModel(CreateContext(settings: settings), settings));
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            SettingsLayoutSuite.Layout(view, 480);
+            AssertEqual(1, Visuals(view).OfType<VoiceLanguageTags>().Count(),
+                "Selected compiled card must render its language metadata in the reusable control");
+        });
+
     internal static async Task RunLifetimeAsync()
     {
         foreach (var testCase in CreateLifetimeCases())
@@ -80,28 +98,34 @@ internal static class VoiceLanguageTagsSuite
             ("after-source", true, false), ("chrome", true, true), ("before-source", false, false),
         })
             cases.Add(($"popup.language-tags/lifecycle/initialization-{name}",
-                () => RunOnStaThreadAsync(() => PopupInitializationFailureRetiresOwnership(failAfterSource, failInChrome))));
-        cases.Add(("popup.language-tags/lifecycle/popup-input", () => RunOnStaThreadAsync(PopupOwnsInputAndLifetime)));
-        cases.Add(("popup.language-tags/lifecycle/window-owner", () => RunOnStaThreadAsync(WindowOwnerRetiresAndRepositionsPopup)));
+                () => RunOnStaThreadAsync((Func<Task>)(() => PopupInitializationFailureRetiresOwnership(failAfterSource, failInChrome)))));
+        cases.Add(("popup.language-tags/lifecycle/popup-input", () => RunOnStaThreadAsync((Func<Task>)PopupOwnsInputAndLifetime)));
+        cases.Add(("popup.language-tags/lifecycle/window-owner", () => RunOnStaThreadAsync((Func<Task>)WindowOwnerRetiresAndRepositionsPopup)));
         return cases;
     }
 
-    private static void PopupInitializationFailureRetiresOwnership(bool failAfterSource, bool failInChrome)
-    {
-        var original = new InvalidOperationException("Injected popup material initialization failure");
-        var cleanup = new IOException("Injected native material cleanup failure");
-        var tags = new VoiceLanguageTags(new FailingPopupBackdropApi(original, cleanup, failAfterSource, failInChrome)) { Languages = Codes };
-        var scroll = new ScrollViewer { Content = tags, Height = 220 };
-        AddResources(scroll, "en");
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio popup initialization failure fixture")
-        { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
-        source.RootVisual = scroll;
-        SettingsLayoutSuite.Layout(scroll, 400);
-        Exception? caught = null;
-        try { tags.OpenPopup(); }
-        catch (Exception error) { caught = error; }
-        try
+    internal static Task PopupInitializationFailureRetiresOwnership(bool failAfterSource, bool failInChrome) =>
+        RunPopupInitializationFailureAsync(failAfterSource, failInChrome, new LanguagePopupFixtureOwner());
+
+    private static Task RunPopupInitializationFailureAsync(bool failAfterSource, bool failInChrome,
+        LanguagePopupFixtureOwner owner) => owner.RunAsync(() =>
         {
+            var original = new InvalidOperationException("Injected popup material initialization failure");
+            var cleanup = new IOException("Injected native material cleanup failure");
+            var tags = new VoiceLanguageTags(new FailingPopupBackdropApi(original, cleanup, failAfterSource, failInChrome)) { Languages = Codes };
+            owner.Tags = tags;
+            owner.RequestClose = () => tags.ClosePopup();
+            var scroll = new ScrollViewer { Content = tags, Height = 220 };
+            AddResources(scroll, "en");
+            var source = owner.AcquireSource(() => new HwndSource(new HwndSourceParameters("Fish Audio popup initialization failure fixture")
+            { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 }));
+            source.RootVisual = scroll;
+            SettingsLayoutSuite.Layout(scroll, 400);
+            Exception? caught = null;
+            owner.BeginOpen(tags);
+            try { tags.OpenPopup(); }
+            catch (Exception error) { caught = error; }
+            finally { owner.CaptureSource(); }
             if (failAfterSource)
             {
                 AssertEqual<Exception?>(null, caught, "Optional native application failure uses opaque fallback without escaping HWND creation");
@@ -121,9 +145,8 @@ internal static class VoiceLanguageTagsSuite
             var key = new KeyEventArgs(Keyboard.PrimaryDevice, source, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent, Source = scroll };
             InputManager.Current.ProcessInput(key);
             AssertEqual(false, key.Handled, "No retired popup input handler consumes Escape after initialization failure/close");
-        }
-        finally { try { tags.ClosePopup(); } catch { /* The assertions retain the primary failure. */ } }
-    }
+            return Task.CompletedTask;
+        });
 
     private sealed class FailingPopupBackdropApi(Exception failure, Exception cleanupFailure, bool failAfterSource, bool failInChrome) : IPopupBackdropApi
     {
@@ -141,7 +164,7 @@ internal static class VoiceLanguageTagsSuite
             await RunOnStaThreadAsync((Func<Task>)(() => RenderCompiledCardsAsync(320, 1.25, dark, mode, directory)));
     }
 
-    private static void LabelsUseExplicitCultureAndTrustedFlags()
+    internal static void LabelsUseExplicitCultureAndTrustedFlags()
     {
         var original = CultureInfo.CurrentUICulture;
         var countries = new[] { "us", "cn", "de", "jp", "fr", "es", "kr", "sa", "ru", "pt", "it", "nl", "pl", "tr", "in", "vn", "th", "id" };
@@ -170,7 +193,7 @@ internal static class VoiceLanguageTagsSuite
             AssertNotNull(assembly.GetManifestResourceInfo("STranslate.Plugin.Tts.FishAudio.Assets.Flags." + file), "Required flag data must be embedded in the plugin assembly");
     }
 
-    private static void PartitionAndDictionaryReplacement()
+    internal static void PartitionAndDictionaryReplacement()
     {
         var tags = new VoiceLanguageTags();
         AddResources(tags, "en");
@@ -205,141 +228,169 @@ internal static class VoiceLanguageTagsSuite
         AssertEqual(true, names.Count >= 6, "Supported UI dictionaries visibly relocalize names without metadata changes");
     }
 
-    private static void PopupOwnsInputAndLifetime()
-    {
-        var tags = new VoiceLanguageTags { Languages = Codes };
-        var second = new VoiceLanguageTags { Languages = Codes };
-        var outside = new Button { Content = "Outside", Height = 30 };
-        var panel = new StackPanel();
-        panel.Children.Add(tags); panel.Children.Add(second); panel.Children.Add(outside);
-        var scroll = new ScrollViewer { Content = panel, Height = 80 };
-        AddResources(scroll, "en");
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio language popup fixture")
-        { Width = 480, Height = 600, WindowStyle = 0, PositionX = 120, PositionY = 120 });
-        source.RootVisual = scroll;
-        SettingsLayoutSuite.Layout(scroll, 480);
-        var more = (Button)tags.FindName("MoreButton");
-        more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        AssertEqual(true, tags.IsPopupOpen, "Button activation opens a native Popup");
-        var popup = (Popup)tags.FindName("LanguagePopup");
-        var surface = (Border)tags.FindName("PopupSurface");
-        AssertEqual(false, ReferenceEquals(PresentationSource.FromVisual(surface), source), "Popup content must use its real separate presentation source");
-        var peer = UIElementAutomationPeer.CreatePeerForElement(more)!;
-        var expand = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
-        AssertEqual(ExpandCollapseState.Expanded, expand.ExpandCollapseState, "Automation exposes expanded state");
-        foreach (var locale in UiLocales.All)
-        {
-            ReplaceLocale(scroll, locale); Drain();
-            AssertEqual(true, tags.IsPopupOpen, "Changing all seven language dictionaries keeps open content current on the same instance");
-            AssertEqual(locale, tags.UiLocale.ToLowerInvariant(), "Open Popup owner follows a live dictionary replacement");
-            foreach (var pill in ((Panel)tags.FindName("PopupPanel")).Children.OfType<ContentControl>())
-            {
-                var label = (VoiceLanguageLabel)pill.Content;
-                AssertEqual(VoiceLanguagePresentation.Describe(label.Code, tags.UiLocale).Name, label.Name, "Open remaining labels follow each explicit UI culture");
-            }
-        }
-        SettingsLayoutSuite.Layout(scroll, 320);
-        AssertEqual(true, tags.IsPopupOpen, "A responsive prefix change refreshes the open popup");
-        var shown = ((Panel)tags.FindName("InlinePanel")).Children.OfType<ContentControl>().Count(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible);
-        AssertEqual(Codes.Length - shown, ((Panel)tags.FindName("PopupPanel")).Children.Count, "Open popup remaining partition follows width changes");
-        SettingsLayoutSuite.Layout(scroll, 4000);
-        AssertEqual(false, tags.IsPopupOpen, "Removing overflow during resize closes the overlay");
-        SettingsLayoutSuite.Layout(scroll, 480);
-        tags.OpenPopup();
-        more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        AssertEqual(false, tags.IsPopupOpen, "Clicking the same trigger toggles closed");
-        tags.OpenPopup();
-        AssertNotNull(surface.Background, "Native popup resolves an opaque themed background");
-        var popupSource = PresentationSource.FromVisual(surface)!;
-        var key = new KeyEventArgs(Keyboard.PrimaryDevice, popupSource, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
-        InputManager.Current.ProcessInput(key);
-        AssertEqual(false, tags.IsPopupOpen, "Escape from the Popup's presentation source closes the overlay");
-        AssertEqual(true, key.Handled, "Popup Escape is consumed before parent numeric editor handling");
-        AssertEqual(true, more.IsKeyboardFocused, "Escape returns focus to the surviving trigger");
-        tags.OpenPopup();
-        var pointer = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-        { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = more };
-        InputManager.Current.ProcessInput(pointer);
-        AssertEqual(true, tags.IsPopupOpen, "Same-trigger mouse-down does not pre-dismiss the overlay before Click");
-        more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        AssertEqual(false, tags.IsPopupOpen, "Same-trigger down/click closes once without reopening");
-        tags.OpenPopup();
-        InputManager.Current.ProcessInput(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
-        { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = outside });
-        AssertEqual(false, tags.IsPopupOpen, "An outside pointer press closes the native Popup");
-        AssertEqual(true, more.IsKeyboardFocused, "Outside dismissal does not force a new focus target");
-        tags.OpenPopup();
-        tags.DataContext = new object();
-        AssertEqual(false, tags.IsPopupOpen, "Rebinding a card closes its old overlay");
-        tags.OpenPopup(); tags.Languages = Codes.Take(3).ToArray();
-        AssertEqual(false, tags.IsPopupOpen, "Removing the remaining trigger closes its overlay");
-        tags.Languages = Codes; tags.OpenPopup(); tags.Visibility = Visibility.Collapsed;
-        AssertEqual(false, tags.IsPopupOpen, "Hidden owners close the overlay");
-        tags.Visibility = Visibility.Visible; tags.OpenPopup();
-        scroll.ScrollToVerticalOffset(10); Drain();
-        AssertEqual(false, tags.IsPopupOpen, "Ancestor scroll dismisses the old anchor");
-        tags.Languages = Enumerable.Range(0, 105).Select(index => $"x{index}").ToArray();
-        // The old 80-DIP owner cannot fit the measured localized header/chrome
-        // after screen insets. Give this internal-scroll case a usable viewport;
-        // fixed-chrome refusal is covered separately by the popup edge suite.
-        scroll.Height = 160;
-        SettingsLayoutSuite.Layout(scroll, 480); tags.OpenPopup(); Drain();
-        AssertEqual(true, tags.IsPopupOpen, "The internal-scroll case opens within a viewport that fits measured fixed chrome");
-        var popupScroller = Visuals(surface).OfType<ScrollViewer>().Single();
-        AssertEqual(true, popupScroller.ViewportHeight > 0 && popupScroller.ViewportHeight <= 280,
-            "A large remaining list is bounded by 280 DIP and the actual short visible viewport after fixed chrome");
-        AssertEqual(true, popupScroller.ScrollableHeight > 0, "All remaining languages stay accessible through vertical scrolling");
-        SearchAdjustmentControlSuite.AssertScrollbarExclusion(popupScroller,
-            ((Panel)tags.FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "remaining language pills");
-        popupScroller.ScrollToVerticalOffset(20); Drain();
-        AssertEqual(true, tags.IsPopupOpen, "Scrolling the popup itself does not dismiss its remaining languages");
-        tags.OpenPopup();
-        panel.Children.Remove(tags); Drain();
-        AssertEqual(false, tags.IsPopupOpen, "Unloaded/replaced cards close their overlay");
-        AssertEqual(false, popup.IsOpen, "Native popup is closed after lifecycle retirement");
-    }
+    internal static Task PopupOwnsInputAndLifetime() =>
+        RunPopupInputAsync(new LanguagePopupFixtureOwner());
 
-    private static void WindowOwnerRetiresAndRepositionsPopup()
-    {
-        var tags = new VoiceLanguageTags { Languages = Codes };
-        AddResources(tags, "en");
-        // Visible-viewport containment intentionally refuses an off-monitor owner.
-        var window = new Window { Content = tags, Width = 400, Height = 240, Left = 120, Top = 120, Opacity = 0,
-            ShowInTaskbar = false, ShowActivated = false, WindowStyle = WindowStyle.None };
-        try
+    internal static Task RunLanguageOwnershipControlAsync(int boundary, LanguagePopupFixtureHooks hooks) =>
+        boundary == 0
+            ? RunPopupInitializationFailureAsync(true, false, new LanguagePopupFixtureOwner(hooks))
+            : RunPopupInputAsync(new LanguagePopupFixtureOwner(hooks));
+
+    private static Task RunPopupInputAsync(LanguagePopupFixtureOwner owner) => owner.RunAsync(async () =>
         {
-            window.Show(); Drain(); tags.OpenPopup();
+            var tags = new VoiceLanguageTags { Languages = Codes };
+            owner.Tags = tags;
+            owner.RequestClose = () => tags.ClosePopup();
+            var second = new VoiceLanguageTags { Languages = Codes };
+            var outside = new Button { Content = "Outside", Height = 30 };
+            var panel = new StackPanel();
+            panel.Children.Add(tags); panel.Children.Add(second); panel.Children.Add(outside);
+            var scroll = new ScrollViewer { Content = panel, Height = 80 };
+            AddResources(scroll, "en");
+            var source = owner.AcquireSource(() => new HwndSource(new HwndSourceParameters("Fish Audio language popup fixture")
+            { Width = 480, Height = 600, WindowStyle = 0, PositionX = 120, PositionY = 120 }));
+            source.RootVisual = scroll;
+            SettingsLayoutSuite.Layout(scroll, 480);
+            var more = (Button)tags.FindName("MoreButton");
+            owner.Open(tags, () => more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+            AssertEqual(true, tags.IsPopupOpen, "Button activation opens a native Popup");
+            var popup = (Popup)tags.FindName("LanguagePopup");
+            var surface = (Border)tags.FindName("PopupSurface");
+            AssertEqual(false, ReferenceEquals(PresentationSource.FromVisual(surface), source), "Popup content must use its real separate presentation source");
+            var peer = UIElementAutomationPeer.CreatePeerForElement(more)!;
+            var expand = (IExpandCollapseProvider)peer.GetPattern(PatternInterface.ExpandCollapse)!;
+            AssertEqual(ExpandCollapseState.Expanded, expand.ExpandCollapseState, "Automation exposes expanded state");
+            foreach (var locale in UiLocales.All)
+            {
+                ReplaceLocale(scroll, locale); Drain();
+                AssertEqual(true, tags.IsPopupOpen, "Changing all seven language dictionaries keeps open content current on the same instance");
+                AssertEqual(locale, tags.UiLocale.ToLowerInvariant(), "Open Popup owner follows a live dictionary replacement");
+                foreach (var pill in ((Panel)tags.FindName("PopupPanel")).Children.OfType<ContentControl>())
+                {
+                    var label = (VoiceLanguageLabel)pill.Content;
+                    AssertEqual(VoiceLanguagePresentation.Describe(label.Code, tags.UiLocale).Name, label.Name, "Open remaining labels follow each explicit UI culture");
+                }
+            }
+            SettingsLayoutSuite.Layout(scroll, 320);
+            AssertEqual(true, tags.IsPopupOpen, "A responsive prefix change refreshes the open popup");
+            var shown = ((Panel)tags.FindName("InlinePanel")).Children.OfType<ContentControl>().Count(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible);
+            AssertEqual(Codes.Length - shown, ((Panel)tags.FindName("PopupPanel")).Children.Count, "Open popup remaining partition follows width changes");
+            SettingsLayoutSuite.Layout(scroll, 4000);
+            AssertEqual(false, tags.IsPopupOpen, "Removing overflow during resize closes the overlay");
+            await owner.JoinCurrentAsync();
+            SettingsLayoutSuite.Layout(scroll, 480);
+            owner.Open(tags, () => tags.OpenPopup());
+            more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            AssertEqual(false, tags.IsPopupOpen, "Clicking the same trigger toggles closed");
+            await owner.JoinCurrentAsync();
+            owner.Open(tags, () => tags.OpenPopup());
+            AssertNotNull(surface.Background, "Native popup resolves an opaque themed background");
+            var popupSource = PresentationSource.FromVisual(surface)!;
+            var key = new KeyEventArgs(Keyboard.PrimaryDevice, popupSource, Environment.TickCount, Key.Escape) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+            InputManager.Current.ProcessInput(key);
+            AssertEqual(false, tags.IsPopupOpen, "Escape from the Popup's presentation source closes the overlay");
+            AssertEqual(true, key.Handled, "Popup Escape is consumed before parent numeric editor handling");
+            AssertEqual(true, more.IsKeyboardFocused, "Escape returns focus to the surviving trigger");
+            await owner.JoinCurrentAsync();
+            owner.Open(tags, () => tags.OpenPopup());
+            var pointer = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+            { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = more };
+            InputManager.Current.ProcessInput(pointer);
+            AssertEqual(true, tags.IsPopupOpen, "Same-trigger mouse-down does not pre-dismiss the overlay before Click");
+            more.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            AssertEqual(false, tags.IsPopupOpen, "Same-trigger down/click closes once without reopening");
+            await owner.JoinCurrentAsync();
+            owner.Open(tags, () => tags.OpenPopup());
+            InputManager.Current.ProcessInput(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+            { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = outside });
+            AssertEqual(false, tags.IsPopupOpen, "An outside pointer press closes the native Popup");
+            AssertEqual(true, more.IsKeyboardFocused, "Outside dismissal does not force a new focus target");
+            await owner.JoinCurrentAsync();
+            owner.Open(tags, () => tags.OpenPopup());
+            tags.DataContext = new object();
+            AssertEqual(false, tags.IsPopupOpen, "Rebinding a card closes its old overlay");
+            await owner.JoinCurrentAsync();
+            owner.Open(tags, () => tags.OpenPopup()); tags.Languages = Codes.Take(3).ToArray();
+            AssertEqual(false, tags.IsPopupOpen, "Removing the remaining trigger closes its overlay");
+            await owner.JoinCurrentAsync();
+            tags.Languages = Codes; owner.Open(tags, () => tags.OpenPopup()); tags.Visibility = Visibility.Collapsed;
+            AssertEqual(false, tags.IsPopupOpen, "Hidden owners close the overlay");
+            await owner.JoinCurrentAsync();
+            tags.Visibility = Visibility.Visible; owner.Open(tags, () => tags.OpenPopup());
+            scroll.ScrollToVerticalOffset(10); Drain();
+            AssertEqual(false, tags.IsPopupOpen, "Ancestor scroll dismisses the old anchor");
+            await owner.JoinCurrentAsync();
+            tags.Languages = Enumerable.Range(0, 105).Select(index => $"x{index}").ToArray();
+            // The old 80-DIP owner cannot fit the measured localized header/chrome
+            // after screen insets. Give this internal-scroll case a usable viewport;
+            // fixed-chrome refusal is covered separately by the popup edge suite.
+            scroll.Height = 160;
+            SettingsLayoutSuite.Layout(scroll, 480); owner.Open(tags, () => tags.OpenPopup()); Drain();
+            AssertEqual(true, tags.IsPopupOpen, "The internal-scroll case opens within a viewport that fits measured fixed chrome");
+            var popupScroller = Visuals(surface).OfType<ScrollViewer>().Single();
+            AssertEqual(true, popupScroller.ViewportHeight > 0 && popupScroller.ViewportHeight <= 280,
+                "A large remaining list is bounded by 280 DIP and the actual short visible viewport after fixed chrome");
+            AssertEqual(true, popupScroller.ScrollableHeight > 0, "All remaining languages stay accessible through vertical scrolling");
+            SearchAdjustmentControlSuite.AssertScrollbarExclusion(popupScroller,
+                ((Panel)tags.FindName("PopupPanel")).Children.OfType<FrameworkElement>(), "remaining language pills");
+            popupScroller.ScrollToVerticalOffset(20); Drain();
+            AssertEqual(true, tags.IsPopupOpen, "Scrolling the popup itself does not dismiss its remaining languages");
+            tags.OpenPopup();
+            panel.Children.Remove(tags); Drain();
+            AssertEqual(false, tags.IsPopupOpen, "Unloaded/replaced cards close their overlay");
+            AssertEqual(false, popup.IsOpen, "Native popup is closed after lifecycle retirement");
+            await owner.JoinCurrentAsync();
+        });
+
+    internal static Task WindowOwnerRetiresAndRepositionsPopup() =>
+        RunWindowOwnerAsync(new LanguageWindowFixtureOwner());
+
+    internal static Task RunLanguageWindowOwnershipControlAsync(LanguageWindowFixtureHooks hooks) =>
+        RunWindowOwnerAsync(new LanguageWindowFixtureOwner(hooks));
+
+    private static Task RunWindowOwnerAsync(LanguageWindowFixtureOwner owner) => owner.RunAsync(async () =>
+        {
+            var tags = new VoiceLanguageTags { Languages = Codes };
+            owner.Tags = tags;
+            owner.RequestPopupClose = () => tags.ClosePopup();
+            AddResources(tags, "en");
+            // Visible-viewport containment intentionally refuses an off-monitor owner.
+            var window = owner.AcquireWindow(() => new Window { Content = tags, Width = 400, Height = 240, Left = 120, Top = 120, Opacity = 0,
+                ShowInTaskbar = false, ShowActivated = false, WindowStyle = WindowStyle.None });
+            window.Show(); Drain(); owner.RequireShownSource(); owner.Open(tags, () => tags.OpenPopup());
             AssertEqual(true, tags.IsPopupOpen, "A native Window owns the overlay");
             window.Left += 10; window.Width = 480; Drain();
             AssertEqual(true, tags.IsPopupOpen, "Window move/resize repositions the current overlay without losing ownership");
             window.Hide(); Drain();
             AssertEqual(false, tags.IsPopupOpen, "Hiding a native owner retires its overlay");
-            window.Show(); Drain(); tags.OpenPopup();
+            await owner.JoinCurrentAsync();
+            window.Show(); Drain(); owner.RequireShownSource(); owner.Open(tags, () => tags.OpenPopup());
             typeof(Window).GetMethod("OnDeactivated", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(window, [EventArgs.Empty]);
             AssertEqual(false, tags.IsPopupOpen, "Owner deactivation closes the overlay when another application receives focus");
-        }
-        finally { tags.ClosePopup(); window.Close(); }
-    }
+        });
 
-    private static void OverflowDoesNotRaiseLanguageRow()
-    {
-        var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-        var card = new VoiceSearchItem { Id = AppliedKey, Title = "Same card", Description = "Same description", AuthorName = "Same author", Languages = Codes.Take(3).ToArray() };
-        vm.ByIdResults = [card]; vm.BrowseMode = VoiceBrowseMode.ById;
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        SettingsLayoutSuite.Layout(view, 640);
-        var tag = Visuals(view).OfType<VoiceLanguageTags>().Single(item => ReferenceEquals(item.DataContext, card));
-        var author = Visuals(view).OfType<TextBlock>().Single(item => item.Text == "Same author");
-        var beforeHeight = tag.ActualHeight;
-        var beforeAuthor = author.TranslatePoint(new Point(), CardBorder(tag)).Y;
-        card.Languages = Codes.Take(5).ToArray();
-        SettingsLayoutSuite.Layout(view, 640);
-        AssertEqual(beforeHeight, tag.ActualHeight, "A same-line +N trigger must not increase the language row height");
-        AssertEqual(beforeAuthor, author.TranslatePoint(new Point(), CardBorder(tag)).Y, "Adding a same-line +N preserves the author baseline");
-    }
+    internal static Task OverflowDoesNotRaiseLanguageRow() => RunOverflowLanguageRowAsync();
 
-    private static void ResponsivePrefixFitsOneRowWithoutACap()
+    private static Task RunOverflowLanguageRowAsync(LanguageViewModelFixtureHooks? hooks = null) =>
+        new LanguageViewModelFixtureOwner(hooks).RunAsync(owner =>
+        {
+            var settings = new Settings();
+            var vm = owner.Acquire(() => new SettingsViewModel(CreateContext(settings: settings), settings));
+            var card = new VoiceSearchItem { Id = AppliedKey, Title = "Same card", Description = "Same description", AuthorName = "Same author", Languages = Codes.Take(3).ToArray() };
+            vm.ByIdResults = [card]; vm.BrowseMode = VoiceBrowseMode.ById;
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            SettingsLayoutSuite.Layout(view, 640);
+            var tag = Visuals(view).OfType<VoiceLanguageTags>().Single(item => ReferenceEquals(item.DataContext, card));
+            var author = Visuals(view).OfType<TextBlock>().Single(item => item.Text == "Same author");
+            var beforeHeight = tag.ActualHeight;
+            var beforeAuthor = author.TranslatePoint(new Point(), CardBorder(tag)).Y;
+            card.Languages = Codes.Take(5).ToArray();
+            SettingsLayoutSuite.Layout(view, 640);
+            AssertEqual(beforeHeight, tag.ActualHeight, "A same-line +N trigger must not increase the language row height");
+            AssertEqual(beforeAuthor, author.TranslatePoint(new Point(), CardBorder(tag)).Y, "Adding a same-line +N preserves the author baseline");
+        });
+
+    internal static void ResponsivePrefixFitsOneRowWithoutACap()
     {
         var tags = new VoiceLanguageTags { Languages = Codes.Take(5).ToArray() };
         AddResources(tags, "en");
@@ -355,7 +406,7 @@ internal static class VoiceLanguageTagsSuite
         }
     }
 
-    private static void FitThresholdsAndLongLabels()
+    internal static void FitThresholdsAndLongLabels()
     {
         var tags = new VoiceLanguageTags { Languages = Enumerable.Range(0, 105).Select(index => $"x{index}").ToArray() };
         AddResources(tags, "en");
@@ -406,7 +457,7 @@ internal static class VoiceLanguageTagsSuite
         }
     }
 
-    private static void InheritedFontMetricsRefreshTheSameInstance()
+    internal static void InheritedFontMetricsRefreshTheSameInstance()
     {
         const double width = 300;
         var tags = new VoiceLanguageTags { Languages = Codes };
@@ -452,15 +503,19 @@ internal static class VoiceLanguageTagsSuite
     private static ContentControl[] InlinePills(VoiceLanguageTags tags) => ((Panel)tags.FindName("InlinePanel")).Children
         .OfType<ContentControl>().Where(item => item.Content is VoiceLanguageLabel && item.Visibility == Visibility.Visible).ToArray();
 
-    private static async Task RenderCompiledCardsAsync(double width, double dpi, bool dark, VoiceBrowseMode mode, string? proofDirectory)
-    {
-        var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Nora · Warm and Gentle Audiobook Narration Voice", Description = "Soft and clear, for audiobooks and everyday conversation.", AuthorName = "Nora Studio", Languages = Codes, SampleAudioUrl = "https://example.invalid/sample.mp3" } };
-        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-        HwndSource? source = null;
-        var popupOwners = new List<(VoiceLanguageTags Tags, PopupCloseObserver Observer)>(2);
-        ExceptionDispatchInfo? failure = null;
-        try
+    internal static Task RenderCompiledCardsAsync(double width, double dpi, bool dark, VoiceBrowseMode mode, string? proofDirectory) =>
+        RunRenderedCardsAsync(width, dpi, dark, mode, proofDirectory, new RenderedLanguageFixtureOwner());
+
+    internal static Task RunRenderedLanguageOwnershipControlAsync(RenderedLanguageFixtureHooks hooks) =>
+        RunRenderedCardsAsync(400, 1d, false, VoiceBrowseMode.ById, null, new RenderedLanguageFixtureOwner(hooks));
+
+    private static Task RunRenderedCardsAsync(double width, double dpi, bool dark,
+        VoiceBrowseMode mode, string? proofDirectory, RenderedLanguageFixtureOwner owner) =>
+        owner.RunAsync(() =>
         {
+            var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Nora · Warm and Gentle Audiobook Narration Voice", Description = "Soft and clear, for audiobooks and everyday conversation.", AuthorName = "Nora Studio", Languages = Codes, SampleAudioUrl = "https://example.invalid/sample.mp3" } };
+            var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+            owner.ViewModel = vm;
             var localCover = FindRepoFile("STranslate.Plugin.Tts.FishAudio/Assets/Flags/language.png");
             vm.CachedVoiceCoverUrl = localCover;
             var card = new VoiceSearchItem { Id = AppliedKey, Title = settings.CachedVoice.Title!, Description = settings.CachedVoice.Description!, AuthorName = "Nora Studio", Languages = Codes, CoverUrl = localCover, SampleAudioUrl = "https://example.invalid/sample.mp3" };
@@ -471,11 +526,11 @@ internal static class VoiceLanguageTagsSuite
             view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
             ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
             var desktopScale = VisualTreeHelper.GetDpi(new DrawingVisual());
-            source = new HwndSource(new HwndSourceParameters("Fish Audio rendered language Popup fixture")
+            var source = owner.AcquireSource(() => new HwndSource(new HwndSourceParameters("Fish Audio rendered language Popup fixture")
             {
                 Width = (int)Math.Ceiling(width * desktopScale.DpiScaleX), Height = (int)Math.Ceiling(1200 * desktopScale.DpiScaleY),
                 WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120,
-            });
+            }));
             // Keep the entire render phase under a finite native client allocation.
             // Inherited-font invalidations can otherwise let an unhosted root receive
             // an automatic infinite-width layout during the dispatcher drain.
@@ -535,10 +590,10 @@ internal static class VoiceLanguageTagsSuite
                 SettingsLayoutSuite.Layout(view, width);
                 var nativeTags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
                 foreach (var popupTag in nativeTags.Take(2))
-                    popupOwners.Add((popupTag, new PopupCloseObserver((Popup)popupTag.FindName("LanguagePopup"))));
-                nativeTags[0].OpenPopup();
+                    owner.Observe(popupTag);
+                owner.Open(nativeTags[0], () => nativeTags[0].OpenPopup());
                 AssertEqual(true, nativeTags[0].IsPopupOpen, "Selected card trigger opens its native Popup");
-                nativeTags[1].OpenPopup();
+                owner.Open(nativeTags[1], () => nativeTags[1].OpenPopup());
                 AssertEqual(false, nativeTags[0].IsPopupOpen, "Only one overlay is owned by a settings view");
                 AssertEqual(true, nativeTags[1].IsPopupOpen, "The second card transfers overlay ownership");
                 var nativeSurface = (Border)nativeTags[1].FindName("PopupSurface");
@@ -563,35 +618,8 @@ internal static class VoiceLanguageTagsSuite
                 var chosen = vm.CachedVoiceId;
                 AssertEqual(AppliedKey, chosen, "Language overlay actions never apply or clear a voice");
             }
-        }
-        catch (Exception error) { failure = ExceptionDispatchInfo.Capture(error); }
-        finally
-        {
-            // Start both closures before awaiting either overlay's real Closed.
-            // The body keeps its original synchronous retirement assertions.
-            var closing = new List<Task>(popupOwners.Count);
-            foreach (var (tags, observer) in popupOwners)
-                closing.Add(observer.CloseAsync(() =>
-                {
-                    if (tags.IsPopupOpen) tags.ClosePopup();
-                }, failure?.SourceException));
-            foreach (var closed in closing)
-            {
-                try { await closed; }
-                catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
-            }
-            foreach (var (_, observer) in popupOwners)
-            {
-                try { observer.Dispose(); }
-                catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
-            }
-            try { source?.Dispose(); }
-            catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
-            try { vm.Dispose(); }
-            catch (Exception error) { failure ??= ExceptionDispatchInfo.Capture(error); }
-        }
-        failure?.Throw();
-    }
+            return Task.CompletedTask;
+        });
 
     private static void AddResources(FrameworkElement root, string locale)
     {

@@ -17,7 +17,9 @@ param(
     [Parameter(Mandatory)][string]$ResultsDirectory,
     [string]$RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')),
     [string]$RunId = [Guid]::NewGuid().ToString('N'),
-    [switch]$CollectOnly
+    [switch]$CollectOnly,
+    [string]$MetadataToolAssembly = '',
+    [string]$RunnerMetadataTemplatePath = ''
 )
 
 Set-StrictMode -Version Latest
@@ -349,6 +351,91 @@ function Get-SnapshotIdentity {
     } finally { $hash.Dispose() }
 }
 
+function Get-RunnerCoverageMetadataEnvironment {
+    if ([string]::IsNullOrEmpty($RunnerMetadataTemplatePath)) { return @{} }
+    Require-Coverage ([IO.Path]::IsPathFullyQualified($RunnerMetadataTemplatePath) -and
+        $RunnerMetadataTemplatePath -cmatch '^[A-Za-z]:[\\/]') 'coverage-runner-template-path'
+    $templatePath = [IO.Path]::GetFullPath($RunnerMetadataTemplatePath)
+    Require-RegularFile $templatePath ([IO.Path]::GetDirectoryName($templatePath))
+    $templateGuard = [IO.File]::Open($templatePath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    $locks.Add($templateGuard)
+    Require-Coverage ($templateGuard.Length -gt 0 -and $templateGuard.Length -le 131072) 'coverage-runner-template-size'
+    $templateSha256 = Get-Digest $templatePath
+    $text = [IO.File]::ReadAllText($templatePath, [Text.UTF8Encoding]::new($false, $true))
+    Require-Coverage ($text.Length -le 32767) 'coverage-runner-template-size'
+    $document = [Text.Json.JsonDocument]::Parse($text)
+    try {
+        function Assert-RunnerTemplateFields($Value, [string[]]$Names) {
+            Require-Coverage ($Value.ValueKind -eq [Text.Json.JsonValueKind]::Object) 'coverage-runner-template-shape'
+            $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+            foreach ($property in $Value.EnumerateObject()) {
+                Require-Coverage ($Names -ccontains $property.Name -and $seen.Add($property.Name)) 'coverage-runner-template-shape'
+            }
+            Require-Coverage ($seen.Count -eq $Names.Count) 'coverage-runner-template-shape'
+        }
+        Assert-RunnerTemplateFields $document.RootElement @('schemaVersion','kind','runId','repositoryRoot','sessionDirectory',
+            'sourceTree','sourceFingerprint','sourcePath','sourceSha256','snapshotContextPath','snapshotContextSha256',
+            'assemblies','tool','coverageCatalogSessionDirectory')
+        Require-Coverage ($document.RootElement.GetProperty('schemaVersion').GetInt32() -eq 1 -and
+            $document.RootElement.GetProperty('assemblies').GetArrayLength() -eq 2) 'coverage-runner-template-shape'
+        foreach ($pair in $document.RootElement.GetProperty('assemblies').EnumerateArray()) {
+            Assert-RunnerTemplateFields $pair @('key','assembly','assemblySha256','pdb','pdbSha256','discovery','discoverySha256','catalog','catalogSha256')
+            foreach ($property in $pair.EnumerateObject()) { [void]$property.Value.GetString() }
+        }
+        Assert-RunnerTemplateFields ($document.RootElement.GetProperty('tool')) @('assembly','assemblySha256','pdb','pdbSha256')
+        foreach ($property in $document.RootElement.GetProperty('tool').EnumerateObject()) { [void]$property.Value.GetString() }
+        $metadata = $text | ConvertFrom-Json -AsHashtable
+        Require-Coverage ($metadata.kind -ceq 'runner-readonly-metadata' -and $metadata.runId -ceq $RunId -and
+            (Same-Path $metadata.repositoryRoot $root) -and $metadata.sourceTree -ceq $source.tree -and
+            $metadata.sourceFingerprint -ceq $source.fingerprint -and
+            (Same-Path $metadata.snapshotContextPath $env:FISHAUDIO_SNAPSHOT_CONTEXT) -and
+            $metadata.snapshotContextSha256 -ceq $source.contextSha256 -and
+            (Same-Path $metadata.sessionDirectory $metadata.coverageCatalogSessionDirectory) -and
+            (Same-Path $metadata.sourcePath (Join-Path $metadata.sessionDirectory 'source.json'))) 'coverage-runner-template-binding'
+        $pins = [Collections.Generic.List[object]]::new()
+        $pins.Add(@{ path = $metadata.sourcePath; sha256 = $metadata.sourceSha256; root = $metadata.sessionDirectory })
+        $projects = @('tests/STranslate.Plugin.Tts.FishAudio.Tests', 'tests/FishAudio.Testing.Tests')
+        $names = @('STranslate.Plugin.Tts.FishAudio.Tests', 'FishAudio.Testing.Tests')
+        $keys = @('plugin', 'testing-tool')
+        for ($index = 0; $index -lt 2; $index++) {
+            $pair = $metadata.assemblies[$index]
+            $expectedDll = Join-Path $root ($projects[$index] + '/bin/coverage/Release/net10.0-windows/' + $names[$index] + '.dll')
+            $phases = [IO.Path]::GetFullPath((Join-Path $metadata.sessionDirectory 'phases')) + [IO.Path]::DirectorySeparatorChar
+            Require-Coverage ($pair.key -ceq $keys[$index] -and (Same-Path $pair.assembly $expectedDll) -and
+                (Same-Path $pair.pdb ([IO.Path]::ChangeExtension($expectedDll, '.pdb'))) -and
+                (Same-Path $pair.catalog (Join-Path $metadata.sessionDirectory ($pair.key + '/catalog.json'))) -and
+                [IO.Path]::IsPathFullyQualified($pair.discovery) -and
+                [IO.Path]::GetFullPath($pair.discovery).StartsWith($phases, [StringComparison]::OrdinalIgnoreCase) -and
+                [IO.Path]::GetFileName($pair.discovery) -ceq 'discovery.dump') 'coverage-runner-template-catalog-binding'
+            foreach ($role in @('assembly','pdb')) { $pins.Add(@{ path = $pair[$role]; sha256 = $pair[$role + 'Sha256']; root = $root }) }
+            foreach ($role in @('discovery','catalog')) { $pins.Add(@{ path = $pair[$role]; sha256 = $pair[$role + 'Sha256']; root = $metadata.sessionDirectory }) }
+        }
+        Require-Coverage ((Same-Path $metadata.tool.assembly $metadataTool) -and
+            (Same-Path $metadata.tool.pdb ([IO.Path]::ChangeExtension($metadataTool, '.pdb')))) 'coverage-runner-template-tool-binding'
+        foreach ($role in @('assembly','pdb')) { $pins.Add(@{ path = $metadata.tool[$role]; sha256 = $metadata.tool[$role + 'Sha256']; root = $root }) }
+        foreach ($pin in $pins) {
+            Require-Coverage ($pin.sha256 -is [string] -and $pin.sha256 -cmatch '^[a-f0-9]{64}$') 'coverage-runner-template-pin'
+            Require-RegularFile $pin.path $pin.root
+            $locks.Add([IO.File]::Open($pin.path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+            Require-Coverage ((Get-Digest $pin.path) -ceq $pin.sha256) 'coverage-runner-template-pin'
+        }
+        $executing = @($metadata.assemblies | Where-Object { Same-Path $_.assembly $TestAssembly })
+        Require-Coverage ($executing.Count -eq 1 -and $executing[0].assemblySha256 -ceq (Get-Digest $TestAssembly)) 'coverage-runner-template-executing-binding'
+        $metadata.sessionDirectory = $runRoot
+        $metadata.sourcePath = Join-Path $runRoot 'source.json'; $metadata.sourceSha256 = Get-Digest $metadata.sourcePath
+        $executing[0].discovery = Join-Path $runRoot 'discovery.dump'; $executing[0].discoverySha256 = Get-Digest $executing[0].discovery
+        $executing[0].catalog = $catalogPath; $executing[0].catalogSha256 = Get-Digest $catalogPath
+        $json = $metadata | ConvertTo-Json -Depth 16 -Compress
+        Require-Coverage ($json.Length -le 32767) 'coverage-runner-template-size'
+        [IO.File]::Copy($templatePath, (Join-Path $runRoot 'runner-metadata-template.json'), $false)
+        Write-NewText (Join-Path $runRoot 'runner-metadata.json') $json
+        Write-NewJson (Join-Path $runRoot 'runner-metadata-binding.json') @{ schemaVersion = 1
+            templateSha256 = $templateSha256; derivedSha256 = Get-Digest (Join-Path $runRoot 'runner-metadata.json')
+            authority = 'caller-independent-parent-build-and-catalog-template'; baselineClaim = $false }
+        return @{ FISHAUDIO_RUNNER_METADATA_JSON = $json; FISHAUDIO_RUNNER_REQUEST_PATH = $frameworkRequest }
+    } finally { $document.Dispose() }
+}
+
 function Write-CoverageSettings([string]$Path, [string]$Output, [string]$FullName = '') {
     $settings = [Xml.XmlWriterSettings]::new(); $settings.Encoding = $utf8; $settings.Indent = $true
     $stream = [IO.File]::Open($Path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
@@ -423,6 +510,12 @@ try {
     Require-Coverage ([IO.File]::Exists($vstest) -and [IO.File]::Exists($DotCoverToolFile) -and
         [IO.Path]::GetFileName($DotCoverToolFile).Equals('dotCover.dll', [StringComparison]::OrdinalIgnoreCase)) 'coverage-collector-fixed-tool-missing'
     $metadataTool = Join-Path $root 'tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll'
+    if (-not [string]::IsNullOrEmpty($MetadataToolAssembly)) {
+        $coverageMetadataTool = Join-Path $root 'tools/FishAudio.Testing/bin/coverage/Release/net10.0-windows/FishAudio.Testing.dll'
+        Require-Coverage ([IO.Path]::IsPathFullyQualified($MetadataToolAssembly) -and
+            ((Same-Path $MetadataToolAssembly $metadataTool) -or (Same-Path $MetadataToolAssembly $coverageMetadataTool))) 'coverage-collector-metadata-tool-binding'
+        $metadataTool = [IO.Path]::GetFullPath($MetadataToolAssembly)
+    }
     $stage = 'binary-input'
     Require-RegularFile $metadataTool $root
     foreach ($dll in @($TestAssembly, $ProductAssembly)) {
@@ -480,6 +573,17 @@ try {
         $binaries += [ordered]@{ role = $pair[0]; dllRelativePath = [IO.Path]::GetRelativePath($root, $pair[1]).Replace('\','/')
             pdbRelativePath = [IO.Path]::GetRelativePath($root, [IO.Path]::ChangeExtension($pair[1], '.pdb')).Replace('\','/'); identity = $record.binary }
     }
+    # Fixed collection policy; these names came from the held actual PE pairs.
+    $instrumentationPolicyVersion = 'framework-infrastructure-exclusions-v2'
+    foreach ($instrumentationName in @($binaries | ForEach-Object { $_.identity.assemblyName })) {
+        Require-Coverage ($instrumentationName -is [string] -and
+            $instrumentationName -ine 'Microsoft.TestPlatform.CommunicationUtilities' -and
+            $instrumentationName -ine 'Microsoft.TestPlatform.CoreUtilities' -and
+            $instrumentationName -ine 'Microsoft.TestPlatform.CrossPlatEngine' -and
+            $instrumentationName -ine 'Microsoft.TestPlatform.PlatformAbstractions' -and
+            $instrumentationName -notlike 'Microsoft.VisualStudio.TestPlatform.*' -and
+            $instrumentationName -ine 'NUnit3.TestAdapter' -and $instrumentationName -ine 'testhost') 'coverage-collector-instrumentation-policy-collision'
+    }
     $buildBytes = $utf8.GetBytes((@($source.fingerprint, $binaries) | ConvertTo-Json -Depth 12 -Compress))
     $identity = [ordered]@{ runId = $RunId; sessionId = $sessionId; canonicalId = $CaseId
         source = @{ commit = $source.commit; tree = $source.tree; fingerprint = $source.fingerprint }
@@ -505,6 +609,25 @@ try {
     [void](Invoke-CoveragePhase 'case-metadata' $dotnet @($metadataTool, 'coverage-case-metadata', '--input', $metadataRequest, '--output', $metadataOutput) 120000)
     $caseMetadata = ([IO.File]::ReadAllText($metadataOutput) | ConvertFrom-Json -AsHashtable).value
     Require-Coverage ($caseMetadata.canonicalId -ceq $CaseId) 'coverage-collector-case-metadata-mismatch'
+    $dependencyRequest = Join-Path $runRoot 'dependency-observation-request.json'
+    $locks.Add([IO.File]::Open($env:FISHAUDIO_SNAPSHOT_CONTEXT, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    Require-Coverage ((Get-Digest $env:FISHAUDIO_SNAPSHOT_CONTEXT) -ceq $source.contextSha256) 'coverage-dependency-context-changed'
+    $dependencyContext = [IO.File]::ReadAllText($env:FISHAUDIO_SNAPSHOT_CONTEXT) | ConvertFrom-Json
+    Require-Coverage ((Get-Digest $env:FISHAUDIO_SNAPSHOT_CONTEXT) -ceq $source.contextSha256) 'coverage-dependency-context-changed'
+    Write-NewJson $dependencyRequest @{ schemaVersion = 1; source = $identity.source; buildId = $identity.buildId
+        sourceDirectory = $root; testsDll = $TestAssembly; testsPdb = [IO.Path]::ChangeExtension($TestAssembly, '.pdb')
+        discovery = (Join-Path $runRoot 'discovery.dump'); canonicalIds = @($CaseId)
+        documentMaps = @(@{ documentPrefix = '/_/'; snapshotRelativePrefix = '' })
+        trackedSources = @($dependencyContext.files | ForEach-Object { @{ relativePath = $_.path; sha256 = $_.sha256 } }) }
+    $locks.Add([IO.File]::Open($dependencyRequest, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    $dependencyRequestSha256 = Get-Digest $dependencyRequest
+    $dependencyOutput = Join-Path $runRoot 'dependency-observation.json'
+    [void](Invoke-CoveragePhase 'dependency-observation' $dotnet @($metadataTool, 'coverage-dependencies-observe', '--input', $dependencyRequest, '--output', $dependencyOutput) 120000)
+    $locks.Add([IO.File]::Open($dependencyOutput, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    $dependencyOutputSha256 = Get-Digest $dependencyOutput
+    $dependencyDocument = [IO.File]::ReadAllText($dependencyOutput) | ConvertFrom-Json
+    Require-Coverage ($dependencyDocument.complete -eq $true -and $dependencyDocument.kind -ceq 'coverage-dependencies-observe') 'coverage-dependency-observation-rejected'
+    $dependencyObservation = $dependencyDocument.value
     $selection = Join-Path $runRoot 'selection.json'
     Write-NewJson $selection @{ schemaVersion = 1; ids = @($CaseId) }
     $executionSettings = Join-Path $runRoot 'execution.runsettings'
@@ -519,6 +642,7 @@ try {
     $coverLog = Join-Path $runRoot $coverLogRelative
     $coverErrorLog = Join-Path $frameworkDirectory 'cover.err.log'
     $frameworkRequest = Join-Path $runRoot 'framework-cover-request.json'
+    $runnerMetadataEnvironment = Get-RunnerCoverageMetadataEnvironment
     Write-NewJson $frameworkRequest ([ordered]@{
         schemaVersion = 1; runId = $RunId; sourceTree = $source.tree; sourceFingerprint = $source.fingerprint
         workingDirectory = $root; shellExecutable = $shell; dotnetExecutable = $dotnet
@@ -528,17 +652,18 @@ try {
         resultXmlPath = Join-Path $runRoot $nunitRelative; trxPath = Join-Path $runRoot $trxRelative
         outputDirectory = $frameworkDirectory; cases = @(@{ canonicalId = $CaseId; fullName = $selected[0].fullName })
         maximumConcurrency = 1; requireOrder = $true
-        environment = @{
+        environment = (@{
             DOTNET_CLI_UI_LANGUAGE = 'en'; VSLANG = '1033'; FISHAUDIO_COMPAT_PARALLEL_PROOF = '0'
             FISHAUDIO_COMPAT_EVIDENCE_ROOT = $runtimeEvidence; FISHAUDIO_TEST_REPOSITORY_ROOT = $root
             FISHAUDIO_PWSH_EXECUTABLE = $shell; FISHAUDIO_DOTNET_EXECUTABLE = $dotnet
             FISHAUDIO_COVERAGE_SESSION_ID = $sessionId; FISHAUDIO_COVERAGE_RUN_ID = $RunId
             FISHAUDIO_COVERAGE_CASE_ID = $CaseId; FISHAUDIO_COVERAGE_SOURCE_TREE = $source.tree
             FISHAUDIO_COVERAGE_EVIDENCE_ROOT = $runtimeEvidence
-        }
+        } + $runnerMetadataEnvironment)
         profiledLaunch = @{ sessionId = $sessionId; toolAssembly = $DotCoverToolFile; toolSha256 = $toolSha256
             vstestConsoleAssembly = $vstest; vstestConsoleSha256 = Get-Digest $vstest
-            snapshotPath = $snapshotPath; logPath = $coverLog }
+            snapshotPath = $snapshotPath; logPath = $coverLog
+            instrumentationPolicyVersion = $instrumentationPolicyVersion; productAssembly = $ProductAssembly; productAssemblySha256 = Get-Digest $ProductAssembly }
     })
     [void](Invoke-CoveragePhase 'cover' $dotnet @($metadataTool, 'framework-run', '--request', $frameworkRequest))
     $stage = 'framework-supervision-verification'
@@ -553,7 +678,8 @@ try {
         $frameworkRecord.launch.sessionId -ceq $sessionId -and
         $frameworkRecord.launch.invocationSha256 -ceq (Get-Digest (Join-Path $frameworkDirectory 'invocation.json')) -and
         $frameworkRecord.launch.toolSha256 -ceq $toolSha256 -and
-        $frameworkRecord.launch.vstestConsoleSha256 -ceq (Get-Digest $vstest)) 'coverage-collector-framework-launch-mismatch'
+        $frameworkRecord.launch.vstestConsoleSha256 -ceq (Get-Digest $vstest) -and
+        $frameworkRecord.launch.instrumentationPolicyVersion -ceq $instrumentationPolicyVersion) 'coverage-collector-framework-launch-mismatch'
     $stage = 'test-verification'
     $xml = @(Get-ChildItem -LiteralPath (Join-Path $frameworkDirectory 'result-xml') -File -Filter '*.xml')
     Require-Coverage ($xml.Count -eq 1 -and [IO.File]::Exists($snapshotPath) -and [IO.File]::Exists($coverLog)) 'coverage-collector-cover-output-missing'
@@ -715,6 +841,9 @@ try {
     $admissionSource = Get-SnapshotIdentity
     Require-Coverage (($source | ConvertTo-Json -Compress) -ceq ($admissionSource | ConvertTo-Json -Compress)) 'coverage-admission-source-changed'
     foreach ($file in $binaryFiles) { Lock-AdmissionInput $file.path $file.sha256 }
+    Lock-AdmissionInput $dependencyRequest $dependencyRequestSha256
+    Lock-AdmissionInput $dependencyOutput $dependencyOutputSha256
+    Lock-AdmissionInput $env:FISHAUDIO_SNAPSHOT_CONTEXT $source.contextSha256
     foreach ($artifact in $artifacts) { Lock-AdmissionInput (Join-Path $runRoot $artifact.relativePath) $artifact.sha256 }
     foreach ($artifact in $hostLifecycle.evidence) { Lock-AdmissionInput $artifact.path $artifact.sha256 }
     Require-Coverage ($null -ne $frameworkEnvelope) 'coverage-admission-framework-envelope-required'
@@ -833,7 +962,8 @@ try {
         binaries = @($binaries | ForEach-Object { @{ role = $_.role; dllRelativePath = $_.dllRelativePath
             pdbRelativePath = $_.pdbRelativePath; expectedIdentity = $_.identity } })
         discoverySha256 = ($artifacts | Where-Object kind -CEQ 'Discovery').sha256; dotCoverVersion = $observedDotCoverVersion
-        toolFile = $DotCoverToolFile; toolSha256 = $toolSha256; requireOwnedAppHost = $requiresOwnedChild
+        instrumentationPolicyVersion = $instrumentationPolicyVersion
+        toolFile = $DotCoverToolFile; toolSha256 = $toolSha256; requireOwnedAppHost = $requiresOwnedChild; dependencies = $dependencyObservation
         requireFrameworkSupervision = $true; supervisor = $supervisor }
     $stage = 'admission-import'
     $caseCoveragePath = Join-Path $runRoot 'case-coverage.json'

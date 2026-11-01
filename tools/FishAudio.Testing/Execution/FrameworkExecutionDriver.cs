@@ -13,12 +13,18 @@ public sealed record FrameworkRunRequest(int SchemaVersion, string RunId, string
     string ResultXmlPath, string TrxPath, string OutputDirectory,
     IReadOnlyList<FrameworkCaseBinding> Cases, int MaximumConcurrency = 1, bool RequireOrder = false,
     IReadOnlyDictionary<string, string>? Environment = null, string? SourceFingerprint = null,
-    DotCoverSdkVstestLaunch? ProfiledLaunch = null);
+    DotCoverSdkVstestLaunch? ProfiledLaunch = null,
+    OrderedProfileDotCoverLaunch? OrderedProfiledLaunch = null);
 
 // The only profiled route is the pinned CLI around the SDK's VSTest console.
 // It does not accept an arbitrary executable or replacement test arguments.
 public sealed record DotCoverSdkVstestLaunch(string SessionId, string ToolAssembly, string ToolSha256,
-    string VstestConsoleAssembly, string VstestConsoleSha256, string SnapshotPath, string LogPath);
+    string VstestConsoleAssembly, string VstestConsoleSha256, string SnapshotPath, string LogPath,
+    string? InstrumentationPolicyVersion = null, string? ProductAssembly = null, string? ProductAssemblySha256 = null);
+
+// Separate from isolated-case launch: only the complete current ordered native profile.
+public sealed record OrderedProfileDotCoverLaunch(string Profile, string RawDiscoverySha256,
+    DotCoverSdkVstestLaunch Collection);
 
 /// <summary>
 /// Owns the process and evidence envelope of one standard VSTest invocation.
@@ -121,10 +127,26 @@ public static class FrameworkExecutionDriver
 
     private static void ValidateProfiledLaunch(FrameworkRunRequest request, string output, List<FileStream> guards)
     {
-        if (request.ProfiledLaunch is not { } launch) return;
+        Require(request.ProfiledLaunch is null || request.OrderedProfiledLaunch is null,
+            "framework-profiled-launch-ambiguous");
+        Require(request.OrderedProfiledLaunch is null || request.OrderedProfiledLaunch.Collection is not null,
+            "framework-profiled-group-collection-required");
+        var launch = ProfiledCollection(request);
+        if (launch is null) return;
+        ValidateInstrumentationPolicy(request, launch, guards);
+        if (request.OrderedProfiledLaunch is { } ordered)
+        {
+            _ = OrderedProfileCoveragePlan.ValidateSelection(request.DiscoveryPath, ordered.Profile,
+                ordered.RawDiscoverySha256, request.Cases, request.MaximumConcurrency, request.RequireOrder);
+            foreach (var name in new[] { "FISHAUDIO_COVERAGE_SESSION_ID", "FISHAUDIO_COVERAGE_RUN_ID",
+                "FISHAUDIO_COVERAGE_CASE_ID", "FISHAUDIO_COVERAGE_SOURCE_TREE", "FISHAUDIO_COVERAGE_EVIDENCE_ROOT" })
+                Require(request.Environment is not null && request.Environment.TryGetValue(name, out var value) && value == "",
+                    "framework-profiled-group-single-case-context-forbidden");
+        }
         Require(Guid.TryParseExact(launch.SessionId, "N", out var session) && session != Guid.Empty &&
             session.ToString("N") == launch.SessionId && Hash(launch.ToolSha256, 64) &&
-            Hash(launch.VstestConsoleSha256, 64) && request.Cases.Count == 1 && request.MaximumConcurrency == 1,
+            Hash(launch.VstestConsoleSha256, 64) &&
+            (request.OrderedProfiledLaunch is not null || request.Cases.Count == 1) && request.MaximumConcurrency == 1,
             "framework-profiled-request-identity");
         guards.Add(OpenInput(launch.ToolAssembly));
         Require(Digest(launch.ToolAssembly) == launch.ToolSha256, "framework-profiled-tool-mismatch");
@@ -147,15 +169,41 @@ public static class FrameworkExecutionDriver
         }
     }
 
-    private static string[] TargetArguments(FrameworkRunRequest request)
+    private static DotCoverSdkVstestLaunch? ProfiledCollection(FrameworkRunRequest request) =>
+        request.ProfiledLaunch ?? request.OrderedProfiledLaunch?.Collection;
+
+    internal static void ValidateInstrumentationPolicy(FrameworkRunRequest request, DotCoverSdkVstestLaunch launch,
+        List<FileStream> guards)
+    {
+        Require(CoverageInstrumentationPolicy.IsSupported(launch.InstrumentationPolicyVersion), "framework-instrumentation-policy-unknown");
+        if (launch.InstrumentationPolicyVersion is null)
+        {
+            Require(launch.ProductAssembly is null && launch.ProductAssemblySha256 is null, "framework-instrumentation-policy-v0-fields");
+            return;
+        }
+        Require(launch.ProductAssembly is not null && Hash(launch.ProductAssemblySha256, 64), "framework-instrumentation-policy-product");
+        var product = OpenInput(launch.ProductAssembly!);
+        guards.Add(product);
+        var tests = OpenInput(request.TestAssembly);
+        guards.Add(tests);
+        Require(product.Length is > 0 and <= 256 * 1024 * 1024 && tests.Length is > 0 and <= 256 * 1024 * 1024,
+            "framework-instrumentation-policy-input-size");
+        Require(Digest(launch.ProductAssembly!) == launch.ProductAssemblySha256 &&
+            Digest(request.TestAssembly) == request.TestAssemblySha256, "framework-instrumentation-policy-input-mismatch");
+        Require(CoverageInstrumentationPolicy.RetainsProtectedNames(CoverageInstrumentationPolicy.ReadAssemblyName(product),
+            CoverageInstrumentationPolicy.ReadAssemblyName(tests)), "framework-instrumentation-policy-collision");
+    }
+
+    internal static string[] TargetArguments(FrameworkRunRequest request)
     {
         var results = new[] { "--Settings:" + request.RunSettings,
             "--ResultsDirectory:" + Path.GetDirectoryName(request.TrxPath),
             "--logger:trx;LogFileName=" + Path.GetFileName(request.TrxPath) };
-        if (request.ProfiledLaunch is not { } launch)
+        if (ProfiledCollection(request) is not { } launch)
             return ["vstest", request.TestAssembly, .. results];
         return [launch.ToolAssembly, "cover", "--target-executable", request.DotnetExecutable,
-            "--snapshot-output", launch.SnapshotPath, "--log-file", launch.LogPath, "--", "exec",
+            "--snapshot-output", launch.SnapshotPath, "--log-file", launch.LogPath,
+            .. CoverageInstrumentationPolicy.Arguments(launch.InstrumentationPolicyVersion), "--", "exec",
             launch.VstestConsoleAssembly, request.TestAssembly, results[0], results[2], results[1]];
     }
 
@@ -166,7 +214,7 @@ public static class FrameworkExecutionDriver
         Directory.CreateDirectory(request.OutputDirectory);
         Directory.CreateDirectory(Path.GetDirectoryName(request.ResultXmlPath)!);
         Directory.CreateDirectory(Path.GetDirectoryName(request.TrxPath)!);
-        if (request.ProfiledLaunch is { } profiled)
+        if (ProfiledCollection(request) is { } profiled)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(profiled.SnapshotPath)!);
             Directory.CreateDirectory(Path.GetDirectoryName(profiled.LogPath)!);
@@ -189,10 +237,12 @@ public static class FrameworkExecutionDriver
             ["arguments"] = arguments, ["environment"] = targetEnvironment,
             ["driverControl"] = new { pipeName = launcherPipe, nonce, runId = request.RunId, sourceTree = request.SourceTree },
         };
-        if (request.ProfiledLaunch is { } coverage)
+        if (ProfiledCollection(request) is { } coverage)
         {
             invocation.Add("sessionRunId", coverage.SessionId);
-            invocation.Add("canonicalCaseId", request.Cases[0].CanonicalId);
+            if (request.OrderedProfiledLaunch is { } ordered)
+                invocation.Add("coverageProfile", ordered.Profile);
+            else invocation.Add("canonicalCaseId", request.Cases[0].CanonicalId);
         }
         await WriteNewAsync(invocationPath, invocation);
         inputGuards.Add(OpenInput(invocationPath));
@@ -243,6 +293,7 @@ public static class FrameworkExecutionDriver
         var targetPid = 0;
         int? targetExitCode = null;
         long? targetExitTimestamp = null;
+        long? completedTimestamp = null;
         var published = false;
         Task<(NUnitEvidenceResult Evidence, string ResultSha256, string TrxSha256)>? verification = null;
         long? verificationStarted = null;
@@ -376,7 +427,8 @@ public static class FrameworkExecutionDriver
                 if (accepted && launcherExited && stdoutDrained && stderrDrained && activeProcesses == 0 &&
                     launcherRead.IsCompletedSuccessfully && hostRead.IsCompletedSuccessfully && !channel.Reader.TryPeek(out _))
                 {
-                    watchdog.HostExited(Stopwatch.GetTimestamp(), accepted && process.ExitCode == 0, true, true);
+                    completedTimestamp = Stopwatch.GetTimestamp();
+                    watchdog.HostExited(completedTimestamp.Value, accepted && process.ExitCode == 0, true, true);
                     Require(watchdog.State.Complete && verified, "framework-envelope-incomplete");
                     break;
                 }
@@ -426,10 +478,15 @@ public static class FrameworkExecutionDriver
             schemaVersion = 1, kind = "framework-execution", request.RunId, request.SourceTree, request.SourceFingerprint,
             request.TestAssemblySha256, requestSha256,
             policy = new { request.MaximumConcurrency, request.RequireOrder },
-            launch = new { kind = request.ProfiledLaunch is null ? "vstest" : "dotcover-sdk-vstest",
-                sessionId = request.ProfiledLaunch?.SessionId, invocationSha256,
-                toolSha256 = request.ProfiledLaunch?.ToolSha256,
-                vstestConsoleSha256 = request.ProfiledLaunch?.VstestConsoleSha256 },
+            launch = new { kind = request.OrderedProfiledLaunch is not null ? "dotcover-sdk-vstest-ordered-profile" :
+                    request.ProfiledLaunch is null ? "vstest" : "dotcover-sdk-vstest",
+                sessionId = ProfiledCollection(request)?.SessionId, invocationSha256,
+                toolSha256 = ProfiledCollection(request)?.ToolSha256,
+                vstestConsoleSha256 = ProfiledCollection(request)?.VstestConsoleSha256,
+                profile = request.OrderedProfiledLaunch?.Profile,
+                rawDiscoverySha256 = request.OrderedProfiledLaunch?.RawDiscoverySha256,
+                instrumentationPolicyVersion = ProfiledCollection(request)?.InstrumentationPolicyVersion },
+            orderedProfileClock = request.OrderedProfiledLaunch is null ? null : new { startedTimestamp = started, completedTimestamp },
             selectedIds = request.Cases.Select(item => item.CanonicalId).ToArray(), state = watchdog.State,
             target = new { started = targetStarted, pid = targetPid, exitCode = targetExitCode },
             process = new { launcherPid = launched ? process.Id : (int?)null, launcherExited,

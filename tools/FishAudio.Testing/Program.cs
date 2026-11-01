@@ -18,7 +18,11 @@ internal static class Program
         }
         if (EvidenceCommands.IsInvocation(args)) return EvidenceCommands.Run(args);
         if (MigrationCommands.IsInvocation(args)) return MigrationCommands.Run(args);
+        if (CoverageCiTransportCommands.IsInvocation(args)) return CoverageCiTransportCommands.Run(args);
+        if (FullCoverageCiCommands.IsInvocation(args)) return FullCoverageCiCommands.Run(args);
+        if (FullCoverageCommands.IsInvocation(args)) return FullCoverageCommands.Run(args);
         if (CoverageCommands.IsInvocation(args)) return CoverageCommands.Run(args);
+        if (OrderedProfileCoverageCommands.IsInvocation(args)) return OrderedProfileCoverageCommands.Run(args);
         if (!TryReadOptions(args, out var options))
         {
             Console.Error.WriteLine("Usage: workspace-probe --project <absolute tests csproj> --output <absolute JSON> [--coverage]");

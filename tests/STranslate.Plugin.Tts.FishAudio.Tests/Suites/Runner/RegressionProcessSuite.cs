@@ -812,8 +812,8 @@ internal static class RegressionProcessSuite
         request.LegacyArguments = ["--favorite-order-tests"];
         await new RegressionProcessHost().ExecutePartitionAsync(request, report, fixture.Path);
         AssertEqual("passed", report.Cases[0].Outcome, "A whitelisted real legacy alias uses the controlled child without recursive launch");
-        var privateRequest = Request([RegressionProcessProtocol.LegacyId("--popup-proof-tests")]);
-        privateRequest.LegacyArguments = ["--popup-proof-tests", "private-original-proof-output"];
+        var privateRequest = Request([RegressionProcessProtocol.LegacyId("--numeric-typography-proof-tests")]);
+        privateRequest.LegacyArguments = ["--numeric-typography-proof-tests", "private-original-proof-output"];
         RegressionProcessProtocol.ValidateRequest(privateRequest);
         AssertEqual("private-original-proof-output", privateRequest.LegacyArguments[1], "Legacy proof values retain their original private meaning");
         var publicJson = JsonSerializer.Serialize(report, RegressionReport.JsonOptions);

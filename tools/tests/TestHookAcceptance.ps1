@@ -49,7 +49,11 @@ $runId = [Guid]::NewGuid().ToString('N')
 $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
 $runRoot = Join-Path $temporaryRoot ('fishaudio-hook-acceptance-' + $runId)
 $fixturesRoot = Join-Path $runRoot 'fixtures'
-$evidenceRoot = Join-Path $runRoot 'evidence'
+$evidenceRoot = if ([string]::IsNullOrWhiteSpace($ResultsPath)) { Join-Path $runRoot 'evidence' } else {
+    $ResultsPath = [IO.Path]::GetFullPath($ResultsPath)
+    Join-Path ([IO.Path]::GetDirectoryName($ResultsPath)) ([IO.Path]::GetFileName($ResultsPath) + '.owner-evidence-' + $runId)
+}
+$ownerEvidenceLink = $null
 $emptyGitConfig = Join-Path $runRoot 'empty.gitconfig'
 $emptyGitTemplate = Join-Path $runRoot 'empty-template'
 $results = [Collections.Generic.List[object]]::new()
@@ -102,6 +106,16 @@ function Write-PrivateFailure {
     Write-FixtureText $Path $detail.ToString()
 }
 
+function Write-DurableNewJson {
+    param([string]$Path, $Value)
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    Assert-Condition ((Test-ContainedPath $fullPath $evidenceRoot) -or
+        [string]::Equals($fullPath, $ownerEvidenceLink, [StringComparison]::OrdinalIgnoreCase)) 'foreign-command-evidence'
+    $bytes = $utf8.GetBytes(($Value | ConvertTo-Json -Depth 10) + "`n")
+    $stream = [IO.FileStream]::new($fullPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read, 1, [IO.FileOptions]::WriteThrough)
+    try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) }
+    finally { $stream.Dispose() }
+}
 function Get-RemainingMilliseconds {
     param($Owner)
     $remaining = 120000L - $Owner.Clock.ElapsedMilliseconds
@@ -121,6 +135,8 @@ function Invoke-OwnedProcess {
     $remaining = Get-RemainingMilliseconds $Owner
     $Owner.CommandOrdinal++
     $logPrefix = Join-Path $Owner.Evidence ('{0:D3}-{1}' -f $Owner.CommandOrdinal, $Label)
+    $stdoutRaw = $logPrefix + '.stdout.raw'
+    $stderrRaw = $logPrefix + '.stderr.raw'
     $start = [Diagnostics.ProcessStartInfo]::new()
     $start.FileName = $FilePath
     $start.WorkingDirectory = $WorkingDirectory
@@ -150,20 +166,52 @@ function Invoke-OwnedProcess {
     $process.StartInfo = $start
     $stdout = $null
     $stderr = $null
+    $stdoutSink = $null
+    $stderrSink = $null
+    $stdoutSinkCreated = $false
+    $stderrSinkCreated = $false
     $primary = $null
     $processStarted = $false
+    $startedUtc = [DateTimeOffset]::UtcNow
     try {
+        Write-DurableNewJson ($logPrefix + '.start.json') ([ordered]@{
+            schemaVersion = 1; kind = 'hook-acceptance-command-start'; runId = $runId
+            scenario = [IO.Path]::GetFileName($Owner.FixtureRoot); ordinal = $Owner.CommandOrdinal; label = $Label
+            executable = $FilePath; arguments = @($Arguments); workingDirectory = $WorkingDirectory
+            startedUtc = $startedUtc.ToString('O'); ownerElapsedMilliseconds = $Owner.Clock.ElapsedMilliseconds
+            remainingOwnerMilliseconds = 120000L - $Owner.Clock.ElapsedMilliseconds
+            stdoutRaw = [IO.Path]::GetFileName($stdoutRaw); stderrRaw = [IO.Path]::GetFileName($stderrRaw)
+        })
+        # Disable managed output buffering. Every completed small async copy write
+        # reaches its own WriteThrough file while the command is still running.
+        $options = [IO.FileOptions]::Asynchronous -bor [IO.FileOptions]::WriteThrough
+        $stdoutSink = [IO.FileStream]::new($stdoutRaw, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read, 1, $options)
+        $stdoutSinkCreated = $true
+        $stderrSink = [IO.FileStream]::new($stderrRaw, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read, 1, $options)
+        $stderrSinkCreated = $true
         $processStarted = $process.Start()
         Assert-Condition $processStarted 'process-not-started'
-        $stdout = $process.StandardOutput.ReadToEndAsync()
-        $stderr = $process.StandardError.ReadToEndAsync()
+        $stdoutEncoding = $process.StandardOutput.CurrentEncoding
+        $stderrEncoding = $process.StandardError.CurrentEncoding
+        $stdout = $process.StandardOutput.BaseStream.CopyToAsync($stdoutSink, 4096)
+        $stderr = $process.StandardError.BaseStream.CopyToAsync($stderrSink, 4096)
         Assert-Condition ($process.WaitForExit($remaining)) 'process-deadline'
         $remaining = Get-RemainingMilliseconds $Owner
         $drains = [Threading.Tasks.Task]::WhenAll([Threading.Tasks.Task[]]@($stdout, $stderr))
         Assert-Condition ($drains.Wait($remaining)) 'output-deadline'
-        [IO.File]::WriteAllText($logPrefix + '.stdout.log', $stdout.Result, $utf8)
-        [IO.File]::WriteAllText($logPrefix + '.stderr.log', $stderr.Result, $utf8)
-        return [pscustomobject]@{ ExitCode = $process.ExitCode; Output = $stdout.Result; Error = $stderr.Result }
+        $stdoutSink.Flush($true)
+        $stderrSink.Flush($true)
+        $stdoutSink.Dispose()
+        $stdoutSink = $null
+        $stderrSink.Dispose()
+        $stderrSink = $null
+        # Decode only after both original pipes have drained, using the same
+        # Process StreamReader encodings/BOM handling as ReadToEndAsync did.
+        $outputText = [IO.File]::ReadAllText($stdoutRaw, $stdoutEncoding)
+        $errorText = [IO.File]::ReadAllText($stderrRaw, $stderrEncoding)
+        [IO.File]::WriteAllText($logPrefix + '.stdout.log', $outputText, $utf8)
+        [IO.File]::WriteAllText($logPrefix + '.stderr.log', $errorText, $utf8)
+        return [pscustomobject]@{ ExitCode = $process.ExitCode; Output = $outputText; Error = $errorText }
     } catch {
         $primary = $_
         try { Write-PrivateFailure $primary ($logPrefix + '.failure.txt') } catch { }
@@ -186,13 +234,45 @@ function Invoke-OwnedProcess {
                     Assert-Condition ($failureRemaining -gt 0 -and $drain.Wait([Math]::Max(1, $failureRemaining))) 'failure-output-deadline'
                 }
                 if ($null -ne $stdout -and $stdout.IsCompletedSuccessfully) {
-                    [IO.File]::WriteAllText($logPrefix + '.stdout.log', $stdout.Result, $utf8)
+                    if ($null -ne $stdoutSink) { $stdoutSink.Flush($true); $stdoutSink.Dispose(); $stdoutSink = $null }
+                    [IO.File]::WriteAllText($logPrefix + '.stdout.log', [IO.File]::ReadAllText($stdoutRaw, $stdoutEncoding), $utf8)
                 }
                 if ($null -ne $stderr -and $stderr.IsCompletedSuccessfully) {
-                    [IO.File]::WriteAllText($logPrefix + '.stderr.log', $stderr.Result, $utf8)
+                    if ($null -ne $stderrSink) { $stderrSink.Flush($true); $stderrSink.Dispose(); $stderrSink = $null }
+                    [IO.File]::WriteAllText($logPrefix + '.stderr.log', [IO.File]::ReadAllText($stderrRaw, $stderrEncoding), $utf8)
                 }
             }
-        } catch { $cleanupError = $_ } finally { $process.Dispose() }
+        } catch { $cleanupError = $_ }
+        # Attempt both sink releases independently; a release failure cannot
+        # erase a command error or prevent release of the other raw stream.
+        $stdoutClosed = $stdoutSinkCreated -and $null -eq $stdoutSink
+        $stderrClosed = $stderrSinkCreated -and $null -eq $stderrSink
+        try { if ($null -ne $stdoutSink) { $stdoutSink.Dispose(); $stdoutClosed = $true } }
+        catch { if ($null -eq $cleanupError) { $cleanupError = $_ } }
+        try { if ($null -ne $stderrSink) { $stderrSink.Dispose(); $stderrClosed = $true } }
+        catch { if ($null -eq $cleanupError) { $cleanupError = $_ } }
+        try {
+            $exited = $processStarted -and $process.HasExited
+            $stdoutDrained = $null -ne $stdout -and $stdout.IsCompletedSuccessfully
+            $stderrDrained = $null -ne $stderr -and $stderr.IsCompletedSuccessfully
+            Write-DurableNewJson ($logPrefix + '.end.json') ([ordered]@{
+                schemaVersion = 1; kind = 'hook-acceptance-command-end'; runId = $runId
+                scenario = [IO.Path]::GetFileName($Owner.FixtureRoot); ordinal = $Owner.CommandOrdinal; label = $Label
+                startedUtc = $startedUtc.ToString('O'); finishedUtc = [DateTimeOffset]::UtcNow.ToString('O')
+                ownerElapsedMilliseconds = $Owner.Clock.ElapsedMilliseconds
+                processStarted = $processStarted; processId = $(if ($processStarted) { $process.Id } else { $null })
+                targetExited = $exited; exitCode = $(if ($exited) { $process.ExitCode } else { $null })
+                stdoutDrained = $stdoutDrained; stderrDrained = $stderrDrained
+                stdoutSinkCreated = $stdoutSinkCreated; stderrSinkCreated = $stderrSinkCreated
+                stdoutSinkClosed = $stdoutClosed; stderrSinkClosed = $stderrClosed
+                stdoutRawBytes = $(if ([IO.File]::Exists($stdoutRaw)) { [IO.FileInfo]::new($stdoutRaw).Length } else { $null })
+                stderrRawBytes = $(if ([IO.File]::Exists($stderrRaw)) { [IO.FileInfo]::new($stderrRaw).Length } else { $null })
+                executionComplete = $exited -and $stdoutDrained -and $stderrDrained -and $stdoutClosed -and $stderrClosed -and $null -eq $primary -and $null -eq $cleanupError
+                failureType = $(if ($null -ne $primary) { $primary.Exception.GetType().FullName } else { $null })
+                cleanupFailureType = $(if ($null -ne $cleanupError) { $cleanupError.Exception.GetType().FullName } else { $null })
+            })
+        } catch { if ($null -eq $cleanupError) { $cleanupError = $_ } }
+        finally { $process.Dispose() }
         if ($null -ne $cleanupError) {
             try { [IO.File]::WriteAllText($logPrefix + '.cleanup.log', $cleanupError.Exception.GetType().FullName, $utf8) } catch { }
             if ($null -eq $primary) { throw $cleanupError }
@@ -1297,7 +1377,7 @@ function Invoke-AcceptanceScenario {
             Write-FixtureText (Join-Path $root 'value.txt') "bad`n"
             Invoke-FixtureGit $Owner $root @('add', '--', 'value.txt') | Out-Null
             $defaultTree = (Invoke-FixtureGit $Owner $root @('write-tree')).Output.Trim()
-            $alternateIndex = Join-Path $Owner.Evidence 'alternate.index'
+            $alternateIndex = Join-Path $Owner.FixtureRoot 'alternate.index'
             $environment = @{ GIT_INDEX_FILE = $alternateIndex }
             Invoke-FixtureGit $Owner $root @('read-tree', 'HEAD') $environment | Out-Null
             Write-FixtureText (Join-Path $root 'alternate-only.txt') "tracked by the alternate index`n"
@@ -1653,6 +1733,13 @@ try {
     Assert-Condition (-not (Test-ContainedPath $ResultsPath $sourceRoot)) 'results-must-be-private'
     [IO.Directory]::CreateDirectory($fixturesRoot) | Out-Null
     [IO.Directory]::CreateDirectory($evidenceRoot) | Out-Null
+    [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($ResultsPath)) | Out-Null
+    $ownerEvidenceLink = $ResultsPath + '.owner_evidence-' + $runId + '.json'
+    Write-DurableNewJson $ownerEvidenceLink ([ordered]@{
+        schemaVersion = 1; kind = 'hook-acceptance-evidence-owner'; runId = $runId
+        resultsPath = $ResultsPath; evidence = $evidenceRoot; selected = @($selected)
+        createdUtc = [DateTimeOffset]::UtcNow.ToString('O')
+    })
     [IO.Directory]::CreateDirectory($emptyGitTemplate) | Out-Null
     Write-FixtureText $emptyGitConfig ''
     foreach ($name in $selected) {
@@ -1719,6 +1806,8 @@ try {
                 notRun = @($selected | Where-Object { $completedNames -cnotcontains $_ })
                 failure = $failureCode
                 evidence = $evidenceRoot
+                runId = $runId
+                ownerEvidence = $ownerEvidenceLink
             }
             Write-FixtureText ([IO.Path]::GetFullPath($ResultsPath)) ($report | ConvertTo-Json -Depth 10)
         }

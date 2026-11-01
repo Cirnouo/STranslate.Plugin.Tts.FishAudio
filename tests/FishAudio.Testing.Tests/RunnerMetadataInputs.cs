@@ -27,7 +27,10 @@ internal static class RunnerMetadataInputs
     internal sealed record Context(int SchemaVersion, string Kind, string RunId, string RepositoryRoot,
         string SessionDirectory, string? SourceTree, string SourceFingerprint, string SourcePath,
         string SourceSha256, string? SnapshotContextPath, string? SnapshotContextSha256,
-        IReadOnlyList<CatalogPair> Assemblies, FilePair Tool);
+        IReadOnlyList<CatalogPair> Assemblies, FilePair Tool)
+    {
+        public string? CoverageCatalogSessionDirectory { get; init; }
+    }
     internal sealed record Binding(Context Context, FrameworkRunRequest Request);
     internal sealed record SdkDependencyEvidence(string PackageId, string Version, string ZipEntry,
         string LockSha256, string AssetsSha256, string MetadataSha256, string DeclaredContentHash,
@@ -75,11 +78,11 @@ internal static class RunnerMetadataInputs
             var context = Parse<Context>(text!);
             var request = Read<FrameworkRunRequest>(requestPath!, guards);
             var control = Read<FrameworkClientContext>(controlPath!, guards);
+            _ = ReadLayout(context, request, requestPath);
             Require(request.Environment is not null &&
                 request.Environment.TryGetValue(ContextVariable, out var pinned) && pinned == text &&
                 request.Environment.TryGetValue(RequestVariable, out var pinnedRequest) && Same(pinnedRequest, requestPath!) &&
-                Same(controlPath!, Path.Combine(request.OutputDirectory, "control-context.json")) &&
-                Same(requestPath!, Path.Combine(Path.GetDirectoryName(request.OutputDirectory)!, "execution-request.json")),
+                Same(controlPath!, Path.Combine(request.OutputDirectory, "control-context.json")),
                 "request-context-binding");
             Require(control.SchemaVersion == 1 && control.RunId == request.RunId && control.SourceTree == request.SourceTree &&
                 Same(control.TestAssembly, request.TestAssembly) && control.TestAssemblySha256 == request.TestAssemblySha256 &&
@@ -103,8 +106,8 @@ internal static class RunnerMetadataInputs
         var dependencies = new List<SdkDependencyEvidence>();
         try
         {
-            // Four owned directory levels: session/key/execution/phase/supervised.
-            var session = Path.GetFullPath(Path.Combine(request.OutputDirectory, "../../../.."));
+            var layout = ReadLayout(context, request);
+            var session = layout.SessionDirectory;
             Require(context.SchemaVersion == 1 && context.Kind == "runner-readonly-metadata" &&
                 context.RunId == request.RunId && Same(context.RepositoryRoot, root) &&
                 Same(context.SessionDirectory, session) && Same(context.SourcePath, Path.Combine(session, "source.json")) &&
@@ -116,7 +119,18 @@ internal static class RunnerMetadataInputs
                 identity.GetProperty("tree").GetString() == context.SourceTree &&
                 identity.GetProperty("fingerprintKind").GetString() == "sha256-source-path-and-bytes-ordinal-v1", "source-binding");
             var snapshot = Environment.GetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT");
-            if (identity.GetProperty("snapshot").GetBoolean())
+            if (layout.Coverage)
+            {
+                Require(snapshot is not null && context.SourceTree is not null &&
+                    Same(snapshot, context.SnapshotContextPath!) &&
+                    context.SnapshotContextSha256 == identity.GetProperty("contextSha256").GetString() &&
+                    Same(identity.GetProperty("snapshotRoot").GetString()!, root), "snapshot-binding");
+                using var original = ReadDocument(snapshot!, context.SnapshotContextSha256!, guards);
+                Require(original.RootElement.GetProperty("schemaVersion").GetInt32() == 1 &&
+                    original.RootElement.GetProperty("tree").GetString() == context.SourceTree &&
+                    Same(original.RootElement.GetProperty("root").GetString()!, root), "snapshot-binding");
+            }
+            else if (identity.GetProperty("snapshot").GetBoolean())
             {
                 Require(snapshot is not null && context.SourceTree is not null &&
                     Same(snapshot, context.SnapshotContextPath!) &&
@@ -139,12 +153,16 @@ internal static class RunnerMetadataInputs
             for (var index = 0; index < 2; index++)
             {
                 var item = context.Assemblies[index];
-                var expected = Path.Combine(root, projects[index], "bin/Release/net10.0-windows", names[index] + ".dll");
+                var expected = Path.Combine(root, projects[index], layout.Coverage ? "bin/coverage/Release/net10.0-windows" : "bin/Release/net10.0-windows", names[index] + ".dll");
+                var executingCoverage = layout.Coverage && Same(item.Assembly, request.TestAssembly);
+                var catalogSession = executingCoverage ? session : layout.CatalogSessionDirectory;
                 Require(Same(item.Assembly, expected) && Same(item.Pdb, Path.ChangeExtension(expected, ".pdb")) &&
-                    Same(item.Catalog, Path.Combine(session, item.Key, "catalog.json")) &&
-                    Within(item.Discovery, Path.Combine(session, "phases")) &&
-                    Path.GetFileName(item.Discovery) == "discovery.dump" &&
-                    Path.GetFileName(Path.GetDirectoryName(item.Discovery)!).EndsWith("-discover-" + item.Key, StringComparison.Ordinal),
+                    (executingCoverage
+                        ? Same(item.Catalog, Path.Combine(session, "catalog.json")) && Same(item.Discovery, Path.Combine(session, "discovery.dump"))
+                        : Same(item.Catalog, Path.Combine(catalogSession, item.Key, "catalog.json")) &&
+                            Within(item.Discovery, Path.Combine(catalogSession, "phases")) &&
+                            Path.GetFileName(item.Discovery) == "discovery.dump" &&
+                            Path.GetFileName(Path.GetDirectoryName(item.Discovery)!).EndsWith("-discover-" + item.Key, StringComparison.Ordinal)),
                     "assembly-binding");
                 var dependency = VerifyBinaryAndSources(new(item.Assembly, item.AssemblySha256, item.Pdb, item.PdbSha256), root, guards);
                 if (dependency is not null) dependencies.Add(dependency);
@@ -164,11 +182,12 @@ internal static class RunnerMetadataInputs
             Require(Same(executing.Assembly, request.TestAssembly) && executing.AssemblySha256 == request.TestAssemblySha256 &&
                 Same(executing.Discovery, request.DiscoveryPath), "executing-owner-binding");
             var tool = context.Tool;
-            var expectedTool = Path.Combine(root, "tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll");
+            var expectedTool = Path.Combine(root, "tools/FishAudio.Testing", layout.Coverage ?
+                "bin/coverage/Release/net10.0-windows/FishAudio.Testing.dll" : "bin/Release/net10.0-windows/FishAudio.Testing.dll");
             Require(Same(tool.Assembly, expectedTool) && Same(tool.Pdb, Path.ChangeExtension(expectedTool, ".pdb")), "tool-binding");
             _ = VerifyBinary(tool, guards);
-            // Normal tool builds do not emit GeneratedRegex source files. Tool
-            // linkage/loaded image identity is required; generator closure is not claimed.
+            // Tool linkage and loaded image identity remain required in both
+            // output modes; no complete generator closure is claimed.
             Require(Hash(typeof(BinaryIdentity).Assembly.Location) == tool.AssemblySha256,
                 "loaded-tool-binding");
             Require(dependencies.Count == 1, "sdk-document-count");
@@ -177,6 +196,33 @@ internal static class RunnerMetadataInputs
         catch (Rejected) { failed = true; throw; }
         catch (Exception error) when (IsInputFailure(error)) { failed = true; throw new Rejected("invalid-input"); }
         finally { Release(guards, failed); }
+    }
+
+
+    // Only layout derivation is shared with offline protocol controls. It does
+    // not admit files, authenticate a build, run a profiler or replace ReadBinding.
+    internal sealed record Layout(bool Coverage, string SessionDirectory, string CatalogSessionDirectory);
+    internal static Layout ReadLayout(Context context, FrameworkRunRequest request, string? requestPath = null)
+    {
+        Require(request.ProfiledLaunch is null || request.OrderedProfiledLaunch is null, "coverage-layout");
+        var launch = request.ProfiledLaunch ?? request.OrderedProfiledLaunch?.Collection;
+        var coverage = launch is not null;
+        var session = Path.GetFullPath(Path.Combine(request.OutputDirectory, coverage ? ".." : "../../../.."));
+        if (coverage)
+        {
+            Require(context.CoverageCatalogSessionDirectory is not null &&
+                Path.IsPathFullyQualified(context.CoverageCatalogSessionDirectory) &&
+                Same(request.OutputDirectory, Path.Combine(session, "framework-cover")) &&
+                request.SourceTree is not null && request.SourceFingerprint is not null &&
+                request.MaximumConcurrency == 1 && request.RequireOrder &&
+                Same(launch!.SnapshotPath, Path.Combine(request.OutputDirectory, "coverage.dcvr")) &&
+                Same(launch.LogPath, Path.Combine(request.OutputDirectory, "cover.log")), "coverage-layout");
+        }
+        else Require(context.CoverageCatalogSessionDirectory is null, "coverage-layout");
+        if (requestPath is not null)
+            Require(Same(requestPath, coverage ? Path.Combine(session, "framework-cover-request.json") :
+                Path.Combine(Path.GetDirectoryName(request.OutputDirectory)!, "execution-request.json")), "request-context-binding");
+        return new(coverage, session, coverage ? Path.GetFullPath(context.CoverageCatalogSessionDirectory!) : session);
     }
 
     private static BinaryIdentityRecord VerifyBinary(FilePair pair, List<FileStream> guards)
@@ -233,10 +279,12 @@ internal static class RunnerMetadataInputs
         MetadataReader metadata, Document document, List<FileStream> guards)
     {
         var project = Path.Combine(root, "tests/FishAudio.Testing.Tests");
-        Require(Same(pair.Assembly, Path.Combine(project, "bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll")),
+        var coverage = Same(pair.Assembly, Path.Combine(project, "bin/coverage/Release/net10.0-windows/FishAudio.Testing.Tests.dll"));
+        Require(coverage || Same(pair.Assembly, Path.Combine(project, "bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll")),
             "compiler-path-map");
         var lockPath = Path.Combine(project, "packages.lock.json");
-        var assetsPath = Path.Combine(project, "obj/project.assets.json");
+        var intermediate = Path.Combine(project, coverage ? "obj/coverage" : "obj");
+        var assetsPath = Path.Combine(intermediate, "project.assets.json");
         using var locked = ReadCurrentDocument(lockPath, guards);
         using var assets = ReadCurrentDocument(assetsPath, guards);
         var lockedRoot = locked.RootElement;
@@ -250,7 +298,7 @@ internal static class RunnerMetadataInputs
             assetsRoot.GetProperty("version").GetInt32() == 4 && library.GetProperty("type").GetString() == "package" &&
             library.GetProperty("path").GetString() == packageRelative && library.GetProperty("sha512").GetString() == SdkContentHash &&
             Same(restore.GetProperty("projectPath").GetString()!, Path.Combine(project, "FishAudio.Testing.Tests.csproj")) &&
-            Same(Path.TrimEndingDirectorySeparator(restore.GetProperty("outputPath").GetString()!), Path.Combine(project, "obj")), "sdk-package-binding");
+            Same(Path.TrimEndingDirectorySeparator(restore.GetProperty("outputPath").GetString()!), intermediate), "sdk-package-binding");
         var files = library.GetProperty("files").EnumerateArray().Select(item => item.GetString()).ToArray();
         Require(files.Count(item => item == SdkEntry) == 1 &&
             assetsRoot.GetProperty("targets").GetProperty("net10.0-windows").GetProperty(SdkId + "/" + SdkVersion)

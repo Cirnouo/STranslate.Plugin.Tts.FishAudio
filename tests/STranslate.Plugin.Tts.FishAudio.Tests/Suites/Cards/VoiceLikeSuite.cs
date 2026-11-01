@@ -14,7 +14,7 @@ using static ContextProxy;
 using static StaTestHost;
 using static TestAssertions;
 
-internal static class VoiceLikeSuite
+internal static partial class VoiceLikeSuite
 {
     internal static async Task RunAllAsync()
     {
@@ -88,17 +88,19 @@ internal static class VoiceLikeSuite
         AssertHeartAspect((System.Windows.Shapes.Path)like.Content);
     });
 
-    private static void InspectLikeState(string locale, bool dark, double width, VoiceBrowseMode mode)
+    private static void InspectLikeState(string locale, bool dark, double width, VoiceBrowseMode mode, NativeCardsTempFixtureOwner? ordinaryOwner = null)
     {
         const string id = "0123456789abcdef0123456789abcdef";
         const string other = "1123456789abcdef0123456789abcdef";
-        var directory = CreateTempDirectory();
+        var directory = ordinaryOwner?.CreateSettingsDirectory() ?? CreateTempDirectory();
         var file = Path.Combine(directory, "favorite-voices.json");
         // An existing ordered file from the Favorite presentation is already the Like list.
         var original = JsonSerializer.Serialize(new[] { other, id });
         File.WriteAllText(file, original);
         var settings = new Settings { VoiceId = id, CachedVoice = new() { Title = "Selected" } };
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: directory), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings, pluginSettingsDirectoryPath: directory), settings);
+        ordinaryOwner?.Own(vm);
+        using var legacyVm = ordinaryOwner is null ? vm : null;
         var item = new VoiceSearchItem { Id = id, Title = "Matching result", TaskCount = 12345, IsFavorite = true };
         vm.SearchResults = [item]; vm.ByIdResults = [item]; vm.FavoriteResults = [item]; vm.HasSearched = true;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
@@ -176,7 +178,9 @@ internal static class VoiceLikeSuite
         AssertEnumerableEqual(new[] { other, id }, JsonSerializer.Deserialize<string[]>(File.ReadAllText(file))!, "Like appends the same ID without metadata or order changes");
         AssertEqual(12345L, item.TaskCount, "Like never reinterprets provider popularity");
         if (mode != VoiceBrowseMode.Favorites) return;
-        using var reloaded = new FavoriteVoiceStore(directory);
+        var reloaded = new FavoriteVoiceStore(directory);
+        ordinaryOwner?.Own(reloaded);
+        using var legacyReloaded = ordinaryOwner is null ? reloaded : null;
         AssertEnumerableEqual(new[] { other, id }, reloaded.Read(), "The unchanged ID-only format survives reopening");
         vm.BrowseMode = VoiceBrowseMode.Favorites;
         SettingsLayoutSuite.Layout(view, width);

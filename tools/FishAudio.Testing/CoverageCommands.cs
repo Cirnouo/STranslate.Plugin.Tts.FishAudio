@@ -15,7 +15,7 @@ internal static class CoverageCommands
     };
 
     internal static bool IsInvocation(string[] args) => args.Length > 0 && args[0]
-        is "coverage-aggregate" or "coverage-review-export" or "coverage-review-cover" or "coverage-review-console" or "coverage-host-envelope" or "coverage-case-metadata" or "coverage-import";
+        is "coverage-aggregate" or "coverage-review-export" or "coverage-review-cover" or "coverage-review-console" or "coverage-host-envelope" or "coverage-case-metadata" or "coverage-dependencies-observe" or "coverage-import" or "compiler-input-capture-import";
 
     internal static int Run(string[] args)
     {
@@ -62,6 +62,16 @@ internal static class CoverageCommands
                     if (metadata.SchemaVersion != 1) throw new InvalidDataException();
                     value = NUnitEvidence.ReadCaseMetadata(metadata.Discovery, metadata.CanonicalId);
                     break;
+                case "coverage-dependencies-observe":
+                    RequireKeys(options, "--input", "--output");
+                    value = CoverageDependencies.Observe(Read<CoverageDependencyObservationInput>(options["--input"]));
+                    break;
+                case "compiler-input-capture-import":
+                    RequireKeys(options, "--input", "--expectation", "--output");
+                    value = CompilerInputCapture.ReadValidated(
+                        Read<CompilerInputCaptureInput>(options["--input"]),
+                        Read<CompilerInputCaptureAdmission>(options["--expectation"]));
+                    break;
                 default:
                     RequireKeys(options, "--input", "--expectation", "--output");
                     value = IsolatedCoverageSession.ReadValidated(Read<IsolatedCoverageSessionInput>(options["--input"]),
@@ -83,6 +93,8 @@ internal static class CoverageCommands
         catch (NUnitHostEvidenceException error) { return Rejected(error.Code); }
         catch (NUnitEvidenceException error) { return Rejected(error.Code); }
         catch (IsolatedCoverageSessionException error) { return Rejected(error.Code); }
+        catch (CoverageDependencyException error) { return Rejected(error.Code); }
+        catch (CompilerInputCaptureException error) { return Rejected(error.Code); }
         catch (Exception) { return Rejected("invalid-input-or-output", 2); }
     }
 

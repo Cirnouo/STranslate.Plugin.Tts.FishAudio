@@ -247,7 +247,7 @@ function Read-FrameworkLegacyCatalog([string]$Assembly, [string]$AssemblySha256,
     try {
         while ($null -ne ($line = $reader.ReadLine())) {
             Require-Framework (-not $footer) 'framework-ci-legacy-list-trailing-output'
-            if ($line -cmatch '^Selected ([1-9][0-9]{0,5}) case\(s\)\.\z') {
+            if ($line -cmatch '^Selected (0|[1-9][0-9]{0,5}) case\(s\)\.\z') {
                 Require-Framework ([int]$Matches[1] -eq $cases.Count) 'framework-ci-legacy-list-count'
                 $footer = $true
             } else {
@@ -258,7 +258,7 @@ function Read-FrameworkLegacyCatalog([string]$Assembly, [string]$AssemblySha256,
                 $cases.Add([ordered]@{ id = $id; partition = $partition })
             }
         }
-        Require-Framework ($footer -and $cases.Count -gt 0) 'framework-ci-legacy-list-missing-footer'
+        Require-Framework ($footer) 'framework-ci-legacy-list-missing-footer'
     } finally { $reader.Dispose() }
     $path = Join-Path $Directory 'current-legacy-catalog.json'
     # Identity-only metadata: no outcome or completed regression report is made.

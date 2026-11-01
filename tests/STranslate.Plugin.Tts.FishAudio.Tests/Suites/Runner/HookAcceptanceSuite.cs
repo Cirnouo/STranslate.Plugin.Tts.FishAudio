@@ -80,7 +80,9 @@ public sealed class HookAcceptanceSuite
         {
             var script = TestAssertions.FindRepoFile(Path.Combine("tools", "tests", "TestHookAcceptance.ps1"));
             var contextPath = Environment.GetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT");
-            var evidence = string.IsNullOrEmpty(contextPath) ? Path.Combine(Path.GetTempPath(), "FishAudioHookTests") : Path.GetDirectoryName(contextPath)!;
+            var evidence = Environment.GetEnvironmentVariable("FISHAUDIO_COMPAT_EVIDENCE_ROOT");
+            if (string.IsNullOrWhiteSpace(evidence))
+                evidence = string.IsNullOrEmpty(contextPath) ? Path.Combine(Path.GetTempPath(), "FishAudioHookTests") : Path.GetDirectoryName(contextPath)!;
             var result = Path.Combine(evidence, "hook-contracts", scenario + "-" + Guid.NewGuid().ToString("N") + ".json");
             Directory.CreateDirectory(Path.GetDirectoryName(result)!);
             var start = new ProcessStartInfo("pwsh")

@@ -18,7 +18,7 @@ using static ContextProxy;
 using static StaTestHost;
 using static TestAssertions;
 
-internal static class VoiceCardLayoutSuite
+internal static partial class VoiceCardLayoutSuite
 {
     internal static async Task RunAllAsync(string? proofDirectory = null)
     {
@@ -41,7 +41,7 @@ internal static class VoiceCardLayoutSuite
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
         {
             var id = $"cards.layout/{ContextId(locale, dark, dpi, width, mode)}";
-            cases.Add((id, () => RunOnStaThreadAsync(() => InspectCards(width, dpi, dark, locale, mode, proofDirectory))));
+            cases.Add((id, () => RunOnStaThreadAsync((Func<Task>)(() => InspectCards(width, dpi, dark, locale, mode, proofDirectory)))));
         }
 
         foreach (var group in new[] { "description", "headers" })
@@ -62,7 +62,7 @@ internal static class VoiceCardLayoutSuite
             AddBehavior("date", 400, 1.25, dark, mode, InspectDates);
 
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
-            AddBehavior("tooltip", 400, 1, false, mode, InspectTooltips);
+            AddAsyncBehavior("tooltip", 400, 1, false, mode, fixture => InspectTooltipsAsync(fixture));
 
         foreach (var dark in new[] { false, true })
         foreach (var mode in new[] { VoiceBrowseMode.Search, VoiceBrowseMode.ById, VoiceBrowseMode.Favorites })
@@ -72,7 +72,13 @@ internal static class VoiceCardLayoutSuite
         void AddBehavior(string group, double width, double dpi, bool dark, VoiceBrowseMode mode, Action<CardFixture> inspect)
         {
             var id = $"cards.layout.{group}/{ContextId("en", dark, dpi, width, mode)}";
-            cases.Add((id, () => RunOnStaThreadAsync(() => WithCards(width, dpi, dark, "en", mode, inspect))));
+            cases.Add((id, () => RunOnStaThreadAsync((Func<Task>)(() => WithCards(width, dpi, dark, "en", mode, inspect)))));
+        }
+
+        void AddAsyncBehavior(string group, double width, double dpi, bool dark, VoiceBrowseMode mode, Func<CardFixture, Task> inspect)
+        {
+            var id = $"cards.layout.{group}/{ContextId("en", dark, dpi, width, mode)}";
+            cases.Add((id, () => RunOnStaThreadAsync((Func<Task>)(() => WithCards(width, dpi, dark, "en", mode, inspect)))));
         }
     }
 
@@ -89,57 +95,69 @@ internal static class VoiceCardLayoutSuite
         SettingsLayoutSuite.Layout(SettingsLayoutSuite.CreateThemedView(vm), 400);
     }, RegressionExecution.Timeout);
 
-    private static void WithCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, Action<CardFixture> inspect)
+    private static Task WithCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, Action<CardFixture> inspect) =>
+        WithCards(width, dpi, dark, locale, mode, fixture => { inspect(fixture); return Task.CompletedTask; });
+
+    private static Task WithCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode,
+        Func<CardFixture, Task> inspect, CardTooltipFixtureHooks? hooks = null)
     {
-        var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new()
+        SettingsViewModel? vm = null;
+        HwndSource? source = null;
+        return RegressionFixtureOwner.RunAsync(async () =>
         {
-            Title = "Morning monologue · a long example voice title for ellipsis geometry",
-            Description = "A clear and natural narrative voice. " + new string('x', 200),
-            AuthorName = "Example author with a very long name that should remain on one line",
-            Languages = new[] { "en", "zh", "ja", "ko", "de", "fr", "es", "pt", "ru", "tr" },
-            CreatedAt = VoiceCreationDateSuite.Date, TaskCount = 128600,
-            SampleAudioUrl = "https://example.invalid/sample.mp3"
-        } };
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
-        var cover = FindRepoFile("STranslate.Plugin.Tts.FishAudio/Assets/Flags/language.png");
-        vm.CachedVoiceCoverUrl = cover;
-        var card = new VoiceSearchItem
-        {
-            Id = AppliedKey, Title = settings.CachedVoice.Title, Description = settings.CachedVoice.Description,
-            AuthorName = settings.CachedVoice.AuthorName, Languages = settings.CachedVoice.Languages,
-            CreatedAt = VoiceCreationDateSuite.Date, TaskCount = 128600, CoverUrl = cover,
-            SampleAudioUrl = settings.CachedVoice.SampleAudioUrl,
-        };
-        vm.SearchResults = [card]; vm.ByIdResults = [card]; vm.FavoriteResults = [card]; vm.HasSearched = true;
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        view.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
-        view.SetResourceReference(Control.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
-        var language = view.Resources.MergedDictionaries.Single(item => item.Source?.LocalPath.Replace('\\', '/').Contains("/Languages/", StringComparison.Ordinal) == true);
-        view.Resources.MergedDictionaries.Remove(language);
-        view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml"), UriKind.Absolute) });
-        view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
-        ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-        var desktopScale = VisualTreeHelper.GetDpi(new DrawingVisual());
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio dated card fixture")
-        {
-            Width = (int)Math.Ceiling(width * desktopScale.DpiScaleX), Height = (int)Math.Ceiling(1600 * desktopScale.DpiScaleY),
-            WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120,
-        });
-        source.RootVisual = view;
-        SettingsLayoutSuite.Layout(view, width);
-        typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
-        vm.BrowseMode = mode;
-        SettingsLayoutSuite.Layout(view, width);
-        typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
-        SettingsLayoutSuite.Layout(view, width);
-        var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
-        AssertEqual(2, tags.Length, "Selected and active browse card must both be present");
-        inspect(new CardFixture(width, dpi, dark, locale, mode, vm, card, view, tags));
-        AssertEqual(AppliedKey, vm.VoiceId, "Presentation changes do not apply/clear selection");
+            var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new()
+            {
+                Title = "Morning monologue · a long example voice title for ellipsis geometry",
+                Description = "A clear and natural narrative voice. " + new string('x', 200),
+                AuthorName = "Example author with a very long name that should remain on one line",
+                Languages = new[] { "en", "zh", "ja", "ko", "de", "fr", "es", "pt", "ru", "tr" },
+                CreatedAt = VoiceCreationDateSuite.Date, TaskCount = 128600,
+                SampleAudioUrl = "https://example.invalid/sample.mp3"
+            } };
+            vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+            var cover = FindRepoFile("STranslate.Plugin.Tts.FishAudio/Assets/Flags/language.png");
+            vm.CachedVoiceCoverUrl = cover;
+            var card = new VoiceSearchItem
+            {
+                Id = AppliedKey, Title = settings.CachedVoice.Title, Description = settings.CachedVoice.Description,
+                AuthorName = settings.CachedVoice.AuthorName, Languages = settings.CachedVoice.Languages,
+                CreatedAt = VoiceCreationDateSuite.Date, TaskCount = 128600, CoverUrl = cover,
+                SampleAudioUrl = settings.CachedVoice.SampleAudioUrl,
+            };
+            vm.SearchResults = [card]; vm.ByIdResults = [card]; vm.FavoriteResults = [card]; vm.HasSearched = true;
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            view.SetResourceReference(Control.ForegroundProperty, "TextFillColorPrimaryBrush");
+            view.SetResourceReference(Control.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
+            var language = view.Resources.MergedDictionaries.Single(item => item.Source?.LocalPath.Replace('\\', '/').Contains("/Languages/", StringComparison.Ordinal) == true);
+            view.Resources.MergedDictionaries.Remove(language);
+            view.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(FindRepoFile($"STranslate.Plugin.Tts.FishAudio/Languages/{locale}.xaml"), UriKind.Absolute) });
+            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+            var desktopScale = VisualTreeHelper.GetDpi(new DrawingVisual());
+            source = new HwndSource(new HwndSourceParameters("Fish Audio dated card fixture")
+            {
+                Width = (int)Math.Ceiling(width * desktopScale.DpiScaleX), Height = (int)Math.Ceiling(1600 * desktopScale.DpiScaleY),
+                WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120,
+            });
+            hooks?.SourceAcquired?.Invoke(source, vm);
+            source.RootVisual = view;
+            SettingsLayoutSuite.Layout(view, width);
+            typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
+            vm.BrowseMode = mode;
+            SettingsLayoutSuite.Layout(view, width);
+            typeof(VisualTreeHelper).GetMethod("SetRootDpi", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.Invoke(null, [view, new DpiScale(dpi, dpi)]);
+            SettingsLayoutSuite.Layout(view, width);
+            var tags = Visuals(view).OfType<VoiceLanguageTags>().Where(IsPresented).ToArray();
+            AssertEqual(2, tags.Length, "Selected and active browse card must both be present");
+            await inspect(new CardFixture(width, dpi, dark, locale, mode, vm, card, view, tags, source));
+            AssertEqual(AppliedKey, vm.VoiceId, "Presentation changes do not apply/clear selection");
+        },
+        () => { source?.Dispose(); if (source is not null) hooks?.SourceDisposed?.Invoke(source); return Task.CompletedTask; },
+        () => { vm?.Dispose(); return Task.CompletedTask; });
     }
 
     private sealed record CardFixture(double Width, double Dpi, bool Dark, string Locale, VoiceBrowseMode Mode,
-        SettingsViewModel ViewModel, VoiceSearchItem Card, SettingsView View, VoiceLanguageTags[] Tags)
+        SettingsViewModel ViewModel, VoiceSearchItem Card, SettingsView View, VoiceLanguageTags[] Tags, HwndSource Source)
     {
         internal IEnumerable<CardParts> Parts()
         {
@@ -165,7 +183,7 @@ internal static class VoiceCardLayoutSuite
     private sealed record CardParts(bool Selected, VoiceLanguageTags Tag, Border CardRoot, Button Title, Button Action,
         TextBlock Description, TextBlock Author, TextBlock Date, DockPanel TitleRow, StackPanel Metadata, StackPanel Actions);
 
-    private static void InspectCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, string? proofDirectory) =>
+    private static Task InspectCards(double width, double dpi, bool dark, string locale, VoiceBrowseMode mode, string? proofDirectory) =>
         WithCards(width, dpi, dark, locale, mode, fixture =>
         {
             var vm = fixture.ViewModel;
@@ -321,19 +339,29 @@ internal static class VoiceCardLayoutSuite
         }
     }
 
-    private static void InspectTooltips(CardFixture fixture)
+    private static async Task InspectTooltipsAsync(CardFixture fixture, CardTooltipFixtureHooks? hooks = null)
     {
         var view = fixture.View;
         foreach (var part in fixture.Parts())
         {
             var date = part.Date;
             var tooltip = (ToolTip)date.ToolTip;
-            tooltip.PlacementTarget = date; tooltip.IsOpen = true;
-            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
-            var tooltipText = ((StackPanel)tooltip.Content).Children.OfType<TextBlock>().ToArray();
-            AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), tooltipText[0].Text, "Native date tooltip resolves its localized caption");
-            AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local, true), tooltipText[1].Text, "Native date tooltip binds the complete local timestamp and offset");
-            tooltip.IsOpen = false;
+            hooks?.BeforeTooltipOwnership?.Invoke(tooltip);
+            var lifetime = new NativeCardToolTipOwner(tooltip);
+            await lifetime.RunAsync(() =>
+            {
+                tooltip.PlacementTarget = date; tooltip.IsOpen = true;
+                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ContextIdle);
+                lifetime.RequireOpenedSource();
+                hooks?.TooltipReady?.Invoke(new CardTooltipFixtureProbe(lifetime, fixture.Source, fixture.ViewModel));
+                var tooltipText = ((StackPanel)tooltip.Content).Children.OfType<TextBlock>().ToArray();
+                AssertEqual(view.FindResource("STranslate_Plugin_Tts_FishAudio_Voice_CreatedAt"), tooltipText[0].Text, "Native date tooltip resolves its localized caption");
+                AssertEqual(VoiceCreationDateConverter.Format(VoiceCreationDateSuite.Date, TimeZoneInfo.Local, true), tooltipText[1].Text, "Native date tooltip binds the complete local timestamp and offset");
+                lifetime.ExpectClose();
+                tooltip.IsOpen = false;
+                lifetime.RecordCloseSetterReturn();
+                return Task.CompletedTask;
+            });
         }
     }
 

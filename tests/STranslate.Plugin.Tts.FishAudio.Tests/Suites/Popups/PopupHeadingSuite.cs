@@ -21,57 +21,83 @@ internal static class PopupHeadingSuite
         await RunOnStaThreadAsync(CompiledSearchHeading);
         await RunOnStaThreadAsync(CompiledLanguageHeading);
         foreach (var stage in new[] { "read", "write", "update" })
-            await RunOnStaThreadAsync(() => HeadingFailureDoesNotAffectMaterialOrInput(stage));
+            await RunOnStaThreadAsync((Func<Task>)(() => HeadingFailureDoesNotAffectMaterialOrInput(stage)));
         await RunOnStaThreadAsync(SourceReplacementAndDestroyedRetirement);
     }
 
-    private static void CompiledSearchHeading()
+    internal static Task CompiledSearchHeading() =>
+        CompiledSearchHeadingAsync(new PopupHeadingFixtureOwner());
+
+    internal static Task RunOwnershipControlAsync(int scene, PopupHeadingFixtureHooks hooks) => scene switch
+    {
+        0 => CompiledSearchHeadingAsync(new PopupHeadingFixtureOwner(hooks)),
+        1 => CompiledLanguageHeadingAsync(new PopupHeadingFixtureOwner(hooks)),
+        2 => HeadingFailureDoesNotAffectMaterialOrInputAsync("read", new PopupHeadingFixtureOwner(hooks)),
+        _ => throw new ArgumentOutOfRangeException(nameof(scene))
+    };
+
+    private static Task CompiledSearchHeadingAsync(PopupHeadingFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var owner = Attach(view);
+        var owner = Attach(view);
+        fixture.Source = owner;
         var control = (SearchAdjustmentControl)view.FindName("SearchAdjustments");
         var popup = (Popup)control.FindName("AdjustmentPopup");
-        try
+        fixture.RequestClose = () => { popup.IsOpen = false; fixture.RecordCloseSetterReturn(); };
+        fixture.DrainOriginal = Drain;
+        fixture.OriginalFinallyActive = true;
+        fixture.Open(popup, control, () =>
         {
             ((Button)control.FindName("AdjustmentButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Drain();
-            var surface = (Border)control.FindName("PopupSurface");
-            AssertHeadingAndLocales(view, surface, "STranslate_Plugin_Tts_FishAudio_Search_Adjustments");
-            var first = (HwndSource)PresentationSource.FromVisual(surface);
-            popup.IsOpen = false; Drain();
+        });
+        var surface = (Border)control.FindName("PopupSurface");
+        AssertHeadingAndLocales(view, surface, "STranslate_Plugin_Tts_FishAudio_Search_Adjustments");
+        var first = (HwndSource)PresentationSource.FromVisual(surface);
+        popup.IsOpen = false; fixture.RecordCloseSetterReturn(); Drain();
+        await fixture.JoinCurrentAsync();
+        fixture.Open(popup, control, () =>
+        {
             ((Button)control.FindName("AdjustmentButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Drain();
-            AssertEqual(false, ReferenceEquals(first, PresentationSource.FromVisual(surface)), "Reopening owns a fresh source and heading lease");
-            AssertHeading(surface, "STranslate_Plugin_Tts_FishAudio_Search_Adjustments");
-        }
-        finally { popup.IsOpen = false; Drain(); }
-    }
+        });
+        AssertEqual(false, ReferenceEquals(first, PresentationSource.FromVisual(surface)), "Reopening owns a fresh source and heading lease");
+        AssertHeading(surface, "STranslate_Plugin_Tts_FishAudio_Search_Adjustments");
+    });
 
-    private static void CompiledLanguageHeading()
+    internal static Task CompiledLanguageHeading() =>
+        CompiledLanguageHeadingAsync(new PopupHeadingFixtureOwner());
+
+    private static Task CompiledLanguageHeadingAsync(PopupHeadingFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         var tags = new VoiceLanguageTags { Languages = ["en", "zh", "ja", "de", "fr", "ko", "ru", "tr", "pt", "it"] };
         tags.Resources.MergedDictionaries.Add(view.Resources);
         var scroll = new ScrollViewer { Content = tags, Height = 220 };
-        using var owner = Attach(scroll);
-        try
-        {
-            tags.OpenPopup(); Drain();
-            AssertEqual(true, tags.IsPopupOpen, "The compiled language shell opens before checking native identity");
-            var surface = (Border)tags.FindName("PopupSurface");
-            AssertHeadingAndLocales(tags, surface, "STranslate_Plugin_Tts_FishAudio_Languages_More");
-            var first = (HwndSource)PresentationSource.FromVisual(surface);
-            tags.ClosePopup(); Drain(); tags.OpenPopup(); Drain();
-            AssertEqual(false, ReferenceEquals(first, PresentationSource.FromVisual(surface)), "Language reopening owns a fresh source and heading lease");
-            AssertHeading(surface, "STranslate_Plugin_Tts_FishAudio_Languages_More");
-        }
-        finally { tags.ClosePopup(); Drain(); }
-    }
+        var owner = Attach(scroll);
+        fixture.Source = owner;
+        var popup = (Popup)tags.FindName("LanguagePopup");
+        fixture.RequestClose = () => { tags.ClosePopup(); fixture.RecordCloseSetterReturn(); };
+        fixture.DrainOriginal = Drain;
+        fixture.OriginalFinallyActive = true;
+        fixture.Open(popup, tags, () => { tags.OpenPopup(); Drain(); });
+        AssertEqual(true, tags.IsPopupOpen, "The compiled language shell opens before checking native identity");
+        var surface = (Border)tags.FindName("PopupSurface");
+        AssertHeadingAndLocales(tags, surface, "STranslate_Plugin_Tts_FishAudio_Languages_More");
+        var first = (HwndSource)PresentationSource.FromVisual(surface);
+        tags.ClosePopup(); fixture.RecordCloseSetterReturn(); Drain();
+        await fixture.JoinCurrentAsync();
+        fixture.Open(popup, tags, () => { tags.OpenPopup(); Drain(); });
+        AssertEqual(false, ReferenceEquals(first, PresentationSource.FromVisual(surface)), "Language reopening owns a fresh source and heading lease");
+        AssertHeading(surface, "STranslate_Plugin_Tts_FishAudio_Languages_More");
+    });
 
-    private static void LeaseOwnershipAndFailures()
+    internal static void LeaseOwnershipAndFailures()
     {
         var api = new FakeTextApi { Text = "prior nonempty" };
         var live = true;
@@ -122,43 +148,62 @@ internal static class PopupHeadingSuite
         AssertEqual(true, ReferenceEquals(cleanupFailure, lease.CleanupFailure), "The independent cleanup failure retains its own identity");
     }
 
-    private static void HeadingFailureDoesNotAffectMaterialOrInput(string stage)
+    internal static Task HeadingFailureDoesNotAffectMaterialOrInput(string stage) =>
+        HeadingFailureDoesNotAffectMaterialOrInputAsync(stage, new PopupHeadingFixtureOwner());
+
+    private static Task HeadingFailureDoesNotAffectMaterialOrInputAsync(string stage, PopupHeadingFixtureOwner fixture) =>
+        fixture.RunAsync(() =>
     {
         var surface = new Border { Width = 140, Height = 100 };
         surface.Resources["Heading"] = "Existing heading";
         surface.Resources["FlyoutPresenterBackground"] = Brushes.White;
         var input = new Button { Content = "Input" }; surface.Child = input;
-        using var owner = Attach(new Border());
+        var owner = Attach(new Border());
+        fixture.Source = owner;
         var popup = new Popup { Child = surface, PlacementTarget = owner.RootVisual as UIElement, StaysOpen = true };
         var api = new FakeTextApi();
         var failure = new IOException("Optional heading failure");
         if (stage == "read") api.ReadFailure = failure;
         if (stage == "write") api.WriteFailure = failure;
         var material = new PopupMaterial(popup, surface, new AcceptedBackdropApi(), "Heading", api);
-        var clicks = 0; input.Click += (_, _) => clicks++;
-        try
-        {
-            material.Begin(); popup.IsOpen = true; Drain();
-            if (stage == "update") { api.WriteFailure = failure; surface.Resources["Heading"] = "Localized heading"; Drain(); }
-            AssertEqual(true, material.AttributeAccepted, "Optional heading failures cannot remove accepted material");
-            AssertEqual<Exception?>(null, material.Failure, "Optional heading failures do not replace the material failure owner");
-            input.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-            AssertEqual(1, clicks, "Heading failure leaves popup input usable");
-            AssertEqual(true, popup.IsOpen, "Heading failure cannot close the popup");
-        }
-        finally { popup.IsOpen = false; material.End(); Drain(); }
-    }
+        var clicks = 0;
+        RoutedEventHandler listener = (_, _) => clicks++;
+        input.Click += listener;
+        fixture.ReleaseListener = () => input.Click -= listener;
+        fixture.RequestClose = () => { popup.IsOpen = false; fixture.RecordCloseSetterReturn(); };
+        fixture.EndMaterial = material.End;
+        fixture.DrainOriginal = Drain;
+        fixture.OriginalFinallyActive = true;
+        material.Begin();
+        fixture.Open(popup, surface, () => { popup.IsOpen = true; Drain(); }, material);
+        if (stage == "update") { api.WriteFailure = failure; surface.Resources["Heading"] = "Localized heading"; Drain(); }
+        AssertEqual(true, material.AttributeAccepted, "Optional heading failures cannot remove accepted material");
+        AssertEqual<Exception?>(null, material.Failure, "Optional heading failures do not replace the material failure owner");
+        input.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        AssertEqual(1, clicks, "Heading failure leaves popup input usable");
+        AssertEqual(true, popup.IsOpen, "Heading failure cannot close the popup");
+        return Task.CompletedTask;
+    });
 
-    private static void SourceReplacementAndDestroyedRetirement()
+    internal static Task SourceReplacementAndDestroyedRetirement() =>
+        SourceReplacementAndDestroyedRetirementAsync(new PopupHeadingSourceFixtureOwner());
+
+    internal static Task RunSourceReplacementOwnershipControlAsync(PopupHeadingSourceFixtureHooks hooks) =>
+        SourceReplacementAndDestroyedRetirementAsync(new PopupHeadingSourceFixtureOwner(hooks));
+
+    private static Task SourceReplacementAndDestroyedRetirementAsync(PopupHeadingSourceFixtureOwner fixture) =>
+        fixture.RunAsync(async () =>
     {
         var surface = new Border(); surface.Resources["Heading"] = "Heading";
         var api = new FakeTextApi { Text = "first prior" };
         var heading = new PopupNativeHeading(surface, "Heading", api);
-        using var first = Attach(new Border());
-        using var second = Attach(new Border());
+        var first = Attach(new Border());
+        fixture.FirstSource = first;
+        var second = Attach(new Border());
+        fixture.SecondSource = second;
         var native = new NativePopupWindowTextApi();
         var prior = native.Read(first.Handle);
-        try
+        await RegressionFixtureOwner.RunAsync(() =>
         {
             native.Write(first.Handle, new string('x', 4095));
             AssertEqual(4095, native.Read(first.Handle).Length, "Native reads retain the complete maximum accepted prior text");
@@ -166,23 +211,24 @@ internal static class PopupHeadingSuite
             var rejected = false;
             try { native.Read(first.Handle); } catch (InvalidOperationException) { rejected = true; }
             AssertEqual(true, rejected, "Native reads reject over-bound text instead of retaining a truncated prior value");
-        }
-        finally { native.Write(first.Handle, prior); }
+            return Task.CompletedTask;
+        }, () => { native.Write(first.Handle, prior); return Task.CompletedTask; });
         var nativeState = WindowState(first.Handle);
         var nativeHeading = new PopupNativeHeading(surface, "Heading", native);
-        nativeHeading.Begin();
-        try
+        await RegressionFixtureOwner.RunAsync(() =>
         {
+            nativeHeading.Begin();
             nativeHeading.Attach(first);
             AssertEqual("Heading", native.Read(first.Handle), "Native lease uses the existing dynamic heading");
             AssertEqual(nativeState, WindowState(first.Handle), "Setting native heading preserves styles, bounds and owner");
-        }
-        finally { nativeHeading.End(); }
+            fixture.NativeHeadingReady(native, prior);
+            return Task.CompletedTask;
+        }, () => { nativeHeading.End(); return Task.CompletedTask; });
         AssertEqual(prior, native.Read(first.Handle), "Ending the live native lease restores its nonempty prior identity exactly");
         AssertEqual(nativeState, WindowState(first.Handle), "Restoring native heading preserves styles, bounds and owner");
-        heading.Begin();
-        try
+        await RegressionFixtureOwner.RunAsync(() =>
         {
+            heading.Begin();
             heading.Attach(first);
             heading.Attach(second);
             AssertEqual("Heading", api.Text, "Replacement acquires a fresh source lease after prior restoration");
@@ -195,9 +241,9 @@ internal static class PopupHeadingSuite
             AssertEqual(calls, api.Calls, "Destroyed source retirement performs no native call");
             surface.Resources["Heading"] = "Retired update"; Drain();
             AssertEqual(calls, api.Calls, "Retired resource callbacks stay detached");
-        }
-        finally { heading.End(); }
-    }
+            return Task.CompletedTask;
+        }, () => { heading.End(); return Task.CompletedTask; });
+    });
 
     private static void AssertHeadingAndLocales(FrameworkElement root, Border surface, string key)
     {
@@ -246,10 +292,13 @@ internal static class PopupHeadingSuite
     }
     private static HwndSource Attach(FrameworkElement view)
     {
-        var source = new HwndSource(new HwndSourceParameters("Popup heading regression owner") { Width = 480, Height = 1600, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
-        source.RootVisual = view;
-        SettingsLayoutSuite.Layout(view, 480);
-        return source;
+        return PopupSourceAcquisition.Acquire(
+            () => new HwndSource(new HwndSourceParameters("Popup heading regression owner") { Width = 480, Height = 1600, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 }),
+            source =>
+            {
+                source.RootVisual = view;
+                SettingsLayoutSuite.Layout(view, 480);
+            });
     }
     private static (IntPtr Style, IntPtr ExtendedStyle, IntPtr Owner, int Left, int Top, int Right, int Bottom) WindowState(IntPtr handle)
     {

@@ -29,26 +29,26 @@
 
 .PARAMETER Test
     Verify the complete hybrid owner union after inspecting the package for an
-    unfiltered Release run. Explicit legacy selectors remain diagnostic only.
+    unfiltered Release run. Legacy execution selections are retired and fail nonzero.
 
 .PARAMETER LegacyOnly
-    Explicit legacy diagnostic mode. This does not establish complete hybrid
-    validation and is not used by the commit gate.
+    Retired legacy execution mode. The runner rejects it with a nonzero exit;
+    use the complete Release hybrid route or tools/Test.ps1 for framework work.
 
 .PARAMETER TestGroup
-    Select logical regression groups. Requires -Test.
+    Retired legacy group selection. Requires -Test and fails nonzero.
 
 .PARAMETER TestCase
-    Select exact regression case IDs. Requires -Test.
+    Retired legacy case selection. Use tools/Test.ps1 -CaseId for framework cases.
 
 .PARAMETER Affected
-    Add groups affected by changes from the TestBase merge-base and working tree.
+    Retired legacy impact selection; it cannot select migrated framework owners.
 
 .EXAMPLE
     .\build.ps1
     .\build.ps1 -Clean
     .\build.ps1 -CleanOnly
-    .\build.ps1 -Clean -Test
+    # Legacy execution is retired; use the Release verification command below.
     .\build.ps1 -Release -Clean -Test
 #>
 [CmdletBinding()]

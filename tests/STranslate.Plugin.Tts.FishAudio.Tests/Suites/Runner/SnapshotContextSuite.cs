@@ -108,6 +108,8 @@ internal static class SnapshotContextSuite
 
     internal static void VerifierRequiresCompleteCatalog()
     {
+        // Prepare repository-backed metadata before the file-free synthetic context.
+        var cases = RegressionCatalogSuite.DeclaredOriginalPopupDescriptors();
         var original = Environment.GetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT");
         var directory = CreateTempDirectory();
         Exception? primary = null;
@@ -121,16 +123,15 @@ internal static class SnapshotContextSuite
                 sourceCommit = new string('b', 40), files = Array.Empty<object>()
             }));
             Environment.SetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT", contextPath);
-            var cases = RegressionCatalog.Create();
             var complete = Report();
             var valid = Save(complete, "valid.json");
             if (RegressionReport.BuildMetadata("RegressionBuildConfiguration") != "Release")
             {
-                ExpectFailure(() => RegressionSnapshotVerifier.Run(["--verify-snapshot-report", valid, tree]),
+                ExpectFailure(() => RegressionSnapshotVerifier.RunForCatalog(["--verify-snapshot-report", valid, tree], cases),
                     "A non-Release verifier cannot authorize Release commit evidence");
                 return;
             }
-            AssertEqual(0, RegressionSnapshotVerifier.Run(["--verify-snapshot-report", valid, tree]),
+            AssertEqual(0, RegressionSnapshotVerifier.RunForCatalog(["--verify-snapshot-report", valid, tree], cases),
                 "Complete same-source ordered catalog evidence passes metadata verification");
             foreach (var mutation in new[] { "subset", "reordered", "not-run", "source", "sdk", "unfinished" })
             {
@@ -145,7 +146,7 @@ internal static class SnapshotContextSuite
                     case "unfinished": report.Complete = false; break;
                 }
                 var path = Save(report, mutation + ".json");
-                ExpectFailure(() => RegressionSnapshotVerifier.Run(["--verify-snapshot-report", path, tree]),
+                ExpectFailure(() => RegressionSnapshotVerifier.RunForCatalog(["--verify-snapshot-report", path, tree], cases),
                     "Incomplete or mismatched evidence cannot satisfy a full commit gate");
             }
 

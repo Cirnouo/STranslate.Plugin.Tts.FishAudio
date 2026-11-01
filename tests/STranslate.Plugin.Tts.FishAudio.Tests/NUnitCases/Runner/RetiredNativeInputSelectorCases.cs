@@ -146,7 +146,7 @@ public sealed class RetiredNativeInputSelectorCases
             await File.WriteAllTextAsync(Path.Combine(directory, "stdout.log"), output.Result);
             await File.WriteAllTextAsync(Path.Combine(directory, "stderr.log"), error.Result);
             Assert.That(process.ExitCode, Is.EqualTo(2), "A retired request must fail rather than widen/narrow the current legacy set.");
-            Assert.That(error.Result.Trim(), Is.EqualTo(expected));
+            Assert.That(error.Result.Trim(), Is.EqualTo(RegressionLegacyEntryPoint.RetiredDiagnostic), "The historical diagnostic remains row provenance: " + expected);
             Assert.That(output.Result.Contains("Selected ", StringComparison.Ordinal), Is.False);
             foreach (var input in originals)
                 Assert.That(await File.ReadAllBytesAsync(input.Key), Is.EqualTo(input.Value),

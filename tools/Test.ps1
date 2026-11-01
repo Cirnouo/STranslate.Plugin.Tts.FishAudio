@@ -7,6 +7,15 @@ param(
     [ValidateRange(0, 4)][int]$Workers = 4,
     [string]$ResultsDirectory,
     [switch]$NoBuild,
+    [switch]$Coverage,
+    [ValidateSet('Full', 'Prepare', 'Shard', 'Compose')][string]$CoverageOperation = 'Full',
+    [string]$PreparedPath,
+    [string]$ExpectedPreparedSha256,
+    [int]$ShardIndex = 0,
+    [int]$ShardCount = 1,
+    [string[]]$ShardManifestPath = @(),
+    [string[]]$ExpectedShardSha256 = @(),
+    [string]$DotCoverToolFile,
     [string]$Scenario = 'IsolatedCase',
     [string]$EvidenceDirectory,
     [string]$RepositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -14,6 +23,31 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+if ($Coverage) {
+    if ($Mode -cne 'Full' -or $PSBoundParameters.ContainsKey('CaseId') -or $PSBoundParameters.ContainsKey('SelectionPath') -or
+        $PSBoundParameters.ContainsKey('Workers') -or $PSBoundParameters.ContainsKey('NoBuild') -or
+        $PSBoundParameters.ContainsKey('Scenario') -or $PSBoundParameters.ContainsKey('EvidenceDirectory')) {
+        [Console]::Error.WriteLine('test-driver: Full coverage requires the complete frozen-source build and catalogs.'); exit 2
+    }
+    $coverageOptions = @{ RepositoryRoot = $RepositoryRoot; Operation = $CoverageOperation }
+    if ($ResultsDirectory) { $coverageOptions.ResultsDirectory = $ResultsDirectory }
+    if ($DotCoverToolFile) { $coverageOptions.DotCoverToolFile = $DotCoverToolFile }
+    foreach ($name in @('PreparedPath', 'ExpectedPreparedSha256', 'ShardIndex', 'ShardCount',
+        'ShardManifestPath', 'ExpectedShardSha256')) {
+        if ($PSBoundParameters.ContainsKey($name)) { $coverageOptions[$name] = $PSBoundParameters[$name] }
+    }
+    & (Join-Path $PSScriptRoot 'Invoke-FullCoverage.ps1') @coverageOptions
+    exit $LASTEXITCODE
+}
+foreach ($name in @('CoverageOperation', 'PreparedPath', 'ExpectedPreparedSha256', 'ShardIndex', 'ShardCount',
+    'ShardManifestPath', 'ExpectedShardSha256')) {
+    if ($PSBoundParameters.ContainsKey($name)) {
+        [Console]::Error.WriteLine('test-driver: coverage operation arguments require Full coverage.'); exit 2
+    }
+}
+if ($PSBoundParameters.ContainsKey('DotCoverToolFile')) {
+    [Console]::Error.WriteLine('test-driver: DotCoverToolFile requires Full coverage.'); exit 2
+}
 if ($Mode -ceq 'Compatibility') {
     if ($PSBoundParameters.ContainsKey('SelectionPath')) {
         [Console]::Error.WriteLine('test-driver: file selection requires Full mode.'); exit 2
@@ -312,6 +346,12 @@ function Get-SourceIdentity {
             Require-Condition ($file.path -is [string] -and $file.sha256 -cmatch '^[a-f0-9]{64}$') 'test-driver-invalid-snapshot-file'
             $paths.Add($file.path)
         }
+        $sourceRowsByPath = [Collections.Generic.Dictionary[string,Collections.Generic.List[object]]]::new([StringComparer]::InvariantCulture)
+        foreach ($file in $context.files) {
+            $sourceRows = $null
+            if (-not $sourceRowsByPath.TryGetValue($file.path, [ref]$sourceRows)) { $sourceRows = [Collections.Generic.List[object]]::new(); $sourceRowsByPath.Add($file.path, $sourceRows) }
+            $sourceRows.Add($file)
+        }
         $identity = [ordered]@{
             snapshot = $true; tree = $context.tree; sourceCommit = $context.sourceCommit; commit = $context.sourceCommit
             snapshotRootValidated = $true; contextSha256 = Get-Digest $env:FISHAUDIO_SNAPSHOT_CONTEXT
@@ -338,7 +378,7 @@ function Get-SourceIdentity {
             $name = $utf8.GetBytes($path.Replace('\', '/'))
             $bytes = [IO.File]::ReadAllBytes($full)
             if ($env:FISHAUDIO_SNAPSHOT_CONTEXT) {
-                $entry = @($context.files | Where-Object path -CEQ $path)
+                $entry = @($sourceRowsByPath[$path].ToArray())
                 Require-Condition ($entry.Count -eq 1 -and
                     [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant() -ceq $entry[0].sha256) 'test-driver-snapshot-file-changed'
             }
@@ -627,7 +667,9 @@ try {
                 $trxPath = Join-Path $supervised 'trx/results.trx'
                 $settingsPath = Join-Path $phaseDirectory 'execution.runsettings'
                 # Every phase has its own exact filter, including all-discovered runs.
-                Write-RunSettings $settingsPath $output @($group.selection | ForEach-Object fullName) -StopOnError $true `
+                # A singleton has no later leaf to stop. Let the platform publish a failed result;
+                # the unchanged external owner still bounds hangs, process exit and both drains.
+                Write-RunSettings $settingsPath $output @($group.selection | ForEach-Object fullName) -StopOnError (@($group.selection).Count -gt 1) `
                     -ExecutionWorkers $(if ($Workers -eq 0) { 0 } else { $group.maximumConcurrency })
                 $ids = @($group.selection | ForEach-Object canonicalId)
                 Write-NewJson (Join-Path $phaseDirectory 'selection.json') @{ schemaVersion = 1; ids = $ids }

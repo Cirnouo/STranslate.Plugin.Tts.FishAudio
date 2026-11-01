@@ -342,7 +342,16 @@ function Get-HybridSource([string]$RepositoryRoot, [string]$Directory) {
         $context = Read-HybridJson $env:FISHAUDIO_SNAPSHOT_CONTEXT
         Require-Hybrid ($context.schemaVersion -eq 1 -and (Test-HybridSamePath $context.root $RepositoryRoot) -and
             $context.tree -cmatch '^[a-f0-9]{40}([a-f0-9]{24})?$' -and ($null -eq $context.sourceCommit -or $context.sourceCommit -cmatch '^[a-f0-9]{40}([a-f0-9]{24})?$')) 'hybrid-snapshot-context'
-        foreach ($item in $context.files) { $paths.Add([string]$item.path) }
+        $sourceRowsByPath = [Collections.Generic.Dictionary[string,Collections.Generic.List[object]]]::new([StringComparer]::InvariantCulture)
+        foreach ($item in $context.files) {
+            $paths.Add([string]$item.path)
+            if ($item.path -isnot [string]) { $sourceRowsByPath = $null }
+            elseif ($null -ne $sourceRowsByPath) {
+                $sourceRows = $null
+                if (-not $sourceRowsByPath.TryGetValue($item.path, [ref]$sourceRows)) { $sourceRows = [Collections.Generic.List[object]]::new(); $sourceRowsByPath.Add($item.path, $sourceRows) }
+                $sourceRows.Add($item)
+            }
+        }
         $legacyTree = $context.tree
         $identity = [ordered]@{ snapshot = $true; tree = $context.tree; sourceCommit = $context.sourceCommit; commit = $context.sourceCommit
             snapshotRootValidated = $true; contextSha256 = Get-HybridDigest $env:FISHAUDIO_SNAPSHOT_CONTEXT }
@@ -374,7 +383,7 @@ function Get-HybridSource([string]$RepositoryRoot, [string]$Directory) {
             [void](Lock-HybridFile $full)
             $bytes = [IO.File]::ReadAllBytes($full)
             if ($null -ne $context) {
-                $entry = @($context.files | Where-Object path -CEQ $path)
+                $entry = @(if ($null -ne $sourceRowsByPath) { $sourceRowsByPath[$path].ToArray() } else { $context.files | Where-Object path -CEQ $path })
                 Require-Hybrid ($entry.Count -eq 1 -and (Get-HybridDigest $full) -ceq $entry[0].sha256) 'hybrid-snapshot-file-changed'
             }
             $name = [Text.UTF8Encoding]::new($false).GetBytes($path.Replace('\','/'))
@@ -570,7 +579,7 @@ function Read-HybridLegacyCatalog([string]$Assembly, [string]$AssemblySha256, [s
     try {
         while ($null -ne ($line = $reader.ReadLine())) {
             Require-Hybrid (-not $footer) 'framework-ci-legacy-list-trailing-output'
-            if ($line -cmatch '^Selected ([1-9][0-9]{0,5}) case\(s\)\.\z') {
+            if ($line -cmatch '^Selected (0|[1-9][0-9]{0,5}) case\(s\)\.\z') {
                 Require-Hybrid ([int]$Matches[1] -eq $cases.Count) 'framework-ci-legacy-list-count'
                 $footer = $true
             } else {
@@ -581,7 +590,7 @@ function Read-HybridLegacyCatalog([string]$Assembly, [string]$AssemblySha256, [s
                 $cases.Add([ordered]@{ id = $id; partition = $partition })
             }
         }
-        Require-Hybrid ($footer -and $cases.Count -gt 0) 'framework-ci-legacy-list-missing-footer'
+        Require-Hybrid ($footer) 'framework-ci-legacy-list-missing-footer'
     } finally { $reader.Dispose() }
     $path = Join-Path $Directory 'current-legacy-catalog.json'
     # Identity-only metadata: no outcome or completed regression report is made.

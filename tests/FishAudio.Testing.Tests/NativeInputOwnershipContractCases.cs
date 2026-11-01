@@ -84,8 +84,10 @@ public sealed partial class FrameworkCiEvidenceTests
         Assert.That(slots.Slots.Take(5).Select(item => item.Partition),
             Is.EqualTo(new[] { "core", "native-settings", "native-input", "native-popups", "native-cards" }));
         Assert.That(slots.Slots.Take(5).Select(item => item.Owner),
-            Is.EqualTo(new[] { "framework", "framework", "framework", "legacy", "legacy" }));
+            Is.EqualTo(new[] { "framework", "framework", "framework", "framework", "framework" }));
         Assert.That(slots.Slots[2].SelectedIds, Is.EqualTo(expected));
+        Assert.That(slots.Slots.Any(item => item.Owner == "legacy"), Is.False,
+            "Empty current legacy metadata cannot become a successful execution slot.");
         foreach (var slot in slots.Slots.Where(item => item.Owner == "legacy"))
             Assert.That(slot.SelectedIds, Is.EqualTo(legacy.Where(item => item.Partition == slot.Partition).Select(item => item.Id)),
                 "Every remaining legacy slot retains complete current catalog order.");

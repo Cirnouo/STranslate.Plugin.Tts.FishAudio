@@ -12,6 +12,7 @@ public sealed class ApiKeyFormatTests
 
     [Test]
     [Property("FishAudioCaseId", "settings.api-key/api-key-format-accepts-legacy-and-prefixed-keys")]
+    [Property("FishAudioSmoke", "true")]
     public void ApiKeyFormatAcceptsLegacyAndPrefixedKeys()
     {
         foreach (var key in new[] { AppliedKey, DraftKey, PrefixedKey, "sk-fish-" + new string('A', 43) })

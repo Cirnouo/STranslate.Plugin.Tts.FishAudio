@@ -27,6 +27,8 @@ The public entry is [Test.ps1](../../tools/Test.ps1). In these examples, `$newRe
 
 ## Bounded observations and retained limitations
 
+A separate 2026-10-30 observation collected one historical immutable `native-settings` build as a complete 173-member ordered group in one host using dotCover CLI 2026.2.3.1. All 173 leaves passed their exact XML/TRX checks; the external collector recorder took 292.43 s, including collection, export, review and group admission, with builds outside that duration. A later strict source-candidate CLI read took 1.45 s against the original matching Product DLL/PDB: it verified 122 document hashes (83 tracked, 39 generated), enumerated 1306 PE method rows and retained 2054 aggregate observations in one group graph. These are distinct units, not counts of covered methods or independent per-case coverage. Unknown observations and conservative type fallback remain; source mappings, build/generator input closure, dependency closure and complete-baseline flags stay false. This single historical sample establishes neither current-candidate gate admission nor a full-catalog cost forecast; ordinary tests remain on NUnit/VSTest.
+
 | Candidate or control | Actual observation | Consequence |
 |---|---|---|
 | dotCover CLI 2026.2.3.1 with Microsoft.Testing.Platform 2.4.1 and JetBrains.dotCover.Framework 1.0.2 | The host collected named test-boundary blocks, but the tested JSON/XML exports had empty test indices and no machine-readable case relations. | This tested route did not meet the attribution requirement. The authorized fallback is NUnit/VSTest with one isolated case per artifact. This does not prove every possible MTP configuration unsupported. |

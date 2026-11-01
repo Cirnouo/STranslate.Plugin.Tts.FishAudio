@@ -114,6 +114,7 @@ public sealed class StreamingPlaybackTests
 
     [Test]
     [Property("FishAudioCaseId", "playback.streaming/pcm-ring-cap-and-wraparound")]
+    [Property("FishAudioSmoke", "true")]
     [Order(32)]
     public Task PcmRingCapsFiveSecondsAndTracksWraparound() =>
         StreamingPlaybackSuite.RunOwnedAsync(() =>

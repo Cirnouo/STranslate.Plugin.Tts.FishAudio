@@ -7,6 +7,8 @@ namespace NUnitCompatibility;
 [TestFixture]
 [NonParallelizable]
 [Order(10)]
+[Property("FishAudioCoverageResponsibility", "FrameworkLifecycleOnly")]
+[Property("FishAudioCodeDependency", "tests/STranslate.Plugin.Tts.FishAudio.Tests/NUnitCompatibility/OrderedProfileCompatibilityCases.cs")]
 public sealed class OrderedProfileZuluFixture
 {
     [OneTimeSetUp]
@@ -34,6 +36,8 @@ public sealed class OrderedProfileZuluFixture
 [TestFixture]
 [NonParallelizable]
 [Order(20)]
+[Property("FishAudioCoverageResponsibility", "FrameworkLifecycleOnly")]
+[Property("FishAudioCodeDependency", "tests/STranslate.Plugin.Tts.FishAudio.Tests/NUnitCompatibility/OrderedProfileCompatibilityCases.cs")]
 public sealed class OrderedProfileAlphaFixture
 {
     // This fixture must consume the first fixture's trace without resetting it.

@@ -6,7 +6,7 @@ using System.Xml.Linq;
 namespace FishAudio.Testing.Evidence;
 
 public sealed record NUnitCaseExecutionPolicy(DiscoveredNUnitCase Case, string FixtureFullName,
-    bool FreshHost, string? Profile, int? ProfileOrdinal, IReadOnlyList<string> ExclusiveResources);
+    bool FreshHost, string? Profile, int? ProfileOrdinal, IReadOnlyList<string> ExclusiveResources, bool Smoke = false);
 
 // Only fixed execution-metadata-* codes may leave the future reader. Input
 // XML, filesystem paths and original parser exception details stay private.
@@ -19,6 +19,7 @@ public sealed class NUnitExecutionMetadataException : Exception
 public static class NUnitExecutionMetadata
 {
     private const string Fresh = "FishAudioFreshHost";
+    private const string Smoke = "FishAudioSmoke";
     private const string Profile = "FishAudioExecutionProfile";
     private const string Ordinal = "FishAudioProfileOrdinal";
     private const string Resource = "FishAudioExclusiveResource";
@@ -59,6 +60,7 @@ public static class NUnitExecutionMetadata
                 var owners = leaf.AncestorsAndSelf().Where(IsOwner).Reverse().ToArray();
                 Require(owners.Length <= 128, "work-limit");
                 var fresh = false;
+                var smoke = false;
                 string? profile = null;
                 int? ordinal = null;
                 var resources = new HashSet<string>(StringComparer.Ordinal);
@@ -68,6 +70,7 @@ public static class NUnitExecutionMetadata
                     work = checked(work + 1 + scope.Resources.Length);
                     Require(work <= MaximumPolicyReferences, "work-limit");
                     fresh |= scope.FreshHost;
+                    smoke |= scope.Smoke;
                     // Conflicting scopes cannot silently weaken or redirect
                     // a fixture's execution contract through a leaf override.
                     if (scope.Profile is not null)
@@ -85,7 +88,7 @@ public static class NUnitExecutionMetadata
                 }
                 Require((profile is null) == (ordinal is null), "invalid-ordinal");
                 policies.Add(new(item, fixtureName!, fresh || profile is not null, profile, ordinal,
-                    Array.AsReadOnly(resources.Order(StringComparer.Ordinal).ToArray())));
+                    Array.AsReadOnly(resources.Order(StringComparer.Ordinal).ToArray()), smoke));
             }
             foreach (var profile in policies.Where(item => item.Profile is not null).GroupBy(item => item.Profile))
             {
@@ -109,18 +112,20 @@ public static class NUnitExecutionMetadata
         }
     }
 
-    private sealed record ScopePolicy(bool FreshHost, string? Profile, int? Ordinal, string[] Resources);
+    private sealed record ScopePolicy(bool FreshHost, string? Profile, int? Ordinal, string[] Resources, bool Smoke);
 
     private static ScopePolicy ReadScope(XElement owner)
     {
         var containers = owner.Elements("properties").Take(2).ToArray();
         Require(containers.Length <= 1, "invalid-properties");
         var properties = containers.SelectMany(container => container.Elements("property"))
-            .Where(property => (string?)property.Attribute("name") is Fresh or Profile or Ordinal or Resource)
+            .Where(property => (string?)property.Attribute("name") is Fresh or Smoke or Profile or Ordinal or Resource)
             .Take(129).ToArray();
         Require(properties.Length <= 128, "work-limit");
         var fresh = Scalar(properties, Fresh);
         Require(fresh is null or "true", "invalid-fresh-host");
+        var smoke = Scalar(properties, Smoke);
+        Require(smoke is null or "true", "invalid-smoke");
         var profile = Scalar(properties, Profile);
         Require(profile is null || SafeName(profile), "invalid-profile");
         var ordinalText = Scalar(properties, Ordinal);
@@ -134,7 +139,8 @@ public static class NUnitExecutionMetadata
         var resources = properties.Where(property => (string?)property.Attribute("name") == Resource)
             .Select(property => (string?)property.Attribute("value")).ToArray();
         Require(resources.All(SafeName), "invalid-resource");
-        return new(fresh is not null, profile, ordinal, resources.Select(value => value!).Distinct(StringComparer.Ordinal).ToArray());
+        return new(fresh is not null, profile, ordinal, resources.Select(value => value!).Distinct(StringComparer.Ordinal).ToArray(),
+            smoke is not null);
     }
 
     private static string? Scalar(XElement[] properties, string name)
@@ -146,6 +152,7 @@ public static class NUnitExecutionMetadata
         Require(value is not null, name switch
         {
             Fresh => "invalid-fresh-host",
+            Smoke => "invalid-smoke",
             Profile => "invalid-profile",
             _ => "invalid-ordinal",
         });

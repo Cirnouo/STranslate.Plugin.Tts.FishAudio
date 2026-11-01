@@ -70,8 +70,8 @@ public sealed class RetiredStreamingSelectorCases
             await File.WriteAllTextAsync(Path.Combine(directory, "stdout.log"), output.Result);
             await File.WriteAllTextAsync(Path.Combine(directory, "stderr.log"), error.Result);
             Assert.That(process.ExitCode, Is.EqualTo(2), "retired-selector-must-not-fallback-to-another-selection");
-            Assert.That(error.Result.Trim(), Is.EqualTo("Runner selection error: " + expectedCode + "."),
-                "retired-selector-must-reach-the-real-selection-boundary");
+            Assert.That(error.Result.Trim(), Is.EqualTo(RegressionLegacyEntryPoint.RetiredDiagnostic),
+                "retired-selector-must-reach-production-retirement-before-historical-" + expectedCode);
             Assert.That(output.Result.Contains("Selected ", StringComparison.Ordinal), Is.False,
                 "A rejected legacy selector must not list or execute an unrelated set.");
             foreach (var input in originals)

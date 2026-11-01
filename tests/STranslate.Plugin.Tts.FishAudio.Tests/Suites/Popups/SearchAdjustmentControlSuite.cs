@@ -45,7 +45,7 @@ internal static class SearchAdjustmentControlSuite
         {
             foreach (var (locale, dark) in new[] { ("en", false), ("en", true), ("ru", true) })
                 await ObserveMatrixTaskAsync($"proof/{locale}/{dark}", stage => GeometryAndFlagsAsync(locale, dark, 1.25, stage, proofDirectory));
-            await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
+            await RunOnStaThreadAsync((Func<Task>)(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory)));
             return;
         }
         if (group is "lifetime")
@@ -64,12 +64,12 @@ internal static class SearchAdjustmentControlSuite
         }
         if (group is "radio")
         {
-            foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark));
+            foreach (var dark in new[] { false, true }) await RunOnStaThreadAsync((Func<Task>)(() => RadioAppearanceMatchesNativePeer(dark)));
             return;
         }
         if (group is "edges")
         {
-            await RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory));
+            await RunOnStaThreadAsync((Func<Task>)(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory)));
             await ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
             return;
         }
@@ -89,14 +89,14 @@ internal static class SearchAdjustmentControlSuite
             ("popup.search-adjustment/native/captions-keyboard-apply", () => RunOnStaThreadAsync(CaptionsAndKeyboardApplyAsync)),
         };
         foreach (var dark in new[] { false, true })
-            cases.Add(($"popup.search-adjustment/native/radio/{(dark ? "dark" : "light")}", () => RunOnStaThreadAsync(() => RadioAppearanceMatchesNativePeer(dark))));
+            cases.Add(($"popup.search-adjustment/native/radio/{(dark ? "dark" : "light")}", () => RunOnStaThreadAsync((Func<Task>)(() => RadioAppearanceMatchesNativePeer(dark)))));
         cases.AddRange(new (string Id, Func<Task> Run)[]
         {
             ("popup.search-adjustment/native/drafts-apply-tile-input", () => RunOnStaThreadAsync(DraftsApplyAndTileInputAsync)),
             ("popup.search-adjustment/native/held-apply-reopens-intent", () => RunOnStaThreadAsync(HeldApplyReopensAppliedIntentAsync)),
             ("popup.search-adjustment/native/overlay-ownership", () => RunOnStaThreadAsync(OverlayOwnershipAndLifetime)),
             ("popup.search-adjustment/native/window-scroll-lifetime", () => RunOnStaThreadAsync(WindowAndScrollLifetime)),
-            ("popup.search-adjustment/native/short-viewport", () => RunOnStaThreadAsync(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory))),
+            ("popup.search-adjustment/native/short-viewport", () => RunOnStaThreadAsync((Func<Task>)(() => ShortViewportKeepsPopupInsideVisibleArea(proofDirectory)))),
             ("popup.search-adjustment/native/viewport-lifecycle", () => ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses)),
             ("popup.search-adjustment/native/material-own-source", () => RunOnStaThreadAsync(PopupMaterialUsesItsOwnNonlayeredSource)),
         });
@@ -104,6 +104,14 @@ internal static class SearchAdjustmentControlSuite
         cases.AddRange(CreateGeometryCases(proofDirectory));
         return cases;
     }
+
+    // Direct bindings keep the original async observer, callback and diagnostic owner.
+    internal static Task ObserveGeometryAsync(string locale, bool dark, double dpi) =>
+        ObserveMatrixTaskAsync($"{locale}/{(dark ? "dark" : "light")}/{dpi * 100:0}%",
+            stage => new OrdinaryPopupProofDirectory().RunAsync(directory => GeometryAndFlagsAsync(locale, dark, dpi, stage, directory)));
+
+    internal static Task ObserveViewportLifecycleAsync() =>
+        ObserveViewportActionAsync(ViewportClampsAcrossTriggerOrRefuses);
 
     private static async Task RunGeometryAsync(string? proofDirectory)
     {
@@ -180,6 +188,76 @@ internal static class SearchAdjustmentControlSuite
                 Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
                 Stage("entered");
                 try { action(Stage); }
+                catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
+                finally { Stage("action completed"); completion.TrySetResult(); }
+            }, actionTimeout);
+            await ReportAsync(false, false).ConfigureAwait(false);
+        }
+        catch (RegressionExecutionTimeoutException error) when (!ReferenceEquals(error, Volatile.Read(ref actionFailure)))
+        {
+            Stage(Volatile.Read(ref enteredAt) < 0 ? "outer deadline before entry; observing same action off STA for at most 10s" : "outer deadline after entry; observing same action off STA for at most 10s");
+            await ReportAsync(true, true).ConfigureAwait(false);
+            throw;
+        }
+        catch
+        {
+            await ReportAsync(true, false).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    // The distinct name prevents Task-returning descriptions from binding to Action.
+    internal static async Task ObserveMatrixTaskActionAsync(string name, Func<Action<string>, Task> action,
+        Func<Func<Task>, TimeSpan, Task>? dispatch = null, Func<Task, Task>? observe = null, Action<string>? write = null, TimeProvider? observationTimeProvider = null,
+        string prefix = "search-adjustment", string details = "320/480 DIP.", TimeSpan? executionTimeout = null,
+        RegressionDiagnostics.WorkCapture? diagnosticWork = null)
+    {
+        var actionTimeout = executionTimeout ?? RegressionExecution.Timeout;
+        var elapsed = Stopwatch.StartNew();
+        var phases = new ConcurrentQueue<string>();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Exception? actionFailure = null;
+        long enteredAt = -1;
+        var phaseAttempts = 0;
+        void Stage(string phase)
+        {
+            if (Interlocked.Increment(ref phaseAttempts) <= 256)
+                phases.Enqueue($"{elapsed.ElapsedMilliseconds}ms thread={Environment.CurrentManagedThreadId}: {phase}");
+        }
+        Task ReportAsync(bool failed, bool observeCompletion) => RegressionDiagnostics.RunAsync(async retired =>
+        {
+            if (observeCompletion)
+            {
+                try
+                {
+                    var observation = (observe ?? (pending => pending))(completion.Task);
+                    if (diagnosticWork is not null) diagnosticWork.Observation = observation;
+                    await observation.ConfigureAwait(false);
+                    Stage("same action observation completed; original deadline remains failed");
+                }
+                catch (Exception error) { Stage($"same action observation ended ({error.GetType().Name}); original deadline remains failed"); }
+            }
+            if (failed)
+            {
+                foreach (var phase in phases)
+                {
+                    if (retired()) break;
+                    try { (write ?? Console.WriteLine)($"[{prefix}/{name}] {phase}"); } catch { }
+                }
+            }
+            else if (!retired())
+            {
+                try { (write ?? Console.WriteLine)($"[{prefix}/{name}] completed in {elapsed.ElapsedMilliseconds}ms; entry={Volatile.Read(ref enteredAt)}ms; phases={phases.Count}; deadline={actionTimeout.TotalSeconds}s; {details}"); } catch { }
+            }
+        }, observationTimeProvider, diagnosticWork);
+        Stage(FormattableString.Invariant($"queued with {(executionTimeout is null ? "shared" : "explicit")} {actionTimeout.TotalSeconds}s action deadline"));
+        try
+        {
+            await (dispatch ?? ((callback, timeout) => RunOnStaThreadAsync(callback, timeout)))(async () =>
+            {
+                Interlocked.Exchange(ref enteredAt, elapsed.ElapsedMilliseconds);
+                Stage("entered");
+                try { await action(Stage); }
                 catch (Exception error) { Volatile.Write(ref actionFailure, error); Stage($"action failed ({error.GetType().Name})"); throw; }
                 finally { Stage("action completed"); completion.TrySetResult(); }
             }, actionTimeout);
@@ -604,31 +682,47 @@ internal static class SearchAdjustmentControlSuite
         return control!;
     }
 
-    private static void PopupMaterialUsesItsOwnNonlayeredSource()
+    internal static Task RunPopupOwnershipControlAsync(int scene, SearchPopupFixtureHooks hooks) => scene switch
+    {
+        0 => new OrdinaryPopupProofDirectory().RunAsync(directory => RadioAppearanceMatchesNativePeerAsync(false, directory, new SearchPopupFixtureOwner(hooks))),
+        1 => PopupMaterialUsesItsOwnNonlayeredSourceAsync(new SearchPopupFixtureOwner(hooks)),
+        2 => PopupMaterialFallbackAndSourceLifetimesAsync(true, new PopupBackdropResult(0, 0, 2), new SearchPopupFixtureOwner(hooks)),
+        _ => throw new ArgumentOutOfRangeException(nameof(scene))
+    };
+
+    internal static Task PopupMaterialUsesItsOwnNonlayeredSource() =>
+        PopupMaterialUsesItsOwnNonlayeredSourceAsync(new SearchPopupFixtureOwner());
+
+    private static Task PopupMaterialUsesItsOwnNonlayeredSourceAsync(SearchPopupFixtureOwner fixture) => fixture.RunAsync(() =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var ownerSource = Attach(view);
+        var ownerSource = Attach(view);
+        fixture.Source = ownerSource;
         var control = Control(view);
-        Open(control);
-        try
-        {
-            var surface = Part<Border>(control, "PopupSurface");
-            var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
-            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
-                AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Mica compatibility path must create a nonlayered Popup before applying DWM material");
-            var material = ((SearchAdjustmentControl)control).Material;
-            Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleMaterial=UNVERIFIED");
-            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) && material.Failure is null && material.Result.FrameHResult >= 0 && material.Result.ReadbackHResult >= 0)
-                AssertEqual(2, material.Result.BackdropType, "The existing toolkit request must read back the host Mica family, never Desktop Acrylic");
-            AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
-            Click(control, "CloseButton");
-            AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
-        }
-        finally { Part<Popup>(control, "AdjustmentPopup").IsOpen = false; Drain(); }
-    }
+        var popup = Part<Popup>(control, "AdjustmentPopup");
+        fixture.Open(popup, control, () => Open(control));
+        // The original finally began only after Open returned. A failed Open
+        // therefore gains no new Drain; its actual lifetime is still joined.
+        fixture.RequestClose = () => { popup.IsOpen = false; fixture.RecordCloseSetterReturn(); };
+        fixture.DrainOriginal = Drain;
+        var surface = Part<Border>(control, "PopupSurface");
+        var popupSource = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(false, ReferenceEquals(ownerSource, popupSource), "Material must target the exact Popup source, never the host source");
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621))
+            AssertEqual(false, popupSource.UsesPerPixelOpacity, "The supported Mica compatibility path must create a nonlayered Popup before applying DWM material");
+        var material = ((SearchAdjustmentControl)control).Material;
+        Console.WriteLine($"[popup-material/search] hwnd=0x{popupSource.Handle:X}; owner=0x{ownerSource.Handle:X}; layered={popupSource.UsesPerPixelOpacity}; frameHR=0x{material.Result.FrameHResult:X8}; readHR=0x{material.Result.ReadbackHResult:X8}; type={material.Result.BackdropType}; accepted={material.AttributeAccepted}; visibleMaterial=UNVERIFIED");
+        if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22621) && material.Failure is null && material.Result.FrameHResult >= 0 && material.Result.ReadbackHResult >= 0)
+            AssertEqual(2, material.Result.BackdropType, "The existing toolkit request must read back the host Mica family, never Desktop Acrylic");
+        AssertEqual(material.AttributeAccepted, surface.Background is SolidColorBrush { Color.A: 0 }, "Only a successful exact-HWND frame/readback enables a transparent WPF surface");
+        Click(control, "CloseButton");
+        fixture.RecordCloseSetterReturn();
+        AssertEqual(IntPtr.Zero, material.Handle, "Close retires the owned popup source");
+        return Task.CompletedTask;
+    });
 
     private static async Task RunMaterialFallbackAsync()
     {
@@ -648,48 +742,56 @@ internal static class SearchAdjustmentControlSuite
             ("frame-failure", new PopupBackdropResult(unchecked((int)0x80004005), 0, 2)),
         })
             cases.Add(($"popup.search-adjustment/native/material-fallback/{(supported ? "supported" : "unsupported")}/{name}",
-                () => RunOnStaThreadAsync(() => PopupMaterialFallbackAndSourceLifetimes(supported, result))));
+                () => RunOnStaThreadAsync((Func<Task>)(() => PopupMaterialFallbackAndSourceLifetimes(supported, result)))));
         return cases;
     }
 
-    private static void PopupMaterialFallbackAndSourceLifetimes(bool supported, PopupBackdropResult result)
+    internal static Task PopupMaterialFallbackAndSourceLifetimes(bool supported, PopupBackdropResult result) =>
+        PopupMaterialFallbackAndSourceLifetimesAsync(supported, result, new SearchPopupFixtureOwner());
+
+    private static Task PopupMaterialFallbackAndSourceLifetimesAsync(bool supported, PopupBackdropResult result,
+        SearchPopupFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var ownerSource = Attach(view);
+        var ownerSource = Attach(view);
+        fixture.Source = ownerSource;
         var surface = new Border { Width = 140, Height = 100, CornerRadius = new CornerRadius(8) };
         var popup = new Popup { PlacementTarget = Control(view), Child = surface, StaysOpen = true };
         var api = new TestPopupBackdropApi { IsSupported = supported, Result = result };
         var material = new PopupMaterial(popup, surface, api);
-        try
-        {
-            material.Begin(); popup.IsOpen = true; Drain();
-            var first = (HwndSource)PresentationSource.FromVisual(surface);
-            var accepted = supported && result == new PopupBackdropResult(0, 0, 2);
-            AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
-            AssertEqual(accepted, material.AttributeAccepted, "Only successful frame/readback Mica type 2 enables transparent material; Acrylic type 3 is rejected");
-            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Accepted Mica clears the shell; every fallback stays explicitly opaque");
-            AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
-            AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.Black; Drain();
-            AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Live theme replacement preserves the accepted/opaque decision");
-            if (supported) AssertEqual((first.Handle, true), api.Chrome[^1], "Theme updates target only the live popup source with the new dark state");
-            popup.IsOpen = false; Drain();
-            AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
-            var calls = api.Chrome.Count;
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
-            AssertEqual(calls, api.Chrome.Count, "Retired theme callbacks cannot update stale sources");
-            material.Begin(); popup.IsOpen = true; Drain();
-            var second = (HwndSource)PresentationSource.FromVisual(surface);
-            AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
-            AssertEqual(accepted, material.AttributeAccepted, "Reopen evaluates the new source independently");
-            surface.Resources["FlyoutPresenterBackground"] = Brushes.White; Drain();
-            if (supported) AssertEqual((second.Handle, false), api.Chrome[^1], "Reopened theme changes target the new live source only");
-            AssertEqual(false, api.Chrome.Any(call => call.Handle == ownerSource.Handle), "Native theme updates never target the owner HWND");
-        }
-        finally { popup.IsOpen = false; material.End(); Drain(); }
-    }
+        fixture.RequestClose = () => { popup.IsOpen = false; fixture.RecordCloseSetterReturn(); };
+        fixture.EndMaterial = material.End;
+        fixture.DrainOriginal = Drain;
+        material.Begin();
+        fixture.Open(popup, surface, () => { popup.IsOpen = true; Drain(); }, material);
+        var first = (HwndSource)PresentationSource.FromVisual(surface);
+        var accepted = supported && result == new PopupBackdropResult(0, 0, 2);
+        AssertEqual(!supported, first.UsesPerPixelOpacity, "Capability selects the source configuration before creation");
+        AssertEqual(accepted, material.AttributeAccepted, "Only successful frame/readback Mica type 2 enables transparent material; Acrylic type 3 is rejected");
+        AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Accepted Mica clears the shell; every fallback stays explicitly opaque");
+        AssertEqual(supported ? 1 : 0, api.Applied.Count, "Unsupported platforms never attempt native material");
+        AssertEqual(false, api.Applied.Contains(ownerSource.Handle), "No fallback or application may target the owner HWND");
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.Black; Drain();
+        AssertEqual(accepted ? (byte)0 : (byte)255, ((SolidColorBrush)surface.Background).Color.A, "Live theme replacement preserves the accepted/opaque decision");
+        if (supported) AssertEqual((first.Handle, true), api.Chrome[^1], "Theme updates target only the live popup source with the new dark state");
+        popup.IsOpen = false; fixture.RecordCloseSetterReturn(); Drain();
+        AssertEqual(IntPtr.Zero, material.Handle, "Closed popup retires material ownership");
+        var calls = api.Chrome.Count;
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.Red; Drain();
+        AssertEqual(calls, api.Chrome.Count, "Retired theme callbacks cannot update stale sources");
+        await fixture.JoinCurrentAsync();
+        material.Begin();
+        fixture.Open(popup, surface, () => { popup.IsOpen = true; Drain(); }, material);
+        var second = (HwndSource)PresentationSource.FromVisual(surface);
+        AssertEqual(false, ReferenceEquals(first, second), "Reopen reacquires the newly created Popup source");
+        AssertEqual(accepted, material.AttributeAccepted, "Reopen evaluates the new source independently");
+        surface.Resources["FlyoutPresenterBackground"] = Brushes.White; Drain();
+        if (supported) AssertEqual((second.Handle, false), api.Chrome[^1], "Reopened theme changes target the new live source only");
+        AssertEqual(false, api.Chrome.Any(call => call.Handle == ownerSource.Handle), "Native theme updates never target the owner HWND");
+    });
 
     private sealed class TestPopupBackdropApi : IPopupBackdropApi
     {
@@ -709,58 +811,72 @@ internal static class SearchAdjustmentControlSuite
     private static HwndSource Attach(SettingsView view, int width = 480)
     {
         var screenDpi = VisualTreeHelper.GetDpi(new DrawingVisual());
-        var source = new HwndSource(new HwndSourceParameters("Fish Audio search adjustment fixture")
+        return PopupSourceAcquisition.Acquire(() => new HwndSource(new HwndSourceParameters("Fish Audio search adjustment fixture")
         {
             Width = (int)Math.Ceiling(width * screenDpi.DpiScaleX),
             Height = (int)Math.Ceiling(1600 * screenDpi.DpiScaleY),
             WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120,
+        }), source =>
+        {
+            source.RootVisual = view;
+            SettingsLayoutSuite.Layout(view, width);
         });
-        source.RootVisual = view;
-        SettingsLayoutSuite.Layout(view, width);
-        return source;
     }
 
-    private static async Task CaptionsAndKeyboardApplyAsync()
-    {
-        var settings = new Settings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"total":0,"items":[]}""";
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var source = Attach(view);
-        var control = Control(view);
-        Open(control);
-        AssertEqual("Relevance first", Part<RadioButton>(control, "RelevanceRadio").Content as string,
-            "Each native sort choice presents only its readable title without helper descriptions");
-        AssertEqual("Most used first", Part<RadioButton>(control, "PopularityRadio").Content as string, "Popularity retains its rich title");
-        AssertEqual("Newest first", Part<RadioButton>(control, "CreationRadio").Content as string, "Creation order retains its rich title");
-        AssertNotNull(control.FindName("LanguageTiles"), "Language options must be eleven equal toggle tiles");
-        var tile = Tiles(control).Single(item => (string)item.Tag == "en");
-        foreach (var key in new[] { Key.Enter, Key.Space })
+    internal static Task CaptionsAndKeyboardApplyAsync() =>
+        RunCaptionsAndKeyboardApplyAsync(new SearchApplyFixtureOwner());
+
+    private static Task RunCaptionsAndKeyboardApplyAsync(SearchApplyFixtureOwner owner) =>
+        owner.RunAsync(async () =>
         {
-            var phases = new List<string>();
-            string State() => $"checked={tile.IsChecked}; focused={tile.IsKeyboardFocused}; pressed={tile.IsPressed}; captured={tile.IsMouseCaptured}";
-            phases.Add($"{key}/before-focus: {State()}");
-            tile.Focus();
-            phases.Add($"{key}/after-focus: {State()}");
-            var previous = tile.IsChecked;
-            LocalKey(tile, key, phase => phases.Add($"{key}/{phase}: {State()}")); Drain();
-            phases.Add($"{key}/after-drain: {State()}");
-            try { AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior"); }
-            catch { foreach (var phase in phases) Console.WriteLine($"[search-keyboard] {phase}"); throw; }
-            AssertEqual(true, IsOpen(control), "Tile keyboard activation preserves the popup");
-            AssertEqual(0, http.GetCallCount, "Tile keyboard activation cannot invoke Apply");
-        }
-        Part<RadioButton>(control, "PopularityRadio").Focus();
-        LocalKey(Part<RadioButton>(control, "PopularityRadio"), Key.Enter); Drain();
-        AssertEqual(true, IsOpen(control), "Native radio Enter stays local without Apply");
-        var apply = Part<Button>(control, "ApplyButton");
-        apply.Focus(); LocalKey(apply, Key.Enter); Drain();
-        AssertEqual(false, IsOpen(control), "Explicit keyboard Apply closes search adjustments");
-        AssertEqual(1, http.GetCallCount, "Keyboard Apply invokes exactly one page-one GET");
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(2, http.GetCallCount, "Explicit Search remains independent of popup keyboard Apply");
-    }
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = """{"total":0,"items":[]}""";
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            owner.ViewModel = vm;
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            var source = Attach(view);
+            owner.Source = source;
+            var control = Control(view);
+            owner.Control = (SearchAdjustmentControl)control;
+            owner.ApplyObservation = owner.Control.ObserveApplyTasks();
+            owner.Popups.HostSource = source;
+            owner.Popups.ViewModel = vm;
+            owner.Popups.Control = control;
+            owner.Popups.RequestClose = () => { if (IsOpen(control)) Click(control, "CloseButton"); };
+            owner.Popups.Open(control, () => Open(control));
+            AssertEqual("Relevance first", Part<RadioButton>(control, "RelevanceRadio").Content as string,
+                "Each native sort choice presents only its readable title without helper descriptions");
+            AssertEqual("Most used first", Part<RadioButton>(control, "PopularityRadio").Content as string, "Popularity retains its rich title");
+            AssertEqual("Newest first", Part<RadioButton>(control, "CreationRadio").Content as string, "Creation order retains its rich title");
+            AssertNotNull(control.FindName("LanguageTiles"), "Language options must be eleven equal toggle tiles");
+            var tile = Tiles(control).Single(item => (string)item.Tag == "en");
+            foreach (var key in new[] { Key.Enter, Key.Space })
+            {
+                var phases = new List<string>();
+                string State() => $"checked={tile.IsChecked}; focused={tile.IsKeyboardFocused}; pressed={tile.IsPressed}; captured={tile.IsMouseCaptured}";
+                phases.Add($"{key}/before-focus: {State()}");
+                tile.Focus();
+                phases.Add($"{key}/after-focus: {State()}");
+                var previous = tile.IsChecked;
+                LocalKey(tile, key, phase => phases.Add($"{key}/{phase}: {State()}")); Drain();
+                phases.Add($"{key}/after-drain: {State()}");
+                try { AssertEqual(previous != true, tile.IsChecked, "Enter and Space keep native local toggle behavior"); }
+                catch { foreach (var phase in phases) Console.WriteLine($"[search-keyboard] {phase}"); throw; }
+                AssertEqual(true, IsOpen(control), "Tile keyboard activation preserves the popup");
+                AssertEqual(0, http.GetCallCount, "Tile keyboard activation cannot invoke Apply");
+            }
+            Part<RadioButton>(control, "PopularityRadio").Focus();
+            LocalKey(Part<RadioButton>(control, "PopularityRadio"), Key.Enter); Drain();
+            AssertEqual(true, IsOpen(control), "Native radio Enter stays local without Apply");
+            var apply = Part<Button>(control, "ApplyButton");
+            apply.Focus(); LocalKey(apply, Key.Enter); Drain();
+            AssertEqual(false, IsOpen(control), "Explicit keyboard Apply closes search adjustments");
+            AssertEqual(1, http.GetCallCount, "Keyboard Apply invokes exactly one page-one GET");
+            await vm.SearchVoicesCommand.ExecuteAsync(null);
+            AssertEqual(2, http.GetCallCount, "Explicit Search remains independent of popup keyboard Apply");
+            await owner.Popups.JoinCurrentAsync();
+        });
 
     // This hidden HWND cannot acquire OS keyboard focus. Exercise native class
     // handlers with an explicit focus-state fixture; physical Tab is host acceptance.
@@ -801,99 +917,147 @@ internal static class SearchAdjustmentControlSuite
 
     // Draft controls must have no network side effects. Apply must capture the
     // current TextBox once, including an unchanged refresh and keyboard activation.
-    private static async Task DraftsApplyAndTileInputAsync()
-    {
-        var settings = new Settings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"total":24,"items":[]}""";
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var source = Attach(view);
-        var control = Control(view);
-        Open(control);
-        AssertEqual(true, IsOpen(control), "The embedded action opens a native popup");
-        AssertEqual(11, Tiles(control).Length, "All and ten approved languages use equal tiles");
-        AssertEnumerableEqual(new[] { "" }, Selected(control), "All alone is the default");
-        Toggle(control, "ja"); Toggle(control, "en");
-        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Specific languages toggle independently and exclude All");
-        Toggle(control, "en"); Toggle(control, "ja");
-        AssertEnumerableEqual(new[] { "" }, Selected(control), "Clearing the final specific restores All");
-        foreach (var code in new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }) Toggle(control, code);
-        AssertEqual(10, Selected(control).Length, "Selecting all ten specifics remains filtered");
-        AssertEqual(false, Tiles(control)[0].IsChecked, "All ten does not select All");
-        Toggle(control, "");
-        AssertEnumerableEqual(new[] { "" }, Selected(control), "All clears every specific");
-        Toggle(control, "ja");
-        Part<RadioButton>(control, "CreationRadio").IsChecked = true;
-        AssertEqual(0, http.GetCallCount, "Draft language/sort edits never call the provider");
-        Click(control, "ResetButton");
-        AssertEnumerableEqual(new[] { "" }, Selected(control), "Reset drafts All");
-        AssertEqual(true, Part<RadioButton>(control, "RelevanceRadio").IsChecked, "Reset drafts relevance");
-        AssertEqual(0, http.GetCallCount, "Reset never calls the provider");
-        Click(control, "CloseButton");
-        AssertEqual(false, IsOpen(control), "Close dismisses without applying");
-        AssertEqual(0, http.GetCallCount, "Close discards drafts without a request");
-        Open(control);
-        AssertEnumerableEqual(new[] { "" }, Selected(control), "Reopening discards the former draft");
-        Toggle(control, "ja"); Toggle(control, "en");
-        Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
-        var input = (TextBox)view.FindName("VoiceSearchInput");
-        input.Text = "visible & query";
-        Drain();
-        Click(control, "ApplyButton");
-        Drain();
-        AssertEqual(false, IsOpen(control), "Apply closes immediately");
-        AssertEqual(1, http.GetCallCount, "Apply invokes exactly one request");
-        AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=en&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
-        Open(control);
-        AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from applied selections");
-        var surface = Part<Border>(control, "PopupSurface");
-        var scroll = Part<ScrollViewer>(control, "PopupScroll");
-        scroll.ScrollToVerticalOffset(50); Drain();
-        AssertEqual(true, IsOpen(control), "Internal body scrolling preserves adjustment drafts");
-        Toggle(control, "ru");
-        var key = Escape(surface);
-        AssertEqual(true, key.Handled, "Escape is consumed by the adjustment overlay");
-        AssertEqual(false, IsOpen(control), "Escape closes adjustments directly");
-        AssertEqual(true, Part<Button>(control, "AdjustmentButton").IsKeyboardFocused, "Escape returns focus to the embedded trigger");
-        AssertEqual(1, http.GetCallCount, "Escape discards drafts without another GET");
-        Open(control);
-        Click(control, "ApplyButton"); Drain();
-        AssertEqual(2, http.GetCallCount, "Unchanged compiled Apply still refreshes exactly once");
-        input.RaiseEvent(new RoutedEventArgs(UIElement.LostFocusEvent)); Drain();
-        AssertEqual(2, http.GetCallCount, "Blur after Apply cannot issue a duplicate search");
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(3, http.GetCallCount, "The public Search command remains usable with applied options");
-    }
+    internal static Task DraftsApplyAndTileInputAsync() =>
+        RunDraftsApplyAndTileInputAsync(new SearchApplyFixtureOwner());
 
-    private static async Task HeldApplyReopensAppliedIntentAsync()
-    {
-        const string response = """{"total":24,"items":[{"_id":"11111111111111111111111111111111","title":"Voice"}]}""";
-        var settings = new Settings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = response;
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var source = Attach(view);
-        var control = Control(view);
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        await vm.NextPageCommand.ExecuteAsync(null);
-        var cards = vm.SearchResults;
-        var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var published = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        vm.PropertyChanged += (_, args) =>
+    internal static Task RunSearchDraftOwnershipControlAsync(SearchApplyFixtureHooks hooks) =>
+        RunDraftsApplyAndTileInputAsync(new SearchApplyFixtureOwner(hooks));
+
+    private static Task RunDraftsApplyAndTileInputAsync(SearchApplyFixtureOwner owner) =>
+        owner.RunAsync(async () =>
         {
-            if (args.PropertyName == nameof(vm.SearchResults)) published.TrySetResult();
-        };
-        http.GetAsyncHandler = (_, _, _) => held.Task;
-        try
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = """{"total":24,"items":[]}""";
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            owner.ViewModel = vm;
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            var source = Attach(view);
+            owner.Source = source;
+            var control = Control(view);
+            owner.Control = (SearchAdjustmentControl)control;
+            owner.ApplyObservation = owner.Control.ObserveApplyTasks();
+            owner.Popups.HostSource = source;
+            owner.Popups.ViewModel = vm;
+            owner.Popups.Control = control;
+            owner.Popups.RequestClose = () => { if (IsOpen(control)) Click(control, "CloseButton"); };
+            owner.Popups.Open(control, () => Open(control));
+            AssertEqual(true, IsOpen(control), "The embedded action opens a native popup");
+            AssertEqual(11, Tiles(control).Length, "All and ten approved languages use equal tiles");
+            AssertEnumerableEqual(new[] { "" }, Selected(control), "All alone is the default");
+            Toggle(control, "ja"); Toggle(control, "en");
+            AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Specific languages toggle independently and exclude All");
+            Toggle(control, "en"); Toggle(control, "ja");
+            AssertEnumerableEqual(new[] { "" }, Selected(control), "Clearing the final specific restores All");
+            foreach (var code in new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" }) Toggle(control, code);
+            AssertEqual(10, Selected(control).Length, "Selecting all ten specifics remains filtered");
+            AssertEqual(false, Tiles(control)[0].IsChecked, "All ten does not select All");
+            Toggle(control, "");
+            AssertEnumerableEqual(new[] { "" }, Selected(control), "All clears every specific");
+            Toggle(control, "ja");
+            Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+            AssertEqual(0, http.GetCallCount, "Draft language/sort edits never call the provider");
+            Click(control, "ResetButton");
+            AssertEnumerableEqual(new[] { "" }, Selected(control), "Reset drafts All");
+            AssertEqual(true, Part<RadioButton>(control, "RelevanceRadio").IsChecked, "Reset drafts relevance");
+            AssertEqual(0, http.GetCallCount, "Reset never calls the provider");
+            Click(control, "CloseButton");
+            AssertEqual(false, IsOpen(control), "Close dismisses without applying");
+            AssertEqual(0, http.GetCallCount, "Close discards drafts without a request");
+            await owner.Popups.JoinCurrentAsync();
+            owner.Popups.Open(control, () => Open(control));
+            AssertEnumerableEqual(new[] { "" }, Selected(control), "Reopening discards the former draft");
+            Toggle(control, "ja"); Toggle(control, "en");
+            Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
+            var input = (TextBox)view.FindName("VoiceSearchInput");
+            input.Text = "visible & query";
+            Drain();
+            Click(control, "ApplyButton");
+            Drain();
+            AssertEqual(false, IsOpen(control), "Apply closes immediately");
+            AssertEqual(1, http.GetCallCount, "Apply invokes exactly one request");
+            AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=task_count&title=visible%20%26%20query&language=en&language=ja", http.LastGetUrl, "Apply captures visible text and current drafts");
+            owner.RecordApplyStarted();
+            await owner.Popups.JoinCurrentAsync();
+            owner.Popups.Open(control, () => Open(control));
+            AssertEnumerableEqual(new[] { "en", "ja" }, Selected(control), "Reopening starts from applied selections");
+            var surface = Part<Border>(control, "PopupSurface");
+            var scroll = Part<ScrollViewer>(control, "PopupScroll");
+            scroll.ScrollToVerticalOffset(50); Drain();
+            AssertEqual(true, IsOpen(control), "Internal body scrolling preserves adjustment drafts");
+            Toggle(control, "ru");
+            var key = Escape(surface);
+            AssertEqual(true, key.Handled, "Escape is consumed by the adjustment overlay");
+            AssertEqual(false, IsOpen(control), "Escape closes adjustments directly");
+            AssertEqual(true, Part<Button>(control, "AdjustmentButton").IsKeyboardFocused, "Escape returns focus to the embedded trigger");
+            AssertEqual(1, http.GetCallCount, "Escape discards drafts without another GET");
+            await owner.Popups.JoinCurrentAsync();
+            owner.Popups.Open(control, () => Open(control));
+            Click(control, "ApplyButton"); Drain();
+            AssertEqual(2, http.GetCallCount, "Unchanged compiled Apply still refreshes exactly once");
+            owner.RecordApplyStarted();
+            input.RaiseEvent(new RoutedEventArgs(UIElement.LostFocusEvent)); Drain();
+            AssertEqual(2, http.GetCallCount, "Blur after Apply cannot issue a duplicate search");
+            await vm.SearchVoicesCommand.ExecuteAsync(null);
+            AssertEqual(3, http.GetCallCount, "The public Search command remains usable with applied options");
+            await owner.Popups.JoinCurrentAsync();
+        });
+
+    internal static Task HeldApplyReopensAppliedIntentAsync() =>
+        RunHeldApplyReopensAppliedIntentAsync(new HeldPopupApplyFixtureOwner(), null);
+
+    internal static Task RunHeldApplyReopensAppliedIntentAsync(HeldPopupApplyFixtureOwner owner,
+        Action<HeldPopupApplyFailurePoint, HeldPopupApplyFixtureOwner>? fault) =>
+        RunHeldApplyWithNativeOwnershipAsync(owner, fault, new SearchApplyPopupSequenceOwner());
+
+    internal static Task RunSearchHeldNativeOwnershipControlAsync(HeldPopupApplyFixtureOwner owner,
+        SearchApplyPopupHooks hooks) =>
+        RunHeldApplyWithNativeOwnershipAsync(owner, null, new SearchApplyPopupSequenceOwner(hooks));
+
+    private static Task RunHeldApplyWithNativeOwnershipAsync(HeldPopupApplyFixtureOwner owner,
+        Action<HeldPopupApplyFailurePoint, HeldPopupApplyFixtureOwner>? fault, SearchApplyPopupSequenceOwner popups) =>
+        owner.RunAsync(() => popups.RunAsync(async () =>
         {
-            Open(control); Toggle(control, "en");
+            const string response = """{"total":24,"items":[{"_id":"11111111111111111111111111111111","title":"Voice"}]}""";
+            owner.ResponseJson = response;
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            owner.Http = http;
+            http.GetResponseJson = response;
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            owner.ViewModel = vm;
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            var source = Attach(view);
+            owner.Source = source;
+            var control = Control(view);
+            owner.Control = (SearchAdjustmentControl)control;
+            owner.ApplyObservation = owner.Control.ObserveApplyTasks();
+            popups.HostSource = source;
+            popups.ViewModel = vm;
+            popups.Control = control;
+            popups.RequestClose = () => { if (IsOpen(control)) Click(control, "CloseButton"); };
+            await vm.SearchVoicesCommand.ExecuteAsync(null);
+            await vm.NextPageCommand.ExecuteAsync(null);
+            var cards = vm.SearchResults;
+            var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.HeldResponse = held;
+            var published = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            owner.Publication = published.Task;
+            owner.PublicationHandler = (_, args) =>
+            {
+                if (args.PropertyName == nameof(vm.SearchResults)) published.TrySetResult();
+            };
+            vm.PropertyChanged += owner.PublicationHandler;
+            http.GetAsyncHandler = (_, _, _) => held.Task;
+            owner.OriginalFinallyActive = true;
+            popups.Open(control, () => Open(control)); Toggle(control, "en");
             Part<RadioButton>(control, "CreationRadio").IsChecked = true;
             Click(control, "ApplyButton");
+            fault?.Invoke(HeldPopupApplyFailurePoint.AfterApplyStarted, owner);
             AssertEqual(3, http.GetCallCount, "Held compiled Apply starts exactly one page-one GET");
             AssertEqual(false, IsOpen(control), "Held Apply closes immediately");
-            Open(control);
+            await popups.JoinCurrentAsync();
+            popups.Open(control, () => Open(control));
             AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen while the response is held shows applied English");
             AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Pending reopen keeps applied sort");
             AssertEqual(true, vm.HasSearchAdjustments, "Pending applied intent enables the indicator");
@@ -901,6 +1065,7 @@ internal static class SearchAdjustmentControlSuite
             AssertEqual(2, vm.SearchPage, "Pending popup intent retains successful navigation");
             Toggle(control, "en"); Toggle(control, "de");
             Part<RadioButton>(control, "PopularityRadio").IsChecked = true;
+            fault?.Invoke(HeldPopupApplyFailurePoint.AfterPendingDraftChanged, owner);
             await Task.Run(() => held.SetResult(response));
             await published.Task.WaitAsync(RegressionExecution.Timeout);
             Drain();
@@ -908,85 +1073,123 @@ internal static class SearchAdjustmentControlSuite
             AssertEnumerableEqual(new[] { "de" }, Selected(control), "English success cannot mutate the independent German draft");
             AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Response publication cannot mutate the open sort draft");
             AssertEqual("en", string.Join(",", vm.SearchLanguages), "Success leaves applied menu intent unchanged");
-            Click(control, "CloseButton"); Open(control);
+            Click(control, "CloseButton"); await popups.JoinCurrentAsync(); popups.Open(control, () => Open(control));
             AssertEnumerableEqual(new[] { "en" }, Selected(control), "Close and reopen restore applied English after success");
             AssertEqual(true, Part<RadioButton>(control, "CreationRadio").IsChecked, "Close and reopen restore applied sort");
             AssertEqual(3, http.GetCallCount, "Draft edits, response and reopen add no GETs");
             Click(control, "CloseButton");
-        }
-        finally { held.TrySetResult(response); vm.Dispose(); Drain(); }
-    }
+        }));
 
     // The per-view token prevents competing overlays, stale releases and leaked
     // input subscriptions after tab/rebind/unload/ancestor-scroll retirement.
-    private static void OverlayOwnershipAndLifetime()
+    internal static Task RunRetirementOwnershipControlAsync(int scene, SearchRetirementFixtureHooks hooks,
+        string? proofDirectory = null) => scene switch
+    {
+        0 => OverlayOwnershipAndLifetimeAsync(new SearchRetirementFixtureOwner(hooks)),
+        1 => WindowAndScrollLifetimeAsync(new SearchRetirementFixtureOwner(hooks)),
+        2 => ShortViewportKeepsPopupInsideVisibleAreaAsync(
+            proofDirectory ?? throw new InvalidOperationException("search-retirement-control-proof-directory-required"),
+            new SearchRetirementFixtureOwner(hooks)),
+        _ => throw new ArgumentOutOfRangeException(nameof(scene)),
+    };
+
+    internal static Task OverlayOwnershipAndLifetime() =>
+        OverlayOwnershipAndLifetimeAsync(new SearchRetirementFixtureOwner());
+
+    private static Task OverlayOwnershipAndLifetimeAsync(SearchRetirementFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
         var settings = new Settings { VoiceId = AppliedKey, CachedVoice = new() { Title = "Voice", Languages = new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt" } } };
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
-        using var source = Attach(view, 400);
+        var source = Attach(view, 400);
+        fixture.Source = source;
         var control = Control(view);
         var tags = Visuals(view).OfType<VoiceLanguageTags>().First();
-        tags.OpenPopup();
+        var languagePopup = (Popup)tags.FindName("LanguagePopup");
+        var searchPopup = Part<Popup>(control, "AdjustmentPopup");
+        var language1 = fixture.Open("overlay/language-1", languagePopup, tags, () => tags.OpenPopup());
         AssertEqual(true, tags.IsPopupOpen, "The selected card supplies a real overflow overlay");
-        Open(control);
+        var search1 = fixture.Open("overlay/search-1", searchPopup, control, () => Open(control));
         AssertEqual(false, tags.IsPopupOpen, "Search adjustments retire language overflow");
-        tags.OpenPopup();
+        await SearchRetirementFixtureOwner.JoinAsync(language1);
+        var language2 = fixture.Open("overlay/language-2", languagePopup, tags, () => tags.OpenPopup());
         AssertEqual(false, IsOpen(control), "Language overflow retires search adjustments");
+        await SearchRetirementFixtureOwner.JoinAsync(search1);
         tags.ClosePopup();
-        Open(control);
+        await SearchRetirementFixtureOwner.JoinAsync(language2);
+        var search2 = fixture.Open("overlay/search-2", searchPopup, control, () => Open(control));
         vm.BrowseMode = VoiceBrowseMode.ById; Drain();
         AssertEqual(false, IsOpen(control), "Changing browse tabs closes the search overlay");
+        await SearchRetirementFixtureOwner.JoinAsync(search2);
         vm.BrowseMode = VoiceBrowseMode.Search; Drain();
-        Open(control);
+        var search3 = fixture.Open("overlay/search-3", searchPopup, control, () => Open(control));
         control.DataContext = new object();
         AssertEqual(false, IsOpen(control), "Rebinding closes the overlay and retires subscriptions");
+        await SearchRetirementFixtureOwner.JoinAsync(search3);
         control.DataContext = vm;
-        Open(control);
+        var search4 = fixture.Open("overlay/search-4", searchPopup, control, () => Open(control));
         control.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
         AssertEqual(false, IsOpen(control), "Unloading closes the overlay");
-        Open(control);
+        await SearchRetirementFixtureOwner.JoinAsync(search4);
+        var search5 = fixture.Open("overlay/search-5", searchPopup, control, () => Open(control));
         var outside = (TextBox)view.FindName("VoiceSearchInput");
         InputManager.Current.ProcessInput(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
         { RoutedEvent = Mouse.PreviewMouseDownEvent, Source = outside });
         AssertEqual(false, IsOpen(control), "Outside presses close the overlay");
-    }
+        await SearchRetirementFixtureOwner.JoinAsync(search5);
+    });
 
-    private static void WindowAndScrollLifetime()
+    internal static Task WindowAndScrollLifetime() =>
+        WindowAndScrollLifetimeAsync(new SearchRetirementFixtureOwner());
+
+    private static Task WindowAndScrollLifetimeAsync(SearchRetirementFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         var scroll = new ScrollViewer { Content = view, Height = 320 };
         var window = new Window { Content = scroll, Width = 480, Height = 340, Left = 120, Top = 120, Opacity = 0,
             ShowInTaskbar = false, ShowActivated = false, WindowStyle = WindowStyle.None };
-        try
-        {
-            window.Show(); Drain();
-            var control = Control(view);
-            control.BringIntoView(); Drain();
-            Open(control);
-            AssertEqual(true, IsOpen(control), "A compiled Window owns the adjustment popup");
-            window.Left += 10; window.Width = 400; Drain();
-            AssertEqual(true, IsOpen(control), "Moving/resizing the native owner repositions without dropping ownership");
-            scroll.ScrollToVerticalOffset(scroll.VerticalOffset + 50); Drain();
-            AssertEqual(false, IsOpen(control), "Ancestor page scrolling retires the overlay");
-            control.BringIntoView(); Drain(); Open(control);
-            window.Hide(); Drain();
-            AssertEqual(false, IsOpen(control), "Hiding the owner closes the popup");
-            window.Show(); Drain(); Open(control);
-            typeof(Window).GetMethod("OnDeactivated", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, [EventArgs.Empty]);
-            AssertEqual(false, IsOpen(control), "Window deactivation retires input subscriptions and the native child");
-        }
-        finally { window.Close(); }
-    }
+        var windowLifetime = new NativeWindowLifetimeOwner(window);
+        fixture.WindowLifetime = windowLifetime;
+        window.Show(); Drain();
+        windowLifetime.RequireShownSource();
+        var control = Control(view);
+        var popup = Part<Popup>(control, "AdjustmentPopup");
+        control.BringIntoView(); Drain();
+        var first = fixture.Open("window/search-1", popup, control, () => Open(control));
+        AssertEqual(true, IsOpen(control), "A compiled Window owns the adjustment popup");
+        window.Left += 10; window.Width = 400; Drain();
+        AssertEqual(true, IsOpen(control), "Moving/resizing the native owner repositions without dropping ownership");
+        scroll.ScrollToVerticalOffset(scroll.VerticalOffset + 50); Drain();
+        AssertEqual(false, IsOpen(control), "Ancestor page scrolling retires the overlay");
+        await SearchRetirementFixtureOwner.JoinAsync(first);
+        control.BringIntoView(); Drain();
+        var second = fixture.Open("window/search-2", popup, control, () => Open(control));
+        window.Hide(); Drain();
+        AssertEqual(false, IsOpen(control), "Hiding the owner closes the popup");
+        await SearchRetirementFixtureOwner.JoinAsync(second);
+        window.Show(); Drain();
+        var third = fixture.Open("window/search-3", popup, control, () => Open(control));
+        typeof(Window).GetMethod("OnDeactivated", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(window, [EventArgs.Empty]);
+        AssertEqual(false, IsOpen(control), "Window deactivation retires input subscriptions and the native child");
+        await SearchRetirementFixtureOwner.JoinAsync(third);
+    });
 
     // Monitor-only Y clamping lets an options popup extend below a short host
     // window. Both anchor edges must fit the actually visible ancestor viewport.
-    private static void ShortViewportKeepsPopupInsideVisibleArea(string? proofDirectory = null)
+    internal static Task ShortViewportKeepsPopupInsideVisibleArea(string? proofDirectory = null) =>
+        ShortViewportKeepsPopupInsideVisibleAreaAsync(proofDirectory, new SearchRetirementFixtureOwner());
+
+    private static Task ShortViewportKeepsPopupInsideVisibleAreaAsync(string? proofDirectory,
+        SearchRetirementFixtureOwner fixture) => fixture.RunAsync(async () =>
     {
+        fixture.ProofDirectory = proofDirectory;
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         // Same labeled headless accent fixture as the locale matrix; the host
         // supplies these native resources in actual installed-window acceptance.
@@ -994,16 +1197,19 @@ internal static class SearchAdjustmentControlSuite
         view.Resources["AccentButtonForeground"] = Brushes.White;
         var scroll = new ScrollViewer { Content = view, Height = 240, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         var dpi = VisualTreeHelper.GetDpi(new DrawingVisual());
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio short visible popup viewport fixture")
-        { Width = (int)(400 * dpi.DpiScaleX), Height = (int)(240 * dpi.DpiScaleY), WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
-        source.RootVisual = scroll;
+        var source = PopupSourceAcquisition.Acquire(() => new HwndSource(new HwndSourceParameters("Fish Audio short visible popup viewport fixture")
+        { Width = (int)(400 * dpi.DpiScaleX), Height = (int)(240 * dpi.DpiScaleY), WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 }),
+            value => value.RootVisual = scroll);
+        fixture.Source = source;
         SettingsLayoutSuite.Layout(scroll, 400);
         var control = Control(view);
+        var popup = Part<Popup>(control, "AdjustmentPopup");
         var naturalTop = control.TransformToAncestor(view).Transform(new Point()).Y;
         foreach (var nearBottom in new[] { true, false })
         {
             scroll.ScrollToVerticalOffset(Math.Max(0, naturalTop - (nearBottom ? 190 : 12)));
-            Drain(); Open(control);
+            Drain();
+            var opened = fixture.Open(nearBottom ? "short/above" : "short/below", popup, control, () => Open(control));
             var surface = Part<Border>(control, "PopupSurface");
             var presenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
             var viewportTop = presenter.PointToScreen(new Point()).Y;
@@ -1040,10 +1246,12 @@ internal static class SearchAdjustmentControlSuite
             AssertEqual(false, ReferenceEquals(oldBar, contentScroll.Template.FindName("PART_VerticalScrollBar", contentScroll)), "Template replacement realizes a new scrollbar part");
             AssertScrollbarExclusion(contentScroll, Tiles(control), "replacement native template");
             SavePopupProof(surface, $"short-viewport-{(nearBottom ? "above" : "below")}-native{dpi.DpiScaleX * 100:0}", proofDirectory);
+            fixture.Checkpoint(nearBottom ? "short/proof-above" : "short/proof-below", opened);
             Click(control, "CloseButton");
             AssertEqual(0d, contentScroll.Padding.Right, "Close detaches and restores the viewer's original padding");
+            await SearchRetirementFixtureOwner.JoinAsync(opened);
         }
-    }
+    });
 
     internal static void AssertScrollbarExclusion(ScrollViewer viewer, IEnumerable<FrameworkElement> content, string context)
     {
@@ -1071,249 +1279,271 @@ internal static class SearchAdjustmentControlSuite
         for (DependencyObject? current = item; current is not null; current = VisualTreeHelper.GetParent(current)) yield return current;
     }
 
-    private static async Task ViewportClampsAcrossTriggerOrRefuses(Action<string> stage)
-    {
-        stage("fake search setup begin");
-        var settings = new Settings();
-        var (service, http) = TestHttpServiceProxy.Create();
-        http.GetResponseJson = """{"total":24,"items":[{"_id":"0123456789abcdef0123456789abcdef","title":"Retained voice","type":"tts","samples":[]}]}""";
-        stage("viewmodel construction begin");
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
-        stage("viewmodel construction end");
-        vm.SearchQuery = "retained query";
-        stage("fake search apply begin");
-        await vm.ApplySearchOptionsAsync(["en"], "task_count");
-        stage("fake search apply end");
-        var successfulResults = vm.SearchResults;
-        var requestCount = http.GetCallCount;
-        stage("successful search baselines captured");
-        stage("compiled view construction begin");
-        var view = SettingsLayoutSuite.CreateThemedView(vm);
-        stage("compiled view construction end");
-        var scroll = new ScrollViewer { Content = view, Height = 220 };
-        stage("native source construction begin");
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio centered short popup fixture")
-        { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 });
-        stage("native source construction end");
-        stage("source attach begin");
-        source.RootVisual = scroll;
-        stage("source attach end");
-        stage("initial source layout begin");
-        SettingsLayoutSuite.Layout(scroll, 400);
-        stage("initial source layout end");
-        var control = Control(view);
-        stage("initial scroll and original drain begin");
-        scroll.ScrollToVerticalOffset(control.TransformToAncestor(view).Transform(new Point()).Y - 96); Drain();
-        stage("initial scroll and original drain end");
-        stage("search/centered vertical open" + " begin");
-        Open(control);
-        stage("search/centered vertical open" + " end");
-        AssertEqual(true, IsOpen(control), "A centered trigger can use the complete visible viewport when neither side fits fixed chrome and an option");
-        var surface = Part<Border>(control, "PopupSurface");
-        var trigger = Part<Button>(control, "AdjustmentButton");
-        AssertEqual(true, surface.PointToScreen(new Point()).Y < trigger.PointToScreen(new Point()).Y
-            && surface.PointToScreen(new Point(0, surface.ActualHeight)).Y > trigger.PointToScreen(new Point(0, trigger.ActualHeight)).Y,
-            "The useful constrained popup can clamp across the trigger");
-        stage("search/setup" + "/fixed actions begin");
-        AssertFixedActions(control, surface);
-        stage("search/setup" + "/fixed actions end");
-        stage("search/setup close" + " begin");
-        Click(control, "CloseButton");
-        stage("search/setup close" + " end");
-        stage("height refusal layout and drain begin");
-        scroll.Height = 70; SettingsLayoutSuite.Layout(scroll, 400); Drain();
-        stage("height refusal layout and drain end");
-        stage("search/height refusal open" + " begin");
-        Open(control);
-        stage("search/height refusal open" + " end");
-        AssertEqual(false, IsOpen(control), "A viewport smaller than measured fixed chrome coherently refuses the popup");
-        AssertEqual(false, (bool)control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control)!,
-            "Refusal retires input and overlay ownership");
+    private static Task ViewportClampsAcrossTriggerOrRefuses(Action<string> stage) =>
+        RunViewportLifecycleAsync(stage, new SearchViewportFixtureOwner());
 
-        scroll.Height = 280;
-        stage("height refusal assertions complete");
-        foreach (var (locale, dark) in new[] { ("en", false), ("ru", true) })
+    internal static Task RunSearchViewportOwnershipControlAsync(SearchViewportFixtureHooks hooks) =>
+        RunViewportLifecycleAsync(_ => { }, new SearchViewportFixtureOwner(hooks));
+
+    private static Task RunViewportLifecycleAsync(Action<string> stage, SearchViewportFixtureOwner owner) =>
+        owner.RunAsync(async () =>
         {
-            stage("search/" + locale + "/locale-theme begin");
-            scroll.Width = 400;
-            stage("search/" + locale + "/dictionary replace begin");
-            SetLocale(view, locale);
-            view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
-            ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
-            stage("search/" + locale + "/locale-theme replacement end");
-            stage("search/" + locale + "/locale wide layout-drain" + " begin");
-            SettingsLayoutSuite.Layout(scroll, 400); Drain();
-            stage("search/" + locale + "/locale wide layout-drain" + " end");
-            stage("search/" + locale + "/locale wide open" + " begin");
-            Open(control);
-            stage("search/" + locale + "/locale wide open" + " end");
-            AssertEqual(true, IsOpen(control), "A sufficiently wide viewport opens with native localized actions");
-            stage("search/" + locale + "/locale wide" + "/fixed actions begin");
+            stage("fake search setup begin");
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = """{"total":24,"items":[{"_id":"0123456789abcdef0123456789abcdef","title":"Retained voice","type":"tts","samples":[]}]}""";
+            stage("viewmodel construction begin");
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            owner.ViewModel = vm;
+            stage("viewmodel construction end");
+            vm.SearchQuery = "retained query";
+            stage("fake search apply begin");
+            var initialApply = vm.ApplySearchOptionsAsync(["en"], "task_count");
+            owner.InitialApplyTask = initialApply;
+            await initialApply;
+            stage("fake search apply end");
+            var successfulResults = vm.SearchResults;
+            var requestCount = http.GetCallCount;
+            stage("successful search baselines captured");
+            stage("compiled view construction begin");
+            var view = SettingsLayoutSuite.CreateThemedView(vm);
+            stage("compiled view construction end");
+            var scroll = new ScrollViewer { Content = view, Height = 220 };
+            stage("native source construction begin");
+            var source = owner.AcquireSource(() => new HwndSource(new HwndSourceParameters("Fish Audio centered short popup fixture")
+            { Width = 400, Height = 300, WindowStyle = unchecked((int)0x80000000), PositionX = 120, PositionY = 120 }));
+            stage("native source construction end");
+            stage("source attach begin");
+            source.RootVisual = scroll;
+            stage("source attach end");
+            stage("initial source layout begin");
+            SettingsLayoutSuite.Layout(scroll, 400);
+            stage("initial source layout end");
+            var control = Control(view);
+            owner.RequestSearchClose = () => { if (IsOpen(control)) Click(control, "CloseButton"); };
+            stage("initial scroll and original drain begin");
+            scroll.ScrollToVerticalOffset(control.TransformToAncestor(view).Transform(new Point()).Y - 96); Drain();
+            stage("initial scroll and original drain end");
+            stage("search/centered vertical open" + " begin");
+            owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), true);
+            stage("search/centered vertical open" + " end");
+            AssertEqual(true, IsOpen(control), "A centered trigger can use the complete visible viewport when neither side fits fixed chrome and an option");
+            var surface = Part<Border>(control, "PopupSurface");
+            var trigger = Part<Button>(control, "AdjustmentButton");
+            AssertEqual(true, surface.PointToScreen(new Point()).Y < trigger.PointToScreen(new Point()).Y
+                && surface.PointToScreen(new Point(0, surface.ActualHeight)).Y > trigger.PointToScreen(new Point(0, trigger.ActualHeight)).Y,
+                "The useful constrained popup can clamp across the trigger");
+            stage("search/setup" + "/fixed actions begin");
             AssertFixedActions(control, surface);
-            stage("search/" + locale + "/locale wide" + "/fixed actions end");
-            stage("search/" + locale + "/locale wide" + "/fixed captions begin");
-            AssertFixedCaptions(control, surface);
-            stage("search/" + locale + "/locale wide" + "/fixed captions end");
-            var reset = Part<Button>(control, "ResetButton");
-            var apply = Part<Button>(control, "ApplyButton");
-            // Independent boundary from the already rendered complete actions,
-            // rather than the helper's unconstrained measurement or decision.
-            var requiredWidth = reset.ActualWidth + apply.ActualWidth + apply.Margin.Left
-                + surface.Padding.Left + surface.Padding.Right + surface.BorderThickness.Left + surface.BorderThickness.Right;
-            var presenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
-            var viewportOverhead = scroll.ActualWidth - presenter.ActualWidth + 16;
-            stage("search/" + locale + "/draft changes begin");
-            Toggle(control, "ja");
-            Part<RadioButton>(control, "CreationRadio").IsChecked = true;
-            stage("search/" + locale + "/draft changes end");
-            stage("search/" + locale + "/draft changes complete; narrow begin");
-            scroll.Width = requiredWidth - 2 + viewportOverhead;
-            stage("search/" + locale + "/locale narrow layout-drain" + " begin");
-            SettingsLayoutSuite.Layout(scroll, 400); Drain();
-            stage("search/" + locale + "/locale narrow layout-drain" + " end");
-            var rejectedWidth = (presenter.PointToScreen(new Point(presenter.ActualWidth, 0)).X - presenter.PointToScreen(new Point()).X)
-                / PopupViewport.ScreenScale(control).DpiScaleX - 16;
-            AssertEqual(false, IsOpen(control), "Narrowing an open viewport below its complete native footer width closes the popup");
-            stage("search/" + locale + "/locale narrow retirement" + " begin");
-            AssertHorizontalRetirement(control, view);
-            stage("search/" + locale + "/locale narrow retirement" + " complete");
-            stage("search/" + locale + "/locale narrow open" + " begin");
-            Open(control);
-            stage("search/" + locale + "/locale narrow open" + " end");
-            AssertEqual(false, IsOpen(control), "A tall viewport narrower than localized fixed actions refuses reopening");
-            stage("search/" + locale + "/locale narrow retirement" + " begin");
-            AssertHorizontalRetirement(control, view);
-            stage("search/" + locale + "/locale narrow retirement" + " complete");
-            if (locale == "ru")
-            {
-                stage("search/ru/original 150 width begin");
-                scroll.Width = 150;
-                stage("search/ru refusal layout-drain" + " begin");
-                SettingsLayoutSuite.Layout(scroll, 400); Drain();
-                stage("search/ru refusal layout-drain" + " end");
-                foreach (var attempt in new[] { 1, 2 })
-                {
-                    stage("search/ru/refusal attempt " + attempt + "/open" + " begin");
-                    Open(control);
-                    stage("search/ru/refusal attempt " + attempt + "/open" + " end");
-                    AssertEqual(false, IsOpen(control), $"The original 150-DIP Russian narrow viewport refuses open {attempt}");
-                    stage("search/ru/original refusal retirement" + " begin");
-                    AssertHorizontalRetirement(control, view);
-                    stage("search/ru/original refusal retirement" + " complete");
-                }
-            }
-            stage("search/" + locale + "/width retirement invariants begin");
-            AssertEqual(requestCount, http.GetCallCount, "Width retirement and refused reopening issue no GET");
-            AssertEqual(true, ReferenceEquals(successfulResults, vm.SearchResults), "Width refusal retains successful result objects");
-            AssertEnumerableEqual(new[] { "en" }, vm.SearchLanguages, "Width retirement cannot apply language drafts");
-            AssertEqual("task_count", vm.SearchSort, "Width retirement cannot apply sort drafts");
-            AssertEqual(1, vm.SearchPage, "Width retirement preserves successful pagination");
-            stage("search/" + locale + "/width retirement invariants complete");
-
-            stage("search/" + locale + "/sufficient width restore begin");
-            scroll.Width = requiredWidth + 2 + viewportOverhead;
-            stage("search/" + locale + "/locale restored layout-drain-open" + " begin");
-            SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
-            stage("search/" + locale + "/locale restored layout-drain-open" + " end");
-            AssertEqual(true, IsOpen(control), "Restoring enough width reopens without a forced maximum-width floor");
-            stage("search/" + locale + "/locale restored" + "/fixed actions begin");
-            AssertFixedActions(control, surface);
-            stage("search/" + locale + "/locale restored" + "/fixed actions end");
-            stage("search/" + locale + "/locale restored" + "/fixed captions begin");
-            AssertFixedCaptions(control, surface);
-            stage("search/" + locale + "/locale restored" + "/fixed captions end");
-            AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen restores successful languages after discarded drafts");
-            AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Reopen restores successful sort");
-            var top = surface.PointToScreen(new Point());
-            var bottom = surface.PointToScreen(new Point(surface.ActualWidth, surface.ActualHeight));
-            var visibleTop = presenter.PointToScreen(new Point());
-            var visibleBottom = presenter.PointToScreen(new Point(presenter.ActualWidth, presenter.ActualHeight));
-            AssertEqual(true, top.X >= visibleTop.X && bottom.X <= visibleBottom.X + 1 && top.Y >= visibleTop.Y && bottom.Y <= visibleBottom.Y + 1,
-                "The reopened shell remains inside the complete visible viewport on both axes");
-            Console.WriteLine($"[popup-horizontal/{locale}/{(dark ? "dark" : "light")}] rendered boundary={requiredWidth:0.###} DIP; rejected requested={requiredWidth - 2:0.###}/actual={rejectedWidth:0.###}; reopened shell={surface.ActualWidth:0.###}; viewport={presenter.ActualWidth:0.###}x{presenter.ActualHeight:0.###}; sourceDpi={PopupViewport.ScreenScale(control).DpiScaleX:0.##}; popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX:0.##}; captions complete; draft/noGET/cleanup preserved");
-            stage("search/" + locale + "/close" + " begin");
+            stage("search/setup" + "/fixed actions end");
+            stage("search/setup close" + " begin");
             Click(control, "CloseButton");
-            stage("search/" + locale + "/close" + " end");
-            stage("search/" + locale + "/locale restored retirement" + " begin");
-            AssertHorizontalRetirement(control, view);
-            stage("search/" + locale + "/locale restored retirement" + " complete");
-        }
-        stage("search/original 400 restore begin");
-        scroll.Width = 400;
-        stage("search/400 restored layout-drain-open" + " begin");
-        SettingsLayoutSuite.Layout(scroll, 400); Drain(); Open(control);
-        stage("search/400 restored layout-drain-open" + " end");
-        AssertEqual(true, IsOpen(control), "Restoring the original 400-DIP viewport reopens after repeated narrow refusal");
-        stage("search/400 restored" + "/fixed actions begin");
-        AssertFixedActions(control, surface);
-        stage("search/400 restored" + "/fixed actions end");
-        stage("search/400 restored" + "/fixed captions begin");
-        AssertFixedCaptions(control, surface);
-        stage("search/400 restored" + "/fixed captions end");
-        stage("search/400 restored close" + " begin");
-        Click(control, "CloseButton");
-        stage("search/400 restored close" + " end");
-        stage("search/400 restored retirement" + " begin");
-        AssertHorizontalRetirement(control, view);
-        stage("search/400 restored retirement" + " complete");
-        AssertEqual(requestCount, http.GetCallCount, "All width-only transitions leave the last successful request untouched");
-        stage("search original 400 restoration and no-GET complete");
+            stage("search/setup close" + " end");
+            await owner.JoinCurrentAsync();
+            stage("height refusal layout and drain begin");
+            scroll.Height = 70; SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            stage("height refusal layout and drain end");
+            stage("search/height refusal open" + " begin");
+            owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), false);
+            stage("search/height refusal open" + " end");
+            AssertEqual(false, IsOpen(control), "A viewport smaller than measured fixed chrome coherently refuses the popup");
+            AssertEqual(false, (bool)control.GetType().GetField("_ownsInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(control)!,
+                "Refusal retires input and overlay ownership");
+            await owner.JoinCurrentAsync();
 
-        // The shared helper must use this shell's own fixed count, not impose the
-        // search footer's larger width on read-only language overflow.
-        stage("language control construction begin");
-        var tags = new VoiceLanguageTags { Languages = new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt", "it", "nl" } };
-        tags.Resources.MergedDictionaries.Add(view.Resources);
-        stage("language construction and original resource attachment end");
-        stage("same-source scroll content replacement begin");
-        scroll.Content = tags;
-        stage("same-source scroll content replacement end");
-        scroll.Width = 150;
-        stage("language initial layout-drain-open begin");
-        SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
-        stage("language initial layout-drain-open end");
-        AssertEqual(true, tags.IsPopupOpen, "Language overflow can open below the search footer's width requirement");
-        var languageSurface = (Border)tags.FindName("PopupSurface");
-        var count = (TextBlock)tags.FindName("RemainingCount");
-        var languageMinimum = count.ActualWidth + count.Margin.Left + languageSurface.Padding.Left + languageSurface.Padding.Right
-            + languageSurface.BorderThickness.Left + languageSurface.BorderThickness.Right;
-        var languagePresenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
-        var languageOverhead = scroll.ActualWidth - languagePresenter.ActualWidth + 16;
-        stage("language own-count width measurements complete");
-        stage("language insufficient width begin");
-        scroll.Width = languageMinimum - 2 + languageOverhead;
-        stage("language narrow layout-drain begin");
-        SettingsLayoutSuite.Layout(scroll, 400); Drain();
-        stage("language narrow layout-drain end");
-        var rejectedLanguageWidth = (languagePresenter.PointToScreen(new Point(languagePresenter.ActualWidth, 0)).X - languagePresenter.PointToScreen(new Point()).X)
-            / PopupViewport.ScreenScale(tags).DpiScaleX - 16;
-        AssertEqual(false, tags.IsPopupOpen, "Language overflow closes when its own fixed count cannot fit");
-        AssertEqual(IntPtr.Zero, tags.Material.Handle, "Language width retirement releases its exact source");
-        AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
-            "Language width retirement detaches input");
-        AssertEqual(0d, ((ScrollViewer)tags.FindName("PopupScroll")).Padding.Right, "Language width retirement restores scrollbar padding");
-        AssertEqual(false, Escape(scroll).Handled, "Retired language input cannot consume Escape");
-        stage("language material input padding and Escape retirement complete");
-        stage("language insufficient reopen begin");
-        tags.OpenPopup(); Drain();
-        stage("language insufficient reopen end");
-        AssertEqual(false, tags.IsPopupOpen, "Language overflow refuses a still insufficient width");
-        stage("language sufficient width restore begin");
-        scroll.Width = languageMinimum + 2 + languageOverhead;
-        stage("language restored layout-drain-open begin");
-        SettingsLayoutSuite.Layout(scroll, 400); Drain(); tags.OpenPopup(); Drain();
-        stage("language restored layout-drain-open end");
-        AssertEqual(true, tags.IsPopupOpen, "Language overflow reopens at its own sufficient width");
-        var countBounds = count.TransformToAncestor(languageSurface).TransformBounds(new Rect(count.RenderSize));
-        AssertEqual(true, countBounds.Left >= 0 && countBounds.Right <= languageSurface.ActualWidth, "The reopened fixed count remains fully visible");
-        stage("language restored full count assertion complete");
-        Console.WriteLine($"[popup-horizontal/languages/ru] native required={languageMinimum:0.###} DIP; rejected requested={languageMinimum - 2:0.###}/actual={rejectedLanguageWidth:0.###}; reopened={languageSurface.ActualWidth:0.###}; count={count.Text}");
-        stage("language close begin");
-        tags.ClosePopup();
-        stage("language close end");
-        AssertEqual(requestCount, http.GetCallCount, "Language width transitions issue no GET");
-        stage("all body assertions complete; original source then VM disposals pending");
-    }
+            scroll.Height = 280;
+            stage("height refusal assertions complete");
+            foreach (var (locale, dark) in new[] { ("en", false), ("ru", true) })
+            {
+                stage("search/" + locale + "/locale-theme begin");
+                scroll.Width = 400;
+                stage("search/" + locale + "/dictionary replace begin");
+                SetLocale(view, locale);
+                view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
+                ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
+                stage("search/" + locale + "/locale-theme replacement end");
+                stage("search/" + locale + "/locale wide layout-drain" + " begin");
+                SettingsLayoutSuite.Layout(scroll, 400); Drain();
+                stage("search/" + locale + "/locale wide layout-drain" + " end");
+                stage("search/" + locale + "/locale wide open" + " begin");
+                owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), true);
+                stage("search/" + locale + "/locale wide open" + " end");
+                AssertEqual(true, IsOpen(control), "A sufficiently wide viewport opens with native localized actions");
+                stage("search/" + locale + "/locale wide" + "/fixed actions begin");
+                AssertFixedActions(control, surface);
+                stage("search/" + locale + "/locale wide" + "/fixed actions end");
+                stage("search/" + locale + "/locale wide" + "/fixed captions begin");
+                AssertFixedCaptions(control, surface);
+                stage("search/" + locale + "/locale wide" + "/fixed captions end");
+                var reset = Part<Button>(control, "ResetButton");
+                var apply = Part<Button>(control, "ApplyButton");
+                // Independent boundary from the already rendered complete actions,
+                // rather than the helper's unconstrained measurement or decision.
+                var requiredWidth = reset.ActualWidth + apply.ActualWidth + apply.Margin.Left
+                    + surface.Padding.Left + surface.Padding.Right + surface.BorderThickness.Left + surface.BorderThickness.Right;
+                var presenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
+                var viewportOverhead = scroll.ActualWidth - presenter.ActualWidth + 16;
+                stage("search/" + locale + "/draft changes begin");
+                Toggle(control, "ja");
+                Part<RadioButton>(control, "CreationRadio").IsChecked = true;
+                stage("search/" + locale + "/draft changes end");
+                stage("search/" + locale + "/draft changes complete; narrow begin");
+                scroll.Width = requiredWidth - 2 + viewportOverhead;
+                stage("search/" + locale + "/locale narrow layout-drain" + " begin");
+                SettingsLayoutSuite.Layout(scroll, 400); Drain();
+                stage("search/" + locale + "/locale narrow layout-drain" + " end");
+                var rejectedWidth = (presenter.PointToScreen(new Point(presenter.ActualWidth, 0)).X - presenter.PointToScreen(new Point()).X)
+                    / PopupViewport.ScreenScale(control).DpiScaleX - 16;
+                AssertEqual(false, IsOpen(control), "Narrowing an open viewport below its complete native footer width closes the popup");
+                stage("search/" + locale + "/locale narrow retirement" + " begin");
+                AssertHorizontalRetirement(control, view);
+                stage("search/" + locale + "/locale narrow retirement" + " complete");
+                await owner.JoinCurrentAsync();
+                stage("search/" + locale + "/locale narrow open" + " begin");
+                owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), false);
+                stage("search/" + locale + "/locale narrow open" + " end");
+                AssertEqual(false, IsOpen(control), "A tall viewport narrower than localized fixed actions refuses reopening");
+                stage("search/" + locale + "/locale narrow retirement" + " begin");
+                AssertHorizontalRetirement(control, view);
+                stage("search/" + locale + "/locale narrow retirement" + " complete");
+                await owner.JoinCurrentAsync();
+                if (locale == "ru")
+                {
+                    stage("search/ru/original 150 width begin");
+                    scroll.Width = 150;
+                    stage("search/ru refusal layout-drain" + " begin");
+                    SettingsLayoutSuite.Layout(scroll, 400); Drain();
+                    stage("search/ru refusal layout-drain" + " end");
+                    foreach (var attempt in new[] { 1, 2 })
+                    {
+                        stage("search/ru/refusal attempt " + attempt + "/open" + " begin");
+                        owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), false);
+                        stage("search/ru/refusal attempt " + attempt + "/open" + " end");
+                        AssertEqual(false, IsOpen(control), $"The original 150-DIP Russian narrow viewport refuses open {attempt}");
+                        stage("search/ru/original refusal retirement" + " begin");
+                        AssertHorizontalRetirement(control, view);
+                        stage("search/ru/original refusal retirement" + " complete");
+                        await owner.JoinCurrentAsync();
+                    }
+                }
+                stage("search/" + locale + "/width retirement invariants begin");
+                AssertEqual(requestCount, http.GetCallCount, "Width retirement and refused reopening issue no GET");
+                AssertEqual(true, ReferenceEquals(successfulResults, vm.SearchResults), "Width refusal retains successful result objects");
+                AssertEnumerableEqual(new[] { "en" }, vm.SearchLanguages, "Width retirement cannot apply language drafts");
+                AssertEqual("task_count", vm.SearchSort, "Width retirement cannot apply sort drafts");
+                AssertEqual(1, vm.SearchPage, "Width retirement preserves successful pagination");
+                stage("search/" + locale + "/width retirement invariants complete");
+
+                stage("search/" + locale + "/sufficient width restore begin");
+                scroll.Width = requiredWidth + 2 + viewportOverhead;
+                stage("search/" + locale + "/locale restored layout-drain-open" + " begin");
+                SettingsLayoutSuite.Layout(scroll, 400); Drain(); owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), true);
+                stage("search/" + locale + "/locale restored layout-drain-open" + " end");
+                AssertEqual(true, IsOpen(control), "Restoring enough width reopens without a forced maximum-width floor");
+                stage("search/" + locale + "/locale restored" + "/fixed actions begin");
+                AssertFixedActions(control, surface);
+                stage("search/" + locale + "/locale restored" + "/fixed actions end");
+                stage("search/" + locale + "/locale restored" + "/fixed captions begin");
+                AssertFixedCaptions(control, surface);
+                stage("search/" + locale + "/locale restored" + "/fixed captions end");
+                AssertEnumerableEqual(new[] { "en" }, Selected(control), "Reopen restores successful languages after discarded drafts");
+                AssertEqual(true, Part<RadioButton>(control, "PopularityRadio").IsChecked, "Reopen restores successful sort");
+                var top = surface.PointToScreen(new Point());
+                var bottom = surface.PointToScreen(new Point(surface.ActualWidth, surface.ActualHeight));
+                var visibleTop = presenter.PointToScreen(new Point());
+                var visibleBottom = presenter.PointToScreen(new Point(presenter.ActualWidth, presenter.ActualHeight));
+                AssertEqual(true, top.X >= visibleTop.X && bottom.X <= visibleBottom.X + 1 && top.Y >= visibleTop.Y && bottom.Y <= visibleBottom.Y + 1,
+                    "The reopened shell remains inside the complete visible viewport on both axes");
+                Console.WriteLine($"[popup-horizontal/{locale}/{(dark ? "dark" : "light")}] rendered boundary={requiredWidth:0.###} DIP; rejected requested={requiredWidth - 2:0.###}/actual={rejectedWidth:0.###}; reopened shell={surface.ActualWidth:0.###}; viewport={presenter.ActualWidth:0.###}x{presenter.ActualHeight:0.###}; sourceDpi={PopupViewport.ScreenScale(control).DpiScaleX:0.##}; popupDpi={VisualTreeHelper.GetDpi(surface).DpiScaleX:0.##}; captions complete; draft/noGET/cleanup preserved");
+                stage("search/" + locale + "/close" + " begin");
+                Click(control, "CloseButton");
+                stage("search/" + locale + "/close" + " end");
+                stage("search/" + locale + "/locale restored retirement" + " begin");
+                AssertHorizontalRetirement(control, view);
+                stage("search/" + locale + "/locale restored retirement" + " complete");
+                await owner.JoinCurrentAsync();
+            }
+            stage("search/original 400 restore begin");
+            scroll.Width = 400;
+            stage("search/400 restored layout-drain-open" + " begin");
+            SettingsLayoutSuite.Layout(scroll, 400); Drain(); owner.Attempt((Popup)control.FindName("AdjustmentPopup"), control, () => Open(control), true);
+            stage("search/400 restored layout-drain-open" + " end");
+            AssertEqual(true, IsOpen(control), "Restoring the original 400-DIP viewport reopens after repeated narrow refusal");
+            stage("search/400 restored" + "/fixed actions begin");
+            AssertFixedActions(control, surface);
+            stage("search/400 restored" + "/fixed actions end");
+            stage("search/400 restored" + "/fixed captions begin");
+            AssertFixedCaptions(control, surface);
+            stage("search/400 restored" + "/fixed captions end");
+            stage("search/400 restored close" + " begin");
+            Click(control, "CloseButton");
+            stage("search/400 restored close" + " end");
+            stage("search/400 restored retirement" + " begin");
+            AssertHorizontalRetirement(control, view);
+            stage("search/400 restored retirement" + " complete");
+            await owner.JoinCurrentAsync();
+            AssertEqual(requestCount, http.GetCallCount, "All width-only transitions leave the last successful request untouched");
+            stage("search original 400 restoration and no-GET complete");
+
+            // The shared helper must use this shell's own fixed count, not impose the
+            // search footer's larger width on read-only language overflow.
+            stage("language control construction begin");
+            var tags = new VoiceLanguageTags { Languages = new[] { "en", "zh", "de", "ja", "fr", "es", "ko", "ar", "ru", "pt", "it", "nl" } };
+            tags.Resources.MergedDictionaries.Add(view.Resources);
+            owner.RequestLanguageClose = () => tags.ClosePopup();
+            stage("language construction and original resource attachment end");
+            stage("same-source scroll content replacement begin");
+            scroll.Content = tags;
+            stage("same-source scroll content replacement end");
+            scroll.Width = 150;
+            stage("language initial layout-drain-open begin");
+            SettingsLayoutSuite.Layout(scroll, 400); Drain(); owner.Attempt((Popup)tags.FindName("LanguagePopup"), tags, () => tags.OpenPopup(), true); Drain();
+            stage("language initial layout-drain-open end");
+            AssertEqual(true, tags.IsPopupOpen, "Language overflow can open below the search footer's width requirement");
+            var languageSurface = (Border)tags.FindName("PopupSurface");
+            var count = (TextBlock)tags.FindName("RemainingCount");
+            var languageMinimum = count.ActualWidth + count.Margin.Left + languageSurface.Padding.Left + languageSurface.Padding.Right
+                + languageSurface.BorderThickness.Left + languageSurface.BorderThickness.Right;
+            var languagePresenter = Visuals(scroll).OfType<ScrollContentPresenter>().First();
+            var languageOverhead = scroll.ActualWidth - languagePresenter.ActualWidth + 16;
+            stage("language own-count width measurements complete");
+            stage("language insufficient width begin");
+            scroll.Width = languageMinimum - 2 + languageOverhead;
+            stage("language narrow layout-drain begin");
+            SettingsLayoutSuite.Layout(scroll, 400); Drain();
+            stage("language narrow layout-drain end");
+            var rejectedLanguageWidth = (languagePresenter.PointToScreen(new Point(languagePresenter.ActualWidth, 0)).X - languagePresenter.PointToScreen(new Point()).X)
+                / PopupViewport.ScreenScale(tags).DpiScaleX - 16;
+            AssertEqual(false, tags.IsPopupOpen, "Language overflow closes when its own fixed count cannot fit");
+            AssertEqual(IntPtr.Zero, tags.Material.Handle, "Language width retirement releases its exact source");
+            AssertEqual(false, (bool)typeof(VoiceLanguageTags).GetField("_ownsPopupInput", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(tags)!,
+                "Language width retirement detaches input");
+            AssertEqual(0d, ((ScrollViewer)tags.FindName("PopupScroll")).Padding.Right, "Language width retirement restores scrollbar padding");
+            AssertEqual(false, Escape(scroll).Handled, "Retired language input cannot consume Escape");
+            stage("language material input padding and Escape retirement complete");
+            await owner.JoinCurrentAsync();
+            stage("language insufficient reopen begin");
+            owner.Attempt((Popup)tags.FindName("LanguagePopup"), tags, () => tags.OpenPopup(), false); Drain();
+            stage("language insufficient reopen end");
+            AssertEqual(false, tags.IsPopupOpen, "Language overflow refuses a still insufficient width");
+            await owner.JoinCurrentAsync();
+            stage("language sufficient width restore begin");
+            scroll.Width = languageMinimum + 2 + languageOverhead;
+            stage("language restored layout-drain-open begin");
+            SettingsLayoutSuite.Layout(scroll, 400); Drain(); owner.Attempt((Popup)tags.FindName("LanguagePopup"), tags, () => tags.OpenPopup(), true); Drain();
+            stage("language restored layout-drain-open end");
+            AssertEqual(true, tags.IsPopupOpen, "Language overflow reopens at its own sufficient width");
+            var countBounds = count.TransformToAncestor(languageSurface).TransformBounds(new Rect(count.RenderSize));
+            AssertEqual(true, countBounds.Left >= 0 && countBounds.Right <= languageSurface.ActualWidth, "The reopened fixed count remains fully visible");
+            stage("language restored full count assertion complete");
+            Console.WriteLine($"[popup-horizontal/languages/ru] native required={languageMinimum:0.###} DIP; rejected requested={languageMinimum - 2:0.###}/actual={rejectedLanguageWidth:0.###}; reopened={languageSurface.ActualWidth:0.###}; count={count.Text}");
+            stage("language close begin");
+            tags.ClosePopup();
+            stage("language close end");
+            AssertEqual(requestCount, http.GetCallCount, "Language width transitions issue no GET");
+            await owner.JoinCurrentAsync();
+            stage("all body assertions complete; original source then VM disposals pending");
+        });
 
     private static void AssertHorizontalRetirement(FrameworkElement control, FrameworkElement root)
     {
@@ -1595,10 +1825,15 @@ internal static class SearchAdjustmentControlSuite
 
     // A popup-only template/color override must diverge from a separate native
     // peer using the exact same SDK theme, including its checked inner glyph.
-    private static void RadioAppearanceMatchesNativePeer(bool dark)
+    internal static Task RadioAppearanceMatchesNativePeer(bool dark, string? proofDirectory = null) =>
+        RadioAppearanceMatchesNativePeerAsync(dark, proofDirectory, new SearchPopupFixtureOwner());
+
+    private static Task RadioAppearanceMatchesNativePeerAsync(bool dark, string? proofDirectory, SearchPopupFixtureOwner fixture) =>
+        fixture.RunAsync(() =>
     {
         var settings = new Settings();
-        using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
+        fixture.ViewModel = vm;
         var view = SettingsLayoutSuite.CreateThemedView(vm);
         view.Resources.MergedDictionaries.OfType<ThemeResources>().Single().RequestedTheme = dark ? ApplicationTheme.Dark : ApplicationTheme.Light;
         ThemeManager.SetRequestedTheme(view, dark ? ElementTheme.Dark : ElementTheme.Light);
@@ -1609,9 +1844,12 @@ internal static class SearchAdjustmentControlSuite
         view.Resources["RadioButtonOuterEllipseCheckedStroke"] = accent;
         var peer = new RadioButton { Content = "Native peer", GroupName = "IndependentNativePeer" };
         ((Panel)view.Content).Children.Insert(0, peer);
-        using var source = Attach(view);
+        var source = Attach(view);
+        fixture.Source = source;
         var control = Control(view);
-        Open(control);
+        var popup = Part<Popup>(control, "AdjustmentPopup");
+        fixture.RequestClose = () => { if (popup.IsOpen) popup.IsOpen = false; fixture.RecordCloseSetterReturn(); };
+        fixture.Open(popup, control, () => Open(control));
         var actual = Part<RadioButton>(control, "RelevanceRadio");
         foreach (var isChecked in new[] { false, true })
         {
@@ -1644,13 +1882,15 @@ internal static class SearchAdjustmentControlSuite
             var outer = (System.Windows.Shapes.Ellipse)actual.Template.FindName("CheckOuterEllipse", actual);
             AssertEqual(accent.Color, ((SolidColorBrush)outer.Fill).Color, "The radio fixture has an initialized opaque checked accent palette");
             Console.WriteLine($"[search-radio] {(dark ? "dark" : "light")}/{(isChecked ? "checked" : "unchecked")}: outer={outer.ActualWidth:0.##} fill={outer.Fill}, inner={inner.ActualWidth:0.##} fill={inner.Fill}, nativeDpi={VisualTreeHelper.GetDpi(actual).DpiScaleX:0.##}; peer raster matches.");
-            var directory = Path.Combine(Path.GetDirectoryName(FindRepoFile("build.ps1"))!, ".scratch", "task-4", "radio-proof");
+            var directory = proofDirectory ?? Path.Combine(Path.GetDirectoryName(FindRepoFile("build.ps1"))!, ".scratch", "task-4", "radio-proof");
             Directory.CreateDirectory(directory);
             SaveBitmap(actualBitmap, Path.Combine(directory, $"{(dark ? "dark" : "light")}-{(isChecked ? "checked" : "unchecked")}-popup.png"));
             SaveBitmap(peerBitmap, Path.Combine(directory, $"{(dark ? "dark" : "light")}-{(isChecked ? "checked" : "unchecked")}-peer.png"));
         }
         Click(control, "CloseButton");
-    }
+        fixture.RecordCloseSetterReturn();
+        return Task.CompletedTask;
+    });
 
     private static RenderTargetBitmap RenderGlyph(FrameworkElement glyph, FrameworkElement resourceOwner)
     {

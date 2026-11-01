@@ -1,0 +1,89 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Private future-build opt-in. Never imported by a default gate. Capture one
+       explicitly selected real project, not its temporary WPF compilations.
+       This writes Csc task item identities, not a shell command or OS argv.
+       Transport and hook behavior require a separately authorized real control. -->
+  <PropertyGroup Condition="'$(FishAudioCompilerReceipt)' == 'true' And '$(MSBuildProjectFullPath)' == '$(FishAudioCompilerReceiptProjectFullPath)'">
+    <ProvideCommandLineArgs>true</ProvideCommandLineArgs>
+  </PropertyGroup>
+
+  <Target Name="FishAudioBeginCompilerInputCapture" BeforeTargets="CoreCompile"
+          Condition="'$(FishAudioCompilerReceipt)' == 'true' And '$(MSBuildProjectFullPath)' == '$(FishAudioCompilerReceiptProjectFullPath)'">
+    <Error Condition="'$(BuildingProject)' != 'true' Or '$(IsCrossTargetingBuild)' == 'true' Or ('$(DesignTimeBuild)' != '' And '$(DesignTimeBuild)' != 'false') Or ('$(SkipCompilerExecution)' != '' And '$(SkipCompilerExecution)' != 'false')"
+           Text="compiler-capture-real-build-required" />
+    <Error Condition="'$(Configuration)' != 'Release' Or '$(TargetFramework)' != 'net10.0-windows' Or '$(Platform)' != 'AnyCPU' Or '$(NETCoreSdkVersion)' != '10.0.403' Or '$(FishAudioCoverage)' != 'true' Or '$(Optimize)' != 'true' Or '$(DebugType)' != 'portable'"
+           Text="compiler-capture-build-context-required" />
+    <Error Condition="'$(UseSharedCompilation)' != 'false' Or '$(CscToolPath)' != '' Or '$(CscToolExe)' != '' Or '$(ProvideCommandLineArgs)' != 'true'"
+           Text="compiler-capture-default-sdk-tool-required" />
+    <Error Condition="'$(FishAudioCompilerReceiptInvocationId)' == '' Or '$(FishAudioCompilerReceiptSourceTree)' == '' Or '$(FishAudioCompilerReceiptSourceFingerprint)' == '' Or '$(FishAudioCompilerReceiptOutputDirectory)' == ''"
+           Text="compiler-capture-owner-bindings-required" />
+    <Error Condition="!$([System.IO.Path]::IsPathFullyQualified('$(FishAudioCompilerReceiptOutputDirectory)')) Or Exists('$(FishAudioCompilerReceiptOutputDirectory)')"
+           Text="compiler-capture-fresh-owned-slot-required" />
+    <Error Condition="'@(IntermediateAssembly->Count())' != '1' Or '@(_DebugSymbolsIntermediatePath->Count())' != '1' Or Exists('@(IntermediateAssembly)')"
+           Text="compiler-capture-fresh-intermediate-assembly-required" />
+    <!-- Whole-build ownership checks the initial DLL/PDB pair before any build.
+         WPF temporary compilation may leave this PDB after removing its DLL.
+         A fresh main DLL still prevents up-to-date reuse; final admission requires
+         the actual successful build and matching final DLL/PDB identities. -->
+    <!-- Clearing prevents reused target state from masquerading as new task output.
+         A fresh intermediate DLL also prevents ordinary up-to-date reuse. -->
+    <ItemGroup>
+      <CscCommandLineArgs Remove="@(CscCommandLineArgs)" />
+      <_FishAudioCaptureBegin Include="fresh-intermediate-output-slot-v1" />
+      <_FishAudioCaptureBegin Include="invocationId=$(FishAudioCompilerReceiptInvocationId)" />
+    </ItemGroup>
+    <MakeDir Directories="$(FishAudioCompilerReceiptOutputDirectory)" />
+    <WriteLinesToFile File="$(FishAudioCompilerReceiptOutputDirectory)/begin.txt"
+                      Lines="@(_FishAudioCaptureBegin)" Encoding="UTF-8" Overwrite="false" />
+    <PropertyGroup><_FishAudioCompilerCaptureBegan>true</_FishAudioCompilerCaptureBegan></PropertyGroup>
+  </Target>
+
+  <Target Name="FishAudioFinishCompilerInputCapture" AfterTargets="CoreCompile"
+          Condition="'$(FishAudioCompilerReceipt)' == 'true' And '$(MSBuildProjectFullPath)' == '$(FishAudioCompilerReceiptProjectFullPath)'">
+    <Error Condition="'$(BuildingProject)' != 'true' Or '$(IsCrossTargetingBuild)' == 'true' Or ('$(DesignTimeBuild)' != '' And '$(DesignTimeBuild)' != 'false') Or ('$(SkipCompilerExecution)' != '' And '$(SkipCompilerExecution)' != 'false')"
+           Text="compiler-capture-real-build-required" />
+    <Error Condition="'$(Configuration)' != 'Release' Or '$(TargetFramework)' != 'net10.0-windows' Or '$(Platform)' != 'AnyCPU' Or '$(NETCoreSdkVersion)' != '10.0.403' Or '$(FishAudioCoverage)' != 'true' Or '$(Optimize)' != 'true' Or '$(DebugType)' != 'portable' Or '$(UseSharedCompilation)' != 'false' Or '$(CscToolPath)' != '' Or '$(CscToolExe)' != ''"
+           Text="compiler-capture-build-context-required" />
+    <Error Condition="'$(_FishAudioCompilerCaptureBegan)' != 'true' Or '@(CscCommandLineArgs)' == '' Or !Exists('@(IntermediateAssembly)') Or !Exists('@(_DebugSymbolsIntermediatePath)')"
+           Text="compiler-capture-successful-corecompile-output-required" />
+    <Error Condition="Exists('$(FishAudioCompilerReceiptOutputDirectory)/arguments.txt') Or Exists('$(FishAudioCompilerReceiptOutputDirectory)/context.txt') Or Exists('$(FishAudioCompilerReceiptOutputDirectory)/corecompile-returned.txt')"
+           Text="compiler-capture-slot-already-written" />
+    <PropertyGroup>
+      <_FishAudioCaptureArgumentItemCount>@(CscCommandLineArgs->Count())</_FishAudioCaptureArgumentItemCount>
+    </PropertyGroup>
+    <ItemGroup>
+      <_FishAudioCaptureContext Include="format=fish-audio-csc-task-items-v1" />
+      <_FishAudioCaptureContext Include="invocationId=$(FishAudioCompilerReceiptInvocationId)" />
+      <_FishAudioCaptureContext Include="sourceTree=$(FishAudioCompilerReceiptSourceTree)" />
+      <_FishAudioCaptureContext Include="sourceFingerprint=$(FishAudioCompilerReceiptSourceFingerprint)" />
+      <_FishAudioCaptureContext Include="project=$(MSBuildProjectFullPath)" />
+      <_FishAudioCaptureContext Include="projectDirectory=$(MSBuildProjectDirectory)" />
+      <_FishAudioCaptureContext Include="configuration=$(Configuration)" />
+      <_FishAudioCaptureContext Include="targetFramework=$(TargetFramework)" />
+      <_FishAudioCaptureContext Include="platform=$(Platform)" />
+      <_FishAudioCaptureContext Include="sdkVersion=$(NETCoreSdkVersion)" />
+      <_FishAudioCaptureContext Include="optimize=$(Optimize)" />
+      <_FishAudioCaptureContext Include="debugType=$(DebugType)" />
+      <_FishAudioCaptureContext Include="designTimeBuild=false" />
+      <_FishAudioCaptureContext Include="skipCompilerExecution=false" />
+      <_FishAudioCaptureContext Include="useSharedCompilation=$(UseSharedCompilation)" />
+      <_FishAudioCaptureContext Include="compilerToolPath=$(CscToolPath)" />
+      <_FishAudioCaptureContext Include="compilerToolExe=$(CscToolExe)" />
+      <_FishAudioCaptureContext Include="roslynTargetsPath=$([System.IO.Path]::GetFullPath('$(RoslynTargetsPath)'))" />
+      <_FishAudioCaptureContext Include="@(IntermediateAssembly->'intermediateDll=%(FullPath)')" />
+      <_FishAudioCaptureContext Include="@(_DebugSymbolsIntermediatePath->'intermediatePdb=%(FullPath)')" />
+      <_FishAudioCaptureContext Include="argumentItemCount=$(_FishAudioCaptureArgumentItemCount)" />
+      <_FishAudioCaptureContext Include="buildingProject=$(BuildingProject)" />
+      <_FishAudioCaptureEnd Include="corecompile-returned-with-arguments-v1" />
+      <_FishAudioCaptureEnd Include="invocationId=$(FishAudioCompilerReceiptInvocationId)" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(FishAudioCompilerReceiptOutputDirectory)/arguments.txt"
+                      Lines="@(CscCommandLineArgs)" Encoding="UTF-8" Overwrite="false" />
+    <WriteLinesToFile File="$(FishAudioCompilerReceiptOutputDirectory)/context.txt"
+                      Lines="@(_FishAudioCaptureContext)" Encoding="UTF-8" Overwrite="false" />
+    <!-- Target completion is not overall build success. The independent owned
+         build's argv/process/drains/children and binary pins remain mandatory. -->
+    <WriteLinesToFile File="$(FishAudioCompilerReceiptOutputDirectory)/corecompile-returned.txt"
+                      Lines="@(_FishAudioCaptureEnd)" Encoding="UTF-8" Overwrite="false" />
+  </Target>
+</Project>

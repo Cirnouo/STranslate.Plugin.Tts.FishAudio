@@ -22,6 +22,8 @@ public sealed class SnapshotPartitionVerifierCases
     [SetUp]
     public void CreateOwnedSyntheticSnapshotAndCurrentCatalog()
     {
+        // Prepare repository-backed metadata before the file-free synthetic context.
+        var historicalPopups = RegressionCatalogSuite.DeclaredOriginalPopupDescriptors();
         _parent = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Path.GetTempPath()));
         RequireDirectoryChain(_parent);
         _root = Path.Combine(_parent, Prefix + Guid.NewGuid().ToString("N"));
@@ -40,7 +42,11 @@ public sealed class SnapshotPartitionVerifierCases
         Environment.SetEnvironmentVariable("FISHAUDIO_SNAPSHOT_CONTEXT", context);
         _configured = true;
         _ = SnapshotContext.Read() ?? throw new InvalidOperationException("partition-verifier-context-must-admit");
-        _catalog = RegressionCatalog.Create().ToArray();
+        _catalog = historicalPopups.Concat(new[]
+        {
+            new RegressionCase("runner.synthetic/other-partition", "core",
+                () => throw new InvalidOperationException("snapshot-metadata-descriptor-must-not-run")),
+        }).ToArray();
         _partition = RegressionProcessProtocol.Partitions.First(partition =>
             _catalog.Count(item => item.Partition == partition) > 1);
     }
@@ -181,8 +187,8 @@ public sealed class SnapshotPartitionVerifierCases
         Assert.That(File.Exists(missing), Is.False);
     }
 
-    private int Verify(string report, string output) => RegressionSnapshotVerifier.Run(
-        ["--verify-snapshot-partition-report", report, Tree, "--partition", _partition, "--catalog-output", output]);
+    private int Verify(string report, string output) => RegressionSnapshotVerifier.RunForCatalog(
+        ["--verify-snapshot-partition-report", report, Tree, "--partition", _partition, "--catalog-output", output], _catalog);
 
     private RegressionReport Report() => new()
     {

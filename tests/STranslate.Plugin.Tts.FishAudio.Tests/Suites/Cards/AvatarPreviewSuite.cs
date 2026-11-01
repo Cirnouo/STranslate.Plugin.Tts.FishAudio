@@ -22,7 +22,7 @@ using static StaTestHost;
 using static TestAssertions;
 
 // These are injected WPF hover/focus states on compiled controls, not physical input.
-internal static class AvatarPreviewSuite
+internal static partial class AvatarPreviewSuite
 {
     private const string Id = "0123456789abcdef0123456789abcdef";
     private const string OtherId = "1123456789abcdef0123456789abcdef";
@@ -51,7 +51,7 @@ internal static class AvatarPreviewSuite
         return cases;
     }
 
-    private static async Task RunContextAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory)
+    private static async Task RunContextAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory, NativeAvatarFixtureOwner? owner = null)
     {
         var elapsed = Stopwatch.StartNew();
         var name = $"{mode}/{(dark ? "Dark" : "Light")}/{dpi * 100}%/{width}";
@@ -63,26 +63,38 @@ internal static class AvatarPreviewSuite
             {
                 Console.WriteLine($"[avatar-preview/{name}] entered after {elapsed.ElapsedMilliseconds}ms.");
                 var passed = false;
-                try { await CheckLifecycleAsync(mode, dark, dpi, width, proofDirectory, phase => Volatile.Write(ref lastLayoutSubstage, phase)); passed = true; }
-                finally { Console.WriteLine($"[avatar-preview/{name}] completed after {elapsed.ElapsedMilliseconds}ms; passed={passed}."); }
+                Exception? callbackFailure = null;
+                try
+                {
+                    if (owner is null)
+                        await CheckLifecycleAsync(mode, dark, dpi, width, proofDirectory, phase => Volatile.Write(ref lastLayoutSubstage, phase));
+                    else
+                        await owner.RunAsync(() => CheckLifecycleAsync(mode, dark, dpi, width, proofDirectory, phase => Volatile.Write(ref lastLayoutSubstage, phase), owner));
+                    passed = true;
+                }
+                catch (Exception error) when (owner is not null) { callbackFailure = error; throw; }
+                finally { Restore(owner, callbackFailure, () => Console.WriteLine($"[avatar-preview/{name}] completed after {elapsed.ElapsedMilliseconds}ms; passed={passed}.")); }
             });
         }
         catch (Exception error)
         {
-            Console.WriteLine($"[avatar-preview/{name}] failed ({error.GetType().Name}) after {elapsed.ElapsedMilliseconds}ms; last-layout-substage={Volatile.Read(ref lastLayoutSubstage)}.");
+            Restore(owner, error, () => Console.WriteLine($"[avatar-preview/{name}] failed ({error.GetType().Name}) after {elapsed.ElapsedMilliseconds}ms; last-layout-substage={Volatile.Read(ref lastLayoutSubstage)}."));
             throw;
         }
     }
 
-    private static async Task CheckLifecycleAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory, Action<string> layoutSubstage)
+    private static async Task CheckLifecycleAsync(VoiceBrowseMode mode, bool dark, double dpi, double width, string? proofDirectory, Action<string> layoutSubstage, NativeAvatarFixtureOwner? owner = null)
     {
-        using var network = OverrideNetworkAvailability(true);
+        using var network = owner is null ? OverrideNetworkAvailability(true) : null;
+        if (owner is not null) owner.OwnResource(OverrideNetworkAvailability(true));
         var settings = new Settings { VoiceId = Id, CachedVoice = new() { Title = "Selected without cover", SampleAudioUrl = Sample } };
         var (service, http) = TestHttpServiceProxy.Create();
         var player = new TestPreviewAudioPlayer { Duration = TimeSpan.FromSeconds(10) };
         TaskCompletionSource? clipboardWrite = null;
-        using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: CreateTempDirectory()), settings,
+        var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: owner?.CreateSettingsDirectory() ?? CreateTempDirectory()), settings,
             null, null, previewAudioPlayerFactory: () => player, copyVoiceIdToClipboard: _ => { clipboardWrite?.TrySetResult(); });
+        owner?.OwnFacade(vm);
+        using var legacyFacade = owner is null ? vm : null;
         var item = new VoiceSearchItem { Id = Id, Title = "Origin", SampleAudioUrl = Sample, HasMetadata = true };
         var other = new VoiceSearchItem { Id = OtherId, Title = "Independent card", SampleAudioUrl = Sample, HasMetadata = true };
         vm.SearchResults = [item, other]; vm.ByIdResults = [item, other]; vm.FavoriteResults = [item, other]; vm.HasSearched = true; vm.BrowseMode = mode;
@@ -110,6 +122,9 @@ internal static class AvatarPreviewSuite
         var background = browseRoot.Background;
         var selectedBackground = selectedRoot.Background;
         var secondBackground = secondRoot.Background;
+        // The compiled bindings already created these commands in their original order.
+        owner?.ObserveCommand(vm.ToggleDisplayPreviewCommand);
+        owner?.ObserveCommand(vm.ToggleSearchItemPreviewCommand);
         foreach (var button in controls)
         {
             var overlay = Overlay(button);
@@ -129,6 +144,7 @@ internal static class AvatarPreviewSuite
             AssertEqual(Colors.Black, ((SolidColorBrush)backplate.Fill).Color, "The reference-style backplate darkens the image consistently in both themes");
             AssertEqual(false, backplate.IsHitTestVisible, "The contrast layer never owns pointer input");
             AssertProgressGeometry(button);
+            Exception? resizeFailure = null;
             try
             {
                 host.Width = host.Height = portrait.Width = portrait.Height = diameter + 4;
@@ -138,10 +154,12 @@ internal static class AvatarPreviewSuite
                 AssertRoundedPlay(button, (diameter + 4) * .3);
                 AssertProgressGeometry(button);
             }
+            catch (Exception error) when (owner is not null) { resizeFailure = error; throw; }
             finally
             {
-                host.Width = host.Height = portrait.Width = portrait.Height = diameter;
-                Layout();
+                Restore(owner, resizeFailure,
+                    () => portrait.Height = diameter, () => portrait.Width = diameter,
+                    () => host.Height = diameter, () => host.Width = diameter, Layout);
             }
             AssertEqual(true, !button.Focusable && !KeyboardNavigation.GetIsTabStop(button) && button.IsEnabled, "Avatar action stays available without cover/hover but does not enter keyboard navigation");
             AssertEqual<Style?>(null, button.FocusVisualStyle, "Avatar preview has no keyboard-focus adornment");
@@ -151,18 +169,19 @@ internal static class AvatarPreviewSuite
         }
         var originalBounds = controls.Select(button => button.TranslatePoint(new Point(), Card(button))).ToArray();
         SaveProof("idle-no-cover");
+        Exception? sceneFailure = null;
         try
         {
             var cover = FindRepoFile("STranslate.Plugin.Tts.FishAudio/icon.png");
             item.CoverUrl = cover; vm.CachedVoiceCoverUrl = cover; Layout();
             SetHover(browseRoot, true); Layout();
-            AssertCoverShowsThrough(browse, dpi);
+            AssertCoverShowsThrough(browse, dpi, owner);
             SaveProof("idle-hover");
             AssertEqual(1d, Overlay(browse).Opacity, "Hover over any card content reveals Play on its avatar");
             AssertForegroundAndHitOwnership(browse);
             AssertEqual(0d, Overlay(selected).Opacity, "Another same-ID card does not inherit hover");
             SetHover(selectedRoot, true); Layout();
-            AssertCoverShowsThrough(selected, dpi);
+            AssertCoverShowsThrough(selected, dpi, owner);
             SaveProof("idle-hover-both-fixture");
             SetHover(selectedRoot, false); Layout();
             AssertEqual(false, Equals(background, browseRoot.Background), "Only pointer hover highlights the card");
@@ -175,9 +194,10 @@ internal static class AvatarPreviewSuite
             AssertEqual(0d, Overlay(browse).Opacity, "Retained mouse focus alone must not reveal idle Play");
             foreach (var hoveredAtEnd in new[] { false, true })
             {
-                var response = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-                http.GetAsStreamAsyncHandler = (_, _, _) => response.Task;
-                var pending = vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item); Layout();
+                var response = OwnResponse(owner, new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously));
+                http.GetAsStreamAsyncHandler = (_, _, _) => owner?.ObserveReply(response) ?? response.Task;
+                var pending = Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item)); Layout();
+                owner?.Observe("held-preview");
                 foreach (var button in controls) AssertActive(button, "Preview_CancelLoading");
                 SaveProof("preparing-leave");
                 AssertEqual(background, browseRoot.Background, "Preparing with pointer outside does not highlight");
@@ -188,7 +208,7 @@ internal static class AvatarPreviewSuite
                 SetHover(secondRoot, false);
                 response.SetResult(new MemoryStream([1, 2, 3])); await pending; Layout();
                 foreach (var button in controls) AssertActive(button, "Preview_Stop");
-                AssertCoverShowsThrough(browse, dpi);
+                AssertCoverShowsThrough(browse, dpi, owner);
                 SaveProof("active-leave");
                 vm.CachedVoiceCoverUrl = null; Layout();
                 AssertActive(selected, "Preview_Stop");
@@ -207,32 +227,32 @@ internal static class AvatarPreviewSuite
                 SetHover(browseRoot, false); Layout();
             }
             // A second click cancels preparation; its late response may not restore artwork.
-            var held = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-            http.GetAsStreamAsyncHandler = (_, _, _) => held.Task;
-            var old = vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
+            var held = OwnResponse(owner, new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously));
+            http.GetAsStreamAsyncHandler = (_, _, _) => owner?.ObserveReply(held) ?? held.Task;
+            var old = Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item));
             vm.CachedVoiceSampleUrl = item.SampleAudioUrl = null!; Layout();
             AssertActive(selected, "Preview_CancelLoading"); AssertActive(browse, "Preview_CancelLoading");
-            await vm.ToggleDisplayPreviewCommand.ExecuteAsync(null); Layout();
+            await Track(owner, vm.ToggleDisplayPreviewCommand.ExecuteAsync(null)); Layout();
             var idleCount = http.GetAsStreamCallCount;
-            await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
+            await Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item));
             AssertEqual(idleCount, http.GetAsStreamCallCount, "Idle missing-sample cards cannot start another request");
             vm.CachedVoiceSampleUrl = item.SampleAudioUrl = Sample;
             AssertEqual(0d, Overlay(browse).Opacity, "Cross-entry preparation cancel hides the unhovered overlay");
             held.SetResult(new MemoryStream([4, 5, 6])); await old; Layout();
             AssertEqual(0d, Overlay(browse).Opacity, "Late canceled completion cannot reactivate the overlay");
             http.GetAsStreamAsyncHandler = (_, _, _) => Task.FromResult<Stream>(new MemoryStream([1, 2, 3]));
-            await vm.ToggleDisplayPreviewCommand.ExecuteAsync(null); Layout();
+            await Track(owner, vm.ToggleDisplayPreviewCommand.ExecuteAsync(null)); Layout();
             // Missing refreshed media/cover must never remove a still-active cancel/Stop action.
             vm.CachedVoiceSampleUrl = item.SampleAudioUrl = null!; Layout();
             AssertActive(selected, "Preview_Stop"); AssertActive(browse, "Preview_Stop");
-            await vm.ToggleDisplayPreviewCommand.ExecuteAsync(null); Layout();
+            await Track(owner, vm.ToggleDisplayPreviewCommand.ExecuteAsync(null)); Layout();
             AssertEqual(false, vm.IsDisplayVoicePreviewActive, "Existing Stop command retires playback");
             vm.CachedVoiceSampleUrl = item.SampleAudioUrl = Sample;
-            await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item); player.RaiseFailed(new IOException("Fixture failure")); Layout();
+            await Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item)); player.RaiseFailed(new IOException("Fixture failure")); Layout();
             AssertEqual(0d, Overlay(browse).Opacity, "Playback failure restores idle hover-only artwork");
-            held = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-            http.GetAsStreamAsyncHandler = (_, _, _) => held.Task;
-            old = vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item);
+            held = OwnResponse(owner, new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously));
+            http.GetAsStreamAsyncHandler = (_, _, _) => owner?.ObserveReply(held) ?? held.Task;
+            old = Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item));
             vm.SearchResults = [other]; vm.ByIdResults = [other]; vm.FavoriteResults = [other]; Layout();
             AssertEqual(0d, Overlay(selected).Opacity, "Removing the originating card retires matching selected activity");
             held.SetResult(new MemoryStream([7, 8, 9])); await old; Layout();
@@ -241,6 +261,8 @@ internal static class AvatarPreviewSuite
 
             // Native automation still invokes the selected preview without mouse hover.
             http.GetAsStreamAsyncHandler = (_, _, _) => Task.FromResult<Stream>(new MemoryStream([1, 2, 3]));
+            owner?.PrepareAutomationReply(http);
+            owner?.Observe("before-uia-preview");
             var count = http.GetAsStreamCallCount;
             var acceptedPlayback = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             System.ComponentModel.PropertyChangedEventHandler playingPublished = (_, args) =>
@@ -249,36 +271,44 @@ internal static class AvatarPreviewSuite
                     acceptedPlayback.TrySetResult();
             };
             vm.PropertyChanged += playingPublished;
+            owner?.OwnCallback(() => vm.PropertyChanged -= playingPublished);
+            Exception? publicationFailure = null;
             try
             {
-                ((IInvokeProvider)new ButtonAutomationPeer(selected).GetPattern(PatternInterface.Invoke)!).Invoke();
+                InvokeAutomation(owner, (IInvokeProvider)new ButtonAutomationPeer(selected).GetPattern(PatternInterface.Invoke)!);
+                owner?.Observe("queued-uia-preview");
                 await acceptedPlayback.Task.WaitAsync(RegressionExecution.Timeout);
             }
-            finally { vm.PropertyChanged -= playingPublished; }
+            catch (Exception error) when (owner is not null) { publicationFailure = error; throw; }
+            finally { Restore(owner, publicationFailure, () => vm.PropertyChanged -= playingPublished); }
             Layout();
             AssertEqual(count + 1, http.GetAsStreamCallCount, "The reachable preview button retains native automation invocation");
             item.SampleAudioUrl = null!;
-            await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item); Layout();
+            await Track(owner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(item)); Layout();
             AssertEqual(true, vm.IsDisplayVoicePreviewing, "A removed missing-sample card cannot stop another current owner's same-ID playback");
             AssertEqual(count + 1, http.GetAsStreamCallCount, "Removed missing-sample action cannot request audio");
             player.RaiseEnded(); Layout();
             var title = Visuals(selectedRoot).OfType<Button>().Single(button => ReferenceEquals(button.Command, vm.CopyVoiceIdCommand));
             clipboardWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Exception? clipboardFailure = null;
             try
             {
-                ((IInvokeProvider)new ButtonAutomationPeer(title).GetPattern(PatternInterface.Invoke)!).Invoke();
+                InvokeAutomation(owner, (IInvokeProvider)new ButtonAutomationPeer(title).GetPattern(PatternInterface.Invoke)!);
                 await clipboardWrite.Task.WaitAsync(RegressionExecution.Timeout);
             }
-            finally { clipboardWrite = null; }
+            catch (Exception error) when (owner is not null) { clipboardFailure = error; throw; }
+            finally { Restore(owner, clipboardFailure, () => clipboardWrite = null); }
             vm.BrowseMode = VoiceBrowseMode.Search;
             vm.ToggleSelectedVoiceFavoriteCommand.Execute(null);
             vm.SelectVoiceCommand.Execute(other);
             AssertEqual(count + 1, http.GetAsStreamCallCount, "Title/Like/Apply retain independent actions and never start preview");
         }
+        catch (Exception error) when (owner is not null) { sceneFailure = error; throw; }
         finally
         {
-            SetHover(browseRoot, false); SetHover(selectedRoot, false); SetHover(secondRoot, false); SetFocused(browse, false);
-            clipboardWrite = null;
+            Restore(owner, sceneFailure,
+                () => SetHover(browseRoot, false), () => SetHover(selectedRoot, false),
+                () => SetHover(secondRoot, false), () => SetFocused(browse, false), () => clipboardWrite = null);
         }
         Console.WriteLine($"AVATAR {mode}/{(dark ? "Dark" : "Light")}/{dpi * 100}%/{width} passed");
 
@@ -306,20 +336,31 @@ internal static class AvatarPreviewSuite
             AssertProgressGeometry(button);
             var originalDisplayProgress = vm.PreviewProgress;
             var originalItemProgress = item.PreviewProgress;
-            foreach (var progress in resource == "Preview_Stop" ? new[] { 0d, .25, 1d } : Array.Empty<double>())
+            Exception? progressFailure = null;
+            var progressCompleted = false;
+            try
             {
-                vm.PreviewProgress = item.PreviewProgress = progress;
-                Layout();
-                var circumferenceUnits = (Overlay(button).ActualWidth - arc.StrokeThickness) * Math.PI / arc.StrokeThickness;
-                AssertEqual(true, Math.Abs(arc.StrokeDashOffset - (1 - progress) * circumferenceUnits) < .00001,
-                    "Zero, quarter and complete progress use the actual avatar circumference, without changing playback state");
+                foreach (var progress in resource == "Preview_Stop" ? new[] { 0d, .25, 1d } : Array.Empty<double>())
+                {
+                    vm.PreviewProgress = item.PreviewProgress = progress;
+                    Layout();
+                    var circumferenceUnits = (Overlay(button).ActualWidth - arc.StrokeThickness) * Math.PI / arc.StrokeThickness;
+                    AssertEqual(true, Math.Abs(arc.StrokeDashOffset - (1 - progress) * circumferenceUnits) < .00001,
+                        "Zero, quarter and complete progress use the actual avatar circumference, without changing playback state");
+                }
+                progressCompleted = true;
             }
-            vm.PreviewProgress = originalDisplayProgress;
-            item.PreviewProgress = originalItemProgress;
-            Layout();
+            catch (Exception error) when (owner is not null) { progressFailure = error; throw; }
+            finally
+            {
+                if (owner is not null || progressCompleted)
+                    Restore(owner, progressFailure, () => vm.PreviewProgress = originalDisplayProgress,
+                        () => item.PreviewProgress = originalItemProgress, Layout);
+            }
             var host = (Grid)Overlay(button).Parent;
             var portrait = host.Children.OfType<Ellipse>().Single();
             var diameter = host.Width;
+            Exception? resizeFailure = null;
             try
             {
                 host.Width = host.Height = portrait.Width = portrait.Height = diameter + 4;
@@ -329,10 +370,12 @@ internal static class AvatarPreviewSuite
                     AssertEqual(true, Math.Abs(arc.StrokeDashOffset - (1 - originalDisplayProgress) * (diameter + 4 - 1.5) * Math.PI / 1.5) < .00001,
                         "Active progress offset follows a resized portrait rather than retaining the previous circumference");
             }
+            catch (Exception error) when (owner is not null) { resizeFailure = error; throw; }
             finally
             {
-                host.Width = host.Height = portrait.Width = portrait.Height = diameter;
-                Layout();
+                Restore(owner, resizeFailure,
+                    () => portrait.Height = diameter, () => portrait.Width = diameter,
+                    () => host.Height = diameter, () => host.Width = diameter, Layout);
             }
         }
     }
@@ -465,7 +508,7 @@ internal static class AvatarPreviewSuite
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using var file = File.Create(path); encoder.Save(file);
     }
 
-    private static void AssertCoverShowsThrough(Button button, double dpi)
+    private static void AssertCoverShowsThrough(Button button, double dpi, NativeAvatarFixtureOwner? owner = null)
     {
         var overlay = Overlay(button);
         var avatar = (Grid)overlay.Parent;
@@ -478,6 +521,7 @@ internal static class AvatarPreviewSuite
         AssertNotNull(originalBinding, "The transparency fixture must exercise the compiled cover binding");
         var card = Card(button);
         var point = overlay.TranslatePoint(new Point(7, overlay.ActualHeight / 2), card);
+        Exception? imageFailure = null;
         try
         {
             image.SetCurrentValue(ImageBrush.ImageSourceProperty, BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, new byte[] { 0, 0, 255, 255 }, 4));
@@ -487,7 +531,8 @@ internal static class AvatarPreviewSuite
             AssertEqual(true, Math.Abs(red[0] - blue[0]) is >= 150 and <= 156 && Math.Abs(red[2] - blue[2]) is >= 150 and <= 156,
                 "Idle/active compositing retains about sixty percent of both portrait color channels (forty-percent black backplate, injected red/blue ImageBrush fixture)");
         }
-        finally { image.SetCurrentValue(ImageBrush.ImageSourceProperty, original); }
+        catch (Exception error) when (owner is not null) { imageFailure = error; throw; }
+        finally { Restore(owner, imageFailure, () => image.SetCurrentValue(ImageBrush.ImageSourceProperty, original)); }
         AssertEqual(true, ReferenceEquals(originalBinding, BindingOperations.GetBindingExpression(image, ImageBrush.ImageSourceProperty)),
             "The transparency fixture must retain the original cover BindingExpression");
         byte[] Pixel(RenderTargetBitmap bitmap)

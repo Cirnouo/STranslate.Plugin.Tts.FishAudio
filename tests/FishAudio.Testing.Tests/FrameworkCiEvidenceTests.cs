@@ -46,8 +46,17 @@ public sealed partial class FrameworkCiEvidenceTests
     {
         _clock.Start();
         _repositoryRoot = FindRepositoryRoot();
-        _actualTool = Path.Combine(_repositoryRoot, "tools/FishAudio.Testing/bin/Release/net10.0-windows/FishAudio.Testing.dll");
-        Assert.That(File.Exists(_actualTool), Is.True, "The normal Release metadata tool must already be built.");
+        var executing = typeof(FrameworkCiEvidenceTests).Assembly.Location;
+        var normalTests = Path.GetFullPath(Path.Combine(_repositoryRoot, "tests/FishAudio.Testing.Tests/bin/Release/net10.0-windows/FishAudio.Testing.Tests.dll"));
+        var coverageTests = Path.GetFullPath(Path.Combine(_repositoryRoot, "tests/FishAudio.Testing.Tests/bin/coverage/Release/net10.0-windows/FishAudio.Testing.Tests.dll"));
+        var coverage = string.Equals(Path.GetFullPath(executing), coverageTests, StringComparison.OrdinalIgnoreCase);
+        Assert.That(coverage || string.Equals(Path.GetFullPath(executing), normalTests, StringComparison.OrdinalIgnoreCase), Is.True,
+            "The executing test assembly must belong to this source root's normal or coverage Release output.");
+        _actualTool = Path.Combine(_repositoryRoot, "tools/FishAudio.Testing", coverage ?
+            "bin/coverage/Release/net10.0-windows/FishAudio.Testing.dll" : "bin/Release/net10.0-windows/FishAudio.Testing.dll");
+        Assert.That(File.Exists(_actualTool), Is.True, "The selected Release metadata tool must already be built.");
+        Assert.That(Hash(typeof(BinaryIdentity).Assembly.Location), Is.EqualTo(Hash(_actualTool)),
+            "The loaded tool copy and selected current metadata command must have identical bytes.");
         Assert.That(File.Exists(Path.ChangeExtension(_actualTool, ".runtimeconfig.json")), Is.True);
         _root = Path.Combine(Path.GetTempPath(), "fa-framework-ci-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_root);

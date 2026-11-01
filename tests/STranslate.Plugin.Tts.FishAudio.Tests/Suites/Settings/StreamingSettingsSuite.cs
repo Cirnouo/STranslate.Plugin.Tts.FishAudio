@@ -25,6 +25,7 @@ internal static class StreamingSettingsSuite
 
     [NUnit.Framework.Test]
     [NUnit.Framework.Property("FishAudioCaseId", "settings.streaming/legacy-formats-migrate-and-current-defaults-use-pcm")]
+    [NUnit.Framework.Property("FishAudioSmoke", "true")]
     [NUnit.Framework.Order(9)]
     public static void LegacyFormatsMigrateAndCurrentDefaultsUsePcm()
     {

@@ -21,6 +21,22 @@ internal static class RepositoryContractSuite
 {
     [Test]
     [Property("FishAudioCaseId", "repository.contract/ui-locales-have-complete-resources-and-metadata")]
+    [Property("FishAudioSmoke", "true")]
+    [Property("FishAudioEmptyProductCoverage", "RepositoryResourcesOnly")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/en.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/en.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/zh-cn.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/zh-cn.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/zh-tw.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/zh-tw.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ja.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ja.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ko.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ko.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ru.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/ru.json")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/tr.xaml")]
+    [Property("FishAudioRepositoryDependency", "STranslate.Plugin.Tts.FishAudio/Languages/tr.json")]
     [Order(58)]
     public static void UiLocalesHaveCompleteResourcesAndMetadata()
     {

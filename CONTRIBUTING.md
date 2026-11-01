@@ -77,14 +77,14 @@ For local iteration:
 # Debug is the default
 .\build.ps1
 
-# Debug plus the legacy regression runner, with cleanup afterward
-.\build.ps1 -Clean -Test
+# Debug build, with cleanup afterward
+.\build.ps1 -Clean
 
 # Cleanup only
 .\build.ps1 -CleanOnly
 ```
 
-Focused legacy iteration remains available through `-Test -Affected`, `-TestBase`, `-TestGroup`, `-TestCase`, `-TestPartition` and `-RerunFailed`. Affected recommendations use the existing explicit source/shared-dependency map and include working-tree changes; unknown dependencies expand coverage conservatively. Debug, focused legacy commands and `-LegacyOnly` keep that diagnostic legacy scope. They do not replace the full hybrid gate. Ordinary full verification uses the combined Release command above.
+Production legacy execution is retired after the atomic ownership declaration. `-Affected`, `-TestBase`, `-TestGroup`, `-TestCase`, `-TestPartition`, `-RerunFailed`, Debug legacy tests and `-LegacyOnly` cannot verify migrated NUnit work and now fail at the retired parent boundary. Use the framework driver below for focused cases. Ordinary full verification continues to use the combined Release command above; its complete fixed-slot plan covers both complete current framework catalogs once.
 
 Use [tools/Test.ps1](tools/Test.ps1) for framework discovery and focused execution. Each explicit results directory must be a new absolute path; omitting it creates an owned temporary directory.
 
@@ -99,9 +99,9 @@ Use [tools/Test.ps1](tools/Test.ps1) for framework discovery and focused executi
 .\tools\Test.ps1 -Mode Full -CaseId 'compat.sync/api-key-format' -Workers 0
 ```
 
-The driver builds both test projects with locked restore unless `-NoBuild` is supplied; `-NoBuild` requires all normal Release inputs to exist. It rejects unknown, duplicate, ambiguous and empty requested selections and verifies exact NUnit XML/TRX outcomes. `-Workers` accepts 0 through 4 and defaults to 4. Ordinary full verification stays separate from coverage collection and baseline publication. These focused commands and legacy recommendations do not replace the full staged-tree gate or complete CI validation. Formal test-impact analysis and reusable coverage baselines remain future work.
+The driver builds both test projects with locked restore unless `-NoBuild` is supplied; `-NoBuild` requires all normal Release inputs to exist. It rejects unknown, duplicate, ambiguous and empty requested selections and verifies exact NUnit XML/TRX outcomes. `-Workers` accepts 0 through 4 and defaults to 4. Ordinary full verification stays separate from coverage collection and baseline publication. These focused framework commands do not replace the full staged-tree gate or complete CI validation. Formal test-impact analysis and reusable coverage baselines remain future work.
 
-Add ordinary new tests with NUnit attributes in the appropriate test project; no central registry edit is needed. Give each parameter row a stable explicit name, and use an optional `FishAudioCaseId` property when its identity should survive a display-name change. The remaining legacy scenarios continue through their explicit [catalog](tests/STranslate.Plugin.Tts.FishAudio.Tests/Runner/RegressionCatalog.cs). Its metadata command is `dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release -- --legacy --list`. Preserve every existing assertion responsibility, source owner, cleanup and deadline until its migration is verified. The direct STA compatibility samples do not establish replacement of the supervised native watchdog. Normal tests use fakes and local fixtures and should remain deterministic and offline. For probe changes, run its documented offline self-tests. See the verification policies for device/host acceptance, final-state reruns and package runtime checks.
+Add ordinary new tests with NUnit attributes in the appropriate test project; no central registry edit or manually fixed global catalog count is needed. Give each parameter row a stable explicit name, and use an optional `FishAudioCaseId` property when its identity should survive a display-name change. All original responsibilities have declared framework successors. The empty current [legacy catalog](tests/STranslate.Plugin.Tts.FishAudio.Tests/Runner/RegressionCatalog.cs) remains metadata-only: `dotnet run --project tests/STranslate.Plugin.Tts.FishAudio.Tests -c Release -- --legacy --list` prints `Selected 0 case(s).` Other production legacy parent requests fail as retired. Empty metadata is not a successful test run. Preserve every original assertion responsibility, source owner, cleanup and deadline until the final migration has fresh evidence. The direct STA compatibility samples do not establish replacement of supervised native ownership. Normal tests use fakes and local fixtures and remain deterministic and offline. See the verification policies for host acceptance, final-state reruns and package runtime checks.
 
 ## Make a focused change
 

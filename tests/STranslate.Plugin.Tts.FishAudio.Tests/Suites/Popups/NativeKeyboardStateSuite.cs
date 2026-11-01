@@ -16,9 +16,14 @@ internal static class NativeKeyboardStateSuite
         CleanupMetadataCannotReplacePrimaryFailure();
         // One additional shared-guard action, after the existing Search first-use
         // boundaries in Program. Fake transactions never initialize WPF/STA.
-        await SearchAdjustmentControlSuite.ObserveMatrixActionAsync("native-peers", NativePeers,
+        await SearchAdjustmentControlSuite.ObserveMatrixTaskActionAsync("native-peers", NativePeers,
             prefix: "native-key-state", details: "one shared-guard action; Button and ToggleButton");
     }
+
+    // Direct binding of the original native action, after all Search first use.
+    internal static Task ObserveNativePeersAsync() =>
+        SearchAdjustmentControlSuite.ObserveMatrixTaskActionAsync("native-peers", NativePeers,
+            prefix: "native-key-state", details: "one shared-guard action; Button and ToggleButton");
 
     internal static void TransactionsPreserveStateAndFailures()
     {
@@ -333,16 +338,23 @@ internal static class NativeKeyboardStateSuite
         }
     }
 
-    private static void NativePeers(Action<string> stage)
-    {
-        var panel = new StackPanel();
-        var button = new Button { Content = "Button", Width = 100, Height = 30 };
-        var toggle = new ToggleButton { Content = "Toggle", Width = 100, Height = 30 };
-        panel.Children.Add(button); panel.Children.Add(toggle);
-        using var source = new HwndSource(new HwndSourceParameters("Fish Audio native key state peers")
-        { Width = 120, Height = 80, WindowStyle = unchecked((int)0x80000000) }) { RootVisual = panel };
-        try
+    private static Task NativePeers(Action<string> stage) =>
+        RunNativePeersAsync(stage, new NativeKeyboardPeerFixtureOwner());
+
+    internal static Task RunNativePeerOwnershipControlAsync(NativeKeyboardPeerFixtureHooks hooks) =>
+        RunNativePeersAsync(_ => { }, new NativeKeyboardPeerFixtureOwner(hooks));
+
+    private static Task RunNativePeersAsync(Action<string> stage, NativeKeyboardPeerFixtureOwner owner) =>
+        owner.RunAsync(() =>
         {
+            var panel = new StackPanel();
+            var button = new Button { Content = "Button", Width = 100, Height = 30 };
+            var toggle = new ToggleButton { Content = "Toggle", Width = 100, Height = 30 };
+            panel.Children.Add(button); panel.Children.Add(toggle);
+            var source = owner.Own(PopupSourceAcquisition.Acquire(
+                () => new HwndSource(new HwndSourceParameters("Fish Audio native key state peers")
+                { Width = 120, Height = 80, WindowStyle = unchecked((int)0x80000000) }),
+                owned => owned.RootVisual = panel));
             panel.Measure(new Size(120, 80)); panel.Arrange(new Rect(0, 0, 120, 80)); panel.UpdateLayout();
             foreach (var target in new ButtonBase[] { button, toggle })
             {
@@ -388,9 +400,7 @@ internal static class NativeKeyboardStateSuite
                 }
                 finally { target.RemoveHandler(ButtonBase.ClickEvent, listener); target.Command = null; }
             }
-        }
-        finally { source.RootVisual = null; }
-    }
+        });
 
     private sealed class CountingCommand(Action execute) : ICommand
     {

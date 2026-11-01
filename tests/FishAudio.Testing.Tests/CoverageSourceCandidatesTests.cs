@@ -19,7 +19,7 @@ namespace FishAudio.Testing.Tests;
 
 [TestFixture]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-public sealed class CoverageSourceCandidatesTests
+public sealed partial class CoverageSourceCandidatesTests
 {
     private const string OwnedPrefix = "fa-source-candidates-";
     private const string CanonicalId = "source-candidates/fixture";
