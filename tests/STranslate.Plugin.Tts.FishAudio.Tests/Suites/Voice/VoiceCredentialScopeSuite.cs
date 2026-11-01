@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Caching;
 using STranslate.Plugin.Tts.FishAudio.FishAudio;
@@ -7,11 +8,17 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using static ContextProxy;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
+[Property("FishAudioFreshHost", "true")]
 internal static class VoiceCredentialScopeSuite
 {
     private const string Id = "fedcba9876543210fedcba9876543210";
 
-    internal static void CacheWritesAndQueuedEventsKeepCapturedCredentialScope()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credentials/cache-writes-and-queued-events-keep-captured-credential-scope")]
+    [Order(185)]
+    public static void CacheWritesAndQueuedEventsKeepCapturedCredentialScope()
     {
         var cache = new VoiceMetadataCache();
         var scopeA = VoiceMetadataCache.CredentialScope("account-a");
@@ -38,7 +45,10 @@ internal static class VoiceCredentialScopeSuite
         finally { SettingsViewModel.UiThreadInvokerOverride = null; }
     }
 
-    internal static async Task RejectedCredentialSavesRetainAcceptedKeyAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credentials/rejected-credential-saves-retain-accepted-key")]
+    [Order(186)]
+    public static async Task RejectedCredentialSavesRetainAcceptedKeyAsync()
     {
         foreach (var retired in new[] { false, true })
         {
@@ -62,7 +72,10 @@ internal static class VoiceCredentialScopeSuite
         }
     }
 
-    internal static async Task FailedReplacementConstructionPreservesAcceptedCacheAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credentials/failed-replacement-construction-preserves-accepted-cache")]
+    [Order(188)]
+    public static async Task FailedReplacementConstructionPreservesAcceptedCacheAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var cache = new VoiceMetadataCache();
@@ -95,7 +108,10 @@ internal static class VoiceCredentialScopeSuite
         AssertEqual(0, http.GetCallCount, "The restored A facade should keep its credential-scoped cache hit");
     }
 
-    internal static async Task ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credentials/reentrant-preview-metadata-event-cannot-restore-old-account")]
+    [Order(189)]
+    public static async Task ReentrantPreviewMetadataEventCannotRestoreOldAccountAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var earlierSubscriber in new[] { false, true })
@@ -131,7 +147,10 @@ internal static class VoiceCredentialScopeSuite
         }
     }
 
-    internal static void QueuedStartupApplyRechecksCredentialInsideDispatcher()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credentials/queued-startup-apply-rechecks-credential-inside-dispatcher")]
+    [Order(187)]
+    public static void QueuedStartupApplyRechecksCredentialInsideDispatcher()
     {
         var settings = new Settings { ApiKey = "startup-a", VoiceId = Id, CachedVoice = new() { Title = "Old" } };
         using var view = new SettingsViewModel(CreateContext(settings: settings), settings);

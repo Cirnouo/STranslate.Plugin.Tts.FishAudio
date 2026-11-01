@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -9,11 +10,17 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
+[Property("FishAudioFreshHost", "true")]
 internal static class CredentialDisplayPreservationSuite
 {
     private const string Id = "fedcba9876543210fedcba9876543210";
 
-    internal static async Task AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/accepted-edits-preserve-cards-snapshots-and-navigation")]
+    [Order(191)]
+    public static async Task AcceptedEditsPreserveCardsSnapshotsAndNavigationAsync()
     {
         var directory = CreateTempDirectory();
         var ids = Enumerable.Range(1, 6).Select(number => number.ToString("x32")).Append(Id).ToArray();
@@ -82,72 +89,102 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual("Bearer dummy", AssertHeaders(http.LastGetOptions, "Explicit paging after blank key")["Authorization"], "A later explicit request must use the new accepted blank-key policy");
     }
 
-    internal static async Task PendingMetadataCannotReplaceRetainedDisplayAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/pending-metadata-cannot-replace-retained-display")]
+    [Order(193)]
+    public static async Task PendingMetadataCannotReplaceRetainedDisplayAsync()
     {
-        using var network = OverrideNetworkAvailability(true);
-        foreach (var operation in new[] { "search", "by-id", "favorite", "preview" })
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            var directory = CreateTempDirectory();
-            File.WriteAllText(Path.Combine(directory, "favorite-voices.json"), JsonSerializer.Serialize(new[] { Id }));
-            var settings = new Settings { ApiKey = "pending-a", VoiceId = Id,
-                CachedVoice = new() { Title = "Selected before edit", SampleAudioUrl = PreviewSuite.CreateExpiredPreviewUrl("pending.mp3") } };
-            var cache = new VoiceMetadataCache();
-            var (service, http) = TestHttpServiceProxy.Create();
-            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            CancellationToken capturedToken = default;
-            http.GetAsyncHandler = (_, _, token) =>
+            using var network = OverrideNetworkAvailability(true);
+            foreach (var operation in new[] { "search", "by-id", "favorite", "preview" })
             {
-                capturedToken = token;
-                started.TrySetResult();
-                return response.Task; // Deliberately ignores cancellation.
-            };
-            var context = CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory);
-            var player = new TestPreviewAudioPlayer();
-            using var view = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
-                previewAudioPlayerFactory: () => player);
-            view.SearchResults = [new() { Id = Id, Title = "Existing search", Description = "Retain me" }];
-            Task pending;
-            switch (operation)
-            {
-                case "search":
-                    pending = view.SearchVoicesCommand.ExecuteAsync(null);
-                    break;
-                case "by-id":
-                    view.VoiceIdInput = Id;
-                    pending = view.SubmitVoiceIdCommand.ExecuteAsync(null);
-                    break;
-                case "preview":
-                    pending = view.ToggleDisplayPreviewCommand.ExecuteAsync(null);
-                    break;
-                default:
-                    view.SwitchToFavoritesCommand.Execute(null);
-                    pending = view.PendingFavoriteMetadataTask;
-                    break;
+                string? ownedDirectory = null;
+                SettingsViewModel? ownedView = null;
+                TaskCompletionSource<string>? ownedResponse = null;
+                Task? ownedPending = null;
+                await RegressionFixtureOwner.RunAsync(async () =>
+                {
+                    var directory = CreateTempDirectory();
+                    ownedDirectory = directory;
+                    File.WriteAllText(Path.Combine(directory, "favorite-voices.json"), JsonSerializer.Serialize(new[] { Id }));
+                    var settings = new Settings { ApiKey = "pending-a", VoiceId = Id,
+                        CachedVoice = new() { Title = "Selected before edit", SampleAudioUrl = PreviewSuite.CreateExpiredPreviewUrl("pending.mp3") } };
+                    var cache = new VoiceMetadataCache();
+                    var (service, http) = TestHttpServiceProxy.Create();
+                    var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ownedResponse = response;
+                    CancellationToken capturedToken = default;
+                    http.GetAsyncHandler = (_, _, token) =>
+                    {
+                        capturedToken = token;
+                        started.TrySetResult();
+                        return response.Task; // Deliberately ignores cancellation.
+                    };
+                    var context = CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory);
+                    var player = new TestPreviewAudioPlayer();
+                    var view = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
+                        previewAudioPlayerFactory: () => player);
+                    ownedView = view;
+                    view.SearchResults = [new() { Id = Id, Title = "Existing search", Description = "Retain me" }];
+                    Task pending;
+                    switch (operation)
+                    {
+                        case "search":
+                            pending = view.SearchVoicesCommand.ExecuteAsync(null);
+                            break;
+                        case "by-id":
+                            view.VoiceIdInput = Id;
+                            pending = view.SubmitVoiceIdCommand.ExecuteAsync(null);
+                            break;
+                        case "preview":
+                            pending = view.ToggleDisplayPreviewCommand.ExecuteAsync(null);
+                            break;
+                        default:
+                            view.SwitchToFavoritesCommand.Execute(null);
+                            pending = view.PendingFavoriteMetadataTask;
+                            break;
+                    }
+                    ownedPending = pending;
+                    await started.Task.WaitAsync(RegressionExecution.Timeout);
+                    var search = view.SearchResults;
+                    var favorite = view.FavoriteResults.Single();
+                    view.ApiKey = "pending-b";
+                    AssertEqual(true, capturedToken.IsCancellationRequested, "Accepted key edits cancel the previous metadata operation");
+                    AssertEqual(false, view.IsSearching || view.IsSubmittingVoiceId || favorite.IsLoadingMetadata, "Canceled metadata operations release busy indicators");
+                    var display = JsonSerializer.Serialize(new { Search = search, ById = view.ByIdResults, Favorite = favorite, Selected = SelectedDisplay(view) });
+                    var saves = ((ContextProxy)(object)context).SaveCount;
+                    response.SetResult(operation == "search"
+                        ? "{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}]}"
+                        : "{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}");
+                    await pending.WaitAsync(RegressionExecution.Timeout);
+                    AssertEqual(true, ReferenceEquals(search, view.SearchResults) && ReferenceEquals(favorite, view.FavoriteResults.Single()), "Late responses cannot replace retained card objects");
+                    AssertEqual(display, JsonSerializer.Serialize(new { Search = view.SearchResults, ById = view.ByIdResults, Favorite = favorite, Selected = SelectedDisplay(view) }), "Late responses cannot publish metadata into retained displays");
+                    AssertEqual("Selected before edit", settings.CachedVoice?.Title, "Late metadata cannot overwrite the retained persisted selection");
+                    AssertEqual(saves, ((ContextProxy)(object)context).SaveCount, "Late metadata cannot write Settings after the accepted-key change");
+                    AssertEqual(false, cache.TryGet(Id, out _, VoiceMetadataCache.CredentialScope("pending-a")), "An invalidated response cannot become a reusable cache entry");
+                    AssertEqual(false, cache.TryGet(Id, out _, VoiceMetadataCache.CredentialScope("pending-b")), "An invalidated response cannot cross credential cache scopes");
+                    AssertEqual(0, player.PlayCallCount, "A canceled old-key preview cannot start playback from a late response");
+                },
+                () => { ownedView?.Dispose(); return Task.CompletedTask; },
+                () =>
+                {
+                    ownedResponse?.TrySetResult(operation == "search"
+                        ? "{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}]}"
+                        : "{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}");
+                    return Task.CompletedTask;
+                },
+                () => ownedPending ?? Task.CompletedTask,
+                () => { DeleteOwnedHeldWorkDirectory(ownedDirectory); return Task.CompletedTask; });
             }
-            await started.Task.WaitAsync(RegressionExecution.Timeout);
-            var search = view.SearchResults;
-            var favorite = view.FavoriteResults.Single();
-            view.ApiKey = "pending-b";
-            AssertEqual(true, capturedToken.IsCancellationRequested, "Accepted key edits cancel the previous metadata operation");
-            AssertEqual(false, view.IsSearching || view.IsSubmittingVoiceId || favorite.IsLoadingMetadata, "Canceled metadata operations release busy indicators");
-            var display = JsonSerializer.Serialize(new { Search = search, ById = view.ByIdResults, Favorite = favorite, Selected = SelectedDisplay(view) });
-            var saves = ((ContextProxy)(object)context).SaveCount;
-            response.SetResult(operation == "search"
-                ? "{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}]}"
-                : "{\"_id\":\"" + Id + "\",\"title\":\"Late A\"}");
-            await pending.WaitAsync(RegressionExecution.Timeout);
-            AssertEqual(true, ReferenceEquals(search, view.SearchResults) && ReferenceEquals(favorite, view.FavoriteResults.Single()), "Late responses cannot replace retained card objects");
-            AssertEqual(display, JsonSerializer.Serialize(new { Search = view.SearchResults, ById = view.ByIdResults, Favorite = favorite, Selected = SelectedDisplay(view) }), "Late responses cannot publish metadata into retained displays");
-            AssertEqual("Selected before edit", settings.CachedVoice?.Title, "Late metadata cannot overwrite the retained persisted selection");
-            AssertEqual(saves, ((ContextProxy)(object)context).SaveCount, "Late metadata cannot write Settings after the accepted-key change");
-            AssertEqual(false, cache.TryGet(Id, out _, VoiceMetadataCache.CredentialScope("pending-a")), "An invalidated response cannot become a reusable cache entry");
-            AssertEqual(false, cache.TryGet(Id, out _, VoiceMetadataCache.CredentialScope("pending-b")), "An invalidated response cannot cross credential cache scopes");
-            AssertEqual(0, player.PlayCallCount, "A canceled old-key preview cannot start playback from a late response");
-        }
+        });
     }
 
-    internal static async Task ReinitializationDoesNotSeedNewCredentialCacheFromRetainedSnapshotAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/reinitialization-does-not-seed-new-credential-cache-from-retained-snapshot")]
+    [Order(194)]
+    public static async Task ReinitializationDoesNotSeedNewCredentialCacheFromRetainedSnapshotAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var cache = new VoiceMetadataCache();
@@ -185,7 +222,10 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual("Remote A", replacement.ByIdResults.Single().Title, "Publication identity must not replace cache credential scoping");
     }
 
-    internal static void CredentialRoundTripRejectsQueuedPublications()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/credential-round-trip-rejects-queued-publications")]
+    [Order(192)]
+    public static void CredentialRoundTripRejectsQueuedPublications()
     {
         foreach (var publication in new[] { "cache", "startup" })
         {
@@ -213,51 +253,72 @@ internal static class CredentialDisplayPreservationSuite
         }
     }
 
-    internal static async Task FailedSavesPreserveIdentitySubscriptionAndPendingWorkAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/failed-saves-preserve-identity-subscription-and-pending-work")]
+    [Order(195)]
+    public static async Task FailedSavesPreserveIdentitySubscriptionAndPendingWorkAsync()
     {
-        foreach (var leased in new[] { false, true })
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            var stored = new Settings { ApiKey = "accepted-a", VoiceId = Id, CachedVoice = new() { Title = "Retained selected" } };
-            var (service, http) = TestHttpServiceProxy.Create();
-            var context = CreateContext(settings: stored, httpService: service);
-            var lease = default(SettingsWriteLease);
-            var settings = leased ? SettingsStore.Load(context, DateTimeOffset.UtcNow, out lease) : stored;
-            var cache = new VoiceMetadataCache();
-            using var view = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
-                settingsWriteLease: leased ? lease : null);
-            var card = new VoiceSearchItem { Id = Id, Title = "Retained card" };
-            view.SearchResults = [card];
-            var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            CancellationToken capturedToken = default;
-            http.GetAsyncHandler = (_, _, token) => { capturedToken = token; return response.Task; };
-            var pending = view.SearchVoicesCommand.ExecuteAsync(null);
-            var credentialIdentity = settings.CredentialIdentity;
-            var queued = new List<Action>();
-            SettingsViewModel.UiThreadInvokerOverride = queued.Add;
-            try
+            foreach (var leased in new[] { false, true })
             {
-                cache.Put(VoiceMetadata.FromCachedVoice(Id, new() { Title = "Accepted queued metadata" }), VoiceMetadataCache.CredentialScope(settings.ApiKey));
-                ((ContextProxy)(object)context).SaveSettings = _ => throw new IOException("Synthetic key save failure");
-                try { view.ApiKey = "rejected-key"; throw new Exception("Expected key save failure"); }
-                catch (IOException) { }
-                AssertEqual("accepted-a", settings.ApiKey, "Failed saves restore the accepted key");
-                AssertEqual("accepted-a", view.ApiKey, "Failed saves restore the visible key draft");
-                AssertEqual(true, ReferenceEquals(credentialIdentity, settings.CredentialIdentity), "Failed saves cannot rotate credential publication identity");
-                AssertEqual(false, capturedToken.IsCancellationRequested, "Failed key saves cannot cancel accepted in-flight work");
-                AssertEqual(true, ReferenceEquals(card, view.SearchResults.Single()), "Failed saves preserve displayed card objects");
-                AssertEqual("Retained selected", view.CachedVoiceTitle, "Failed saves preserve the selected display");
-                foreach (var action in queued.ToArray()) action();
-                AssertEqual("Accepted queued metadata", card.Title, "Failed saves keep the accepted cache subscription and queued publication valid");
+                SettingsViewModel? ownedView = null;
+                TaskCompletionSource<string>? ownedResponse = null;
+                Task? ownedPending = null;
+                await RegressionFixtureOwner.RunAsync(async () =>
+                {
+                    var stored = new Settings { ApiKey = "accepted-a", VoiceId = Id, CachedVoice = new() { Title = "Retained selected" } };
+                    var (service, http) = TestHttpServiceProxy.Create();
+                    var context = CreateContext(settings: stored, httpService: service);
+                    var lease = default(SettingsWriteLease);
+                    var settings = leased ? SettingsStore.Load(context, DateTimeOffset.UtcNow, out lease) : stored;
+                    var cache = new VoiceMetadataCache();
+                    var view = new SettingsViewModel(context, settings, null, null, voiceMetadataCache: cache,
+                        settingsWriteLease: leased ? lease : null);
+                    ownedView = view;
+                    var card = new VoiceSearchItem { Id = Id, Title = "Retained card" };
+                    view.SearchResults = [card];
+                    var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ownedResponse = response;
+                    CancellationToken capturedToken = default;
+                    http.GetAsyncHandler = (_, _, token) => { capturedToken = token; return response.Task; };
+                    var pending = view.SearchVoicesCommand.ExecuteAsync(null);
+                    ownedPending = pending;
+                    var credentialIdentity = settings.CredentialIdentity;
+                    var queued = new List<Action>();
+                    SettingsViewModel.UiThreadInvokerOverride = queued.Add;
+                    try
+                    {
+                        cache.Put(VoiceMetadata.FromCachedVoice(Id, new() { Title = "Accepted queued metadata" }), VoiceMetadataCache.CredentialScope(settings.ApiKey));
+                        ((ContextProxy)(object)context).SaveSettings = _ => throw new IOException("Synthetic key save failure");
+                        try { view.ApiKey = "rejected-key"; throw new Exception("Expected key save failure"); }
+                        catch (IOException) { }
+                        AssertEqual("accepted-a", settings.ApiKey, "Failed saves restore the accepted key");
+                        AssertEqual("accepted-a", view.ApiKey, "Failed saves restore the visible key draft");
+                        AssertEqual(true, ReferenceEquals(credentialIdentity, settings.CredentialIdentity), "Failed saves cannot rotate credential publication identity");
+                        AssertEqual(false, capturedToken.IsCancellationRequested, "Failed key saves cannot cancel accepted in-flight work");
+                        AssertEqual(true, ReferenceEquals(card, view.SearchResults.Single()), "Failed saves preserve displayed card objects");
+                        AssertEqual("Retained selected", view.CachedVoiceTitle, "Failed saves preserve the selected display");
+                        foreach (var action in queued.ToArray()) action();
+                        AssertEqual("Accepted queued metadata", card.Title, "Failed saves keep the accepted cache subscription and queued publication valid");
+                    }
+                    finally { SettingsViewModel.UiThreadInvokerOverride = null; }
+                    response.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Accepted pending response\"}]}");
+                    await pending.WaitAsync(RegressionExecution.Timeout);
+                    AssertEqual("Accepted pending response", view.SearchResults.Single().Title, "Accepted pending requests remain publishable after failed key persistence");
+                    AssertEqual("Bearer accepted-a", AssertHeaders(http.LastGetOptions, "Pending accepted request")["Authorization"], "Failed persistence cannot change request credentials");
+                },
+                () => { ownedView?.Dispose(); return Task.CompletedTask; },
+                () => { ownedResponse?.TrySetResult("{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Accepted pending response\"}]}"); return Task.CompletedTask; },
+                () => ownedPending ?? Task.CompletedTask);
             }
-            finally { SettingsViewModel.UiThreadInvokerOverride = null; }
-            response.SetResult("{\"total\":1,\"items\":[{\"_id\":\"" + Id + "\",\"title\":\"Accepted pending response\"}]}");
-            await pending.WaitAsync(RegressionExecution.Timeout);
-            AssertEqual("Accepted pending response", view.SearchResults.Single().Title, "Accepted pending requests remain publishable after failed key persistence");
-            AssertEqual("Bearer accepted-a", AssertHeaders(http.LastGetOptions, "Pending accepted request")["Authorization"], "Failed persistence cannot change request credentials");
-        }
+        });
     }
 
-    internal static void AcceptedPublicationOwnsIdentityAcrossCopiesAndReentrantSaves()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/accepted-publication-owns-identity-across-copies-and-reentrant-saves")]
+    [Order(196)]
+    public static void AcceptedPublicationOwnsIdentityAcrossCopiesAndReentrantSaves()
     {
         var stored = new Settings { ApiKey = "accepted-a", VoiceId = Id, CachedVoice = new() { Title = "Retained" } };
         var context = CreateContext(settings: stored);
@@ -298,7 +359,10 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual(1.5, settings.Speed, "The outer ordinary setting save still publishes its requested value");
     }
 
-    internal static async Task StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/startup-credential-round-trip-at-save-boundary-cannot-write")]
+    [Order(199)]
+    public static async Task StartupCredentialRoundTripAtSaveBoundaryCannotWriteAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         var stored = new Settings { ApiKey = "startup-a", VoiceId = Id, CachedVoice = new() { Title = "Retained startup display" } };
@@ -333,7 +397,10 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual(saves + 2, ((ContextProxy)(object)context).SaveCount, "Only the two accepted key edits may save at the boundary");
     }
 
-    internal static void SubscriptionRebindingAndDisposalKeepOnlyTheCurrentOwner()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/subscription-rebinding-and-disposal-keep-only-the-current-owner")]
+    [Order(197)]
+    public static void SubscriptionRebindingAndDisposalKeepOnlyTheCurrentOwner()
     {
         var settings = new Settings { ApiKey = "owner-a", VoiceId = Id };
         var cache = new VoiceMetadataCache();
@@ -365,7 +432,10 @@ internal static class CredentialDisplayPreservationSuite
         finally { SettingsViewModel.UiThreadInvokerOverride = null; }
     }
 
-    internal static async Task RetainedPreviewEntryUsesResourceWithoutAuthAndRefreshesWithAcceptedKeyAsync()
+    [Test]
+    [Property("FishAudioCaseId", "voice.credential-display/retained-preview-entry-uses-resource-without-auth-and-refreshes-with-accepted-key")]
+    [Order(198)]
+    public static async Task RetainedPreviewEntryUsesResourceWithoutAuthAndRefreshesWithAcceptedKeyAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string sample = "https://platform.r2.fish.audio/retained.mp3";
@@ -394,6 +464,38 @@ internal static class CredentialDisplayPreservationSuite
         AssertEqual("Fresh B", card.Title, "An explicit preview refresh may update its current browse card");
         AssertEqual("Retained selected", settings.CachedVoice?.Title, "Refreshing a browse preview still cannot implicitly Apply its metadata");
         AssertEqual("Retained selected", view.CachedVoiceTitle, "The selected display remains independent of browse preview refresh");
+    }
+
+
+    private static void DeleteOwnedHeldWorkDirectory(string? root)
+    {
+        if (root is null) return;
+        var fullRoot = Path.GetFullPath(root);
+        var parent = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "FishAudioTests"));
+        var name = Path.GetFileName(fullRoot);
+        if (!Path.IsPathFullyQualified(root)
+            || !string.Equals(Path.GetDirectoryName(fullRoot), parent, StringComparison.OrdinalIgnoreCase)
+            || !Guid.TryParseExact(name, "N", out var owner)
+            || !string.Equals(name, owner.ToString("N"), StringComparison.Ordinal))
+            throw new InvalidOperationException("held-work-cleanup-owner-invalid");
+        for (DirectoryInfo? directory = new(fullRoot); directory is not null; directory = directory.Parent)
+        {
+            if (!directory.Exists || (directory.Attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                throw new InvalidOperationException("held-work-cleanup-directory-invalid");
+        }
+        var pending = new Stack<string>();
+        pending.Push(fullRoot);
+        while (pending.Count != 0)
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(pending.Pop()))
+            {
+                var attributes = File.GetAttributes(entry);
+                if ((attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0)
+                    throw new InvalidOperationException("held-work-cleanup-entry-invalid");
+                if ((attributes & FileAttributes.Directory) != 0) pending.Push(entry);
+            }
+        }
+        Directory.Delete(fullRoot, recursive: true);
     }
 
     private static string SelectedDisplay(SettingsViewModel view) => JsonSerializer.Serialize(new

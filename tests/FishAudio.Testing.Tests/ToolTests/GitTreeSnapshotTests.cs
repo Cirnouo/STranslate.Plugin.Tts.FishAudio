@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using FishAudio.Testing.Fixtures;
 using FishAudio.Testing.Snapshots;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -22,6 +23,8 @@ public sealed class GitTreeSnapshotTests
     private string _evidenceRoot = "";
     private string _ownedJunction = "";
     private string _ownedJunctionTarget = "";
+    private string _signingRoot = "";
+    private GitFixtureSigning? _signing;
     private Stopwatch? _diagnosticClock;
     private bool _failureArchiveAttempted;
     private int _ordinal;
@@ -50,16 +53,27 @@ public sealed class GitTreeSnapshotTests
         }
         _repository = Path.Combine(_owner, "repository");
         Directory.CreateDirectory(_repository);
-        _git = Executable("git.exe");
+        _git = GitFixtureSigning.ResolveGitExecutable();
     }
 
     [TearDown]
     public async Task ReleaseOwnedRepository()
     {
-        if (string.IsNullOrEmpty(_owner) || !Directory.Exists(_owner)) return;
-        if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+        var failed = TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed;
+        if (failed || _clock.Elapsed >= TimeSpan.FromSeconds(120))
+            _diagnosticClock ??= Stopwatch.StartNew();
+        Exception? signingCleanupFailure = null;
+        try { DeleteSigningMaterials(); }
+        catch (Exception error) { signingCleanupFailure = error; }
+        if (string.IsNullOrEmpty(_owner) || !Directory.Exists(_owner))
+        {
+            if (signingCleanupFailure is not null && !failed) throw signingCleanupFailure;
+            return;
+        }
+        if (failed || signingCleanupFailure is not null)
         {
             await RetainFailureEvidenceAsync();
+            if (signingCleanupFailure is not null && !failed) throw signingCleanupFailure;
             return;
         }
         try { DeleteSuccessfulFixture(); }
@@ -68,6 +82,58 @@ public sealed class GitTreeSnapshotTests
             await RetainFailureEvidenceAsync();
             throw;
         }
+    }
+
+    private void DeleteSigningMaterials()
+    {
+        if (string.IsNullOrEmpty(_signingRoot)) return;
+        CheckSigningCleanupBudget();
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(_signingRoot));
+        var name = Path.GetFileName(root);
+        if (!Path.IsPathFullyQualified(_signingRoot) ||
+            !string.Equals(root, _signingRoot, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(Path.GetDirectoryName(root), _parent, StringComparison.OrdinalIgnoreCase) ||
+            !name.StartsWith("fa-tree-sign-", StringComparison.Ordinal) || name.Length != 13 + 32 ||
+            !Guid.TryParseExact(name[13..], "N", out _))
+            throw new InvalidOperationException("git-tree-fixture-signing-cleanup-owner-invalid");
+        RequireDirectory(_parent);
+        var directory = new DirectoryInfo(root);
+        directory.Refresh();
+        if (!directory.Exists)
+        {
+            if (File.Exists(root)) throw new InvalidOperationException("git-tree-fixture-signing-cleanup-not-directory");
+            return;
+        }
+        RequireDirectory(root);
+        var allowed = new HashSet<string>(StringComparer.Ordinal)
+            { "fixture-ed25519", "fixture-ed25519.pub", "allowed_signers" };
+        var files = new List<FileInfo>();
+        foreach (var entry in directory.EnumerateFileSystemInfos())
+        {
+            CheckSigningCleanupBudget();
+            entry.Refresh();
+            if (entry is not FileInfo file || !entry.Exists ||
+                (entry.Attributes & (FileAttributes.ReparsePoint | FileAttributes.Device)) != 0 ||
+                !allowed.Remove(entry.Name))
+                throw new InvalidOperationException("git-tree-fixture-signing-cleanup-entry-invalid");
+            files.Add(file);
+        }
+        foreach (var file in files)
+        {
+            CheckSigningCleanupBudget();
+            File.SetAttributes(file.FullName, FileAttributes.Normal);
+            File.Delete(file.FullName);
+        }
+        CheckSigningCleanupBudget();
+        Directory.Delete(root, recursive: false);
+        _signingRoot = "";
+        _signing = null;
+    }
+
+    private void CheckSigningCleanupBudget()
+    {
+        if (_diagnosticClock is not null) _ = DrainRemaining(_diagnosticClock);
+        else _ = Remaining();
     }
 
     private void DeleteSuccessfulFixture()
@@ -581,8 +647,36 @@ public sealed class GitTreeSnapshotTests
         await Git(["update-index", "--add", "--cacheinfo", mode + "," + await Blob(bytes) + "," + path], index: index);
     }
     private async Task<string> Commit(string tree)
-        => await GitText(["hash-object", "-t", "commit", "-w", "--stdin"], Encoding.ASCII.GetBytes(
-            $"tree {tree}\nauthor Fixture <fixture@example.invalid> 1700000000 +0000\ncommitter Fixture <fixture@example.invalid> 1700000000 +0000\n\nfixture\n"));
+    {
+        var signing = Signing();
+        var objectId = await GitText([.. signing.ConfigurationArguments(), "-c", "user.name=Fixture",
+            "-c", "user.email=fixture@example.invalid", "commit-tree", "-S", tree, "-m", "fixture"]);
+        if ((objectId.Length != 40 && objectId.Length != 64) ||
+            !objectId.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f'))
+            throw new InvalidOperationException("git-tree-fixture-signed-object-id-invalid");
+        await Git(signing.VerifyCommitArguments(objectId));
+        return objectId;
+    }
+
+    private GitFixtureSigning Signing()
+    {
+        if (_signing is not null) return _signing;
+        _ = Remaining();
+        _signingRoot = Path.Combine(_parent, "fa-tree-sign-" + Guid.NewGuid().ToString("N"));
+        if (string.Equals(_signingRoot, _owner, StringComparison.OrdinalIgnoreCase) ||
+            _signingRoot.StartsWith(_owner + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+            (!string.IsNullOrEmpty(_evidenceRoot) &&
+             (string.Equals(_signingRoot, Path.TrimEndingDirectorySeparator(_evidenceRoot), StringComparison.OrdinalIgnoreCase) ||
+              _signingRoot.StartsWith(Path.TrimEndingDirectorySeparator(_evidenceRoot) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))))
+            throw new InvalidOperationException("git-tree-fixture-signing-root-inside-capture");
+        var keygen = GitFixtureSigning.ResolveSshKeygenExecutable(_git);
+        _signing = GitFixtureSigning.Generate(_signingRoot, keygen, "fixture@example.invalid", (executable, arguments) =>
+        {
+            var result = Run(executable, arguments, input: []).GetAwaiter().GetResult();
+            if (result.ExitCode != 0) throw new InvalidOperationException("git-tree-fixture-keygen-failed");
+        });
+        return _signing;
+    }
     private async Task<string> Tree(params (string Mode, string Name, string Oid)[] entries)
     {
         using var bytes = new MemoryStream();
@@ -622,6 +716,7 @@ public sealed class GitTreeSnapshotTests
         };
         foreach (var argument in arguments) start.ArgumentList.Add(argument);
         foreach (var key in start.Environment.Keys.Where(key => key.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase)).ToArray()) start.Environment.Remove(key);
+        start.Environment.Remove("SSH_AUTH_SOCK");
         if (index is not null) start.Environment["GIT_INDEX_FILE"] = index;
         start.Environment["GIT_OPTIONAL_LOCKS"] = "0";
         using var process = new Process { StartInfo = start };
@@ -638,10 +733,10 @@ public sealed class GitTreeSnapshotTests
             stderr = process.StandardError.BaseStream.CopyToAsync(errorOutput);
             if (input is not null)
             {
-                await process.StandardInput.BaseStream.WriteAsync(input).AsTask().WaitAsync(Remaining());
+                await process.StandardInput.BaseStream.WriteAsync(input).AsTask().WaitAsync(Remaining()).ConfigureAwait(false);
                 process.StandardInput.Close();
             }
-            await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(Remaining());
+            await Task.WhenAll(process.WaitForExitAsync(), stdout, stderr).WaitAsync(Remaining()).ConfigureAwait(false);
             _ = Remaining();
             return new(process.ExitCode, output.ToArray(), errorOutput.ToArray());
         }
@@ -650,14 +745,18 @@ public sealed class GitTreeSnapshotTests
         {
             if (primary is not null && started)
             {
-                var cleanup = Stopwatch.StartNew();
-                _diagnosticClock ??= cleanup;
+                var cleanup = _diagnosticClock ??= Stopwatch.StartNew();
                 try
                 {
                     if (!process.HasExited) process.Kill(entireProcessTree: true);
-                    await Task.WhenAll(new[] { process.WaitForExitAsync(), stdout, stderr }.OfType<Task>()).WaitAsync(DrainRemaining(cleanup));
+                    await Task.WhenAll(new[] { process.WaitForExitAsync(), stdout, stderr }.OfType<Task>())
+                        .WaitAsync(DrainRemaining(cleanup)).ConfigureAwait(false);
                 }
-                catch (Exception cleanupError) { TestContext.Error.WriteLine("git-tree: bounded cleanup failed (" + cleanupError.GetType().Name + ")."); }
+                catch (Exception cleanupError)
+                {
+                    try { TestContext.Error.WriteLine("git-tree: bounded cleanup failed (" + cleanupError.GetType().Name + ")."); }
+                    catch { /* Keep the primary process failure. */ }
+                }
             }
             try
             {
@@ -684,15 +783,6 @@ public sealed class GitTreeSnapshotTests
         var value = Environment.GetEnvironmentVariable("FISHAUDIO_PWSH_EXECUTABLE");
         if (value is null || !Path.IsPathFullyQualified(value) || !File.Exists(value)) throw new InvalidOperationException("git-tree-fixture-pwsh-required");
         return value;
-    }
-    private static string Executable(string name)
-    {
-        foreach (var directory in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
-        {
-            var path = Path.Combine(directory.Trim('"'), name);
-            if (Path.IsPathFullyQualified(path) && File.Exists(path)) return Path.GetFullPath(path);
-        }
-        throw new InvalidOperationException("git-tree-fixture-executable-missing");
     }
     private static void RequireDirectory(string path)
     {

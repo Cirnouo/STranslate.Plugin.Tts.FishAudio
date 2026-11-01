@@ -9,7 +9,7 @@ namespace NUnitCompatibility;
 public sealed class ChildCompatibilityCases
 {
     internal const string NUnitCaseId = "compat.child/streaming-text-first-window";
-    internal const string LegacyCaseId = "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences";
+    internal const string LegacyCaseId = StreamingTextChildCompatibilityTarget.HistoricalScenarioId;
 
     [Test]
     [Property("FishAudioCaseId", NUnitCaseId)]
@@ -48,7 +48,9 @@ public sealed class ChildCompatibilityCases
     private static async Task RunOwnedChildAsync(string directory)
     {
         var registry = RegressionCatalog.Create();
-        var selected = registry.Where(item => item.Id == LegacyCaseId).ToArray();
+        NUnitAssert.That(registry.Any(item => item.Id == LegacyCaseId), Is.False,
+            "The historical target must remain child-only after its standard NUnit owner migrates.");
+        var selected = new[] { StreamingTextChildCompatibilityTarget.CreateCase() };
         NUnitAssert.That(selected.Length, Is.EqualTo(1));
         NUnitAssert.That(selected[0].Partition, Is.EqualTo("core"));
         var source = await RegressionSource.CaptureAsync();

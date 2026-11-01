@@ -6,6 +6,7 @@ using STranslate.Plugin.Tts.FishAudio.ViewModel;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using static AsyncTestWait;
@@ -14,57 +15,95 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static class CreditRefreshSuite
 {
-    internal static async Task ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.credit/manual-credit-refresh-uses-preflight-and-locks-api-key-input")]
+    [NUnit.Framework.Order(160)]
+    public static async Task ManualCreditRefreshUsesPreflightAndLocksApiKeyInputAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var snackbar = new TestSnackbar();
         var logger = new TestLogger();
         var (httpService, http) = TestHttpServiceProxy.Create();
         var settings = new Settings { ApiKey = AppliedKey };
-        var viewModel = new SettingsViewModel(
-            CreateContext(snackbar, settings, httpService, logger: logger),
-            settings);
-
-        await viewModel.RefreshCreditCommand.ExecuteAsync(null);
-        AssertEqual(
-            "STranslate_Plugin_Tts_FishAudio_Network_Unavailable",
-            snackbar.LastError,
-            "Manual credit refresh should use the shared offline preflight");
-        AssertEqual(0, http.GetCallCount, "Manual credit refresh should not call the API when offline");
-        AssertEqual(true, logger.Contains(LogLevel.Warning, "Network unavailable"), "Offline manual refresh should be logged");
-
-        network.Set(true);
-        snackbar.Clear();
-        var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseRequest = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        http.GetAsyncHandler = (_, _, _) =>
+        ExceptionDispatchInfo? failure = null;
+        try
         {
-            requestStarted.SetResult();
-            return releaseRequest.Task;
-        };
+            using var viewModel = new SettingsViewModel(
+                CreateContext(snackbar, settings, httpService, logger: logger),
+                settings);
+            Task? commandTask = null;
+            TaskCompletionSource<string>? pendingResponse = null;
+            try
+            {
+                await viewModel.RefreshCreditCommand.ExecuteAsync(null);
+                AssertEqual(
+                    "STranslate_Plugin_Tts_FishAudio_Network_Unavailable",
+                    snackbar.LastError,
+                    "Manual credit refresh should use the shared offline preflight");
+                AssertEqual(0, http.GetCallCount, "Manual credit refresh should not call the API when offline");
+                AssertEqual(true, logger.Contains(LogLevel.Warning, "Network unavailable"), "Offline manual refresh should be logged");
 
-        var commandTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
-        await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
+                network.Set(true);
+                snackbar.Clear();
+                var requestStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var releaseRequest = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                pendingResponse = releaseRequest;
+                http.GetAsyncHandler = (_, _, _) =>
+                {
+                    requestStarted.SetResult();
+                    return releaseRequest.Task;
+                };
 
-        AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual credit refresh should lock API Key input while the request is running");
-        AssertEqual(false, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be disabled while API Key input is locked");
+                commandTask = viewModel.RefreshCreditCommand.ExecuteAsync(null);
+                await requestStarted.Task.WaitAsync(RegressionExecution.Timeout);
 
-        releaseRequest.SetResult("{\"credit\":\"4.56\"}");
-        await commandTask.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(true, viewModel.IsApiKeyInputLocked, "Manual credit refresh should lock API Key input while the request is running");
+                AssertEqual(false, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be disabled while API Key input is locked");
 
-        AssertEqual(false, viewModel.IsApiKeyInputLocked, "Manual credit refresh should unlock API Key input after the request completes");
-        AssertEqual(true, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be enabled after API Key input unlocks");
+                releaseRequest.SetResult("{\"credit\":\"4.56\"}");
+                await commandTask.WaitAsync(RegressionExecution.Timeout);
+
+                AssertEqual(false, viewModel.IsApiKeyInputLocked, "Manual credit refresh should unlock API Key input after the request completes");
+                AssertEqual(true, viewModel.PasteApiKeyCommand.CanExecute(null), "Paste API Key should be enabled after API Key input unlocks");
+            }
+            catch (Exception error)
+            {
+                failure = ExceptionDispatchInfo.Capture(error);
+            }
+            finally
+            {
+                pendingResponse?.TrySetResult("{\"credit\":\"4.56\"}");
+                try
+                {
+                    if (commandTask is not null) await commandTask;
+                }
+                catch (Exception error)
+                {
+                    failure ??= ExceptionDispatchInfo.Capture(error);
+                }
+            }
+        }
+        catch (Exception error)
+        {
+            failure ??= ExceptionDispatchInfo.Capture(error);
+        }
+        failure?.Throw();
     }
 
-    internal static async Task ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.credit/manual-credit-refresh-success-shows-balance-and-latency")]
+    [NUnit.Framework.Order(161)]
+    public static async Task ManualCreditRefreshSuccessShowsBalanceAndLatencyAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         var settings = new Settings { ApiKey = AppliedKey };
         var (httpService, http) = TestHttpServiceProxy.Create();
         http.GetResponseJson = "{\"credit\":\"7.89\"}";
-        var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
+        using var viewModel = new SettingsViewModel(CreateContext(settings: settings, httpService: httpService), settings);
 
         await viewModel.RefreshCreditCommand.ExecuteAsync(null);
 
@@ -74,7 +113,10 @@ internal static class CreditRefreshSuite
         AssertEqual(TimeSpan.FromSeconds(15), http.LastGetOptions?.Timeout, "Credit refresh should set an explicit request timeout");
     }
 
-    internal static async Task ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.credit/manual-credit-refresh-timeout-shows-localized-error-and-logs")]
+    [NUnit.Framework.Order(162)]
+    public static async Task ManualCreditRefreshTimeoutShowsLocalizedErrorAndLogsAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         var settings = new Settings { ApiKey = AppliedKey };
@@ -82,7 +124,7 @@ internal static class CreditRefreshSuite
         var logger = new TestLogger();
         var (httpService, http) = TestHttpServiceProxy.Create();
         http.GetException = new TimeoutException("request timed out");
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, settings, httpService, logger: logger),
             settings);
 
@@ -97,14 +139,17 @@ internal static class CreditRefreshSuite
         AssertEqual(true, logger.Contains(LogLevel.Error, "Credit refresh failed"), "Manual credit refresh timeout should be logged");
     }
 
-    internal static async Task SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "settings.credit/silent-credit-refresh-preflight-and-timeout-only-log")]
+    [NUnit.Framework.Order(163)]
+    public static async Task SilentCreditRefreshPreflightAndTimeoutOnlyLogAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var settings = new Settings { ApiKey = AppliedKey };
         var snackbar = new TestSnackbar();
         var logger = new TestLogger();
         var (httpService, http) = TestHttpServiceProxy.Create();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, settings, httpService, logger: logger),
             settings);
 

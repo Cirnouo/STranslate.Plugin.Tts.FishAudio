@@ -32,7 +32,7 @@ internal static class SettingsControlAlignmentSuite
         await RunOnStaThreadAsync(VoiceIdCompositionAndPasteRejectInvalidText);
     }
 
-    private static void BrowseTabPositionsStayFixed(string language)
+    internal static void BrowseTabPositionsStayFixed(string language)
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -72,7 +72,7 @@ internal static class SettingsControlAlignmentSuite
         }
     }
 
-    private static void SliderStartsAtNativeContentAnchor()
+    internal static void SliderStartsAtNativeContentAnchor()
     {
         var settings = new Settings { SelectedModel = "s2-pro" };
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -99,7 +99,7 @@ internal static class SettingsControlAlignmentSuite
         }
     }
 
-    private static void EmptyBrowseRowsKeepModelPosition()
+    internal static void EmptyBrowseRowsKeepModelPosition()
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings);
@@ -122,7 +122,7 @@ internal static class SettingsControlAlignmentSuite
             Near(nextHeader, model.TranslatePoint(new Point(), view).Y, "Switching empty query tabs must preserve the following Model heading position");
         }
     }
-    private static void VisibleCardIconsShareCenter(double width)
+    internal static void VisibleCardIconsShareCenter(double width)
     {
         const string id = "0123456789abcdef0123456789abcdef";
         const string sample = "https://example.invalid/sample.mp3";
@@ -205,7 +205,7 @@ internal static class SettingsControlAlignmentSuite
         return icon.TranslatePoint(new Point(bounds.Left + bounds.Width / 2, bounds.Top + bounds.Height / 2), ancestor).Y;
     }
 
-    private static void InputViewportsKeepTheirWidth()
+    internal static void InputViewportsKeepTheirWidth()
     {
         var settings = new Settings { ApiKey = AppliedKey };
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings) { BrowseMode = VoiceBrowseMode.ById, VoiceIdInput = AppliedKey };
@@ -256,7 +256,7 @@ internal static class SettingsControlAlignmentSuite
         }
     }
 
-    private static void VoiceIdCompositionAndPasteRejectInvalidText()
+    internal static void VoiceIdCompositionAndPasteRejectInvalidText()
     {
         var settings = new Settings();
         using var vm = new SettingsViewModel(CreateContext(settings: settings), settings) { BrowseMode = VoiceBrowseMode.ById };

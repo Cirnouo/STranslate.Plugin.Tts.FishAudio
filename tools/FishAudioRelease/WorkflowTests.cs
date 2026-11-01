@@ -27,12 +27,19 @@ internal static class WorkflowTests
         SelfTest.Equal(true, Regex.IsMatch(verifyStep, @"(?m)^\s+run: dotnet run --project tools/FishAudioRelease -c Release -- --verify\s*$"));
         SelfTest.Equal(true, gate[upload..].Contains("uses: actions/upload-artifact@", StringComparison.Ordinal));
         SelfTest.Equal(true, Position(gate, "Require every validation prerequisite to succeed") < Position(gate, "Checkout exact validation commit"));
-        SelfTest.Equal(true, Position(gate, "--verify-reports") < Position(gate, "run: .\\build.ps1 -Release"));
-        SelfTest.Equal(true, Position(gate, "VerifyFrameworkCi.ps1") < Position(gate, "run: .\\build.ps1 -Release"));
-        SelfTest.Equal(true, gate.Contains("needs: [supply-chain-security, commit-messages, regression, nunit-foundation]", StringComparison.Ordinal));
-        SelfTest.Equal(true, gate.Contains("FRAMEWORK_RESULT: ${{ needs.nunit-foundation.result }}", StringComparison.Ordinal));
-        SelfTest.Equal(true, validation.Contains(".\\tools\\Test.ps1 -Mode Full -ResultsDirectory", StringComparison.Ordinal));
-        SelfTest.Equal(true, validation.Contains("framework-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}", StringComparison.Ordinal));
+        SelfTest.Equal(true, Position(gate, "VerifyHybridCi.ps1") < Position(gate, "run: .\\build.ps1 -Release"));
+        SelfTest.Equal(true, gate.Contains("if: ${{ always() }}", StringComparison.Ordinal));
+        SelfTest.Equal(true, gate.Contains("needs: [supply-chain-security, commit-messages, hybrid-validation]", StringComparison.Ordinal));
+        SelfTest.Equal(true, gate.Contains("HYBRID_RESULT: ${{ needs.hybrid-validation.result }}", StringComparison.Ordinal));
+        SelfTest.Equal(true, validation.Contains(".\\tools\\TestHybrid.ps1 -RepositoryRoot", StringComparison.Ordinal));
+        SelfTest.Equal(true, validation.Contains(".\\tools\\Assert-HybridSession.ps1 -RepositoryRoot", StringComparison.Ordinal));
+        SelfTest.Equal(true, validation.Contains("hybrid-report-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}", StringComparison.Ordinal));
+        SelfTest.Equal(false, validation.Contains("VerifyFrameworkCi.ps1", StringComparison.Ordinal));
+        var hybrid = validation[Position(validation, "\n  hybrid-validation:")..Position(validation, "\n  build-test-package:")];
+        SelfTest.Equal(true, Position(hybrid, "Run complete hybrid validation") < Position(hybrid, "Independently admit complete hybrid session"));
+        SelfTest.Equal(true, Position(hybrid, "Independently admit complete hybrid session") < Position(hybrid, "Record this hybrid attempt owner"));
+        SelfTest.Equal(true, hybrid.Contains("timeout-minutes: 90", StringComparison.Ordinal));
+        SelfTest.Equal(true, gate.Contains("GetRegressionJobAttempts.ps1", StringComparison.Ordinal));
         SelfTest.Equal(true, gate.Contains("actions: read", StringComparison.Ordinal));
         SelfTest.Equal(true, gate.Contains("github-token: ${{ github.token }}", StringComparison.Ordinal) &&
             gate.Contains("run-id: ${{ github.run_id }}", StringComparison.Ordinal) && gate.Contains("merge-multiple: false", StringComparison.Ordinal));

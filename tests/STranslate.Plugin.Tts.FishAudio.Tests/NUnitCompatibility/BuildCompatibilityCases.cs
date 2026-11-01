@@ -17,6 +17,11 @@ public sealed class BuildCompatibilityCases
 
     [Test]
     [Property("FishAudioCaseId", "compat.build/legacy-only-skips-nunit")]
-    public Task LegacyOnlyLeavesFrameworkExecutionWithTheOuterCoordinator() =>
+    public Task LegacyOnlyRetainsExplicitDiagnosticRoute() =>
         BuildScriptSuite.LegacyOnlyCoordinatorSkipsFrameworkAsync();
+    [Test]
+    [Property("FishAudioCaseId", "compat.build/admission-failure-keeps-package-and-cleanup")]
+    public Task IndependentHybridAdmissionFailurePreservesExitCodePackageAndCleanup() =>
+        BuildScriptSuite.AdmissionFailureKeepsExitCodePackageAndCleanupAsync();
+
 }

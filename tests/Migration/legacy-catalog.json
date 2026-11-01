@@ -1,0 +1,6353 @@
+{
+  "schemaVersion": 1,
+  "referenceKind": "git-tree",
+  "sourceReferenceCommit": "ec28a59e1a9f4d5debaf2998f668bb3f7988aeca",
+  "sourceTree": "ebbae71fc69aaf5b47d74e4dcbdcc6b6cf4f058c",
+  "provenance": {
+    "localGateReport": {
+      "sha256": "e1caf60196bb62df52a5cc8b0350cff6ab6dd383741f9f2de3ddbcef7b7e8b43",
+      "reportedSourceCommit": "98c53efc3abd5923acf3a97468a572b2c11551bf",
+      "reportedSourceTree": "ebbae71fc69aaf5b47d74e4dcbdcc6b6cf4f058c",
+      "snapshot": true,
+      "complete": true,
+      "configuration": "Release",
+      "sdk": "10.0.403",
+      "passedCaseCount": 1580
+    },
+    "mainConfirmation": {
+      "commit": "ec28a59e1a9f4d5debaf2998f668bb3f7988aeca",
+      "tree": "ebbae71fc69aaf5b47d74e4dcbdcc6b6cf4f058c",
+      "workflowAttempt": 2,
+      "workflowRunUrl": "https://github.com/Cirnouo/STranslate.Plugin.Tts.FishAudio/actions/runs/40591866441/attempts/2",
+      "actualPartitionAttempts": {
+        "core": 2,
+        "native-settings": 1,
+        "native-input": 1,
+        "native-popups": 1,
+        "native-cards": 1
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "streaming.entry/formal-playback-uses-session-without-whole-buffer-host-audio",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/snapshot-stays-immutable-while-settings-are-edited",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/supersession-waits-for-output-cleanup-across-three-calls",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/caller-and-disposal-cancel-owned-sessions",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/cancellation-probe-observes-synchronous-retirement",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/cancellation-probe-retains-only-active-observation",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.entry/transport-failures-do-not-expose-credentials",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/missing-configuration-loads-pcm",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/legacy-formats-migrate-and-current-defaults-use-pcm",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/future-and-duplicate-schemas-remain-read-only",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/invalid-streaming-field-types-default-independently",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/new-fields-round-trip-and-snapshots-preserve-all-settings",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/lease-commit-and-rollback-preserve-streaming-settings",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/model-order-defaults-and-saved-choices-stay-independent",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/view-model-format-and-model-toggles-preserve-settings",
+      "partition": "core"
+    },
+    {
+      "id": "settings.streaming/streaming-settings-ui-resources-are-complete",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/waveout-provides-200ms-in-four-50ms-buffers",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/short-pcm-starts-after-100ms-with-blocked-input",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/starts-at-250ms-without-timer",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/pcm-byte-carry-and-odd-tail",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/device-position-drain-including-underrun-silence",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/large-pcm-bounds-and-low-water-resume",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/device-failure-interrupts-waiting-phases",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/cancellation-and-disposal-interrupt-waiting-phases",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/startup-failures-never-notify",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/stalled-real-data-and-idle-input",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/waveout-position-wrap-and-unexpected-stops",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/mp3-split-frames-and-vbr-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/mp3-truncation-and-oversized-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/mp3-frame-backpressure",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/uncooperative-input-interruption",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/pcm-ring-cap-and-wraparound",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/cancellation-during-play-never-notifies",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/cleanup-preserves-primary-and-attempts-all-resources",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/cleanup-failure-after-success",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/input-cleanup-preserves-decoder-failure",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/synchronous-large-input-starts-before-further-production",
+      "partition": "core"
+    },
+    {
+      "id": "playback.streaming/cancellation-callback-preserves-playback-failure",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.text/first-window-is-lazy-and-cuts-ordinary-long-sentences",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.text/markup-stays-ordered-across-windows-without-duplicate-directions",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.text/control-only-and-incomplete-input-never-claims-readable-prefix",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.text/boundary-priority-and-huge-tail-do-not-change-first-prefix",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/tail-waits-for-successful-playback-and-finish-waits-for-drain",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/short-input-stops-without-waiting-for-playback",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/protocol-rejects-malformed-oversize-and-missing-finish",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/fragmented-audio-uses-owned-bounded-ordered-blocks",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/model-and-request-snapshot-are-exact-before-connect",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/cancellation-and-faults-abort-every-worker",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/connect-first-pcm-and-idle-use-independent-deadlines",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/idle-excludes-union-of-actual-queue-and-pcm-pressure",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/free-cutoff-rejects-before-connect-and-aborts-long-session",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/receiver-and-audio-failures-keep-their-cause-and-dispose-cancels",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.session/cancellation-callback-cannot-replace-primary-audio-failure",
+      "partition": "core"
+    },
+    {
+      "id": "settings.api-key/api-key-format-accepts-legacy-and-prefixed-keys",
+      "partition": "core"
+    },
+    {
+      "id": "settings.api-key/api-key-format-rejects-malformed-keys",
+      "partition": "core"
+    },
+    {
+      "id": "settings.api-key/voice-id-format-remains-legacy-only",
+      "partition": "core"
+    },
+    {
+      "id": "settings.api-key/request-paths-preserve-preflight-and-bearer",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/ui-locales-have-complete-resources-and-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/release112-metadata-is-complete",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/release111-metadata-is-complete",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/release110-metadata-is-complete",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/package-reference-uses-sdk1015",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/release-output-is-isolated-from-debug-artifacts",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/release-build-uses-single-release-switch",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-russian-xaml-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-turkish-metadata-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/configuration-parameter-is-rejected",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/release-switch-selects-release-without-debug-packaging",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-audio-runtime-dependency-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-octicons-notice-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-flag-icons-notice-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/package-missing-streaming-runtime-dependency-fails",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/ordinary-build-cleans-every-artifact-directory-before-building",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/clean-build-cleans-every-artifact-directory-after-building",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/clean-build-cleans-after-failed-regression-tests",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/test-selection-arguments-reach-runner",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/test-selection-without-test-is-rejected",
+      "partition": "core"
+    },
+    {
+      "id": "repository.build/failed-selected-tests-keep-exit-code",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/new-settings-serialize-current-schema-first",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/version100-settings-migrate",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/version101-settings-migrate",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/version102-unversioned-settings-migrate",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/current-voice-fields-win-regardless-of-property-order",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/invalid-current-voice-fields-fall-back-to-legacy",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/wrong-json-type-defaults-only-that-field",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/wrong-schema-type-defaults-only-schema-field",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/unknown-and-deleted-properties-are-cleaned-up",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/numeric-settings-normalize-ranges-and-granularity",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/ordinary-duplicate-defaults-only-that-field",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/duplicate-and-future-schemas-are-read-only",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/current-settings-round-trip",
+      "partition": "core"
+    },
+    {
+      "id": "settings.storage/production-uses-settings-store-for-context-storage",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/api-key-validation-state-was-removed",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/main-delegates-initialization-to-lifecycle-coordinator",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/settings-view-model-splits-preview-and-cover-cache-responsibilities",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/settings-view-model-delegates-credit-refresh-workflow",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/settings-view-model-delegates-voice-discovery-workflow",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/settings-view-model-delegates-preview-refresh-workflow",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/operation-activity-counter-linearizes-state-transitions",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/operation-activity-counter-publishes-outside-gate-across-threads",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/operation-activity-counter-recovery-failure-leaves-publisher-reusable",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/operation-activity-counter-publishes-pending-state-before-rethrowing-publication-failure",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/overlapping-startup-manual-and-tts-operations-unlock-after-final-completion",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/api-key-operation-counter-handles-property-changing-reentrancy",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity/api-key-operation-counter-handles-property-changed-reentrancy",
+      "partition": "core"
+    },
+    {
+      "id": "runner.execution/run",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity-dispatcher/deadline-diagnostics-preserve-original-failure-without-retry",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.activity-dispatcher/playback-failure-and-cancellation-retire-bound-commands-on-ui-thread",
+      "partition": "native-settings"
+    },
+    {
+      "id": "lifecycle.activity-dispatcher/queued-retirement-cannot-unlock-new-ui-operation",
+      "partition": "native-settings"
+    },
+    {
+      "id": "settings.storage/api-key-editing-persists-immediately",
+      "partition": "core"
+    },
+    {
+      "id": "settings.binding/api-key-password-input-persists-before-focus-leaves",
+      "partition": "native-settings"
+    },
+    {
+      "id": "lifecycle.startup-credit/startup-credit-refresh-preflight-skips-request",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/startup-credit-refresh-requests-once-per-initialization",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/completed-startup-credit-refresh-applies-when-settings-view-model-is-created",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/pending-startup-credit-refresh-locks-settings-until-completion",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/failed-startup-credit-refresh-keeps-placeholder-without-snackbar",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/null-startup-credit-keeps-not-loaded-state",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/startup-credit-refresh-ignores-result-after-api-key-changes",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/reinitialized-startup-credit-refresh-ignores-old-cycle",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/reinitialized-startup-credit-refresh-remains-active-during-reload",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/reinitialized-settings-view-uses-new-context-and-settings",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/reinitialization-retires-old-view-model-without-saving-shared-backing-store",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-settings-save-wins-before-failed-replacement-transition",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/failed-same-instance-normalization-restores-old-state-and-backing-store",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/settings-view-model-creation-waits-for-replacement-commit",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/same-settings-instance-separates-old-and-new-view-model-write-leases",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/failed-reinitialization-restores-old-view-model-write-lease",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/dispose-retires-settings-write-lease",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/overtaken-initialization-skips-settings-load",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/reinitialization-waits-for-in-flight-view-model-save",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/disposed-settings-view-model-ignores-startup-credit-result",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/model-policy-uses-cutoff-defaults-and-normalize-loudness-support",
+      "partition": "core"
+    },
+    {
+      "id": "repository.contract/free-model-deadline-documentation-is-consistent",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/main-init-normalizes-structured-settings-without-clearing-keys",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-refresh-selected-voice-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-metadata-rejects-changed-credentials",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-voice-ui-apply-rechecks-expected-voice-id",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/delayed-startup-voice-refresh-does-not-restore-cleared-voice",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/delayed-startup-voice-refresh-does-not-overwrite-new-selection",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/concurrent-paid-model-selection-still-publishes-post-cutoff-policy",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-model-save-failure-rolls-back-runtime-and-storage",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-voice-save-failure-rolls-back-runtime-and-storage",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.startup-credit/published-replacement-invalidates-old-startup-credit-immediately",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-model-normalization-invalidates-speculative-settings-view-model",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/committed-startup-settings-invalidates-post-reservation-view-model-candidate",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-voice-refresh-invalidates-speculative-settings-view-model",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-settings-save-skips-after-new-initialization-request",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/initialization-load-waits-for-authorized-startup-settings-save",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/failed-reinitialization-restores-startup-settings-save-authorization",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-refresh-dispose-cancels-pending-work-without-logging",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/startup-refresh-cancellation-after-response-skips-side-effects",
+      "partition": "core"
+    },
+    {
+      "id": "lifecycle.initialization/reinitialized-startup-refresh-cannot-mutate-new-settings",
+      "partition": "core"
+    },
+    {
+      "id": "repository.architecture/apply-available-models-uses-ui-thread-invoker",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-uses-old-initialization-while-reinit-load-is-blocked",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-uses-initialization-snapshot-across-reinit",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-preflight-stops-before-request-for-missing-network",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-preflight-stops-before-request-for-empty-and-malformed-keys",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-with-formatted-key-streams-without-credit-validation",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.tts/play-audio-timeout-shows-localized-error-and-logs",
+      "partition": "core"
+    },
+    {
+      "id": "settings.credit/manual-credit-refresh-uses-preflight-and-locks-api-key-input",
+      "partition": "core"
+    },
+    {
+      "id": "settings.credit/manual-credit-refresh-success-shows-balance-and-latency",
+      "partition": "core"
+    },
+    {
+      "id": "settings.credit/manual-credit-refresh-timeout-shows-localized-error-and-logs",
+      "partition": "core"
+    },
+    {
+      "id": "settings.credit/silent-credit-refresh-preflight-and-timeout-only-log",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/by-id-lookup-rejects-whitespace-without-request-or-selection-change",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-settings/id-file-transactions-leave-streaming-settings-and-snapshots-untouched",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-settings/legacy-settings-and-favorite-ids-restart-independently",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorite-voice-ids-reject-whitespace-and-retain-canonical-deduplication",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/by-id-lookup-keeps-selected-voice-until-apply",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorite-metadata-migrates-bounds-and-round-trips",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/new-likes-and-relikes-display-first-without-rewriting-durable-order",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/legacy-favorites-reverse-globally-and-adding-keeps-the-current-page",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorites-sync-across-cards-persist-and-clamp-pages",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorite-saves-rollback-and-respect-read-only-and-retired-leases",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/by-id-replacement-and-input-edits-reject-late-results",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorite-and-by-id-preview-refreshes-metadata-without-applying",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/unfavorite-cancels-originating-preview-and-rejects-late-work",
+      "partition": "core"
+    },
+    {
+      "id": "cards.like/shared-card-template-is-compiled",
+      "partition": "native-cards"
+    },
+    {
+      "id": "voice.favorite-cache/same-path-writers-keep-ids-and-corrupt-files-remain-untouched",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/lease-retirement-linearizes-id-writes-without-blocking-snapshots",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/metadata-cache-is-bounded-detached-and-uses-an-independent-client-ttl",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/bookmark-mutations-cannot-refresh-or-replace-remote-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/favorite-misses-load-only-visible-page-and-reject-removed-card-results",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/plugin-cache-is-shared-across-search-by-id-and-reinitialization",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorite-cache/search-and-favorites-reuse-existing-cover-cache-and-clear-keeps-ids",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credentials/cache-writes-and-queued-events-keep-captured-credential-scope",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credentials/rejected-credential-saves-retain-accepted-key",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credentials/queued-startup-apply-rechecks-credential-inside-dispatcher",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credentials/failed-replacement-construction-preserves-accepted-cache",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credentials/reentrant-preview-metadata-event-cannot-restore-old-account",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-and-by-id-use-configured-token-or-dummy",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/accepted-edits-preserve-cards-snapshots-and-navigation",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/credential-round-trip-rejects-queued-publications",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/pending-metadata-cannot-replace-retained-display",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/reinitialization-does-not-seed-new-credential-cache-from-retained-snapshot",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/failed-saves-preserve-identity-subscription-and-pending-work",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/accepted-publication-owns-identity-across-copies-and-reentrant-saves",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/subscription-rebinding-and-disposal-keep-only-the-current-owner",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/retained-preview-entry-uses-resource-without-auth-and-refreshes-with-accepted-key",
+      "partition": "core"
+    },
+    {
+      "id": "voice.credential-display/startup-credential-round-trip-at-save-boundary-cannot-write",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/credential-changes-preserve-display-and-invalidate-pending-search",
+      "partition": "core"
+    },
+    {
+      "id": "voice.favorites/favorite-requests-use-current-credential",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/by-id-errors-expire-at-five-seconds",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/by-id-timer-creation-cannot-outlive-concurrent-retirement",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/reentrant-by-id-timer-creation-cannot-replace-its-successor",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/identical-by-id-errors-restart-their-lifetime",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/edits-and-new-by-id-lookups-clear-errors-immediately",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/deferred-by-id-expiry-rechecks-occurrence-and-disposal",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/by-id-disposal-retires-timer-and-late-responses",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/voice-lookup-requests-use-timeout-and-preserve-failure-semantics",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/voice-lookup-requests-cancel-previous-and-dispose-work",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/voice-lookup-completions-after-dispose-do-not-mutate-state",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-pagination-updates-visible-page-after-success-only",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-pagination-honors-server-window",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/pagination-metadata-preserves-legacy-and-unknown-totals",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-window-tail-and-explicit-has-more",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-unknown-totals-and-raw-type-filtering",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-committed-query-survives-edits-and-failure",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-empty-page-stops-forward-navigation",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/by-id-rejects-explicit-non-tts-models",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-replacement-rejects-late-pagination",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/search-publishes-pagination-before-resolving-covers",
+      "partition": "core"
+    },
+    {
+      "id": "voice.discovery/dispose-restores-discovery-busy-state-before-cancel-callbacks",
+      "partition": "core"
+    },
+    {
+      "id": "streaming.http/post-tts-request-honors-model-specific-prosody-and-timeout",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-audio-url-validation-allows-only-fish-audio-storage-hosts",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-download-uses-host-stream-without-credentials",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-publishes-preparation-before-first-await",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-preparation-transitions-to-real-playback",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-same-voice-across-entries-cancels-preparation",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-old-completion-cannot-clear-new-preparation",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-preparation-failure-and-reset-clear-state",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-queued-publications-read-current-preparation-owner",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/run-bounded-preview-regression-tests",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-audio-url-expiration-refreshes-at-thirty-second-window",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-audio-url-expiration-treats-malformed-signatures-as-expiring",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/selected-preview-cache-update-rejects-changed-voice",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-audio-rejects-invalid-search-url-without-starting-playback",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-valid-url-skips-detail-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-refreshes-cached-voice-and-plays-latest-url",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-offline-preflight-stops-before-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-rechecks-network-before-playback",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-offline-preflight-stops-before-playback",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-uses-list-url-without-detail-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-expired-url-refreshes-visible-metadata",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-expired-refresh-failure-does-not-fallback",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-removed-result-ignores-late-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-second-click-cancels-pending-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-second-click-stops-without-network",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-expired-refresh-failure-shows-error",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-not-found-shows-refresh-error",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-latest-voice-without-sample-shows-unavailable",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-refresh-returning-expired-url-does-not-play",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-second-click-stops-without-network",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-second-click-cancels-pending-refresh-without-restart",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/preview-playback-failure-uses-network-aware-message",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/search-preview-invalidates-pending-display-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-voice-switch-ignores-late-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "preview.ownership/display-preview-dispose-cancels-and-ignores-late-refresh",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/promo-state-persists-dismissal-and-use",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/settings-view-removes-api-key-validation-ui-and-uses-latency-bars",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/settings-view-shows-persistent-credit-placeholder",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/settings-view-includes-s21-promo-and-dynamic-model-descriptions",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/language-resources-match-api-key-rollback",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/preview-failure-language-resources-are-complete",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/language-resources-describe-context-conditioning-consistency",
+      "partition": "core"
+    },
+    {
+      "id": "repository.presentation/translated-readmes-match-current-source-and-control-names",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-uses-existing-file",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-creates-missed-file",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-rejects-invalid-downloads",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-cancels-slow-download-after-timeout",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-downloads-through-bounded-stream",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-clears-only-cover-images-and-formats-size",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/cover-image-cache-size-scans-cover-images-directory",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/clear-cover-image-cache-command-tracks-busy-state",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/clear-cover-image-cache-command-times-out-and-restores-button",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/late-clear-cover-image-cache-task-does-not-unlock-new-operation",
+      "partition": "core"
+    },
+    {
+      "id": "voice.cover-cache/clear-cache-button-uses-localized-text-and-busy-spinner",
+      "partition": "core"
+    },
+    {
+      "id": "settings.proxy/retired-proxy-inputs-are-discarded-and-socket-uses-system-proxy",
+      "partition": "core"
+    },
+    {
+      "id": "settings.proxy/retired-proxy-inputs-cannot-block-formal-reading",
+      "partition": "core"
+    },
+    {
+      "id": "voice.selection/selected-favorite-tracks-apply-clear-browse-mutations-and-failed-writes",
+      "partition": "core"
+    },
+    {
+      "id": "voice.selection/matching-cards-toggle-selection-without-changing-favorite-ids",
+      "partition": "core"
+    },
+    {
+      "id": "voice.selection/removed-origins-cannot-apply-or-clear-matching-current-cards",
+      "partition": "core"
+    },
+    {
+      "id": "voice.selection/failed-selection-writes-keep-applied-identity-and-stars",
+      "partition": "core"
+    },
+    {
+      "id": "voice.selection/matching-by-id-queries-inspect-without-canceling-selection",
+      "partition": "core"
+    },
+    {
+      "id": "numeric.top-p/client-floor-keeps-displayed-precision-defaults-and-temperature-zero",
+      "partition": "core"
+    },
+    {
+      "id": "numeric.top-p/old-zero-canonically-rewrites-once-and-saved-floor-round-trips",
+      "partition": "core"
+    },
+    {
+      "id": "numeric.top-p/future-and-duplicate-schemas-keep-their-read-only-protection",
+      "partition": "core"
+    },
+    {
+      "id": "numeric.top-p/raw-settings-cannot-send-zero-through-http-or-native-payloads",
+      "partition": "core"
+    },
+    {
+      "id": "settings.api-key-card/run-all",
+      "partition": "native-settings"
+    },
+    {
+      "id": "settings.layout/compiled-view-audio-network-and-fold-interactions",
+      "partition": "native-settings"
+    },
+    {
+      "id": "settings.alignment/run-all",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/captured-display125-search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/ideal/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/ideal/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/ideal/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/display/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/display/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1/display/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/ideal/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/ideal/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/ideal/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/display/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/display/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-25/display/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/ideal/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/ideal/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/ideal/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/display/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/display/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-1-5/display/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/ideal/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/ideal/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/ideal/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/display/search",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/display/by-id",
+      "partition": "native-settings"
+    },
+    {
+      "id": "cards.ink/dpi-2/display/favorites",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.glyph/equivalent-native-run-grouping",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-en-us/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-cn/culture-zh-cn/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/zh-tw/culture-zh-tw/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ja/culture-ja-jp/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ko/culture-ko-kr/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/ru/culture-ru-ru/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/tr/culture-tr-tr/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.geometry/compact/en/culture-de-de/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/en-us/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/light/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/light/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/light/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/dark/dpi-1",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/dark/dpi-1-25",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.bottom/de-de/dark/dpi-1-5",
+      "partition": "native-settings"
+    },
+    {
+      "id": "numeric.lifecycle/run",
+      "partition": "native-settings"
+    },
+    {
+      "id": "input.clear/run-requests",
+      "partition": "core"
+    },
+    {
+      "id": "input.clear/run",
+      "partition": "native-settings"
+    },
+    {
+      "id": "input.settings/native-tool-tip-diagnostics-preserve-failures-without-retry",
+      "partition": "core"
+    },
+    {
+      "id": "input.settings/native/track-point/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/track-point/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/track-point/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/track-point/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/volume-zero/en-us",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/volume-zero/de-de",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/volume-zero/ru-ru",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/volume-zero/tr-tr",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/fold-focus/light/search-results",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/fold-focus/light/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/fold-focus/dark/search-results",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/fold-focus/dark/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/en/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/en/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/zh-cn/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/zh-cn/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/zh-tw/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/zh-tw/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ja/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ja/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ko/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ko/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ru/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/ru/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/tr/light",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tabs/tr/dark",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/by-id-text-geometry",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/continuous-hover/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/continuous-hover/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/continuous-hover/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/continuous-hover/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/hover-rearms-over-target",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/resting-wheel/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/resting-wheel/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/resting-wheel/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/resting-wheel/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/slider-wheel/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/slider-wheel/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/slider-wheel/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/slider-wheel/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/en-us/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/en-us/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/en-us/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/en-us/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/de-de/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/de-de/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/de-de/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/de-de/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/ru-ru/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/ru-ru/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/ru-ru/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/ru-ru/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/tr-tr/speed",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/tr-tr/volume",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/tr-tr/temperature",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/native-tooltip/tr-tr/topp",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/tooltip-drag-template-ownership",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/empty-favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/en/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-cn/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/zh-tw/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ja/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ko/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/ru/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-400/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-400/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-400/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-480/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-480/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-480/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.settings/native/copy/tr/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "repository.link/run-all",
+      "partition": "native-input"
+    },
+    {
+      "id": "voice.language/run-all",
+      "partition": "core"
+    },
+    {
+      "id": "cards.creation-date/run-all",
+      "partition": "core"
+    },
+    {
+      "id": "popup.language-tags/compiled-selected-card",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/labels-explicit-culture-trusted-flags",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/partition-dictionary-replacement",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/overflow-keeps-language-row",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/responsive-prefix",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/fit-thresholds-long-labels",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/inherited-font-metrics",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/lifecycle/initialization-after-source",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/lifecycle/initialization-chrome",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/lifecycle/initialization-before-source",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/lifecycle/popup-input",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/lifecycle/window-owner",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-25/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/light/dpi-1-5/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-320/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-400/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-480/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-640/search",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.language-tags/cards/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-popups"
+    },
+    {
+      "id": "input.page-entry/run-all",
+      "partition": "native-input"
+    },
+    {
+      "id": "voice.search-adjustment/run-requests",
+      "partition": "core"
+    },
+    {
+      "id": "popup.search-adjustment/matrix-diagnostics-preserve-failures-without-retry",
+      "partition": "core"
+    },
+    {
+      "id": "popup.search-adjustment/viewport-diagnostics-preserve-async-completion-and-failures",
+      "partition": "core"
+    },
+    {
+      "id": "popup.search-adjustment/native/captions-keyboard-apply",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/radio/light",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/radio/dark",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/drafts-apply-tile-input",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/held-apply-reopens-intent",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/overlay-ownership",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/window-scroll-lifetime",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/short-viewport",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/viewport-lifecycle",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-own-source",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/unsupported/mica",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/unsupported/acrylic",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/unsupported/readback-failure",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/unsupported/frame-failure",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/supported/mica",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/supported/acrylic",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/supported/readback-failure",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/material-fallback/supported/frame-failure",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/en/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-cn/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/zh-tw/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ja/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ko/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/ru/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/light/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/light/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/light/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/dark/dpi-1",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/dark/dpi-1-25",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.search-adjustment/native/geometry/tr/dark/dpi-1-5",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.keyboard-state/run",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.heading/run",
+      "partition": "native-popups"
+    },
+    {
+      "id": "popup.direction/run",
+      "partition": "native-popups"
+    },
+    {
+      "id": "cards.layout/cold-construction",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/en/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-cn/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/zh-tw/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ja/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ko/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/ru/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout/tr/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.description/en/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.headers/en/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/light/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-5/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-5/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.inheritance/en/dark/dpi-1-5/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.date/en/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.tooltip/en/light/dpi-1/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.tooltip/en/light/dpi-1/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.tooltip/en/light/dpi-1/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.layout.loading/en/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/construction",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-424/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-424/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-424/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-400/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-400/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-400/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-424/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-424/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-424/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-480/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-480/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-480/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.description/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "input.cursor/construction",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/format",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/general",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-320/overlays",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/format",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/general",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/light/width-640/overlays",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/format",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/general",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-320/overlays",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/format",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/search",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/by-id",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/favorites",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/general",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/plugin/dark/width-640/overlays",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/light/parts",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/light/template",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/dark/parts",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/dark/template",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/light/lifecycle",
+      "partition": "native-input"
+    },
+    {
+      "id": "input.cursor/native/dark/lifecycle",
+      "partition": "native-input"
+    },
+    {
+      "id": "cards.like/presentation/shared-card-template-is-compiled",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tab-presentation-and-live-locales",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/selected-heart-shared-state",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/en/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-cn/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/zh-tw/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ja/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ko/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/ru/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/light/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.like/presentation/tr/dark/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/light/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-25/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-320/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-320/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-320/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-640/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-640/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "cards.avatar/dark/dpi-1-5/width-640/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/discovery-keeps-accepted-audio",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/pending-origin-retires",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/displayed-pending-origin-may-accept",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/acceptance-reentrancy-correct-owner",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/accepted-publication-cannot-retire-successor",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/explicit-replacement-retirement",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.search-retention/other-origin-removal-retains-audio",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/selection/selected",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/selection/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/selection/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/selection/favorite",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/unlike/unapplied",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/unlike/applied",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/browsing/favorites",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/browsing/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/collection/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/collection/favorite",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/management/selected",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/management/search",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/management/by-id",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/handoff/management/favorite",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/credentials",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/lifecycle",
+      "partition": "native-cards"
+    },
+    {
+      "id": "preview.accepted-continuity/rejected-saves",
+      "partition": "native-cards"
+    },
+    {
+      "id": "runner.contracts/selection",
+      "partition": "core"
+    },
+    {
+      "id": "runner.contracts/catalog",
+      "partition": "core"
+    },
+    {
+      "id": "runner.process/run-all",
+      "partition": "core"
+    },
+    {
+      "id": "runner.ci/verification",
+      "partition": "core"
+    },
+    {
+      "id": "runner.ci/infrastructure",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/validator-failure",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/partial-stage",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/staged-success",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/alternate-index",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/missing-hook",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/fresh-checkout",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/linked-worktree",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/previous-hook-order",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/previous-hook-failure",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/untracked-output",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/raw-bytes",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/index-mutation",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/verifier-rejects-report",
+      "partition": "core"
+    },
+    {
+      "id": "runner.hooks/late-commit-message-mutation",
+      "partition": "core"
+    }
+  ]
+}

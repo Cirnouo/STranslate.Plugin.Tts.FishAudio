@@ -8,7 +8,7 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
-internal static class SearchPreviewRetentionSuite
+internal static partial class SearchPreviewRetentionSuite
 {
     private const string Id = "11111111111111111111111111111111";
     private const string OtherId = "22222222222222222222222222222222";
@@ -33,289 +33,395 @@ internal static class SearchPreviewRetentionSuite
 
     // Stopping on successful discovery publication, or restarting to project state,
     // would lose the same accepted player/buffer or issue another sample GET.
-    private static async Task DiscoveryKeepsAcceptedAudioAsync()
+    private static Task DiscoveryKeepsAcceptedAudioAsync() => DiscoveryKeepsAcceptedAudioAsync(null, null);
+
+    private static async Task DiscoveryKeepsAcceptedAudioAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
-        using var scenario = new Scenario();
-        var vm = scenario.View;
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        var origin = vm.SearchResults.Single();
-        await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-        var buffer = scenario.Player.LastOpenedStream!;
-        Tick(vm, scenario.Player, 2);
-        AssertEqual(.2, origin.PreviewProgress, "Actual output progress projects to the originating card");
+        await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
+        {
+            var scenario = new Scenario();
+            ordinaryOwner?.OwnFacade(scenario);
+            using var legacyScenario = ordinaryOwner is null ? scenario : null;
+            hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+            var vm = scenario.View;
+            await TrackRetentionTask(ordinaryOwner, vm.SearchVoicesCommand.ExecuteAsync(null));
+            var origin = vm.SearchResults.Single();
+            await TrackRetentionTask(ordinaryOwner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+            var buffer = scenario.Player.LastOpenedStream!;
+            Tick(vm, scenario.Player, 2);
+            AssertEqual(.2, origin.PreviewProgress, "Actual output progress projects to the originating card");
 
-        scenario.Http.GetResponseJson = Results(OtherId);
-        vm.SearchQuery = "replacement";
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertRetained(scenario, buffer);
-        AssertEqual(false, origin.IsPreviewActive, "Removed presentation objects release their active overlay");
-        AssertEqual(0d, origin.PreviewProgress, "Removed presentation objects release progress");
-        await vm.NextPageCommand.ExecuteAsync(null);
-        AssertEqual(2, vm.SearchPage, "Next publishes the actual discovery page");
-        AssertRetained(scenario, buffer);
-        await vm.PrevPageCommand.ExecuteAsync(null);
-        AssertEqual(1, vm.SearchPage, "Previous publishes the actual discovery page");
-        AssertRetained(scenario, buffer);
-        vm.PageInput = "3";
-        await vm.CommitPageInputCommand.ExecuteAsync(null);
-        AssertEqual(3, vm.SearchPage, "Page entry uses the real navigation command");
-        AssertRetained(scenario, buffer);
-        await vm.ApplySearchOptionsAsync(vm.SearchLanguages, vm.SearchSort);
-        AssertEqual(1, vm.SearchPage, "Unchanged Apply still refreshes page one");
-        AssertRetained(scenario, buffer);
+            scenario.Http.GetResponseJson = Results(OtherId);
+            vm.SearchQuery = "replacement";
+            await TrackRetentionTask(ordinaryOwner, vm.SearchVoicesCommand.ExecuteAsync(null));
+            AssertRetained(scenario, buffer);
+            AssertEqual(false, origin.IsPreviewActive, "Removed presentation objects release their active overlay");
+            AssertEqual(0d, origin.PreviewProgress, "Removed presentation objects release progress");
+            await TrackRetentionTask(ordinaryOwner, vm.NextPageCommand.ExecuteAsync(null));
+            AssertEqual(2, vm.SearchPage, "Next publishes the actual discovery page");
+            AssertRetained(scenario, buffer);
+            await TrackRetentionTask(ordinaryOwner, vm.PrevPageCommand.ExecuteAsync(null));
+            AssertEqual(1, vm.SearchPage, "Previous publishes the actual discovery page");
+            AssertRetained(scenario, buffer);
+            vm.PageInput = "3";
+            await TrackRetentionTask(ordinaryOwner, vm.CommitPageInputCommand.ExecuteAsync(null));
+            AssertEqual(3, vm.SearchPage, "Page entry uses the real navigation command");
+            AssertRetained(scenario, buffer);
+            await TrackRetentionTask(ordinaryOwner, vm.ApplySearchOptionsAsync(vm.SearchLanguages, vm.SearchSort));
+            AssertEqual(1, vm.SearchPage, "Unchanged Apply still refreshes page one");
+            AssertRetained(scenario, buffer);
 
-        var prior = vm.SearchResults;
-        scenario.Http.GetException = new TimeoutException();
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(true, ReferenceEquals(prior, vm.SearchResults), "Failed search retains successful discovery cards");
-        AssertRetained(scenario, buffer);
-        scenario.Http.GetException = null;
-        var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationToken requestToken = default;
-        scenario.Http.GetAsyncHandler = (_, _, ct) => { requestToken = ct; return response.Task; };
-        var oldSearch = vm.SearchVoicesCommand.ExecuteAsync(null);
-        AssertRetained(scenario, buffer);
-        scenario.Http.GetAsyncHandler = null;
-        scenario.Http.GetResponseJson = Results();
-        await vm.ApplySearchOptionsAsync(vm.SearchLanguages, vm.SearchSort);
-        AssertEqual(true, requestToken.IsCancellationRequested, "Replacement cancels only obsolete discovery work");
-        response.SetResult(Results(OtherId));
-        await oldSearch;
-        AssertEqual(0, vm.SearchResults.Count, "Canceled discovery cannot restore old results");
-        AssertRetained(scenario, buffer);
+            var prior = vm.SearchResults;
+            scenario.Http.GetException = new TimeoutException();
+            await TrackRetentionTask(ordinaryOwner, vm.SearchVoicesCommand.ExecuteAsync(null));
+            AssertEqual(true, ReferenceEquals(prior, vm.SearchResults), "Failed search retains successful discovery cards");
+            AssertRetained(scenario, buffer);
+            scenario.Http.GetException = null;
+            var response = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ordinaryOwner?.OwnResponse(response);
+            CancellationToken requestToken = default;
+            scenario.Http.GetAsyncHandler = (_, _, ct) => { requestToken = ct; return TrackRetentionResponse(ordinaryOwner, response.Task); };
+            var oldSearch = TrackRetentionTask(ordinaryOwner, vm.SearchVoicesCommand.ExecuteAsync(null));
+            AssertRetained(scenario, buffer);
+            hooks?.Failure?.Invoke(SearchRetentionFailurePoint.DiscoveryHeldSearch,
+                new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http, oldSearch, response.Task));
+            scenario.Http.GetAsyncHandler = null;
+            scenario.Http.GetResponseJson = Results();
+            await TrackRetentionTask(ordinaryOwner, vm.ApplySearchOptionsAsync(vm.SearchLanguages, vm.SearchSort));
+            AssertEqual(true, requestToken.IsCancellationRequested, "Replacement cancels only obsolete discovery work");
+            response.SetResult(Results(OtherId));
+            await TrackRetentionTask(ordinaryOwner, oldSearch);
+            AssertEqual(0, vm.SearchResults.Count, "Canceled discovery cannot restore old results");
+            AssertRetained(scenario, buffer);
 
-        Tick(vm, scenario.Player, 6);
-        AssertEqual(.6, vm.PreviewProgress, "Retained audio continues reporting device progress with no matching card");
-        AssertEqual(0d, origin.PreviewProgress, "Later progress never revisits the removed presentation object");
-        scenario.Http.GetResponseJson = Results(Id);
-        await vm.SearchVoicesCommand.ExecuteAsync(null);
-        var matching = vm.SearchResults.Single();
-        AssertEqual(false, ReferenceEquals(origin, matching), "Reappearing results are distinct objects");
-        AssertEqual(true, matching.IsBeingPreviewed, "Reappearing same-ID card shows accepted playback");
-        AssertEqual(.6, matching.PreviewProgress, "Reappearing same-ID card shows current progress");
-        AssertRetained(scenario, buffer);
-        await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-        AssertRetained(scenario, buffer);
-        matching.SampleAudioUrl = null;
-        await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(matching);
-        AssertEqual(null, vm.PreviewingVoiceId, "A current same-ID card can Stop even without a sample");
-        AssertEqual(1, scenario.Player.StopCallCount, "Explicit Stop stops exactly once");
-        AssertEqual(1, scenario.Player.DisposeCallCount, "Explicit Stop releases the accepted player");
-        AssertEqual(false, buffer.CanRead, "Explicit Stop releases the accepted buffer");
-        AssertEqual(1, scenario.Http.GetAsStreamCallCount, "Reappearing Stop never redownloads");
-        AssertEqual(10, scenario.Http.GetCallCount, "Only the ten explicit discovery operations issue metadata GETs");
+            Tick(vm, scenario.Player, 6);
+            AssertEqual(.6, vm.PreviewProgress, "Retained audio continues reporting device progress with no matching card");
+            AssertEqual(0d, origin.PreviewProgress, "Later progress never revisits the removed presentation object");
+            scenario.Http.GetResponseJson = Results(Id);
+            await TrackRetentionTask(ordinaryOwner, vm.SearchVoicesCommand.ExecuteAsync(null));
+            var matching = vm.SearchResults.Single();
+            AssertEqual(false, ReferenceEquals(origin, matching), "Reappearing results are distinct objects");
+            AssertEqual(true, matching.IsBeingPreviewed, "Reappearing same-ID card shows accepted playback");
+            AssertEqual(.6, matching.PreviewProgress, "Reappearing same-ID card shows current progress");
+            AssertRetained(scenario, buffer);
+            await TrackRetentionTask(ordinaryOwner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+            AssertRetained(scenario, buffer);
+            matching.SampleAudioUrl = null;
+            await TrackRetentionTask(ordinaryOwner, vm.ToggleSearchItemPreviewCommand.ExecuteAsync(matching));
+            AssertEqual(null, vm.PreviewingVoiceId, "A current same-ID card can Stop even without a sample");
+            AssertEqual(1, scenario.Player.StopCallCount, "Explicit Stop stops exactly once");
+            AssertEqual(1, scenario.Player.DisposeCallCount, "Explicit Stop releases the accepted player");
+            AssertEqual(false, buffer.CanRead, "Explicit Stop releases the accepted buffer");
+            AssertEqual(1, scenario.Http.GetAsStreamCallCount, "Reappearing Stop never redownloads");
+            AssertEqual(10, scenario.Http.GetCallCount, "Only the ten explicit discovery operations issue metadata GETs");
+        });
     }
 
-    private static async Task PendingOriginStillRetiresAsync()
+    private static Task PendingOriginStillRetiresAsync() => PendingOriginStillRetiresAsync(null, null);
+
+    private static async Task PendingOriginStillRetiresAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var refresh in new[] { false, true })
         {
-            using var scenario = new Scenario();
-            var origin = new VoiceSearchItem { Id = Id, SampleAudioUrl = refresh
-                ? "https://platform.r2.fish.audio/old.mp3?X-Amz-Date=20000101T000000Z&X-Amz-Expires=60" : Url };
-            var duplicate = new VoiceSearchItem { Id = Id, SampleAudioUrl = Url };
-            scenario.View.SearchResults = [origin, duplicate];
-            var detail = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var audio = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-            CancellationToken captured = default;
-            scenario.Http.GetAsyncHandler = (_, _, ct) => { captured = ct; return detail.Task; };
-            scenario.Http.GetAsStreamAsyncHandler = (_, _, ct) => { captured = ct; return audio.Task; };
-            var pending = scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-            // The other same-ID object is retained: equality must not authorize the origin.
-            scenario.View.SearchResults = [duplicate];
-            AssertEqual(true, captured.IsCancellationRequested, "Removing the genuine pending origin cancels even with another same-ID card");
-            AssertEqual(false, origin.IsPreviewActive, "Removed pending origin releases its overlay");
-            AssertEqual(false, duplicate.IsPreviewActive, "The surviving duplicate cannot inherit obsolete preparation");
-            detail.SetResult(JsonSerializer.Serialize(new { _id = Id, title = "Late", samples = new[] { new { audio = Url } } }));
-            using var late = new MemoryStream([1, 2, 3]);
-            audio.SetResult(late);
-            await pending;
-            AssertEqual(0, scenario.Player.PlayCallCount, "Obsolete pending work never starts playback");
-            AssertEqual(refresh ? 0 : 1, scenario.Http.GetAsStreamCallCount, "A stale refresh cannot start a sample download");
-            if (!refresh) AssertEqual(false, late.CanRead, "The late resource is disposed");
+            await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
+            {
+                var scenario = new Scenario();
+                ordinaryOwner?.OwnFacade(scenario);
+                using var legacyScenario = ordinaryOwner is null ? scenario : null;
+                hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+                var origin = new VoiceSearchItem { Id = Id, SampleAudioUrl = refresh
+                    ? "https://platform.r2.fish.audio/old.mp3?X-Amz-Date=20000101T000000Z&X-Amz-Expires=60" : Url };
+                var duplicate = new VoiceSearchItem { Id = Id, SampleAudioUrl = Url };
+                scenario.View.SearchResults = [origin, duplicate];
+                var detail = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+                ordinaryOwner?.OwnResponse(detail);
+                var audio = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
+                ordinaryOwner?.OwnResponse(audio);
+                CancellationToken captured = default;
+                scenario.Http.GetAsyncHandler = (_, _, ct) => { captured = ct; return TrackRetentionResponse(ordinaryOwner, detail.Task); };
+                scenario.Http.GetAsStreamAsyncHandler = (_, _, ct) => { captured = ct; return TrackRetentionResponse(ordinaryOwner, audio.Task); };
+                var pending = TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+                // The other same-ID object is retained: equality must not authorize the origin.
+                scenario.View.SearchResults = [duplicate];
+                AssertEqual(true, captured.IsCancellationRequested, "Removing the genuine pending origin cancels even with another same-ID card");
+                AssertEqual(false, origin.IsPreviewActive, "Removed pending origin releases its overlay");
+                AssertEqual(false, duplicate.IsPreviewActive, "The surviving duplicate cannot inherit obsolete preparation");
+                hooks?.Failure?.Invoke(SearchRetentionFailurePoint.PendingOriginHeld,
+                    new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http, pending, refresh ? detail.Task : audio.Task));
+                detail.SetResult(JsonSerializer.Serialize(new { _id = Id, title = "Late", samples = new[] { new { audio = Url } } }));
+                var late = new MemoryStream([1, 2, 3]);
+                ordinaryOwner?.OwnResource(late);
+                using var legacyLate = ordinaryOwner is null ? late : null;
+                audio.SetResult(late);
+                await TrackRetentionTask(ordinaryOwner, pending);
+                AssertEqual(0, scenario.Player.PlayCallCount, "Obsolete pending work never starts playback");
+                AssertEqual(refresh ? 0 : 1, scenario.Http.GetAsStreamCallCount, "A stale refresh cannot start a sample download");
+                if (!refresh) AssertEqual(false, late.CanRead, "The late resource is disposed");
+            });
         }
     }
 
-    private static async Task AcceptanceReentrancyKeepsTheCorrectOwnerAsync()
+    private static Task AcceptanceReentrancyKeepsTheCorrectOwnerAsync() => AcceptanceReentrancyKeepsTheCorrectOwnerAsync(null, null);
+
+    private static async Task AcceptanceReentrancyKeepsTheCorrectOwnerAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var boundary in new[] { "open", "play", "accepted" })
         {
-            using var scenario = new Scenario();
-            await scenario.View.SearchVoicesCommand.ExecuteAsync(null);
-            var origin = scenario.View.SearchResults.Single();
-            var replacement = new VoiceSearchItem { Id = Id, SampleAudioUrl = Url };
-            void Replace() => scenario.View.SearchResults = [replacement];
-            if (boundary == "open") scenario.Player.OnOpen = Replace;
-            else if (boundary == "play") scenario.Player.OnPlay = Replace;
-            else scenario.View.PropertyChanged += (_, e) =>
+            await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
             {
-                if (e.PropertyName == nameof(SettingsViewModel.PreviewingVoiceId) && scenario.View.PreviewingVoiceId == Id) Replace();
-            };
-            await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-            AssertEqual(boundary == "accepted" ? Id : null, scenario.View.PreviewingVoiceId,
-                "Only a successful Play return permits search origin detachment");
-            AssertEqual(boundary == "accepted" ? 0 : 1, scenario.Player.DisposeCallCount,
-                "Preacceptance removal releases local output; accepted publication preserves it");
-            AssertEqual(false, origin.IsPreviewActive, "Reentrant replacement clears the old presentation");
-            AssertEqual(boundary == "accepted", replacement.IsBeingPreviewed, "The current same-ID overlay reflects acceptance");
-            if (boundary == "accepted")
-            {
-                var buffer = scenario.Player.LastOpenedStream!;
-                Tick(scenario.View, scenario.Player, 4);
-                AssertEqual(.4, replacement.PreviewProgress, "Progress survives the reentrant acceptance handoff");
-                scenario.Player.RaiseEnded();
-                AssertEqual(null, scenario.View.PreviewingVoiceId, "Natural end clears retained playback");
-                AssertEqual(false, replacement.IsPreviewActive, "Natural end clears the matching overlay");
-                AssertEqual(false, buffer.CanRead, "Natural end releases the retained buffer");
-                AssertEqual(1, scenario.Player.StopCallCount, "Natural end stops once");
-                AssertEqual(1, scenario.Player.DisposeCallCount, "Natural end disposes once");
-            }
+                var scenario = new Scenario();
+                ordinaryOwner?.OwnFacade(scenario);
+                using var legacyScenario = ordinaryOwner is null ? scenario : null;
+                hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+                await TrackRetentionTask(ordinaryOwner, scenario.View.SearchVoicesCommand.ExecuteAsync(null));
+                var origin = scenario.View.SearchResults.Single();
+                var replacement = new VoiceSearchItem { Id = Id, SampleAudioUrl = Url };
+                Action replace = () => scenario.View.SearchResults = [replacement];
+                if (boundary == "open")
+                {
+                    scenario.Player.OnOpen = replace;
+                    ordinaryOwner?.OwnCallback(() => { if (ReferenceEquals(scenario.Player.OnOpen, replace)) scenario.Player.OnOpen = null; });
+                }
+                else if (boundary == "play")
+                {
+                    scenario.Player.OnPlay = replace;
+                    ordinaryOwner?.OwnCallback(() => { if (ReferenceEquals(scenario.Player.OnPlay, replace)) scenario.Player.OnPlay = null; });
+                }
+                else
+                {
+                    System.ComponentModel.PropertyChangedEventHandler accepted = (_, e) =>
+                    {
+                        if (e.PropertyName == nameof(SettingsViewModel.PreviewingVoiceId) && scenario.View.PreviewingVoiceId == Id) replace();
+                    };
+                    scenario.View.PropertyChanged += accepted;
+                    ordinaryOwner?.OwnCallback(() => scenario.View.PropertyChanged -= accepted);
+                }
+                await TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+                AssertEqual(boundary == "accepted" ? Id : null, scenario.View.PreviewingVoiceId,
+                    "Only a successful Play return permits search origin detachment");
+                AssertEqual(boundary == "accepted" ? 0 : 1, scenario.Player.DisposeCallCount,
+                    "Preacceptance removal releases local output; accepted publication preserves it");
+                AssertEqual(false, origin.IsPreviewActive, "Reentrant replacement clears the old presentation");
+                AssertEqual(boundary == "accepted", replacement.IsBeingPreviewed, "The current same-ID overlay reflects acceptance");
+                if (boundary == "accepted")
+                {
+                    var buffer = scenario.Player.LastOpenedStream!;
+                    Tick(scenario.View, scenario.Player, 4);
+                    AssertEqual(.4, replacement.PreviewProgress, "Progress survives the reentrant acceptance handoff");
+                    scenario.Player.RaiseEnded();
+                    AssertEqual(null, scenario.View.PreviewingVoiceId, "Natural end clears retained playback");
+                    AssertEqual(false, replacement.IsPreviewActive, "Natural end clears the matching overlay");
+                    AssertEqual(false, buffer.CanRead, "Natural end releases the retained buffer");
+                    AssertEqual(1, scenario.Player.StopCallCount, "Natural end stops once");
+                    AssertEqual(1, scenario.Player.DisposeCallCount, "Natural end disposes once");
+                }
+            });
         }
     }
 
-    private static async Task DisplayedPendingOriginMayStillAcceptAsync()
+    private static Task DisplayedPendingOriginMayStillAcceptAsync() => DisplayedPendingOriginMayStillAcceptAsync(null, null);
+
+    private static async Task DisplayedPendingOriginMayStillAcceptAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
-        using var scenario = new Scenario();
-        await scenario.View.SearchVoicesCommand.ExecuteAsync(null);
-        var origin = scenario.View.SearchResults.Single();
-        var resource = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var metadata = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        CancellationToken previewToken = default;
-        scenario.Http.GetAsStreamAsyncHandler = (_, _, ct) => { previewToken = ct; return resource.Task; };
-        var preview = scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-        scenario.Http.GetAsyncHandler = (_, _, _) => metadata.Task;
-        scenario.View.SearchQuery = "pending discovery";
-        var search = scenario.View.SearchVoicesCommand.ExecuteAsync(null);
-        AssertEqual(true, ReferenceEquals(origin, scenario.View.SearchResults.Single()), "Starting discovery keeps the last successful displayed origin");
-        AssertEqual(false, previewToken.IsCancellationRequested, "A still-displayed pending origin is not retired by query start alone");
-        resource.SetResult(new MemoryStream([1, 2, 3]));
-        await preview;
-        AssertEqual(Id, scenario.View.PreviewingVoiceId, "Current displayed preparation may accept while discovery is pending");
-        metadata.SetResult(Results(OtherId));
-        await search;
-        AssertRetained(scenario, scenario.Player.LastOpenedStream!);
+        await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
+        {
+            var scenario = new Scenario();
+            ordinaryOwner?.OwnFacade(scenario);
+            using var legacyScenario = ordinaryOwner is null ? scenario : null;
+            hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+            await TrackRetentionTask(ordinaryOwner, scenario.View.SearchVoicesCommand.ExecuteAsync(null));
+            var origin = scenario.View.SearchResults.Single();
+            var resource = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ordinaryOwner?.OwnResponse(resource);
+            var metadata = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            ordinaryOwner?.OwnResponse(metadata);
+            CancellationToken previewToken = default;
+            scenario.Http.GetAsStreamAsyncHandler = (_, _, ct) => { previewToken = ct; return TrackRetentionResponse(ordinaryOwner, resource.Task); };
+            var preview = TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+            scenario.Http.GetAsyncHandler = (_, _, _) => TrackRetentionResponse(ordinaryOwner, metadata.Task);
+            scenario.View.SearchQuery = "pending discovery";
+            var search = TrackRetentionTask(ordinaryOwner, scenario.View.SearchVoicesCommand.ExecuteAsync(null));
+            AssertEqual(true, ReferenceEquals(origin, scenario.View.SearchResults.Single()), "Starting discovery keeps the last successful displayed origin");
+            AssertEqual(false, previewToken.IsCancellationRequested, "A still-displayed pending origin is not retired by query start alone");
+            hooks?.Failure?.Invoke(SearchRetentionFailurePoint.DisplayedPreviewAndSearchHeld,
+                new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http, preview, resource.Task, search, metadata.Task));
+            var returnedAudio = new MemoryStream([1, 2, 3]);
+            ordinaryOwner?.OwnResource(returnedAudio);
+            resource.SetResult(returnedAudio);
+            await TrackRetentionTask(ordinaryOwner, preview);
+            AssertEqual(Id, scenario.View.PreviewingVoiceId, "Current displayed preparation may accept while discovery is pending");
+            metadata.SetResult(Results(OtherId));
+            await TrackRetentionTask(ordinaryOwner, search);
+            AssertRetained(scenario, scenario.Player.LastOpenedStream!);
+        });
     }
 
-    private static async Task ExplicitReplacementAndRetirementAsync()
+    private static Task ExplicitReplacementAndRetirementAsync() => ExplicitReplacementAndRetirementAsync(null, null);
+
+    private static async Task ExplicitReplacementAndRetirementAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var retirement in new[] { "replacement", "credentials", "dispose" })
         {
-            using var scenario = new Scenario();
-            await scenario.View.SearchVoicesCommand.ExecuteAsync(null);
-            await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(scenario.View.SearchResults.Single());
-            var buffer = scenario.Player.LastOpenedStream!;
-            scenario.View.SearchResults = [];
-            AssertRetained(scenario, buffer);
-            if (retirement == "credentials")
+            await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
             {
-                scenario.View.ApiKey = "replacement-key";
-                AssertRetained(scenario, buffer);
-                scenario.View.Dispose();
-            }
-            else if (retirement == "dispose") scenario.View.Dispose();
-            else
-            {
-                var next = new VoiceSearchItem { Id = OtherId, SampleAudioUrl = Url };
-                scenario.View.SearchResults = [next];
-                var response = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
-                scenario.Http.GetAsStreamAsyncHandler = (_, _, _) => response.Task;
-                var pending = scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(next);
-                AssertEqual(false, buffer.CanRead, "Intentional replacement stops old audio before new preparation");
-                AssertEqual(null, scenario.View.PreviewingVoiceId, "Existing replacement timing permits no old/new coexistence");
+                var scenario = new Scenario();
+                ordinaryOwner?.OwnFacade(scenario);
+                using var legacyScenario = ordinaryOwner is null ? scenario : null;
+                hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+                await TrackRetentionTask(ordinaryOwner, scenario.View.SearchVoicesCommand.ExecuteAsync(null));
+                await TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(scenario.View.SearchResults.Single()));
+                var buffer = scenario.Player.LastOpenedStream!;
                 scenario.View.SearchResults = [];
-                using var late = new MemoryStream([4, 5, 6]);
-                response.SetResult(late);
-                await pending;
-                AssertEqual(false, late.CanRead, "Invalidated replacement request still releases late audio");
-            }
-            AssertEqual(null, scenario.View.PreviewingVoiceId, "Intentional retirement clears retained accepted playback");
-            AssertEqual(1, scenario.Player.StopCallCount, "Intentional retirement stops once");
-            AssertEqual(1, scenario.Player.DisposeCallCount, "Intentional retirement disposes once");
-            AssertEqual(false, buffer.CanRead, "Intentional retirement releases retained bytes");
+                AssertRetained(scenario, buffer);
+                if (retirement == "credentials")
+                {
+                    scenario.View.ApiKey = "replacement-key";
+                    AssertRetained(scenario, buffer);
+                    scenario.View.Dispose();
+                }
+                else if (retirement == "dispose") scenario.View.Dispose();
+                else
+                {
+                    var next = new VoiceSearchItem { Id = OtherId, SampleAudioUrl = Url };
+                    scenario.View.SearchResults = [next];
+                    var response = new TaskCompletionSource<Stream>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ordinaryOwner?.OwnResponse(response);
+                    scenario.Http.GetAsStreamAsyncHandler = (_, _, _) => TrackRetentionResponse(ordinaryOwner, response.Task);
+                    var pending = TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(next));
+                    AssertEqual(false, buffer.CanRead, "Intentional replacement stops old audio before new preparation");
+                    AssertEqual(null, scenario.View.PreviewingVoiceId, "Existing replacement timing permits no old/new coexistence");
+                    scenario.View.SearchResults = [];
+                    var late = new MemoryStream([4, 5, 6]);
+                    ordinaryOwner?.OwnResource(late);
+                    using var legacyLate = ordinaryOwner is null ? late : null;
+                    response.SetResult(late);
+                    await TrackRetentionTask(ordinaryOwner, pending);
+                    AssertEqual(false, late.CanRead, "Invalidated replacement request still releases late audio");
+                }
+                AssertEqual(null, scenario.View.PreviewingVoiceId, "Intentional retirement clears retained accepted playback");
+                AssertEqual(1, scenario.Player.StopCallCount, "Intentional retirement stops once");
+                AssertEqual(1, scenario.Player.DisposeCallCount, "Intentional retirement disposes once");
+                AssertEqual(false, buffer.CanRead, "Intentional retirement releases retained bytes");
+            });
         }
     }
 
-    private static async Task AcceptedPublicationCannotRetireItsSuccessorAsync()
+    private static Task AcceptedPublicationCannotRetireItsSuccessorAsync() => AcceptedPublicationCannotRetireItsSuccessorAsync(null, null);
+
+    private static async Task AcceptedPublicationCannotRetireItsSuccessorAsync(SearchRetentionFixtureFactory? ordinaryFactory, SearchRetentionFixtureHooks? hooks)
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var retirement in new[] { "replacement", "credentials", "dispose", "end", "stop" })
         {
-            using var scenario = new Scenario();
-            await scenario.View.SearchVoicesCommand.ExecuteAsync(null);
-            var origin = scenario.View.SearchResults.Single();
-            Task? successor = null;
-            var retired = false;
-            scenario.View.PropertyChanged += (_, e) =>
+            await WithRetentionScenarioAsync(ordinaryFactory, async ordinaryOwner =>
             {
-                if (retired || e.PropertyName != nameof(SettingsViewModel.PreviewingVoiceId) || scenario.View.PreviewingVoiceId != Id) return;
-                retired = true;
-                scenario.View.SearchResults = [];
-                if (retirement == "credentials") scenario.View.ApiKey = "replacement-key";
-                else if (retirement == "dispose") scenario.View.Dispose();
-                else if (retirement == "end") scenario.Player.RaiseEnded();
-                else
+                var scenario = new Scenario();
+                ordinaryOwner?.OwnFacade(scenario);
+                using var legacyScenario = ordinaryOwner is null ? scenario : null;
+                hooks?.ScenarioReady?.Invoke(new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http));
+                await TrackRetentionTask(ordinaryOwner, scenario.View.SearchVoicesCommand.ExecuteAsync(null));
+                var origin = scenario.View.SearchResults.Single();
+                Task? successor = null;
+                var retired = false;
+                System.ComponentModel.PropertyChangedEventHandler publication = (_, e) =>
                 {
-                    var card = new VoiceSearchItem { Id = retirement == "stop" ? Id : OtherId, SampleAudioUrl = Url };
-                    scenario.View.SearchResults = [card];
-                    successor = scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(card);
+                    if (retired || e.PropertyName != nameof(SettingsViewModel.PreviewingVoiceId) || scenario.View.PreviewingVoiceId != Id) return;
+                    retired = true;
+                    scenario.View.SearchResults = [];
+                    if (retirement == "credentials") scenario.View.ApiKey = "replacement-key";
+                    else if (retirement == "dispose") scenario.View.Dispose();
+                    else if (retirement == "end") scenario.Player.RaiseEnded();
+                    else
+                    {
+                        var card = new VoiceSearchItem { Id = retirement == "stop" ? Id : OtherId, SampleAudioUrl = Url };
+                        scenario.View.SearchResults = [card];
+                        successor = TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(card));
+                    }
+                };
+                scenario.View.PropertyChanged += publication;
+                ordinaryOwner?.OwnCallback(() => scenario.View.PropertyChanged -= publication);
+                var acceptance = TrackRetentionTask(ordinaryOwner, scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin));
+                await acceptance;
+                hooks?.Failure?.Invoke(SearchRetentionFailurePoint.AcceptedSuccessorStarted,
+                    new SearchRetentionFixtureProbe(ordinaryOwner!, scenario.View, scenario.Player, scenario.ReplacementPlayer, scenario.Http, successor, null, acceptance));
+                if (successor is not null) await successor;
+                AssertEqual(retirement == "replacement" ? OtherId : retirement == "credentials" ? Id : null, scenario.View.PreviewingVoiceId,
+                    "An obsolete acceptance continuation cannot Stop its accepted successor");
+                AssertEqual(retirement == "credentials" ? 0 : 1, scenario.Player.DisposeCallCount, "Only playback retirement releases the old player");
+                AssertEqual(retirement == "credentials", scenario.Player.LastOpenedStream!.CanRead, "Credential edits preserve accepted local bytes");
+                var controller = Playback(scenario.View);
+                var timer = typeof(PreviewPlaybackController).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(controller);
+                AssertEqual(retirement is "replacement" or "credentials", timer is not null, "Only the current accepted owner can install a timer");
+                if (retirement == "replacement")
+                {
+                    scenario.Player.RaiseEnded();
+                    scenario.Player.RaiseFailed(new IOException("old device"));
+                    AssertEqual(OtherId, scenario.View.PreviewingVoiceId, "Old device callbacks cannot affect the successor");
+                    AssertEqual(0, scenario.ReplacementPlayer.DisposeCallCount, "Old cleanup cannot dispose the successor");
+                    scenario.ReplacementPlayer.RaiseEnded();
+                    AssertEqual(null, scenario.View.PreviewingVoiceId, "The successor still owns its natural end");
                 }
-            };
-            await scenario.View.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-            if (successor is not null) await successor;
-            AssertEqual(retirement == "replacement" ? OtherId : retirement == "credentials" ? Id : null, scenario.View.PreviewingVoiceId,
-                "An obsolete acceptance continuation cannot Stop its accepted successor");
-            AssertEqual(retirement == "credentials" ? 0 : 1, scenario.Player.DisposeCallCount, "Only playback retirement releases the old player");
-            AssertEqual(retirement == "credentials", scenario.Player.LastOpenedStream!.CanRead, "Credential edits preserve accepted local bytes");
-            var controller = Playback(scenario.View);
-            var timer = typeof(PreviewPlaybackController).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(controller);
-            AssertEqual(retirement is "replacement" or "credentials", timer is not null, "Only the current accepted owner can install a timer");
-            if (retirement == "replacement")
-            {
-                scenario.Player.RaiseEnded();
-                scenario.Player.RaiseFailed(new IOException("old device"));
-                AssertEqual(OtherId, scenario.View.PreviewingVoiceId, "Old device callbacks cannot affect the successor");
-                AssertEqual(0, scenario.ReplacementPlayer.DisposeCallCount, "Old cleanup cannot dispose the successor");
-                scenario.ReplacementPlayer.RaiseEnded();
-                AssertEqual(null, scenario.View.PreviewingVoiceId, "The successor still owns its natural end");
-            }
+            });
         }
     }
 
-    private static async Task OtherOriginRemovalRetainsAcceptedAudioAsync()
+    private static Task OtherOriginRemovalRetainsAcceptedAudioAsync() =>
+        OtherOriginRemovalRetainsAcceptedAudioAsync(ordinaryFactory: null);
+
+    private static async Task OtherOriginRemovalRetainsAcceptedAudioAsync(NativeCardsAsyncFixtureFactory? ordinaryFactory)
     {
         using var network = OverrideNetworkAvailability(true);
         foreach (var favorite in new[] { false, true })
         {
-            var directory = CreateTempDirectory();
-            File.WriteAllText(Path.Combine(directory, FavoriteVoiceStore.FileName), JsonSerializer.Serialize(new[] { Id }));
-            var settings = new Settings();
-            var cache = new VoiceMetadataCache();
-            cache.Put(VoiceMetadata.FromCachedVoice(Id, new() { Title = "Origin", SampleAudioUrl = Url }));
-            var (service, http) = TestHttpServiceProxy.Create();
-            var player = new TestPreviewAudioPlayer();
-            using var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings,
-                null, null, previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
-            vm.SearchResults = [new VoiceSearchItem { Id = Id, SampleAudioUrl = Url }];
-            if (!favorite) { vm.VoiceIdInput = Id; await vm.SubmitVoiceIdCommand.ExecuteAsync(null); }
-            var origin = favorite ? vm.FavoriteResults.Single() : vm.ByIdResults.Single();
-            await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
-            AssertEqual(Id, vm.PreviewingVoiceId, "The actual nonsearch originating card starts playback");
-            if (favorite) vm.ToggleFavoriteCommand.Execute(origin);
-            else vm.VoiceIdInput = OtherId;
-            AssertEqual(Id, vm.PreviewingVoiceId, "Favorite/By-ID removal preserves accepted playback");
-            AssertEqual(0, player.StopCallCount, "Nonsearch removal leaves accepted output running");
-            AssertEqual(0, player.DisposeCallCount, "Nonsearch removal retains the player with a surviving same-ID search card");
-            AssertEqual(true, player.LastOpenedStream!.CanRead, "Nonsearch removal retains accepted bytes");
-            AssertEqual(false, origin.IsPreviewActive, "Removed nonsearch objects release their active state");
-            AssertEqual(true, vm.SearchResults.Single().IsBeingPreviewed, "Surviving matching cards show active playback");
-            AssertEqual(1, http.GetAsStreamCallCount, "Nonsearch removal never downloads replacement audio");
+            await WithNonsearchOriginAsync(ordinaryFactory, async ordinaryOwner =>
+            {
+                var directory = ordinaryOwner?.CreateSettingsDirectory() ?? CreateTempDirectory();
+                File.WriteAllText(Path.Combine(directory, FavoriteVoiceStore.FileName), JsonSerializer.Serialize(new[] { Id }));
+                var settings = new Settings();
+                var cache = new VoiceMetadataCache();
+                cache.Put(VoiceMetadata.FromCachedVoice(Id, new() { Title = "Origin", SampleAudioUrl = Url }));
+                var (service, http) = TestHttpServiceProxy.Create();
+                var player = new TestPreviewAudioPlayer();
+                var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service, pluginSettingsDirectoryPath: directory), settings,
+                    null, null, previewAudioPlayerFactory: () => player, voiceMetadataCache: cache);
+                ordinaryOwner?.OwnFacade(vm);
+                using var legacyVm = ordinaryOwner is null ? vm : null;
+                vm.SearchResults = [new VoiceSearchItem { Id = Id, SampleAudioUrl = Url }];
+                if (!favorite) { vm.VoiceIdInput = Id; await vm.SubmitVoiceIdCommand.ExecuteAsync(null); }
+                var origin = favorite ? vm.FavoriteResults.Single() : vm.ByIdResults.Single();
+                await vm.ToggleSearchItemPreviewCommand.ExecuteAsync(origin);
+                AssertEqual(Id, vm.PreviewingVoiceId, "The actual nonsearch originating card starts playback");
+                if (favorite) vm.ToggleFavoriteCommand.Execute(origin);
+                else vm.VoiceIdInput = OtherId;
+                AssertEqual(Id, vm.PreviewingVoiceId, "Favorite/By-ID removal preserves accepted playback");
+                AssertEqual(0, player.StopCallCount, "Nonsearch removal leaves accepted output running");
+                AssertEqual(0, player.DisposeCallCount, "Nonsearch removal retains the player with a surviving same-ID search card");
+                AssertEqual(true, player.LastOpenedStream!.CanRead, "Nonsearch removal retains accepted bytes");
+                AssertEqual(false, origin.IsPreviewActive, "Removed nonsearch objects release their active state");
+                AssertEqual(true, vm.SearchResults.Single().IsBeingPreviewed, "Surviving matching cards show active playback");
+                AssertEqual(1, http.GetAsStreamCallCount, "Nonsearch removal never downloads replacement audio");
+            });
         }
     }
+
+    private static Task WithRetentionScenarioAsync(SearchRetentionFixtureFactory? factory,
+        Func<SearchRetentionFixtureOwner?, Task> body)
+    {
+        if (factory is null) return body(null);
+        var owner = factory.Create();
+        return owner.RunAsync(() => body(owner));
+    }
+
+    private static Task TrackRetentionTask(SearchRetentionFixtureOwner? owner, Task operation) =>
+        owner?.TrackOperation(operation) ?? operation;
+
+    private static Task<T> TrackRetentionResponse<T>(SearchRetentionFixtureOwner? owner, Task<T> response) =>
+        owner?.TrackRawResponse(response) ?? response;
 
     private static void Tick(SettingsViewModel vm, TestPreviewAudioPlayer player, int seconds)
     {

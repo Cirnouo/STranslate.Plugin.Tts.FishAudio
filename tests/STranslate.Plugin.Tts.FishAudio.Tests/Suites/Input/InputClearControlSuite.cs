@@ -24,7 +24,7 @@ internal static class InputClearControlSuite
     // 2 explicitly forced password compatibility states = 34 shared-guard actions.
     internal static async Task RunAsync()
     {
-        await Action("construction", stage => { _ = new SettingsView(); stage("compiled construction complete"); });
+        await Action("construction", Construction);
         foreach (var locale in UiLocales.All)
         foreach (var dark in new[] { false, true })
         foreach (var narrow in new[] { false, true })
@@ -35,10 +35,16 @@ internal static class InputClearControlSuite
             await Action($"forced-password-compatibility/{mode}", stage => PasswordCompatibility(mode, stage));
     }
 
-    private static Task Action(string name, Action<Action<string>> body) =>
+    internal static void Construction(Action<string> stage)
+    {
+        _ = new SettingsView();
+        stage("compiled construction complete");
+    }
+
+    internal static Task Action(string name, Action<Action<string>> body) =>
         SearchAdjustmentControlSuite.ObserveMatrixActionAsync(name, body, prefix: "input-clear", details: "shared-guard action; owned native source");
 
-    private static void Geometry(string locale, bool dark, bool narrow, Action<string> stage)
+    internal static void Geometry(string locale, bool dark, bool narrow, Action<string> stage)
     {
         using var fixture = new Fixture(locale, dark);
         stage("compiled view/source ready; production Hidden password");
@@ -83,7 +89,7 @@ internal static class InputClearControlSuite
         stage("all three real viewports/caret/actions/template and locale passed");
     }
 
-    private static void Activation(string field, Action<string> stage)
+    internal static void Activation(string field, Action<string> stage)
     {
         using var fixture = new Fixture("en", false);
         fixture.Vm.BrowseMode = field == "VoiceIdInput" ? VoiceBrowseMode.ById : VoiceBrowseMode.Search;
@@ -141,7 +147,7 @@ internal static class InputClearControlSuite
         stage("actual invoke/source/control/visibility/lock/focus/save assertions passed");
     }
 
-    private static void PasswordCompatibility(PasswordRevealMode mode, Action<string> stage)
+    internal static void PasswordCompatibility(PasswordRevealMode mode, Action<string> stage)
     {
         using var fixture = new Fixture("en", mode == PasswordRevealMode.Peek);
         fixture.Vm.ApiKey = new string('W', 1000);

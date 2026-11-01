@@ -53,7 +53,7 @@ public static class NUnitEvidence
 
     public static IReadOnlyList<DiscoveredNUnitCase> ReadCatalog(string absoluteDumpPath)
     {
-        var document = ReadXml(absoluteDumpPath, adapterDump: true);
+        var document = ReadDiscoveryDocument(absoluteDumpPath);
         var root = document.Root!;
         var run = root.Name == "test-run" ? root : Only(root.Elements("test-run"), "invalid-discovery-root");
         Require(root.Name == "test-run" || root.Name == "NUnitXml", "invalid-discovery-root");
@@ -99,7 +99,7 @@ public static class NUnitEvidence
         using var guard = new FileStream(absoluteDumpPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         var selected = ReadCatalog(absoluteDumpPath).Where(item => item.CanonicalId == canonicalId).ToArray();
         Require(selected.Length == 1, "unknown-selected-case");
-        var document = ReadXml(absoluteDumpPath, adapterDump: true);
+        var document = ReadDiscoveryDocument(absoluteDumpPath);
         var leaf = document.Descendants("test-case").Single(item => (string?)item.Attribute("id") == selected[0].PlatformId);
         Require(leaf.Elements("properties").Count() <= 1, "duplicate-properties-container");
         var values = new SortedDictionary<string, List<string>>(StringComparer.Ordinal);
@@ -264,6 +264,10 @@ public static class NUnitEvidence
         }
         return durations;
     }
+
+    // Share the observed adapter envelope interpretation with metadata readers.
+    // Its byte, node and depth limits remain the existing discovery contract.
+    internal static XDocument ReadDiscoveryDocument(string absolutePath) => ReadXml(absolutePath, adapterDump: true);
 
     private static XDocument ReadXml(string absolutePath, bool adapterDump)
     {

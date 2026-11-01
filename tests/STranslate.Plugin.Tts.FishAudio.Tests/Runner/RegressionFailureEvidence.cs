@@ -1,9 +1,19 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 internal sealed record RegressionFailureFrame(string? SourceFile, int Line, string Type, string Method);
-internal sealed record RegressionFailureInfo(IReadOnlyList<RegressionFailureFrame> Frames, string? NativeKeyboardContext);
+internal sealed record RegressionFailureInfo(IReadOnlyList<RegressionFailureFrame> Frames, string? NativeKeyboardContext)
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public NativeKeyboardFollowUpInfo? NativeKeyboardFollowUp { get; init; }
+}
+internal sealed record NativeKeyboardFollowUpInfo(int Version, string Phase, int Key, bool PlannedDown,
+    bool FirstTableDown, bool FirstNativeDown, int ManagedThreadId, uint NativeThreadId, string Status,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] ushort? ControlledDownMask,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] bool? TableDown,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] bool? NativeDown);
 internal sealed record RegressionFailureSidecar(int Version, string RequestId, string RunId, string CaseId,
     RegressionSourceIdentity Source, RegressionFailureInfo Failure);
 
@@ -47,7 +57,37 @@ internal static class RegressionFailureEvidence
             if (error.Data[NativeKeyboardStateFixture.FailureContextKey] is string value && ValidContext(value)) context = value;
         }
         catch { /* Diagnostic access never replaces the original exception. */ }
-        return new(frames, context);
+        return new(frames, context) { NativeKeyboardFollowUp = CaptureFollowUp(error) };
+    }
+
+    private static NativeKeyboardFollowUpInfo? CaptureFollowUp(Exception error)
+    {
+        try
+        {
+            if (error.Data[global::NativeKeyboardFollowUp.EvidenceKey] is not NativeKeyboardFollowUpResult observation)
+                return null;
+            var first = observation.FirstMismatch;
+            var ordinal = Array.IndexOf(ControlledKeys, first.Key);
+            if (!ReferenceEquals(first.PrimaryFailure, error) || ordinal < 0 || first.ManagedThreadId <= 0 ||
+                first.NativeThreadId == 0 || first.PlannedDown != first.TableDown || first.PlannedDown == first.NativeDown ||
+                first.Phase is not (NativeKeyboardFollowUpPhase.BeforeAction or NativeKeyboardFollowUpPhase.AfterAction)) return null;
+            string status;
+            if (observation.Status == NativeKeyboardFollowUpStatus.Captured &&
+                observation.ControlledDownMask is { } mask && mask <= 0x03FF &&
+                observation.TableDown is { } table && observation.NativeDown.HasValue &&
+                ((mask & (1 << ordinal)) != 0) == table) status = "captured";
+            else if (observation.Status == NativeKeyboardFollowUpStatus.Unavailable &&
+                observation.ControlledDownMask is null && observation.TableDown is null && observation.NativeDown is null)
+                status = "unavailable";
+            else return null;
+            // Project only the fixed owned facts. Never serialize the result's
+            // PrimaryFailure, arbitrary Data, a full keyboard buffer or raw text.
+            return new(1, first.Phase == NativeKeyboardFollowUpPhase.BeforeAction ? "before-action" : "after-action",
+                first.Key, first.PlannedDown, first.TableDown, first.NativeDown,
+                first.ManagedThreadId, first.NativeThreadId, status,
+                observation.ControlledDownMask, observation.TableDown, observation.NativeDown);
+        }
+        catch { return null; }
     }
 
     internal static string SidecarPath(RegressionChildRequest request, int index) => request.ManifestPath + $".failure-{index + 1:D6}.json";
@@ -56,8 +96,10 @@ internal static class RegressionFailureEvidence
     {
         try
         {
+            var info = Capture(error);
             RegressionProcessProtocol.WriteNew(SidecarPath(request, index), new RegressionFailureSidecar(
-                1, request.RequestId, request.RunId, request.CaseIds[index], request.Source, Capture(error)));
+                info.NativeKeyboardFollowUp is null ? 1 : 2,
+                request.RequestId, request.RunId, request.CaseIds[index], request.Source, info));
         }
         catch { /* Best-effort evidence cannot replace or recover a failed case. */ }
     }

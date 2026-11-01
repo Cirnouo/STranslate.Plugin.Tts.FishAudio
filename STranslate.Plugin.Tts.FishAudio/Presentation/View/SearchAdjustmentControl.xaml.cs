@@ -28,6 +28,7 @@ public partial class SearchAdjustmentControl : UserControl
     private bool _updatingDraftTiles;
     private readonly PopupScrollbarLane _scrollbarLane;
     internal PopupMaterial Material { get; }
+    private ApplyTaskObservation? _applyTaskObservation;
 
     public SearchAdjustmentControl()
     {
@@ -214,14 +215,58 @@ public partial class SearchAdjustmentControl : UserControl
         RelevanceRadio.IsChecked = true;
         args.Handled = true;
     }
+    // Explicit instance-only observation. This records references to the work
+    // returned by the existing Apply path; it never creates or completes work.
+    internal ApplyTaskObservation ObserveApplyTasks()
+    {
+        Dispatcher.VerifyAccess();
+        if (_applyTaskObservation is not null)
+            throw new InvalidOperationException("search-apply-observation-already-active");
+        return _applyTaskObservation = new ApplyTaskObservation(this);
+    }
+
+    internal sealed class ApplyTaskObservation : IDisposable
+    {
+        private SearchAdjustmentControl? _owner;
+        private readonly List<Task> _tasks = [];
+        internal IReadOnlyList<Task> Tasks { get; }
+
+        internal ApplyTaskObservation(SearchAdjustmentControl owner)
+        {
+            _owner = owner;
+            Tasks = _tasks.AsReadOnly();
+        }
+
+        internal void Record(Task task) => _tasks.Add(task);
+
+        public void Dispose()
+        {
+            if (_owner is null) return;
+            _owner.Dispatcher.VerifyAccess();
+            if (ReferenceEquals(_owner._applyTaskObservation, this))
+                _owner._applyTaskObservation = null;
+            _owner = null;
+        }
+    }
+
     private async void Apply_Click(object sender, RoutedEventArgs args)
     {
+        var work = StartApplyFromPopup(args);
+        if (work is not null) await work;
+        // No product tail follows this await. The returned original Task owns
+        // the complete coordinator body and its finally/CTS retirement.
+    }
+
+    private Task? StartApplyFromPopup(RoutedEventArgs args)
+    {
         args.Handled = true;
-        if (!AdjustmentPopup.IsOpen || DataContext is not SettingsViewModel vm) return;
+        if (!AdjustmentPopup.IsOpen || DataContext is not SettingsViewModel vm) return null;
         var languages = VoiceSearchCriteria.PresetLanguages.Where(_draftLanguages.Contains).ToArray();
         var sort = PopularityRadio.IsChecked == true ? "task_count" : CreationRadio.IsChecked == true ? "created_at" : "score";
         ClosePopup(true);
-        await vm.ApplySearchOptionsAsync(languages, sort);
+        var work = vm.ApplySearchOptionsAsync(languages, sort);
+        _applyTaskObservation?.Record(work);
+        return work;
     }
     private void Popup_PreviewKeyDown(object sender, KeyEventArgs args)
     {

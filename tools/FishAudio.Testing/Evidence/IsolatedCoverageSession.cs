@@ -44,7 +44,12 @@ public sealed record CoverageDiagnosticReview(CoverageDiagnosticDisposition Disp
 // come from supervision; native process.json's outputDrained alone is insufficient.
 public sealed record CoverageSupervisorReceipt(int SchemaVersion, CoverageSessionIdentity Identity,
     DateTimeOffset StartedUtc, DateTimeOffset SealedUtc, CoverageProcessCompletion Cover,
-    CoverageProcessCompletion Export, CoverageDiagnosticReview Diagnostics, IReadOnlyList<CoverageArtifact> Artifacts);
+    CoverageProcessCompletion Export, CoverageDiagnosticReview Diagnostics, IReadOnlyList<CoverageArtifact> Artifacts)
+{
+    // Historical bounded receipts without this envelope establish their basic
+    // process/artifact boundary, not framework native-action supervision.
+    public CoverageFrameworkEnvelope? FrameworkEnvelope { get; init; }
+}
 public sealed record CoverageRepositoryDependency(string RelativePath, string Sha256);
 public sealed record EmptyProductCoverage(EmptyProductCoverageReason Reason,
     IReadOnlyList<CoverageRepositoryDependency> Dependencies);
@@ -57,7 +62,12 @@ public sealed record IsolatedCoverageSessionInput(int SchemaVersion, CoverageSes
 public sealed record IsolatedCoverageAdmission(int SchemaVersion, CoverageSessionIdentity Identity,
     string SourceDirectory, string BuildDirectory, IReadOnlyList<CoverageBinaryBinding> Binaries,
     string DiscoverySha256, string DotCoverVersion, string ToolFile, string ToolSha256,
-    bool RequireOwnedAppHost, CoverageSupervisorReceipt Supervisor);
+    bool RequireOwnedAppHost, CoverageSupervisorReceipt Supervisor)
+{
+    public bool RequireFrameworkSupervision { get; init; }
+    public string? InstrumentationPolicyVersion { get; init; }
+    public CoverageDependencyObservation? Dependencies { get; init; }
+}
 public sealed record AdmittedCoverageBinary(CoverageBinaryRole Role, BinaryIdentityRecord Identity);
 public sealed record UnresolvedCaseCoverageSymbol(DotCoverMemberRecord Observation);
 public sealed record CaseCoverage(int SchemaVersion, CoverageSessionIdentity Identity,
@@ -69,6 +79,8 @@ public sealed record CaseCoverage(int SchemaVersion, CoverageSessionIdentity Ide
     public bool CompleteBaseline => false;
     public string AttributionMode => "isolated-case";
     public bool SourceMappingsResolved => false;
+    public string? InstrumentationPolicyVersion { get; init; }
+    public CoverageDependencyRecord? Dependencies { get; init; }
 }
 
 public sealed class IsolatedCoverageSessionException : Exception
@@ -82,7 +94,7 @@ public sealed class IsolatedCoverageSessionException : Exception
 /// are never created, rewritten or deleted. Aggregate symbol observations retain
 /// their ambiguity; this reader performs no source-symbol or baseline admission.
 /// </summary>
-public static class IsolatedCoverageSession
+public static partial class IsolatedCoverageSession
 {
     private const long MaximumArtifactBytes = 1024L * 1024 * 1024;
 
@@ -99,6 +111,11 @@ public static class IsolatedCoverageSession
             var supervisor = expected.Supervisor;
             Require(supervisor is not null && supervisor.SchemaVersion == 1 && supervisor.Identity == expected.Identity,
                 "supervisor-identity-mismatch");
+            Require(!expected.RequireFrameworkSupervision || supervisor.FrameworkEnvelope is not null,
+                "framework-supervision-required");
+            Require(CoverageInstrumentationPolicy.IsSupported(expected.InstrumentationPolicyVersion) &&
+                (expected.InstrumentationPolicyVersion is null || supervisor.FrameworkEnvelope is not null),
+                "instrumentation-policy-supervision");
             ValidateCompletion(supervisor, expected.RequireOwnedAppHost);
             Require(expected.DotCoverVersion == DotCoverAggregate.SupportedToolVersion, "unsupported-tool-version");
             Require(IsHash(expected.ToolSha256), "invalid-tool-hash");
@@ -186,6 +203,12 @@ public static class IsolatedCoverageSession
             ValidateProcessRecord(paths[CoverageArtifactKind.ExportProcess], supervisor.Export);
             ValidateInvocation(paths[CoverageArtifactKind.CoverInvocation], expected.Identity, "cover",
                 "--snapshot-output", paths[CoverageArtifactKind.Snapshot], testDll!, expected.ToolFile);
+            if (expected.InstrumentationPolicyVersion is null)
+            {
+                using var coverInvocation = ReadJson(paths[CoverageArtifactKind.CoverInvocation]);
+                Require(!Arguments(coverInvocation.RootElement).Any(item => item.StartsWith("--exclude-", StringComparison.OrdinalIgnoreCase)),
+                    "instrumentation-policy-v0-argv");
+            }
             ValidateInvocation(paths[CoverageArtifactKind.ExportInvocation], expected.Identity, "report",
                 "--snapshot-source", paths[CoverageArtifactKind.Snapshot], testDll: null, expectedToolFile: expected.ToolFile);
             using (var invocation = ReadJson(paths[CoverageArtifactKind.ExportInvocation]))
@@ -195,19 +218,68 @@ public static class IsolatedCoverageSession
             var result = NUnitEvidence.VerifyResults(catalog, [expected.Identity.CanonicalId],
                 paths[CoverageArtifactKind.NUnitXml], paths[CoverageArtifactKind.Trx]);
             Require(result.PassedCount == 1 && result.Cases.Count == 1, "terminal-case-set-mismatch");
+            ValidatedDependencyFramework? framework = null;
+            if (supervisor.FrameworkEnvelope is { } frameworkEnvelope)
+                framework = ValidatedDependencyFramework.ReadIsolatedValidated(frameworkEnvelope, expected, artifactRoot, buildRoot, sourceRoot, testDll!,
+                    paths, relativePaths, binaryPaths, catalog, locks);
+            CoverageDependencyRecord? dependencies = null;
+            if (expected.Dependencies is { } dependencyExpectation)
+            {
+                var testsBinding = expected.Binaries.Single(item => item.Role == CoverageBinaryRole.Tests);
+                dependencies = CoverageDependencies.Validate(dependencyExpectation, expected.Identity.Source, expected.Identity.BuildId,
+                    sourceRoot, testDll!, Child(buildRoot, testsBinding.PdbRelativePath), paths[CoverageArtifactKind.Discovery],
+                    catalog.Where(item => item.CanonicalId == expected.Identity.CanonicalId).ToArray(), "isolated-case",
+                    expected.Identity.RunId, expected.Identity.SessionId, framework, locks);
+            }
             var aggregate = DotCoverAggregate.ReadValidated(paths[CoverageArtifactKind.AggregateJson], product.AssemblyName,
                 expected.DotCoverVersion);
             Require(aggregate.ReportSha256 == input.Artifacts.Single(item => item.Kind == CoverageArtifactKind.AggregateJson).Sha256,
                 "aggregate-digest-mismatch");
             var empty = aggregate.TargetAssembly is null || aggregate.TargetAssembly.CoveredStatements == 0;
-            if (empty) ValidateEmptyProduct(input.EmptyProduct, sourceRoot, locks);
-            else Require(input.EmptyProduct is null, "unexpected-empty-product-explanation");
+            if (empty && dependencies is not null)
+                Require(dependencies.Observation.Cases.All(item => item.Responsibility != CoverageResponsibility.ProductExpected),
+                    "empty-product-expected-hit-required");
+            var frameworkOnly = dependencies is not null && CoverageDependencies.AllowsEmpty(dependencies) &&
+                dependencies.Observation.Cases.All(item => item.Responsibility == CoverageResponsibility.FrameworkLifecycleOnly);
+            if (empty && !(frameworkOnly && input.EmptyProduct is null))
+            {
+                // Keep the established explanation/hash checks first. The same
+                // already-hashed discovery remains held in locks while its
+                // selected canonical case supplies independent declarations.
+                ValidateEmptyProduct(input.EmptyProduct, sourceRoot, locks);
+                var metadata = NUnitEvidence.ReadCaseMetadata(paths[CoverageArtifactKind.Discovery], expected.Identity.CanonicalId);
+                if (!metadata.Properties.ContainsKey("FishAudioEmptyProductCoverage") &&
+                    CoverageDependencies.AllowsEmpty(dependencies) &&
+                    dependencies!.Observation.Cases.Single().Responsibility == CoverageResponsibility.RepositoryResourcesOnly)
+                {
+                    var declared = dependencies.Observation.Cases.Single().Resources.ToDictionary(
+                        item => item.RelativePath, item => item.Sha256, StringComparer.OrdinalIgnoreCase);
+                    Require(declared.Count == input.EmptyProduct!.Dependencies.Count &&
+                        input.EmptyProduct.Dependencies.All(item =>
+                            declared.TryGetValue(item.RelativePath, out var hash) && hash == item.Sha256),
+                        "empty-product-dependency-declaration-mismatch");
+                }
+                else ValidateEmptyProductDeclaration(metadata, input.EmptyProduct!, sourceRoot);
+            }
+            else if (!empty)
+            {
+                Require(input.EmptyProduct is null, "unexpected-empty-product-explanation");
+                // Retain the full Product envelope alongside a validated modern resource declaration.
+                if (!(CoverageDependencies.AllowsEmpty(dependencies) &&
+                    dependencies!.Observation.Cases.Single().Responsibility == CoverageResponsibility.RepositoryResourcesOnly &&
+                    !NUnitEvidence.ReadCaseMetadata(paths[CoverageArtifactKind.Discovery], expected.Identity.CanonicalId)
+                        .Properties.ContainsKey("FishAudioEmptyProductCoverage")))
+                    CoverageDependencies.ValidateNonempty(dependencies);
+            }
+            if (dependencies is not null) CoverageDependencies.Recheck(dependencies, sourceRoot, locks);
             var observations = aggregate.Members.Select(member => new UnresolvedCaseCoverageSymbol(member)).ToArray();
             admitted = true;
             return new(1, expected.Identity, result.Cases[0], binaries.AsReadOnly(), Array.AsReadOnly(input.Artifacts.ToArray()),
-                aggregate, Array.AsReadOnly(observations), supervisor, input.EmptyProduct);
+                aggregate, Array.AsReadOnly(observations), supervisor, input.EmptyProduct)
+                { Dependencies = dependencies, InstrumentationPolicyVersion = expected.InstrumentationPolicyVersion };
         }
         catch (IsolatedCoverageSessionException) { throw; }
+        catch (CoverageDependencyException error) { throw Rejected(error.Code); }
         catch (NUnitEvidenceException) { throw Rejected("test-evidence-rejected"); }
         catch (BinaryIdentityException) { throw Rejected("binary-evidence-rejected"); }
         catch (DotCoverAggregateException) { throw Rejected("aggregate-evidence-rejected"); }
@@ -334,6 +406,27 @@ public static class IsolatedCoverageSession
             var file = OpenAbsolute(Child(sourceRoot, dependency.RelativePath), locks);
             Require(Digest(file) == dependency.Sha256, "repository-dependency-mismatch");
         }
+    }
+
+    private static void ValidateEmptyProductDeclaration(NUnitCaseMetadata metadata,
+        EmptyProductCoverage explanation, string sourceRoot)
+    {
+        Require(metadata.Properties.TryGetValue("FishAudioEmptyProductCoverage", out var reasons),
+            "empty-product-declaration-required");
+        Require(reasons.Count == 1 && reasons[0] == "RepositoryResourcesOnly", "invalid-empty-product-declaration");
+        Require(metadata.Properties.TryGetValue("FishAudioRepositoryDependency", out var dependencies) &&
+            dependencies.Count is > 0 and <= 4096, "invalid-repository-dependency-declaration");
+        var declared = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var dependency in dependencies)
+        {
+            // Use exactly the existing relative-path/root contract. A declaration
+            // cannot authorize an absolute, parent, backslash or duplicate path.
+            _ = Child(sourceRoot, dependency);
+            Require(declared.Add(dependency), "invalid-repository-dependency-declaration");
+        }
+        Require(declared.Count == explanation.Dependencies.Count &&
+            declared.SetEquals(explanation.Dependencies.Select(item => item.RelativePath)),
+            "empty-product-dependency-declaration-mismatch");
     }
 
     private static JsonDocument ReadJson(string path)

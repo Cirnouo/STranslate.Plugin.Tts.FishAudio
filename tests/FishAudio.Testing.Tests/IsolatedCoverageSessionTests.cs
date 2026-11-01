@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Xml.Linq;
 using FishAudio.Testing.Evidence;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -10,7 +11,7 @@ namespace FishAudio.Testing.Tests;
 
 [TestFixture]
 [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
-public sealed class IsolatedCoverageSessionTests
+public sealed partial class IsolatedCoverageSessionTests
 {
     // Hand-declared, sanitized NUnit/CLI shapes. The snapshot is opaque fixture
     // bytes: these tests admit evidence contracts, not actual product coverage.
@@ -109,6 +110,25 @@ public sealed class IsolatedCoverageSessionTests
         foreach (var artifact in _input.Artifacts) Assert.That(File.ReadAllBytes(ArtifactPath(artifact.Kind)), Is.EqualTo(before[artifact.RelativePath]));
     }
 
+    [Test]
+    [Property("FishAudioCaseId", "isolated-coverage/requires-framework-supervision-when-requested")]
+    public void RequiredFrameworkSupervisionCannotAdmitAnOtherwiseValidUncontrolledSession()
+    {
+        Assert.That(Read().TestResult.CanonicalId, Is.EqualTo(CanonicalId));
+        // Keep the pending optional requirement representable before its typed
+        // property exists. Current default JSON handling ignores this new field.
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var expectation = JsonSerializer.SerializeToNode(_expected, options)!.AsObject();
+        expectation["requireFrameworkSupervision"] = true;
+        var required = expectation.Deserialize<IsolatedCoverageAdmission>(options)!;
+
+        var error = Assert.Throws<IsolatedCoverageSessionException>(
+            () => IsolatedCoverageSession.ReadValidated(_input, required),
+            "framework-supervision-required-must-not-admit");
+        if (error is not null)
+            Assert.That(error.Code, Is.EqualTo("coverage-session-framework-supervision-required"));
+    }
+
     [TestCase(0.5, false, TestName = "isolated-session/child-proof-before-cover-is-rejected")]
     [TestCase(5.0, true, TestName = "isolated-session/child-proof-inside-cover-remains-admissible")]
     [TestCase(10.5, false, TestName = "isolated-session/child-proof-after-cover-is-rejected")]
@@ -136,6 +156,7 @@ public sealed class IsolatedCoverageSessionTests
     [TestCase(true, TestName = "isolated-session/absent-product-assembly-with-repository-dependency")]
     public void ExplicitRepositoryResourceCoverageMayHaveNoProductStatements(bool absent)
     {
+        DeclareResourceCoverage("README.md");
         SetAggregateEmpty(absent);
         _input = _input with { EmptyProduct = ResourceExplanation() };
         var admitted = Read();
@@ -143,6 +164,69 @@ public sealed class IsolatedCoverageSessionTests
         Assert.That(admitted.EmptyProduct.Dependencies.Single().RelativePath, Is.EqualTo("README.md"));
         Assert.That(admitted.Aggregate.TargetAssembly?.CoveredStatements ?? 0, Is.Zero);
         Assert.That(admitted.CompleteBaseline, Is.False);
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "isolated-session/undeclared-product-case-cannot-claim-resource-empty")]
+    public void UndeclaredProductCaseCannotClaimResourceEmpty()
+    {
+        SetAggregateEmpty(absent: false);
+        _input = _input with { EmptyProduct = ResourceExplanation() };
+        var metadata = NUnitEvidence.ReadCaseMetadata(ArtifactPath(CoverageArtifactKind.Discovery), CanonicalId);
+        Assert.Multiple(() =>
+        {
+            Assert.That(metadata.CanonicalId, Is.EqualTo(_expected.Identity.CanonicalId));
+            Assert.That(metadata.Properties.ContainsKey("FishAudioEmptyProductCoverage"), Is.False);
+            Assert.That(metadata.Properties.ContainsKey("FishAudioRepositoryDependency"), Is.False);
+            Assert.That(_input.EmptyProduct!.Dependencies.Single().Sha256,
+                Is.EqualTo(Hash(Path.Combine(_root, "source/README.md"))));
+        });
+
+        var error = Assert.Throws<IsolatedCoverageSessionException>(() => Read(),
+            "isolated-empty-undeclared-case-must-reject");
+        if (error is not null)
+            Assert.That(error.Code, Is.EqualTo("coverage-session-empty-product-declaration-required"));
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "isolated-session/empty-dependencies-match-discovered-case")]
+    public void EmptyDependenciesMustMatchTheSameDiscoveredCase()
+    {
+        var matchingDiscovery = DeclareResourceCoverage("README.md");
+        SetAggregateEmpty(absent: false);
+        _input = _input with { EmptyProduct = ResourceExplanation() };
+        var matchingMetadata = NUnitEvidence.ReadCaseMetadata(matchingDiscovery, CanonicalId);
+        var matched = Read();
+        Assert.Multiple(() =>
+        {
+            Assert.That(matchingMetadata.CanonicalId, Is.EqualTo(_expected.Identity.CanonicalId));
+            Assert.That(matchingMetadata.Properties["FishAudioEmptyProductCoverage"],
+                Is.EqualTo(new[] { "RepositoryResourcesOnly" }));
+            Assert.That(matchingMetadata.Properties["FishAudioRepositoryDependency"], Is.EqualTo(new[] { "README.md" }));
+            Assert.That(matched.EmptyProduct!.Dependencies.Single().RelativePath, Is.EqualTo("README.md"));
+            Assert.That(matched.EmptyProduct.Dependencies.Single().Sha256,
+                Is.EqualTo(Hash(Path.Combine(_root, "source/README.md"))));
+        });
+
+        var otherPath = Path.Combine(_root, "source/OTHER.md");
+        using (var other = new FileStream(otherPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+            other.Write(Encoding.UTF8.GetBytes("another real repository-resource dependency fixture"));
+        var otherDiscovery = DeclareResourceCoverage("OTHER.md");
+        var otherMetadata = NUnitEvidence.ReadCaseMetadata(otherDiscovery, CanonicalId);
+        Assert.Multiple(() =>
+        {
+            Assert.That(otherMetadata.CanonicalId, Is.EqualTo(_expected.Identity.CanonicalId));
+            Assert.That(otherMetadata.Properties["FishAudioRepositoryDependency"], Is.EqualTo(new[] { "OTHER.md" }));
+            Assert.That(File.Exists(otherPath), Is.True);
+            Assert.That(Hash(otherPath), Is.Not.EqualTo(Hash(Path.Combine(_root, "source/README.md"))));
+            Assert.That(_input.EmptyProduct!.Dependencies.Single().RelativePath, Is.EqualTo("README.md"));
+            Assert.That(_input.EmptyProduct.Dependencies.Single().Sha256,
+                Is.EqualTo(Hash(Path.Combine(_root, "source/README.md"))));
+        });
+        var error = Assert.Throws<IsolatedCoverageSessionException>(() => Read(),
+            "isolated-empty-declared-dependencies-must-match");
+        if (error is not null)
+            Assert.That(error.Code, Is.EqualTo("coverage-session-empty-product-dependency-declaration-mismatch"));
     }
 
     [Test]
@@ -265,12 +349,14 @@ public sealed class IsolatedCoverageSessionTests
             case "error": ChangeReview(_expected.Supervisor.Diagnostics with { Disposition = CoverageDiagnosticDisposition.Error }); break;
             case "changed-diagnostic": ReplaceArtifact(CoverageArtifactKind.ExportStderr, "different diagnostic bytes"); break;
             case "missing-rule-source": ChangeReview(_expected.Supervisor.Diagnostics with { RuleSourceSha256 = "" }); break;
-            case "empty-unexplained": SetAggregateEmpty(absent: false); break;
+            case "empty-unexplained": DeclareResourceCoverage("README.md"); SetAggregateEmpty(absent: false); break;
             case "empty-no-dependency":
+                DeclareResourceCoverage("README.md");
                 SetAggregateEmpty(absent: false);
                 _input = _input with { EmptyProduct = new(EmptyProductCoverageReason.RepositoryResourcesOnly, []) };
                 break;
             case "dependency-mismatch":
+                DeclareResourceCoverage("README.md");
                 SetAggregateEmpty(absent: false);
                 _input = _input with { EmptyProduct = ResourceExplanation() };
                 File.AppendAllText(Path.Combine(_root, "source/README.md"), "modified after the recorded source snapshot");
@@ -319,6 +405,33 @@ public sealed class IsolatedCoverageSessionTests
 
     private EmptyProductCoverage ResourceExplanation() => new(EmptyProductCoverageReason.RepositoryResourcesOnly,
         [new("README.md", Hash(Path.Combine(_root, "source/README.md")))]);
+
+    private string DeclareResourceCoverage(params string[] dependencies)
+    {
+        // This creates a new literal-fixture discovery generation. Previously
+        // written raw bytes remain intact; only the current sealed descriptor
+        // and its independently expected discovery digest advance together.
+        var document = XDocument.Parse(Discovery, LoadOptions.PreserveWhitespace);
+        var leaf = document.Descendants("test-case").Single(element => element.Elements("properties").Elements("property")
+            .Any(property => (string?)property.Attribute("name") == "FishAudioCaseId" &&
+                (string?)property.Attribute("value") == CanonicalId));
+        var properties = leaf.Element("properties")!;
+        properties.Add(new XElement("property", new XAttribute("name", "FishAudioEmptyProductCoverage"),
+            new XAttribute("value", "RepositoryResourcesOnly")));
+        foreach (var dependency in dependencies)
+            properties.Add(new XElement("property", new XAttribute("name", "FishAudioRepositoryDependency"),
+                new XAttribute("value", dependency)));
+        var path = Path.Combine(_root, "raw", "declared-discovery-" + Guid.NewGuid().ToString("N") + ".fixture");
+        using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
+        using (var writer = new StreamWriter(output, new UTF8Encoding(false)))
+            writer.Write(document.ToString(SaveOptions.DisableFormatting));
+        File.SetLastWriteTimeUtc(path, _started.AddSeconds(13).UtcDateTime);
+        var artifact = new CoverageArtifact(CoverageArtifactKind.Discovery, Path.GetFileName(path), Hash(path),
+            new FileInfo(path).Length, new(File.GetLastWriteTimeUtc(path)));
+        UpdateDescriptor(artifact);
+        _expected = _expected with { DiscoverySha256 = artifact.Sha256 };
+        return path;
+    }
 
     private string Invocation(CoverageSessionIdentity identity, bool cover) => JsonSerializer.Serialize(new
     {

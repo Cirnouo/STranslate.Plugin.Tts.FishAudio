@@ -16,9 +16,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[NUnit.Framework.TestFixture]
+[NUnit.Framework.NonParallelizable]
 internal static partial class PreviewSuite
 {
-    internal static async Task PreviewDownloadUsesHostStreamWithoutCredentialsAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-download-uses-host-stream-without-credentials")]
+    [NUnit.Framework.Order(225)]
+    public static async Task PreviewDownloadUsesHostStreamWithoutCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -46,7 +51,10 @@ internal static partial class PreviewSuite
         AssertEqual(0, http.PostAsBytesCallCount, "Preview must not synthesize audio");
     }
 
-    internal static void PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-audio-url-validation-allows-only-fish-audio-storage-hosts")]
+    [NUnit.Framework.Order(224)]
+    public static void PreviewAudioUrlValidationAllowsOnlyFishAudioStorageHosts()
     {
         AssertPreviewAudioUrlAllowed("https://platform.r2.fish.audio/audio/sample.mp3");
         AssertPreviewAudioUrlAllowed("https://bucket.r2.cloudflarestorage.com/audio/sample.mp3");
@@ -64,7 +72,10 @@ internal static partial class PreviewSuite
         AssertPreviewAudioUrlRejected("not a url");
     }
 
-    internal static void PreviewAudioUrlExpirationRefreshesAtThirtySecondWindow()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-audio-url-expiration-refreshes-at-thirty-second-window")]
+    [NUnit.Framework.Order(233)]
+    public static void PreviewAudioUrlExpirationRefreshesAtThirtySecondWindow()
     {
         const string url = "https://c97f3361a1c971323738e24f451a0225.r2.cloudflarestorage.com/fish-platform-data/task/f196a6d1769d4a61aa0e48f7e4337f04.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20260723T094710Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=signature";
         var issuedAt = new DateTimeOffset(2026, 7, 23, 9, 47, 10, TimeSpan.Zero);
@@ -73,7 +84,10 @@ internal static partial class PreviewSuite
         AssertEqual(true, PreviewAudioUrlPolicy.RequiresRefresh(url, issuedAt.AddSeconds(3570)), "Signed preview URL should refresh at the 30-second boundary");
     }
 
-    internal static void PreviewAudioUrlExpirationTreatsMalformedSignaturesAsExpiring()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-audio-url-expiration-treats-malformed-signatures-as-expiring")]
+    [NUnit.Framework.Order(234)]
+    public static void PreviewAudioUrlExpirationTreatsMalformedSignaturesAsExpiring()
     {
         var nowUtc = new DateTimeOffset(2026, 7, 23, 10, 0, 0, TimeSpan.Zero);
         AssertEqual(false, PreviewAudioUrlPolicy.RequiresRefresh("https://platform.r2.fish.audio/audio/public.mp3", nowUtc), "Unsigned preview URLs should remain directly reusable");
@@ -83,7 +97,10 @@ internal static partial class PreviewSuite
         AssertEqual(true, PreviewAudioUrlPolicy.RequiresRefresh("https://platform.r2.fish.audio/audio/duplicate.mp3?X-Amz-Date=20260723T094710Z&X-Amz-Date=20260723T094711Z&X-Amz-Expires=3600", nowUtc), "Duplicate signed preview parameters should refresh conservatively");
     }
 
-    internal static void SelectedPreviewCacheUpdateRejectsChangedVoice()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/selected-preview-cache-update-rejects-changed-voice")]
+    [NUnit.Framework.Order(235)]
+    public static void SelectedPreviewCacheUpdateRejectsChangedVoice()
     {
         const string requestedVoiceId = "11111111111111111111111111111111";
         var currentCache = new CachedVoiceInfo { Title = "Current Voice" };
@@ -102,7 +119,11 @@ internal static partial class PreviewSuite
         AssertEqual(true, ReferenceEquals(currentCache, settings.CachedVoice), "Rejected selected preview cache update should preserve the current cache");
     }
 
-    internal static void PreviewAudioRejectsInvalidSearchUrlWithoutStartingPlayback()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-audio-rejects-invalid-search-url-without-starting-playback")]
+    [NUnit.Framework.Property("OriginalOrdinal", 236)]
+    [NUnit.Framework.Order(236)]
+    public static async Task PreviewAudioRejectsInvalidSearchUrlWithoutStartingPlayback()
     {
         using var network = OverrideNetworkAvailability(true);
         var logger = new TestLogger();
@@ -114,20 +135,31 @@ internal static partial class PreviewSuite
             clearCoverImageCacheTimeout: null,
             previewAudioPlayerFactory: () => player);
 
-        var item = new VoiceSearchItem
+        Task? ownedCommandTask = null;
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? primaryFailure = null;
+        try
         {
-            Id = "0123456789abcdef0123456789abcdef",
-            SampleAudioUrl = "file:///C:/Windows/win.ini",
-        };
-        viewModel.SearchResults = [item];
-        viewModel.ToggleSearchItemPreviewCommand.Execute(item);
+            var item = new VoiceSearchItem
+            {
+                Id = "0123456789abcdef0123456789abcdef",
+                SampleAudioUrl = "file:///C:/Windows/win.ini",
+            };
+            viewModel.SearchResults = [item];
+            try { viewModel.ToggleSearchItemPreviewCommand.Execute(item); }
+            finally { ownedCommandTask = viewModel.ToggleSearchItemPreviewCommand.ExecutionTask; }
 
-        AssertEqual(null, viewModel.PreviewingVoiceId, "Invalid preview URL should leave preview state stopped");
-        AssertEqual(0, player.PlayCallCount, "Invalid preview URL should not start the player abstraction");
-        AssertEqual(true, logger.Contains(LogLevel.Warning, "Rejected preview audio URL"), "Invalid preview URL should be logged as a recoverable warning");
+            AssertEqual(null, viewModel.PreviewingVoiceId, "Invalid preview URL should leave preview state stopped");
+            AssertEqual(0, player.PlayCallCount, "Invalid preview URL should not start the player abstraction");
+            AssertEqual(true, logger.Contains(LogLevel.Warning, "Rejected preview audio URL"), "Invalid preview URL should be logged as a recoverable warning");
+        }
+        catch (Exception error) { primaryFailure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        finally { await FinishSearchPreflightAsync(viewModel, ownedCommandTask, primaryFailure); }
     }
 
-    internal static async Task DisplayPreviewValidUrlSkipsDetailRefreshAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-valid-url-skips-detail-refresh")]
+    [NUnit.Framework.Order(237)]
+    public static async Task DisplayPreviewValidUrlSkipsDetailRefreshAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -144,7 +176,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(settings: settings, httpService: httpService);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -158,7 +190,10 @@ internal static partial class PreviewSuite
         AssertEqual(currentUrl, http.LastGetStreamUrl, "Selected voice preview should play the current reusable URL");
     }
 
-    internal static async Task DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-refreshes-cached-voice-and-plays-latest-url")]
+    [NUnit.Framework.Order(238)]
+    public static async Task DisplayPreviewRefreshesCachedVoiceAndPlaysLatestUrlAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -184,7 +219,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(settings: settings, httpService: httpService);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -214,7 +249,10 @@ internal static partial class PreviewSuite
         AssertEqual(voiceId, viewModel.PreviewingVoiceId, "Successful preview refresh should expose selected voice playback state");
     }
 
-    internal static async Task DisplayPreviewOfflinePreflightStopsBeforeRefreshAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-offline-preflight-stops-before-refresh")]
+    [NUnit.Framework.Order(239)]
+    public static async Task DisplayPreviewOfflinePreflightStopsBeforeRefreshAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -230,7 +268,7 @@ internal static partial class PreviewSuite
         var snackbar = new TestSnackbar();
         var (httpService, http) = TestHttpServiceProxy.Create();
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, settings, httpService),
             settings,
             clearCoverImageCacheAsync: null,
@@ -245,7 +283,10 @@ internal static partial class PreviewSuite
         AssertEqual(null, viewModel.PreviewingVoiceId, "Offline selected preview should remain stopped");
     }
 
-    internal static async Task DisplayPreviewRechecksNetworkBeforePlaybackAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-rechecks-network-before-playback")]
+    [NUnit.Framework.Order(240)]
+    public static async Task DisplayPreviewRechecksNetworkBeforePlaybackAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -265,7 +306,7 @@ internal static partial class PreviewSuite
         var context = CreateContext(snackbar, settings, httpService);
         var contextProxy = (ContextProxy)(object)context;
         contextProxy.OnSave = () => network.Set(false);
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -281,7 +322,11 @@ internal static partial class PreviewSuite
         AssertEqual(FishAudioRequestPolicy.NetworkUnavailableKey, snackbar.LastError, "Network loss after refresh should show the existing network unavailable message");
     }
 
-    internal static void SearchPreviewOfflinePreflightStopsBeforePlayback()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/search-preview-offline-preflight-stops-before-playback")]
+    [NUnit.Framework.Property("OriginalOrdinal", 241)]
+    [NUnit.Framework.Order(241)]
+    public static async Task SearchPreviewOfflinePreflightStopsBeforePlayback()
     {
         using var network = OverrideNetworkAvailability(false);
         var snackbar = new TestSnackbar();
@@ -293,28 +338,39 @@ internal static partial class PreviewSuite
             clearCoverImageCacheAsync: null,
             clearCoverImageCacheTimeout: null,
             previewAudioPlayerFactory: () => player);
-        var item = new VoiceSearchItem
+        Task? ownedCommandTask = null;
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? primaryFailure = null;
+        try
         {
-            Id = "fedcba9876543210fedcba9876543210",
-            SampleAudioUrl = "https://platform.r2.fish.audio/audio/search.mp3",
-        };
+            var item = new VoiceSearchItem
+            {
+                Id = "fedcba9876543210fedcba9876543210",
+                SampleAudioUrl = "https://platform.r2.fish.audio/audio/search.mp3",
+            };
 
-        if (!viewModel.SearchResults.Contains(item)) viewModel.SearchResults.Add(item);
-        viewModel.ToggleSearchItemPreviewCommand.Execute(item);
+            if (!viewModel.SearchResults.Contains(item)) viewModel.SearchResults.Add(item);
+            try { viewModel.ToggleSearchItemPreviewCommand.Execute(item); }
+            finally { ownedCommandTask = viewModel.ToggleSearchItemPreviewCommand.ExecutionTask; }
 
-        AssertEqual(FishAudioRequestPolicy.NetworkUnavailableKey, snackbar.LastError, "Offline search preview should show the existing network unavailable message");
-        AssertEqual(0, http.GetCallCount, "Search preview should never call model details");
-        AssertEqual(0, player.PlayCallCount, "Offline search preview should not start playback");
-        AssertEqual(null, viewModel.PreviewingVoiceId, "Offline search preview should remain stopped");
+            AssertEqual(FishAudioRequestPolicy.NetworkUnavailableKey, snackbar.LastError, "Offline search preview should show the existing network unavailable message");
+            AssertEqual(0, http.GetCallCount, "Search preview should never call model details");
+            AssertEqual(0, player.PlayCallCount, "Offline search preview should not start playback");
+            AssertEqual(null, viewModel.PreviewingVoiceId, "Offline search preview should remain stopped");
+        }
+        catch (Exception error) { primaryFailure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        finally { await FinishSearchPreflightAsync(viewModel, ownedCommandTask, primaryFailure); }
     }
 
-    internal static async Task SearchPreviewUsesListUrlWithoutDetailRefresh()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/search-preview-uses-list-url-without-detail-refresh")]
+    [NUnit.Framework.Order(242)]
+    public static async Task SearchPreviewUsesListUrlWithoutDetailRefresh()
     {
         using var network = OverrideNetworkAvailability(true);
         const string listUrl = "https://platform.r2.fish.audio/audio/list-result.mp3";
         var (httpService, http) = TestHttpServiceProxy.Create();
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(httpService: httpService),
             new Settings(),
             clearCoverImageCacheAsync: null,
@@ -334,7 +390,10 @@ internal static partial class PreviewSuite
         AssertEqual(1, player.PlayCallCount, "Online search result preview should start playback once");
     }
 
-    internal static async Task SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/search-preview-expired-url-refreshes-visible-metadata")]
+    [NUnit.Framework.Order(243)]
+    public static async Task SearchPreviewExpiredUrlRefreshesVisibleMetadataAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "fedcba9876543210fedcba9876543210";
@@ -372,7 +431,7 @@ internal static partial class PreviewSuite
             if (args.PropertyName is not null)
                 changedProperties.Add(args.PropertyName);
         };
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -399,7 +458,10 @@ internal static partial class PreviewSuite
         AssertEqual(freshUrl, http.LastGetStreamUrl, "Search preview refresh should play the refreshed URL");
     }
 
-    internal static async Task SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/search-preview-expired-refresh-failure-does-not-fallback")]
+    [NUnit.Framework.Order(244)]
+    public static async Task SearchPreviewExpiredRefreshFailureDoesNotFallbackAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "fedcba9876543210fedcba9876543210";
@@ -415,7 +477,7 @@ internal static partial class PreviewSuite
         var (httpService, http) = TestHttpServiceProxy.Create();
         http.GetException = new TimeoutException("model lookup timed out");
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, httpService: httpService, logger: logger),
             new Settings(),
             clearCoverImageCacheAsync: null,
@@ -526,12 +588,15 @@ internal static partial class PreviewSuite
         AssertEqual(0, player.PlayCallCount, "Canceled search refresh should not start playback");
     }
 
-    internal static async Task SearchPreviewSecondClickStopsWithoutNetwork()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/search-preview-second-click-stops-without-network")]
+    [NUnit.Framework.Order(247)]
+    public static async Task SearchPreviewSecondClickStopsWithoutNetwork()
     {
         using var network = OverrideNetworkAvailability(true);
         var snackbar = new TestSnackbar();
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, httpService: TestHttpServiceProxy.Create().Service),
             new Settings(),
             clearCoverImageCacheAsync: null,
@@ -554,7 +619,10 @@ internal static partial class PreviewSuite
         AssertEqual(null, snackbar.LastError, "Stopping search preview while offline should not show a network error");
     }
 
-    internal static async Task DisplayPreviewExpiredRefreshFailureShowsErrorAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-expired-refresh-failure-shows-error")]
+    [NUnit.Framework.Order(248)]
+    public static async Task DisplayPreviewExpiredRefreshFailureShowsErrorAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -576,7 +644,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(snackbar, settings, httpService, logger: logger);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -593,7 +661,10 @@ internal static partial class PreviewSuite
         AssertEqual(true, logger.Contains(LogLevel.Warning, "Selected voice preview refresh failed"), "Selected preview refresh failure should be logged safely");
     }
 
-    internal static async Task DisplayPreviewNotFoundShowsRefreshErrorAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-not-found-shows-refresh-error")]
+    [NUnit.Framework.Order(249)]
+    public static async Task DisplayPreviewNotFoundShowsRefreshErrorAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -614,7 +685,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(snackbar, settings, httpService, logger: logger);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -632,7 +703,10 @@ internal static partial class PreviewSuite
         AssertEqual(true, logger.Contains(LogLevel.Warning, "returned no voice"), "Selected preview 404 should be logged safely");
     }
 
-    internal static async Task DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-latest-voice-without-sample-shows-unavailable")]
+    [NUnit.Framework.Order(250)]
+    public static async Task DisplayPreviewLatestVoiceWithoutSampleShowsUnavailableAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -650,7 +724,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(snackbar, settings, httpService);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -672,7 +746,10 @@ internal static partial class PreviewSuite
         AssertEqual("STranslate_Plugin_Tts_FishAudio_Preview_Unavailable", snackbar.LastError, "Latest details without a sample should show the localized unavailable message");
     }
 
-    internal static async Task DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-refresh-returning-expired-url-does-not-play")]
+    [NUnit.Framework.Order(251)]
+    public static async Task DisplayPreviewRefreshReturningExpiredUrlDoesNotPlayAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -691,7 +768,7 @@ internal static partial class PreviewSuite
         var player = new TestPreviewAudioPlayer();
         var context = CreateContext(snackbar, settings, httpService);
         var contextProxy = (ContextProxy)(object)context;
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             context,
             settings,
             clearCoverImageCacheAsync: null,
@@ -706,7 +783,10 @@ internal static partial class PreviewSuite
         AssertEqual(0, player.PlayCallCount, "An already expiring refreshed URL should not start playback");
     }
 
-    internal static async Task DisplayPreviewSecondClickStopsWithoutNetworkAsync()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/display-preview-second-click-stops-without-network")]
+    [NUnit.Framework.Order(252)]
+    public static async Task DisplayPreviewSecondClickStopsWithoutNetworkAsync()
     {
         using var network = OverrideNetworkAvailability(true);
         const string voiceId = "0123456789abcdef0123456789abcdef";
@@ -722,7 +802,7 @@ internal static partial class PreviewSuite
             {"_id":"{{voiceId}}","title":"Repeat Voice","description":"","cover_image":"","samples":[{"title":"","text":"","audio":"{{freshUrl}}"}],"task_count":0,"author":null,"tags":[],"languages":[],"like_count":0}
             """;
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, settings, httpService),
             settings,
             clearCoverImageCacheAsync: null,
@@ -796,12 +876,15 @@ internal static partial class PreviewSuite
         AssertEqual(null, viewModel.PreviewingVoiceId, "Canceling a pending selected preview should leave playback stopped");
     }
 
-    internal static async Task PreviewPlaybackFailureUsesNetworkAwareMessage()
+    [NUnit.Framework.Test]
+    [NUnit.Framework.Property("FishAudioCaseId", "preview.ownership/preview-playback-failure-uses-network-aware-message")]
+    [NUnit.Framework.Order(254)]
+    public static async Task PreviewPlaybackFailureUsesNetworkAwareMessage()
     {
         using var network = OverrideNetworkAvailability(true);
         var snackbar = new TestSnackbar();
         var player = new TestPreviewAudioPlayer();
-        var viewModel = new SettingsViewModel(
+        using var viewModel = new SettingsViewModel(
             CreateContext(snackbar, httpService: TestHttpServiceProxy.Create().Service),
             new Settings(),
             clearCoverImageCacheAsync: null,
@@ -988,6 +1071,21 @@ internal static partial class PreviewSuite
         AssertEqual(true, ReferenceEquals(originalCache, settings.CachedVoice), "Disposed preview refresh should preserve the original cached voice");
         AssertEqual(saveCountAfterDispose, contextProxy.SaveCount, "Late preview refresh should not save settings after Dispose");
         AssertEqual(0, player.PlayCallCount, "Late preview refresh should not start playback after Dispose");
+    }
+
+    internal static async Task FinishSearchPreflightAsync(SettingsViewModel? viewModel, Task? ownedCommandTask,
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? primaryFailure)
+    {
+        System.Runtime.ExceptionServices.ExceptionDispatchInfo? cleanupFailure = null;
+        try
+        {
+            if (ownedCommandTask is not null) await ownedCommandTask;
+        }
+        catch (Exception error) { cleanupFailure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        try { viewModel?.Dispose(); }
+        catch (Exception error) { cleanupFailure ??= System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error); }
+        primaryFailure?.Throw();
+        cleanupFailure?.Throw();
     }
 
     internal static string CreateExpiredPreviewUrl(string fileName) =>

@@ -1,12 +1,18 @@
+using NUnit.Framework;
 using System.Net.WebSockets;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Streaming;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class StreamingSessionSuite
 {
-    internal static async Task TailWaitsForSuccessfulPlaybackAndFinishWaitsForDrainAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/tail-waits-for-successful-playback-and-finish-waits-for-drain")]
+    [Order(43)]
+    public static async Task TailWaitsForSuccessfulPlaybackAndFinishWaitsForDrainAsync()
     {
         var socket = new FishAudioSocketDouble();
         var player = new SessionPlayerDouble { HoldStart = true, HoldDrain = true };
@@ -37,7 +43,10 @@ internal static class StreamingSessionSuite
         AssertEqual(StreamingStage.Drained, observations[^1].Stage, "Drain is the final successful stage");
     }
 
-    internal static async Task ShortInputStopsWithoutWaitingForPlaybackAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/short-input-stops-without-waiting-for-playback")]
+    [Order(44)]
+    public static async Task ShortInputStopsWithoutWaitingForPlaybackAsync()
     {
         var socket = new FishAudioSocketDouble();
         var player = new SessionPlayerDouble();
@@ -48,7 +57,10 @@ internal static class StreamingSessionSuite
         AssertEqual(2L, player.Bytes, "The successful stream must reach the player");
     }
 
-    internal static async Task ProtocolRejectsMalformedOversizeAndMissingFinishAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/protocol-rejects-malformed-oversize-and-missing-finish")]
+    [Order(45)]
+    public static async Task ProtocolRejectsMalformedOversizeAndMissingFinishAsync()
     {
         foreach (var inject in new Action<FishAudioSocketDouble>[]
         {
@@ -72,7 +84,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task FragmentedAudioUsesOwnedBoundedOrderedBlocksAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/fragmented-audio-uses-owned-bounded-ordered-blocks")]
+    [Order(46)]
+    public static async Task FragmentedAudioUsesOwnedBoundedOrderedBlocksAsync()
     {
         var bytes = Enumerable.Range(0, 120_000).Select(i => (byte)i).ToArray();
         var socket = new FishAudioSocketDouble();
@@ -84,7 +99,10 @@ internal static class StreamingSessionSuite
         AssertEqual(true, player.MaximumBlock <= 16 * 1024, "Each owned queue block must be at most 16KiB");
     }
 
-    internal static async Task ModelAndRequestSnapshotAreExactBeforeConnectAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/model-and-request-snapshot-are-exact-before-connect")]
+    [Order(47)]
+    public static async Task ModelAndRequestSnapshotAreExactBeforeConnectAsync()
     {
         foreach (var model in new[] { "", "typo", "S2.1-PRO" })
         {
@@ -113,7 +131,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task CancellationAndFaultsAbortEveryWorkerAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/cancellation-and-faults-abort-every-worker")]
+    [Order(48)]
+    public static async Task CancellationAndFaultsAbortEveryWorkerAsync()
     {
         foreach (var phase in new[] { "connect", "send-wait", "receive", "prefix", "queue", "drain", "device", "send" })
         {
@@ -149,7 +170,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task ConnectFirstPcmAndIdleUseIndependentDeadlinesAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/connect-first-pcm-and-idle-use-independent-deadlines")]
+    [Order(49)]
+    public static async Task ConnectFirstPcmAndIdleUseIndependentDeadlinesAsync()
     {
         var clock = new ManualStreamingTimeProvider();
         var socket = new FishAudioSocketDouble { ConnectBehavior = token => Task.Delay(Timeout.Infinite, token) };
@@ -194,7 +218,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task IdleExcludesUnionOfActualQueueAndPcmPressureAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/idle-excludes-union-of-actual-queue-and-pcm-pressure")]
+    [Order(50)]
+    public static async Task IdleExcludesUnionOfActualQueueAndPcmPressureAsync()
     {
         var clock = new ManualStreamingTimeProvider();
         var socket = new FishAudioSocketDouble();
@@ -226,7 +253,10 @@ internal static class StreamingSessionSuite
         AssertEqual(true, await CaptureFailureAsync(operation) is TimeoutException, "Thirty active idle seconds still fail after pressure releases");
     }
 
-    internal static async Task FreeCutoffRejectsBeforeConnectAndAbortsLongSessionAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/free-cutoff-rejects-before-connect-and-aborts-long-session")]
+    [Order(51)]
+    public static async Task FreeCutoffRejectsBeforeConnectAndAbortsLongSessionAsync()
     {
         var expiredClock = new OffsetClock(FishAudioModelPolicy.FreeModelCutoffUtc);
         var socket = new FishAudioSocketDouble();
@@ -251,7 +281,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task ReceiverAndAudioFailuresKeepTheirCauseAndDisposeCancelsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/receiver-and-audio-failures-keep-their-cause-and-dispose-cancels")]
+    [Order(52)]
+    public static async Task ReceiverAndAudioFailuresKeepTheirCauseAndDisposeCancelsAsync()
     {
         foreach (var mode in new[] { "receiver", "audio", "dispose" })
         {
@@ -272,7 +305,10 @@ internal static class StreamingSessionSuite
         }
     }
 
-    internal static async Task CancellationCallbackCannotReplacePrimaryAudioFailureAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.session/cancellation-callback-cannot-replace-primary-audio-failure")]
+    [Order(53)]
+    public static async Task CancellationCallbackCannotReplacePrimaryAudioFailureAsync()
     {
         var primaryFailure = new InvalidDataException("synthetic primary decoder failure");
         var callbackFailure = new InvalidOperationException("synthetic cancellation callback failure");

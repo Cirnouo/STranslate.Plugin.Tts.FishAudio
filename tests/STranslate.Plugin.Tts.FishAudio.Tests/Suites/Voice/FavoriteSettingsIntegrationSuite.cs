@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System.Text.Json;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Caching;
@@ -6,9 +7,14 @@ using static ContextProxy;
 using static TestAssertions;
 using static FavoriteVoicesSuite;
 
+[TestFixture]
+[NonParallelizable]
 internal static class FavoriteSettingsIntegrationSuite
 {
-    internal static void IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-settings/id-file-transactions-leave-streaming-settings-and-snapshots-untouched")]
+    [Order(165)]
+    public static void IdFileTransactionsLeaveStreamingSettingsAndSnapshotsUntouched()
     {
         var directory = CreateTempDirectory();
         var storage = new Settings
@@ -42,7 +48,10 @@ internal static class FavoriteSettingsIntegrationSuite
         AssertEqual(false, File.ReadAllText(FilePath(directory)).Contains("Favorite metadata", StringComparison.Ordinal), "Favorite metadata must stay out of durable ID storage");
     }
 
-    internal static void LegacySettingsAndFavoriteIdsRestartIndependently()
+    [Test]
+    [Property("FishAudioCaseId", "voice.favorite-settings/legacy-settings-and-favorite-ids-restart-independently")]
+    [Order(166)]
+    public static void LegacySettingsAndFavoriteIdsRestartIndependently()
     {
         var legacy = SettingsStorageSuite.DeserializeSettings(JsonSerializer.Serialize(new
         {

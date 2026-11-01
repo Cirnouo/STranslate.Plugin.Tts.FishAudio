@@ -3,7 +3,7 @@ using System.Diagnostics;
 internal static class RegressionRunner
 {
     internal static async Task<int> RunAsync(string[] args, IReadOnlyList<RegressionCase> cases,
-        Func<IReadOnlyList<RegressionCase>, RegressionReport, string, Task>? execute = null, RegressionCiIdentity? ci = null)
+        Func<IReadOnlyList<RegressionCase>, RegressionReport, string, Task>? execute = null, RegressionCiIdentity? ci = null, bool allowCoarseImpact = true)
     {
         try
         {
@@ -11,11 +11,18 @@ internal static class RegressionRunner
                 cases.Select(item => item.Id).Distinct(StringComparer.Ordinal).Count() != cases.Count)
                 throw new RegressionSelectionException("invalid-registry");
             var options = RegressionSelection.Parse(args);
+            if (!allowCoarseImpact && options.Affected)
+                throw new RegressionSelectionException("retired-legacy-impact");
             var selectedIds = options.ExplicitIds(cases);
             RegressionReport? previous = null;
             if (options.RerunPath is not null)
             {
                 previous = RegressionReport.Read(options.RerunPath);
+                // A retired aggregate cannot turn a source-drift replay into an
+                // unrelated full selection, even when that old aggregate passed.
+                foreach (var item in previous.Cases)
+                    if (RegressionCaseAliases.Contains(item.Id))
+                        _ = RegressionCaseAliases.Resolve(item.Id, cases, "replay-case-removed");
                 foreach (var item in previous.Cases.Where(item => item.Outcome != "passed"))
                 {
                     selectedIds.UnionWith(RegressionCaseAliases.Resolve(item.Id, cases, "replay-case-removed"));
@@ -25,6 +32,10 @@ internal static class RegressionRunner
             source?.RecordDirtyScope(cases);
             var changedSource = previous is not null && (!previous.Source.Available || source is null || !source.Identity.Available || previous.Source.Fingerprint != source.Identity.Fingerprint);
             var changedBuild = previous is not null && (previous.Configuration != RegressionReport.BuildMetadata("RegressionBuildConfiguration") || previous.Sdk != RegressionReport.BuildMetadata("RegressionBuildSdk"));
+            // Remaining legacy-only mappings cannot authorize migrated NUnit work.
+            // A drifted replay must use complete hybrid verification instead.
+            if (!allowCoarseImpact && (changedSource || changedBuild))
+                throw new RegressionSelectionException("retired-legacy-impact");
             var conservative = false;
             var reasons = new List<string>();
             var recommendedGroups = Array.Empty<string>();

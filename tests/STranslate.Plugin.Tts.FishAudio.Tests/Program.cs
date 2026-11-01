@@ -11,12 +11,10 @@ try
         return ChildCoverageVerifier.Run(args);
     if (RegressionCiVerifier.IsInvocation(args))
         return await RegressionCiVerifier.RunAsync(args);
-    // VSTest loads this assembly without executing Main. The explicit prefix
-    // keeps transitional legacy invocations unambiguous for build and CI.
+    // VSTest loads the assembly without executing Main. The owned child and
+    // verifier protocols above remain separate from retired parent execution.
     var legacyArguments = args.Length != 0 && args[0] == "--legacy" ? args[1..] : args;
-    using var processHost = new RegressionProcessHost(progressOutput: physicalProtocolOutput);
-    var legacy = await RegressionProcessHost.TryRunLegacyAsync(legacyArguments, processHost);
-    return legacy ?? await RegressionRunner.RunAsync(legacyArguments, RegressionCatalog.Create(), processHost.ExecuteAsync, RegressionCiIdentity.Capture());
+    return RegressionLegacyEntryPoint.Run(legacyArguments);
 }
 catch (Exception error)
 {

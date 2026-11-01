@@ -137,6 +137,50 @@ public sealed class CompatibilityCommandTests
             Is.EquivalentTo(new[] { "argv.json", "stdout.bin", "stderr.bin", "process.json" }));
     }
 
+    // Public command failures must precede source preflight: the deliberately
+    // missing invocation root is a second guard against entering a full run.
+    public static IEnumerable<TestCaseData> RejectedFileSelections()
+    {
+        yield return FileSelectionRow("empty", "{\"schemaVersion\":1,\"ids\":[]}", "Full", false,
+            "test-driver-empty-or-invalid-selection");
+        yield return FileSelectionRow("duplicate", "{\"schemaVersion\":1,\"ids\":[\"compat.sync/api-key-format\",\"compat.sync/api-key-format\"]}", "Full", false,
+            "test-driver-invalid-or-duplicate-case-id");
+        yield return FileSelectionRow("truncated", "{\"schemaVersion\":1,\"ids\":[", "Full", false,
+            "test-driver-invalid-selection-input");
+        yield return FileSelectionRow("conflicting-arguments", "{\"schemaVersion\":1,\"ids\":[\"compat.sync/api-key-format\"]}", "Full", true,
+            "test-driver-conflicting-selection-input");
+        yield return FileSelectionRow("discovery-mode", "{\"schemaVersion\":1,\"ids\":[\"compat.sync/api-key-format\"]}", "Discover", false,
+            "test-driver-conflicting-selection-input");
+        yield return FileSelectionRow("compatibility-mode", "{\"schemaVersion\":1,\"ids\":[\"compat.sync/api-key-format\"]}", "Compatibility", false,
+            "test-driver: file selection requires Full mode.");
+    }
+
+    private static TestCaseData FileSelectionRow(string key, string json, string mode, bool includeCaseId, string reason)
+        => new TestCaseData(json, mode, includeCaseId, reason).SetName("file-selection/" + key)
+            .SetProperty("FishAudioCaseId", "test-driver-file-selection/reject-" + key);
+
+    [TestCaseSource(nameof(RejectedFileSelections))]
+    public async Task RejectedFileSelectionCannotEnterSourcePreflightOrOverwriteInput(
+        string json, string mode, bool includeCaseId, string reason)
+    {
+        var input = Path.Combine(_root, "selection.json");
+        var bytes = new UTF8Encoding(false).GetBytes(json);
+        WriteNew(input, bytes);
+        var results = Path.Combine(_root, "must-not-create-results");
+        var invocationRoot = Path.Combine(_root, "must-not-enter-repository");
+        var arguments = new List<string> { "-SelectionPath", input, "-ResultsDirectory", results };
+        if (includeCaseId) arguments.AddRange(["-CaseId", "compat.sync/api-key-format"]);
+        var exit = await RunPublicCommandAsync(mode, invocationRoot, arguments.ToArray());
+        Assert.That(exit, Is.Not.Zero);
+        // The public guard owns this fixed ASCII diagnostic. Keep localized
+        // PowerShell binding bytes unchanged instead of guessing their encoding.
+        var expectedDiagnostic = mode == "Compatibility" ? reason : "reason=" + reason + " ";
+        Assert.That(File.ReadAllBytes(Path.Combine(_root, "stderr.bin")).AsSpan().IndexOf(Encoding.ASCII.GetBytes(expectedDiagnostic)),
+            Is.GreaterThanOrEqualTo(0), "selection-file-guard-must-publish-controlled-ASCII-reason");
+        Assert.That(Directory.Exists(results) || File.Exists(results), Is.False);
+        Assert.That(Directory.Exists(invocationRoot) || File.Exists(invocationRoot), Is.False);
+        Assert.That(File.ReadAllBytes(input), Is.EqualTo(bytes), "Rejected file selection retains its exact source bytes.");
+    }
     private string ErrorText() => new UTF8Encoding(false, true).GetString(File.ReadAllBytes(Path.Combine(_root, "stderr.bin")));
 
     private Task<int> RunPublicCommandAsync(params string[] arguments)

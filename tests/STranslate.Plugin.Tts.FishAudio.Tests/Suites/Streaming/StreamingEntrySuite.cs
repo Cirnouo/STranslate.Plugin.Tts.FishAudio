@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
 using STranslate.Plugin.Tts.FishAudio.Streaming;
@@ -6,6 +7,8 @@ using static ContextProxy;
 using static RuntimeOverrideScopes;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class StreamingEntrySuite
 {
     internal static Main CreatePlugin(Func<IStreamingTtsSession> factory) => new(
@@ -14,7 +17,10 @@ internal static class StreamingEntrySuite
             settingsWriteLease: lease, startupCreditRefreshCycle: startup),
         streamingSessionFactory: factory);
 
-    internal static async Task FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/formal-playback-uses-session-without-whole-buffer-host-audio")]
+    [Order(1)]
+    public static async Task FormalPlaybackUsesSessionWithoutWholeBufferHostAudioAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var settings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);
@@ -36,7 +42,10 @@ internal static class StreamingEntrySuite
         AssertEqual(1, session.DisposeCount, "The entry point should dispose its completed session");
     }
 
-    internal static async Task SnapshotStaysImmutableWhileSettingsAreEditedAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/snapshot-stays-immutable-while-settings-are-edited")]
+    [Order(2)]
+    public static async Task SnapshotStaysImmutableWhileSettingsAreEditedAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var settings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);
@@ -62,41 +71,111 @@ internal static class StreamingEntrySuite
         AssertEqual(false, viewModel.IsApiKeyInputLocked, "Completion should release only its own key operation");
     }
 
-    internal static async Task SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/supersession-waits-for-output-cleanup-across-three-calls")]
+    [Order(3)]
+    public static Task SupersessionWaitsForOutputCleanupAcrossThreeCallsAsync() =>
+        RunSupersessionWaitsForOutputCleanupAcrossThreeCallsAsync();
+
+    internal static async Task RunSupersessionWaitsForOutputCleanupAcrossThreeCallsAsync(
+        Action<NUnitCompatibility.SupersessionOwnershipObservation>? onHeldWork = null)
     {
-        using var network = OverrideNetworkAvailability(false);
-        var cleanupEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var releaseCleanup = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var first = new StreamingSessionDouble
+        await RegressionFixtureOwner.RunAsync(async () =>
         {
-            Handler = async (_, _, token) =>
+            using var network = OverrideNetworkAvailability(false);
+            Main? ownedPlugin = null;
+            TaskCompletionSource? ownedReleaseCleanup = null;
+            Task? ownedStartup = null;
+            STranslate.Plugin.Tts.FishAudio.Lifecycle.PluginInitializationCoordinator.InitializationWorkHandle? ownedInitializationWork = null;
+            Task? ownedFirstCall = null;
+            Task? ownedSecondCall = null;
+            Task? ownedThirdCall = null;
+            bool firstCancellationObserved = false;
+            bool secondCancellationObserved = false;
+            await RegressionFixtureOwner.RunAsync(async () =>
             {
-                try { await Task.Delay(Timeout.InfiniteTimeSpan, token); }
-                finally { cleanupEntered.TrySetResult(); await releaseCleanup.Task; }
+                var cleanupEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var releaseCleanup = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                ownedReleaseCleanup = releaseCleanup;
+                var first = new StreamingSessionDouble
+                {
+                    Handler = async (_, _, token) =>
+                    {
+                        try { await Task.Delay(Timeout.InfiniteTimeSpan, token); }
+                        finally { cleanupEntered.TrySetResult(); await releaseCleanup.Task; }
+                    },
+                };
+                var final = new StreamingSessionDouble();
+                var created = 0;
+                var plugin = CreatePlugin(() => ++created == 1 ? first : final);
+                ownedPlugin = plugin;
+                plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
+                var initializationWork = plugin.CaptureInitializationWork()?.Work
+                    ?? throw new InvalidOperationException("supersession-initialization-work-not-published");
+                ownedInitializationWork = initializationWork;
+                var startup = plugin.PendingStartupTask;
+                ownedStartup = startup;
+                await startup.WaitAsync(RegressionExecution.Timeout);
+                network.Set(true);
+                var firstCall = plugin.PlayAudioAsync("first");
+                ownedFirstCall = firstCall;
+                onHeldWork?.Invoke(new NUnitCompatibility.SupersessionOwnershipObservation(
+                    firstCall, null, null, startup, initializationWork, cleanupEntered.Task, releaseCleanup.Task,
+                    () => { releaseCleanup.TrySetResult(); }, plugin, () => first.DisposeCount, () => created));
+                await first.Entered.Task.WaitAsync(RegressionExecution.Timeout);
+                var secondCall = plugin.PlayAudioAsync("second");
+                ownedSecondCall = secondCall;
+                onHeldWork?.Invoke(new NUnitCompatibility.SupersessionOwnershipObservation(
+                    firstCall, secondCall, null, startup, initializationWork, cleanupEntered.Task, releaseCleanup.Task,
+                    () => { releaseCleanup.TrySetResult(); }, plugin, () => first.DisposeCount, () => created));
+                await cleanupEntered.Task.WaitAsync(RegressionExecution.Timeout);
+                var thirdCall = plugin.PlayAudioAsync("third");
+                ownedThirdCall = thirdCall;
+                onHeldWork?.Invoke(new NUnitCompatibility.SupersessionOwnershipObservation(
+                    firstCall, secondCall, thirdCall, startup, initializationWork, cleanupEntered.Task, releaseCleanup.Task,
+                    () => { releaseCleanup.TrySetResult(); }, plugin, () => first.DisposeCount, () => created));
+                AssertEqual(1, created, "Replacement calls must not create new output before prior cleanup completes");
+                releaseCleanup.TrySetResult();
+                await AssertCanceledAsync(firstCall);
+                firstCancellationObserved = true;
+                await AssertCanceledAsync(secondCall);
+                secondCancellationObserved = true;
+                await thirdCall.WaitAsync(RegressionExecution.Timeout);
+                AssertEqual(2, created, "A superseded waiting call must not create a redundant synthesis session");
+                AssertEqual("third", final.Text, "Only the latest call may acquire output after retirement");
+                AssertEqual(1, first.DisposeCount, "Cancelled output must be disposed before replacement starts");
             },
-        };
-        var final = new StreamingSessionDouble();
-        var created = 0;
-        using var plugin = CreatePlugin(() => ++created == 1 ? first : final);
-        plugin.Init(CreateContext(settings: CreateTtsSettings(FishAudioModelPolicy.S2ProModel)));
-        await plugin.PendingStartupTask.WaitAsync(RegressionExecution.Timeout);
-        network.Set(true);
-        var firstCall = plugin.PlayAudioAsync("first");
-        await first.Entered.Task.WaitAsync(RegressionExecution.Timeout);
-        var secondCall = plugin.PlayAudioAsync("second");
-        await cleanupEntered.Task.WaitAsync(RegressionExecution.Timeout);
-        var thirdCall = plugin.PlayAudioAsync("third");
-        AssertEqual(1, created, "Replacement calls must not create new output before prior cleanup completes");
-        releaseCleanup.TrySetResult();
-        await AssertCanceledAsync(firstCall);
-        await AssertCanceledAsync(secondCall);
-        await thirdCall.WaitAsync(RegressionExecution.Timeout);
-        AssertEqual(2, created, "A superseded waiting call must not create a redundant synthesis session");
-        AssertEqual("third", final.Text, "Only the latest call may acquire output after retirement");
-        AssertEqual(1, first.DisposeCount, "Cancelled output must be disposed before replacement starts");
+            () => { ownedPlugin?.Dispose(); return Task.CompletedTask; },
+            () => { ownedReleaseCleanup?.TrySetResult(); return Task.CompletedTask; },
+            () => ownedStartup ?? Task.CompletedTask,
+            async () =>
+            {
+                if (ownedFirstCall is null) return;
+                try { await ownedFirstCall; }
+                catch (TaskCanceledException) when (firstCancellationObserved) { }
+            },
+            async () =>
+            {
+                if (ownedSecondCall is null) return;
+                try { await ownedSecondCall; }
+                catch (TaskCanceledException) when (secondCancellationObserved) { }
+            },
+            () => ownedThirdCall ?? Task.CompletedTask,
+            async () =>
+            {
+                if (ownedInitializationWork is null) return;
+                var retirementTasks = ownedInitializationWork.RetirementTasks;
+                if (retirementTasks.Count == 0)
+                    throw new InvalidOperationException("supersession-owner-has-no-retirement-task");
+                await Task.WhenAll(retirementTasks);
+            });
+        });
     }
 
-    internal static async Task CallerAndDisposalCancelOwnedSessionsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/caller-and-disposal-cancel-owned-sessions")]
+    [Order(4)]
+    public static async Task CallerAndDisposalCancelOwnedSessionsAsync()
     {
         foreach (var dispose in new[] { false, true })
         {
@@ -118,7 +197,10 @@ internal static class StreamingEntrySuite
         }
     }
 
-    internal static async Task CancellationProbeObservesSynchronousRetirementAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/cancellation-probe-observes-synchronous-retirement")]
+    [Order(5)]
+    public static async Task CancellationProbeObservesSynchronousRetirementAsync()
     {
         foreach (var dispose in new[] { false, true })
         {
@@ -153,7 +235,10 @@ internal static class StreamingEntrySuite
         }
     }
 
-    internal static async Task CancellationProbeRetainsOnlyActiveObservationAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/cancellation-probe-retains-only-active-observation")]
+    [Order(6)]
+    public static async Task CancellationProbeRetainsOnlyActiveObservationAsync()
     {
         var request = new SynthesisRequest(CreateTtsSettings(FishAudioModelPolicy.S2ProModel));
         using var completed = new CancellationTokenSource();
@@ -172,7 +257,10 @@ internal static class StreamingEntrySuite
         AssertEqual(true, session.CancellationObserved, "A later uncanceled call must preserve the probe's prior observation");
     }
 
-    internal static async Task TransportFailuresDoNotExposeCredentialsAsync()
+    [Test]
+    [Property("FishAudioCaseId", "streaming.entry/transport-failures-do-not-expose-credentials")]
+    [Order(7)]
+    public static async Task TransportFailuresDoNotExposeCredentialsAsync()
     {
         using var network = OverrideNetworkAvailability(false);
         var settings = CreateTtsSettings(FishAudioModelPolicy.S2ProModel);

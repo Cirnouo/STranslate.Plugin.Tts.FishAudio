@@ -5,14 +5,8 @@ using static TestAssertions;
 
 internal static class RegressionCiInfrastructureSuite
 {
-    internal static async Task RunAsync()
-    {
-        CaptureUsesOnlyTheExplicitProducerEnvironment();
-        await RunnerAndChildForwardTheSameImmutableOwnerAsync();
-        await RealPowerShellHelpersPreserveEvidenceAndCompletePaginationAsync();
-    }
 
-    private static void CaptureUsesOnlyTheExplicitProducerEnvironment()
+    internal static void CaptureUsesOnlyTheExplicitProducerEnvironment()
     {
         var environment = new Dictionary<string, string?>
         {
@@ -40,7 +34,7 @@ internal static class RegressionCiInfrastructureSuite
             "Unmarked and internal fake runs never borrow ambient GitHub identity.");
     }
 
-    private static async Task RunnerAndChildForwardTheSameImmutableOwnerAsync()
+    internal static async Task RunnerAndChildForwardTheSameImmutableOwnerAsync()
     {
         using var fixture = new Fixture();
         var ci = new RegressionCiIdentity { Repository = "owner/repository", WorkflowRunId = 431, Attempt = 2, Job = "regression", Partition = "core" };
@@ -77,7 +71,7 @@ internal static class RegressionCiInfrastructureSuite
         Require(RegressionReport.Read(ownedPath).Ci!.Attempt == 2, "Rejected owner mutation leaves the original generation unchanged.");
     }
 
-    private static async Task RealPowerShellHelpersPreserveEvidenceAndCompletePaginationAsync()
+    internal static async Task RealPowerShellHelpersPreserveEvidenceAndCompletePaginationAsync()
     {
         using var fixture = new Fixture();
         var script = Path.Combine(fixture.Root, "helpers.ps1");

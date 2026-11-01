@@ -117,7 +117,7 @@ internal static class SearchAdjustmentSuite
 
     // A scalar boundary, duplicate-key overwrite, input aliasing or all-ten => All
     // would lose requested filters at the real HTTP/publication boundary.
-    private static async Task MultipleLanguagesAreOneDetachedRequestAsync()
+    internal static async Task MultipleLanguagesAreOneDetachedRequestAsync()
     {
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -172,7 +172,7 @@ internal static class SearchAdjustmentSuite
 
     // Dropping a filter, translating a wire value, double-escaping text, or reusing
     // a credential draft must fail at the actual fake HTTP boundary.
-    private static async Task RequestsCaptureLanguageAndExplicitSortAsync()
+    internal static async Task RequestsCaptureLanguageAndExplicitSortAsync()
     {
         var settings = new Settings { ApiKey = "accepted-key" };
         var (service, http) = TestHttpServiceProxy.Create();
@@ -198,7 +198,7 @@ internal static class SearchAdjustmentSuite
 
     // Paging owns successful criteria/results; menu intent survives a failed request
     // and explicit Search composes it with the current visible query.
-    private static async Task AppliedCriteriaSurviveFailureAndDraftEditsAsync()
+    internal static async Task AppliedCriteriaSurviveFailureAndDraftEditsAsync()
     {
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -275,7 +275,7 @@ internal static class SearchAdjustmentSuite
 
     // Checking the request generation before queueing WPF work is insufficient:
     // replacement/credential/disposal may retire it before that unit runs.
-    private static async Task QueuedPublicationRechecksItsOwnerAsync()
+    internal static async Task QueuedPublicationRechecksItsOwnerAsync()
     {
         foreach (var retirement in new[] { "replacement", "credentials", "dispose" })
         {
@@ -304,7 +304,7 @@ internal static class SearchAdjustmentSuite
             AssertEqual(false, vm.IsSearching, "A queued retired operation cannot reclaim busy state");
         }
     }
-    private static async Task MalformedApplyRetainsSuccessfulSnapshotAsync()
+    internal static async Task MalformedApplyRetainsSuccessfulSnapshotAsync()
     {
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -326,7 +326,7 @@ internal static class SearchAdjustmentSuite
         }
     }
 
-    private static async Task CoverFailureCannotSplitSuccessfulSnapshotAsync()
+    internal static async Task CoverFailureCannotSplitSuccessfulSnapshotAsync()
     {
         var settings = new Settings();
         var (service, http) = TestHttpServiceProxy.Create();
@@ -346,5 +346,152 @@ internal static class SearchAdjustmentSuite
         AssertEqual("ko", language, "An enrichment failure cannot partially fail applied options");
         AssertEqual("Voice", results.Single().Title, "An enrichment failure retains the complete valid metadata snapshot");
         AssertEqual(true, synchronized, "Preview synchronization belongs to successful metadata publication");
+    }
+
+    // Ordinary NUnit scene: preserves the complete original same-VM workflow.
+    internal static Task RunPendingIntentIsIndependentOfSuccessfulCriteriaOwnedAsync(Action<OfflineInputRequestFixtureOwner>? heldAcquired = null)
+    {
+        var fixture = new OfflineInputRequestFixtureOwner();
+        return fixture.RunAsync(async () =>
+        {
+            var settings = new Settings();
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = Response;
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings) { SearchQuery = "first" };
+            fixture.Track(vm);
+            await fixture.Track(vm.SearchVoicesCommand.ExecuteAsync(null));
+            await fixture.Track(vm.NextPageCommand.ExecuteAsync(null));
+            var cards = vm.SearchResults;
+            var held = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reply = fixture.Hold(held, Response);
+            CancellationToken token = default;
+            http.GetAsyncHandler = (_, _, ct) => { token = ct; return reply.Observe(); };
+            var pending = fixture.Track(Apply(vm, ["en"], "created_at"));
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "Held Apply publishes menu language before its response");
+            AssertEqual("created_at", vm.SearchSort, "Held Apply publishes menu sort before its response");
+            AssertEqual(true, vm.HasSearchAdjustments, "The indicator represents pending applied intent");
+            AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Pending intent cannot replace successful result objects");
+            AssertEqual(2, vm.SearchPage, "Pending intent cannot replace the successful page");
+            heldAcquired?.Invoke(fixture);
+            http.GetAsyncHandler = null;
+            await fixture.Track(vm.NextPageCommand.ExecuteAsync(null));
+            AssertEqual(true, token.IsCancellationRequested, "Paging replaces held search work");
+            AssertEqual("https://api.fish.audio/model?page_size=6&page_number=3&sort_by=score&title=first", http.LastGetUrl, "Paging still owns the full last-successful criteria");
+            AssertEqual("en", string.Join(",", vm.SearchLanguages), "A successful old-criteria page never resets applied menu intent");
+            foreach (var query in new[] { "edited", "" })
+            {
+                vm.SearchQuery = query;
+                await fixture.Track(vm.SearchVoicesCommand.ExecuteAsync(null));
+                AssertEqual("https://api.fish.audio/model?page_size=6&page_number=1&sort_by=created_at" + (query.Length == 0 ? "" : "&title=" + query) + "&language=en", http.LastGetUrl, "Explicit Search combines current visible query with latest menu intent");
+            }
+            held.TrySetResult(Response);
+            await pending;
+        });
+    }
+
+    // Ordinary NUnit scene: preserves the complete original same-VM workflow.
+    internal static Task RunPendingReplacementsCannotRollBackIntentOwnedAsync(string outcome, Action<OfflineInputRequestFixtureOwner>? heldAcquired = null)
+    {
+        var fixture = new OfflineInputRequestFixtureOwner();
+        return fixture.RunAsync(async () =>
+        {
+            var settings = new Settings { ApiKey = "accepted-key" };
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = Response;
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            fixture.Track(vm);
+            await fixture.Track(vm.SearchVoicesCommand.ExecuteAsync(null));
+            await fixture.Track(vm.NextPageCommand.ExecuteAsync(null));
+            var cards = vm.SearchResults;
+            var a = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var b = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var firstReply = fixture.Hold(a, Response);
+            var secondReply = fixture.Hold(b, Response);
+            CancellationToken aToken = default, bToken = default;
+            http.GetAsyncHandler = (_, _, ct) => { aToken = ct; return firstReply.Observe(); };
+            var first = fixture.Track(Apply(vm, ["en"], "created_at"));
+            http.GetAsyncHandler = (_, _, ct) => { bToken = ct; return secondReply.Observe(); };
+            var second = fixture.Track(Apply(vm, ["de"], "task_count"));
+            AssertEqual(true, aToken.IsCancellationRequested, "New Apply cancels the previous request");
+            AssertEqual("de", string.Join(",", vm.SearchLanguages), "The newest Apply owns intent before either response");
+            heldAcquired?.Invoke(fixture);
+            a.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Obsolete"}]}""");
+            await first;
+            AssertEqual("de", string.Join(",", vm.SearchLanguages), "Obsolete success cannot roll back pending intent");
+            AssertEqual(true, ReferenceEquals(cards, vm.SearchResults), "Obsolete success cannot publish over pending replacement");
+            AssertEqual(2, vm.SearchPage, "Obsolete success cannot publish navigation");
+            AssertEqual(true, vm.IsSearching, "Obsolete cleanup cannot retire the newer busy owner");
+            if (outcome == "credentials")
+            {
+                vm.ApiKey = "replacement-key";
+                vm.ApiKey = "accepted-key";
+                AssertEqual(true, bToken.IsCancellationRequested, "Accepted A to B to A retires the pending operation");
+                b.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Retired"}]}""");
+            }
+            else if (outcome == "failure") secondReply.SetException(new TimeoutException());
+            else b.SetResult("""{"total":24,"items":[{"_id":"33333333333333333333333333333333","title":"Current"}]}""");
+            await second;
+            AssertEqual("de", string.Join(",", vm.SearchLanguages), "Replacement completion or retirement retains newest menu intent");
+            AssertEqual("task_count", vm.SearchSort, "Replacement completion or retirement retains newest sort");
+            AssertEqual(false, vm.IsSearching, "Current completion or credential retirement ends busy state");
+            AssertEqual(outcome == "success" ? "Current" : "Voice", vm.SearchResults.Single().Title, "Only a current successful response can publish results");
+            AssertEqual(outcome == "success" ? 1 : 2, vm.SearchPage, "Failure and credential retirement preserve successful navigation");
+            if (outcome == "credentials")
+            {
+                http.GetAsyncHandler = null;
+                await fixture.Track(vm.SearchVoicesCommand.ExecuteAsync(null));
+                AssertEqual("Bearer accepted-key", http.LastGetOptions!.Headers!["Authorization"], "A round trip's next request uses the currently accepted key");
+                AssertEqual(true, http.LastGetUrl!.EndsWith("&language=de", StringComparison.Ordinal), "Credential round trip retains applied intent");
+            }
+        });
+    }
+
+    // Ordinary NUnit scene: preserves the complete original same-VM workflow.
+    internal static Task RunRetiredCriteriaCannotPublishOwnedAsync(string retirement, Action<OfflineInputRequestFixtureOwner>? heldAcquired = null)
+    {
+        var fixture = new OfflineInputRequestFixtureOwner();
+        return fixture.RunAsync(async () =>
+        {
+            var settings = new Settings { ApiKey = "accepted-key" };
+            var (service, http) = TestHttpServiceProxy.Create();
+            http.GetResponseJson = Response;
+            var vm = new SettingsViewModel(CreateContext(settings: settings, httpService: service), settings);
+            fixture.Track(vm);
+            await fixture.Track(Apply(vm, ["zh", "en"], "task_count"));
+            var pending = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var reply = fixture.Hold(pending, Response);
+            CancellationToken captured = default;
+            http.GetAsyncHandler = (_, _, ct) => { captured = ct; return reply.Observe(); };
+            var old = fixture.Track(Apply(vm, ["de"], "created_at"));
+            if (retirement == "replacement")
+            {
+                http.GetAsyncHandler = null;
+                await fixture.Track(Apply(vm, ["pt", "ko"], "score"));
+            }
+            else if (retirement == "credentials") vm.ApiKey = "replacement-key";
+            else vm.Dispose();
+            AssertEqual(true, captured.IsCancellationRequested, "Retiring search cancels its captured request token");
+            heldAcquired?.Invoke(fixture);
+            pending.SetResult("""{"total":900,"items":[{"_id":"22222222222222222222222222222222","title":"Retired"}]}""");
+            await old;
+            AssertEqual(retirement == "replacement" ? "ko,pt" : "de", string.Join(",", vm.SearchLanguages), "Retired completion cannot replace applied criteria");
+            AssertEqual("Voice", vm.SearchResults.Single().Title, "Retired completion cannot replace successful results");
+            AssertEqual(1, vm.SearchPage, "Retired completion cannot replace navigation");
+            if (retirement == "dispose")
+            {
+                var before = http.GetCallCount;
+                await fixture.Track(Apply(vm, ["fr"], "score"));
+                AssertEqual(before, http.GetCallCount, "Disposed Apply cannot issue a request");
+                AssertEqual("de", string.Join(",", vm.SearchLanguages), "Disposed Apply cannot accept new intent");
+                AssertEqual("created_at", vm.SearchSort, "Disposed Apply cannot accept a new sort");
+            }
+            if (retirement == "credentials")
+            {
+                http.GetAsyncHandler = null;
+                await fixture.Track(vm.SearchVoicesCommand.ExecuteAsync(null));
+                AssertEqual("Bearer replacement-key", http.LastGetOptions!.Headers!["Authorization"], "The next explicit search captures the newly accepted credential");
+                AssertEqual(true, http.LastGetUrl!.EndsWith("&language=de", StringComparison.Ordinal), "Credential retirement retains latest applied options");
+            }
+        });
     }
 }

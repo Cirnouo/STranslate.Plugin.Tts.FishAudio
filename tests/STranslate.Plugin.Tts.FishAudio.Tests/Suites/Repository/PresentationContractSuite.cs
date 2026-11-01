@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -14,9 +15,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class PresentationContractSuite
 {
-    internal static void PromoStatePersistsDismissalAndUse()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/promo-state-persists-dismissal-and-use")]
+    [Order(258)]
+    public static void PromoStatePersistsDismissalAndUse()
     {
         var settings = new Settings();
         var context = CreateContext(settings: settings);
@@ -51,7 +57,10 @@ internal static class PresentationContractSuite
         AssertEqual(true, viewModel.IsNormalizeLoudnessEnabled, "Normalize loudness should be enabled for s2-pro and newer models");
     }
 
-    internal static void SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/settings-view-removes-api-key-validation-ui-and-uses-latency-bars")]
+    [Order(259)]
+    public static void SettingsViewRemovesApiKeyValidationUiAndUsesLatencyBars()
     {
         var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Presentation", "View", "SettingsView.xaml")));
 
@@ -73,7 +82,10 @@ internal static class PresentationContractSuite
         AssertEqual(false, latencyBarsXaml.Contains("Segoe MDL2 Assets", StringComparison.Ordinal), "Latency icon should not use the old font glyph");
     }
 
-    internal static void SettingsViewShowsPersistentCreditPlaceholder()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/settings-view-shows-persistent-credit-placeholder")]
+    [Order(260)]
+    public static void SettingsViewShowsPersistentCreditPlaceholder()
     {
         var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Presentation", "View", "SettingsView.xaml")));
         const string placeholderKey = "STranslate_Plugin_Tts_FishAudio_Credit_NotLoaded";
@@ -101,7 +113,10 @@ internal static class PresentationContractSuite
         }
     }
 
-    internal static void SettingsViewIncludesS21PromoAndDynamicModelDescriptions()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/settings-view-includes-s21-promo-and-dynamic-model-descriptions")]
+    [Order(261)]
+    public static void SettingsViewIncludesS21PromoAndDynamicModelDescriptions()
     {
         var xaml = File.ReadAllText(FindRepoFile(Path.Combine("STranslate.Plugin.Tts.FishAudio", "Presentation", "View", "SettingsView.xaml")));
 
@@ -128,7 +143,10 @@ internal static class PresentationContractSuite
         AssertEqual(true, project.Contains("<Resource Include=\"s2-pro-free-promo.webp\" />", StringComparison.Ordinal), "Project should embed the local promo image as a WPF resource");
     }
 
-    internal static void LanguageResourcesMatchApiKeyRollback()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/language-resources-match-api-key-rollback")]
+    [Order(262)]
+    public static void LanguageResourcesMatchApiKeyRollback()
     {
         foreach (var locale in UiLocales.All)
         {
@@ -148,7 +166,10 @@ internal static class PresentationContractSuite
         }
     }
 
-    internal static void PreviewFailureLanguageResourcesAreComplete()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/preview-failure-language-resources-are-complete")]
+    [Order(263)]
+    public static void PreviewFailureLanguageResourcesAreComplete()
     {
         var keys = new[]
         {
@@ -172,7 +193,10 @@ internal static class PresentationContractSuite
         }
     }
 
-    internal static void LanguageResourcesDescribeContextConditioningConsistency()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/language-resources-describe-context-conditioning-consistency")]
+    [Order(264)]
+    public static void LanguageResourcesDescribeContextConditioningConsistency()
     {
         var expectedDescriptions = new Dictionary<string, string>
         {
@@ -199,7 +223,10 @@ internal static class PresentationContractSuite
         }
     }
 
-    internal static void TranslatedReadmesMatchCurrentSourceAndControlNames()
+    [Test]
+    [Property("FishAudioCaseId", "repository.presentation/translated-readmes-match-current-source-and-control-names")]
+    [Order(265)]
+    public static void TranslatedReadmesMatchCurrentSourceAndControlNames()
     {
         var documentationLocales = new Dictionary<string, string>
         {

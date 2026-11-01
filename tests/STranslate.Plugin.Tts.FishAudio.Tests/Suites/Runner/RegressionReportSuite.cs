@@ -4,23 +4,8 @@ using System.Text.Json.Nodes;
 
 internal static class RegressionReportSuite
 {
-    internal static async Task RunAsync()
-    {
-        await ReaderDrainCannotReplaceTheWriterFailureAsync();
-        await ObservedReaderFailureCannotAuthorizeWriterAsync();
-        await TerminalReadersCannotWaitForUnpublishedReadinessAsync();
-        await ReaderFixtureCleanupPreservesPrimaryAndAttemptsEveryReleaseAsync();
-        await ReaderFixtureRootIncludesSetupAndEveryCleanupAsync();
-        HeldCanonicalCannotFailDurableUpdatesOrRepeatActions();
-        InitialOwnershipAndAuthoritativeFailuresRemainStrict();
-        await ConcurrentReadersCannotBlockImmutableUpdatesAsync();
-        await StaleProjectionReplaysOnlyLatestIncompleteCoverageAsync();
-        CanonicalAndLatestGenerationTamperingCannotAuthorizeReuse();
-        UnreadableOrMissingCanonicalRecoveryIsConservative();
-        BareSchemaOneReportsRemainCompatible();
-    }
 
-    private static void HeldCanonicalCannotFailDurableUpdatesOrRepeatActions()
+    internal static void HeldCanonicalCannotFailDurableUpdatesOrRepeatActions()
     {
         using var fixture = new ReportFixture();
         var report = fixture.Report();
@@ -49,7 +34,7 @@ internal static class RegressionReportSuite
         AssertEqual(true, File.ReadAllBytes(fixture.Path).SequenceEqual(original), "A failed canonical projection leaves the original visible bytes unchanged");
     }
 
-    private static void InitialOwnershipAndAuthoritativeFailuresRemainStrict()
+    internal static void InitialOwnershipAndAuthoritativeFailuresRemainStrict()
     {
         using var fixture = new ReportFixture();
         var report = fixture.Report();
@@ -73,7 +58,7 @@ internal static class RegressionReportSuite
         AssertEqual(false, File.Exists(orphan.Path), "Sidecar ownership is checked before creating a canonical report");
     }
 
-    private static async Task ReaderDrainCannotReplaceTheWriterFailureAsync()
+    internal static async Task ReaderDrainCannotReplaceTheWriterFailureAsync()
     {
         var writerFailure = new IOException("private-owned-writer-failure");
         var readerFailure = new IOException("private-reader-drain-failure");
@@ -94,7 +79,7 @@ internal static class RegressionReportSuite
             types.SequenceEqual([typeof(IOException).FullName!]), "Reader drain failure retains only its safe secondary type");
     }
 
-    private static async Task ObservedReaderFailureCannotAuthorizeWriterAsync()
+    internal static async Task ObservedReaderFailureCannotAuthorizeWriterAsync()
     {
         var readerFailure = new IOException("private-observed-reader-failure");
         var writerFailure = new IOException("private-unexpected-writer-failure");
@@ -116,7 +101,7 @@ internal static class RegressionReportSuite
         AssertEqual(1, stops, "An observed reader failure retains its single stop owner");
     }
 
-    private static async Task TerminalReadersCannotWaitForUnpublishedReadinessAsync()
+    internal static async Task TerminalReadersCannotWaitForUnpublishedReadinessAsync()
     {
         foreach (var failed in new[] { true, false })
         {
@@ -144,7 +129,7 @@ internal static class RegressionReportSuite
         }
     }
 
-    private static async Task ReaderFixtureCleanupPreservesPrimaryAndAttemptsEveryReleaseAsync()
+    internal static async Task ReaderFixtureCleanupPreservesPrimaryAndAttemptsEveryReleaseAsync()
     {
         foreach (var hasPrimary in new[] { true, false })
         {
@@ -170,7 +155,7 @@ internal static class RegressionReportSuite
         }
     }
 
-    private static async Task ReaderFixtureRootIncludesSetupAndEveryCleanupAsync()
+    internal static async Task ReaderFixtureRootIncludesSetupAndEveryCleanupAsync()
     {
         var actions = new List<RegressionActionEvent>();
         using var owner = RegressionActionScope.BeginCase("runner.probe/reader-lifetime", actions.Add);
@@ -204,7 +189,7 @@ internal static class RegressionReportSuite
             "Setup, work, reader drain and resource disposal share one unchanged root timestamp");
     }
 
-    private static async Task ConcurrentReadersCannotBlockImmutableUpdatesAsync()
+    internal static async Task ConcurrentReadersCannotBlockImmutableUpdatesAsync()
     {
         ReportFixture fixture = null!;
         RegressionReport report = null!;
@@ -244,7 +229,7 @@ internal static class RegressionReportSuite
             () => { fixture?.Dispose(); return Task.CompletedTask; });
     }
 
-    private static async Task StaleProjectionReplaysOnlyLatestIncompleteCoverageAsync()
+    internal static async Task StaleProjectionReplaysOnlyLatestIncompleteCoverageAsync()
     {
         using var fixture = new ReportFixture();
         var calls = new List<string>();
@@ -272,7 +257,7 @@ internal static class RegressionReportSuite
         AssertEqual(true, File.ReadAllBytes(generationPath).SequenceEqual(durable), "Replay cannot rewrite its immutable input evidence");
     }
 
-    private static void CanonicalAndLatestGenerationTamperingCannotAuthorizeReuse()
+    internal static void CanonicalAndLatestGenerationTamperingCannotAuthorizeReuse()
     {
         foreach (var change in new Action<JsonNode>[]
         {
@@ -314,7 +299,7 @@ internal static class RegressionReportSuite
         }
     }
 
-    private static void UnreadableOrMissingCanonicalRecoveryIsConservative()
+    internal static void UnreadableOrMissingCanonicalRecoveryIsConservative()
     {
         using var fixture = new ReportFixture();
         var report = fixture.Report();
@@ -339,7 +324,7 @@ internal static class RegressionReportSuite
         ExpectRejected(() => RegressionReport.Read(fixture.Path), "An unreadable canonical cannot choose between multiple sidecar owners");
     }
 
-    private static void BareSchemaOneReportsRemainCompatible()
+    internal static void BareSchemaOneReportsRemainCompatible()
     {
         using var fixture = new ReportFixture();
         var report = fixture.Report();

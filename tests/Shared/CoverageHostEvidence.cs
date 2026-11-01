@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using FishAudio.Testing.Execution;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 
@@ -13,6 +14,7 @@ public sealed class CoverageHostEvidence
     [OneTimeSetUp]
     public void CaptureStart()
     {
+        FrameworkLifecycleClient.StartHost();
         try
         {
             var context = ReadContext();
@@ -28,33 +30,55 @@ public sealed class CoverageHostEvidence
         }
         catch (Exception error) when (IsEvidenceFailure(error))
         {
+            FrameworkLifecycleClient.AbortHost();
             // Filesystem exception messages can contain the private evidence path.
             throw new InvalidDataException("coverage-host-start-evidence-failed");
+        }
+        catch
+        {
+            FrameworkLifecycleClient.AbortHost();
+            throw;
         }
     }
 
     [OneTimeTearDown]
     public void CaptureEnd()
     {
-        var owner = _owner;
-        if (owner is null) return;
-
+        var preserveFailure = TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed;
         try
         {
-            var finishedUtc = DateTimeOffset.UtcNow;
-            Require(finishedUtc >= owner.StartedUtc, "coverage-host-clock-regressed");
-            Require(ReadAssemblySha256(owner.AssemblyPath) == owner.AssemblySha256,
-                "coverage-host-assembly-changed");
-            WriteNew(owner, "end", finishedUtc);
+            var owner = _owner;
+            if (owner is null) return;
+
+            try
+            {
+                var finishedUtc = DateTimeOffset.UtcNow;
+                Require(finishedUtc >= owner.StartedUtc, "coverage-host-clock-regressed");
+                Require(ReadAssemblySha256(owner.AssemblyPath) == owner.AssemblySha256,
+                    "coverage-host-assembly-changed");
+                WriteNew(owner, "end", finishedUtc);
+            }
+            catch (Exception error) when (IsEvidenceFailure(error))
+            {
+                // Missing or partial end evidence remains inadmissible. Preserve
+                // an existing NUnit failure if secondary evidence publication fails.
+                if (preserveFailure)
+                {
+                    try { TestContext.Error.WriteLine("coverage-host-end-evidence-failed"); }
+                    catch { /* Preserve the existing NUnit failure. */ }
+                }
+                else
+                    throw new InvalidDataException("coverage-host-end-evidence-failed");
+            }
         }
-        catch (Exception error) when (IsEvidenceFailure(error))
+        catch
         {
-            // Missing or partial end evidence remains inadmissible. Preserve an
-            // existing NUnit failure when publishing this secondary evidence fails.
-            if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
-                TestContext.Error.WriteLine("coverage-host-end-evidence-failed");
-            else
-                throw new InvalidDataException("coverage-host-end-evidence-failed");
+            preserveFailure = true;
+            throw;
+        }
+        finally
+        {
+            FrameworkLifecycleClient.CleanupComplete(preserveFailure);
         }
     }
 

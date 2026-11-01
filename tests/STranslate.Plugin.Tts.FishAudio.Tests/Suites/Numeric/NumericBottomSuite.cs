@@ -59,7 +59,7 @@ internal static class NumericBottomSuite
             yield return (culture, dark, dpi);
     }
 
-    private static void Measure(string culture, bool dark, double dpi, string? directory, List<string> failures)
+    internal static void Measure(string culture, bool dark, double dpi, string? directory, List<string> failures)
     {
         var original = CultureInfo.CurrentCulture;
         try

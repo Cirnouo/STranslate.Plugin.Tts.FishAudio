@@ -1,9 +1,11 @@
 # Framework evidence and real-project workspace probe
 
 The normal framework entry is `tools/Test.ps1`; the [test-system specification](../../docs/specs/test-system.md)
-owns discovery, full/focused execution, canonical identity and raw evidence. This
-CLI supplies metadata admission and a bounded workspace capability probe. It does
-not replace NUnit or execute scenarios.
+owns discovery, full/focused execution, canonical identity and raw evidence. The
+metadata admission and bounded workspace-probe commands described below do not
+execute scenarios. This CLI also supplies the internal `framework-run` process
+supervisor used by that driver; NUnit retains discovery, fixtures, assertions and
+results.
 
 All evidence command paths are absolute. Each command creates a fresh JSON output
 and rejects an existing destination:

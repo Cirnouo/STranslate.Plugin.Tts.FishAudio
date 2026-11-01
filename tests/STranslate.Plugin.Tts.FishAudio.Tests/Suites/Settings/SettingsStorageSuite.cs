@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -14,9 +15,14 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
 internal static class SettingsStorageSuite
 {
-    internal static void NewSettingsSerializeCurrentSchemaFirst()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/new-settings-serialize-current-schema-first")]
+    [Order(79)]
+    public static void NewSettingsSerializeCurrentSchemaFirst()
     {
         var settings = new Settings();
         var json = JsonSerializer.Serialize(settings);
@@ -28,7 +34,10 @@ internal static class SettingsStorageSuite
             "SchemaVersion should be the first serialized settings property");
     }
 
-    internal static void Version100SettingsMigrate()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/version100-settings-migrate")]
+    [Order(80)]
+    public static void Version100SettingsMigrate()
     {
         var settings = DeserializeSettings(
             """
@@ -64,7 +73,10 @@ internal static class SettingsStorageSuite
         AssertEqual(Settings.DefaultConditionOnPreviousChunks, settings.ConditionOnPreviousChunks, "Missing v1.0.0 context setting should use its default");
     }
 
-    internal static void Version101SettingsMigrate()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/version101-settings-migrate")]
+    [Order(81)]
+    public static void Version101SettingsMigrate()
     {
         var settings = DeserializeSettings(
             """
@@ -95,7 +107,10 @@ internal static class SettingsStorageSuite
         AssertEqual(Settings.DefaultMp3Bitrate, settings.Mp3Bitrate, "Missing v1.0.1 bitrate should use its default");
     }
 
-    internal static void Version102UnversionedSettingsMigrate()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/version102-unversioned-settings-migrate")]
+    [Order(82)]
+    public static void Version102UnversionedSettingsMigrate()
     {
         var settings = DeserializeSettings(
             """
@@ -130,7 +145,10 @@ internal static class SettingsStorageSuite
         AssertEqual(false, settings.ConditionOnPreviousChunks, "v1.0.2 context setting should be preserved");
     }
 
-    internal static void CurrentVoiceFieldsWinRegardlessOfPropertyOrder()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/current-voice-fields-win-regardless-of-property-order")]
+    [Order(83)]
+    public static void CurrentVoiceFieldsWinRegardlessOfPropertyOrder()
     {
         AssertCurrentWins(
             """
@@ -159,7 +177,10 @@ internal static class SettingsStorageSuite
         }
     }
 
-    internal static void InvalidCurrentVoiceFieldsFallBackToLegacy()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/invalid-current-voice-fields-fall-back-to-legacy")]
+    [Order(84)]
+    public static void InvalidCurrentVoiceFieldsFallBackToLegacy()
     {
         var settings = DeserializeSettings(
             """
@@ -176,7 +197,10 @@ internal static class SettingsStorageSuite
         AssertEqual(8, settings.CachedVoice?.TaskCount, "Fallback cached voice metadata should be preserved");
     }
 
-    internal static void WrongJsonTypeDefaultsOnlyThatField()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/wrong-json-type-defaults-only-that-field")]
+    [Order(85)]
+    public static void WrongJsonTypeDefaultsOnlyThatField()
     {
         var settings = DeserializeSettings(
             """
@@ -199,7 +223,10 @@ internal static class SettingsStorageSuite
         AssertEqual(false, settings.NormalizeLoudness, "A neighboring valid boolean should remain unchanged");
     }
 
-    internal static void WrongSchemaTypeDefaultsOnlySchemaField()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/wrong-schema-type-defaults-only-schema-field")]
+    [Order(86)]
+    public static void WrongSchemaTypeDefaultsOnlySchemaField()
     {
         var settings = DeserializeSettings(
             """
@@ -223,7 +250,10 @@ internal static class SettingsStorageSuite
         AssertEqual(1, proxy.SaveCount, "Wrong-type SchemaVersion should trigger canonical save");
     }
 
-    internal static void UnknownAndDeletedPropertiesAreCleanedUp()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/unknown-and-deleted-properties-are-cleaned-up")]
+    [Order(87)]
+    public static void UnknownAndDeletedPropertiesAreCleanedUp()
     {
         var settings = DeserializeSettings(
             """
@@ -251,7 +281,10 @@ internal static class SettingsStorageSuite
         AssertEqual(false, canonicalJson.Contains("AuthorAvatar", StringComparison.Ordinal), "Canonical settings should drop deleted cached voice properties");
     }
 
-    internal static void NumericSettingsNormalizeRangesAndGranularity()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/numeric-settings-normalize-ranges-and-granularity")]
+    [Order(88)]
+    public static void NumericSettingsNormalizeRangesAndGranularity()
     {
         var settings = new Settings
         {
@@ -285,7 +318,10 @@ internal static class SettingsStorageSuite
         AssertEqual(Settings.DefaultTopP, settings.TopP, "Out-of-range TopP should normalize to default");
     }
 
-    internal static void OrdinaryDuplicateDefaultsOnlyThatField()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/ordinary-duplicate-defaults-only-that-field")]
+    [Order(89)]
+    public static void OrdinaryDuplicateDefaultsOnlyThatField()
     {
         var settings = DeserializeSettings(
             """
@@ -308,7 +344,10 @@ internal static class SettingsStorageSuite
         AssertEqual(1, proxy.SaveCount, "An ordinary duplicate should trigger one canonical save");
     }
 
-    internal static void DuplicateAndFutureSchemasAreReadOnly()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/duplicate-and-future-schemas-are-read-only")]
+    [Order(90)]
+    public static void DuplicateAndFutureSchemasAreReadOnly()
     {
         var duplicate = DeserializeSettings(
             """
@@ -356,7 +395,10 @@ internal static class SettingsStorageSuite
         AssertEqual(true, futureLogger.Contains("read-only"), "Blocked future-schema saves should be logged");
     }
 
-    internal static void CurrentSettingsRoundTrip()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/current-settings-round-trip")]
+    [Order(91)]
+    public static void CurrentSettingsRoundTrip()
     {
         var original = new Settings
         {
@@ -403,7 +445,10 @@ internal static class SettingsStorageSuite
         AssertEqual(original.IsS21ProFreePromoDismissed, roundTripped.IsS21ProFreePromoDismissed, "Current round trip should preserve promo dismissal");
     }
 
-    internal static void ProductionUsesSettingsStoreForContextStorage()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/production-uses-settings-store-for-context-storage")]
+    [Order(92)]
+    public static void ProductionUsesSettingsStoreForContextStorage()
     {
         var productionRoot = FindRepoPath("STranslate.Plugin.Tts.FishAudio");
         var offenders = Directory
@@ -423,7 +468,10 @@ internal static class SettingsStorageSuite
             "Settings should live in the focused Configuration directory");
     }
 
-    internal static void ApiKeyEditingPersistsImmediately()
+    [Test]
+    [Property("FishAudioCaseId", "settings.storage/api-key-editing-persists-immediately")]
+    [Order(110)]
+    public static void ApiKeyEditingPersistsImmediately()
     {
         var settings = new Settings { ApiKey = AppliedKey };
         var context = CreateContext(settings: settings);

@@ -1,5 +1,5 @@
 #!/bin/sh
 set -eu
 repository=$(git rev-parse --show-toplevel)
-state=$(git rev-parse --path-format=absolute --git-path fish-audio-testing)
-exec pwsh -NoLogo -NoProfile -File "$state/hooks/TestGate.ps1" -RepositoryRoot "$repository" "$@"
+hooks=$(git rev-parse --path-format=absolute --git-path hooks)
+exec pwsh -NoLogo -NoProfile -File "$hooks/TestGate.ps1" -RepositoryRoot "$repository" "$@"

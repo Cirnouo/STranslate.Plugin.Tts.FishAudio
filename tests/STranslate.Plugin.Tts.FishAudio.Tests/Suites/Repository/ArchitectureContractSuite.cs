@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using STranslate.Plugin;
 using STranslate.Plugin.Tts.FishAudio;
 using STranslate.Plugin.Tts.FishAudio.Configuration;
@@ -14,9 +15,15 @@ using static RuntimeOverrideScopes;
 using static StaTestHost;
 using static TestAssertions;
 
+[TestFixture]
+[NonParallelizable]
+[Property("FishAudioFreshHost", "true")]
 internal static class ArchitectureContractSuite
 {
-    internal static void MainDelegatesInitializationToLifecycleCoordinator()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/main-delegates-initialization-to-lifecycle-coordinator")]
+    [Order(94)]
+    public static void MainDelegatesInitializationToLifecycleCoordinator()
     {
         const string coordinatorTypeName = "STranslate.Plugin.Tts.FishAudio.Lifecycle.PluginInitializationCoordinator";
         var pluginAssembly = typeof(Main).Assembly;
@@ -47,7 +54,10 @@ internal static class ArchitectureContractSuite
             "The lifecycle coordinator should atomically capture TTS dependencies");
     }
 
-    internal static void ApiKeyValidationStateWasRemoved()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/api-key-validation-state-was-removed")]
+    [Order(93)]
+    public static void ApiKeyValidationStateWasRemoved()
     {
         AssertEqual(
             false,
@@ -55,7 +65,10 @@ internal static class ArchitectureContractSuite
             "Runtime API Key validation state should be removed");
     }
 
-    internal static void SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/settings-view-model-splits-preview-and-cover-cache-responsibilities")]
+    [Order(95)]
+    public static void SettingsViewModelSplitsPreviewAndCoverCacheResponsibilities()
     {
         var constructors = typeof(SettingsViewModel).GetConstructors(BindingFlags.Public | BindingFlags.Instance);
         AssertEqual(
@@ -84,7 +97,10 @@ internal static class ArchitectureContractSuite
             "Cover image cache display and cleanup should be split into an internal manager boundary");
     }
 
-    internal static void SettingsViewModelDelegatesCreditRefreshWorkflow()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/settings-view-model-delegates-credit-refresh-workflow")]
+    [Order(96)]
+    public static void SettingsViewModelDelegatesCreditRefreshWorkflow()
     {
         const string coordinatorTypeName = "STranslate.Plugin.Tts.FishAudio.Presentation.CreditRefreshCoordinator";
         var pluginAssembly = typeof(SettingsViewModel).Assembly;
@@ -125,7 +141,10 @@ internal static class ArchitectureContractSuite
             "SettingsViewModel should preserve the internal API Key operation completion entry point");
     }
 
-    internal static void SettingsViewModelDelegatesVoiceDiscoveryWorkflow()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/settings-view-model-delegates-voice-discovery-workflow")]
+    [Order(97)]
+    public static void SettingsViewModelDelegatesVoiceDiscoveryWorkflow()
     {
         const string coordinatorTypeName = "STranslate.Plugin.Tts.FishAudio.Presentation.VoiceDiscoveryCoordinator";
         var pluginAssembly = typeof(SettingsViewModel).Assembly;
@@ -162,7 +181,10 @@ internal static class ArchitectureContractSuite
             "The voice discovery coordinator should own both cancellation sources");
     }
 
-    internal static void SettingsViewModelDelegatesPreviewRefreshWorkflow()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/settings-view-model-delegates-preview-refresh-workflow")]
+    [Order(98)]
+    public static void SettingsViewModelDelegatesPreviewRefreshWorkflow()
     {
         const string coordinatorTypeName = "STranslate.Plugin.Tts.FishAudio.Presentation.PreviewRefreshCoordinator";
         const string policyTypeName = "STranslate.Plugin.Tts.FishAudio.Presentation.PreviewAudioUrlPolicy";
@@ -229,7 +251,10 @@ internal static class ArchitectureContractSuite
             "SettingsViewModel should no longer contain the VoiceSearchItem declaration");
     }
 
-    internal static void ApplyAvailableModelsUsesUiThreadInvoker()
+    [Test]
+    [Property("FishAudioCaseId", "repository.architecture/apply-available-models-uses-ui-thread-invoker")]
+    [Order(153)]
+    public static void ApplyAvailableModelsUsesUiThreadInvoker()
     {
         var invoked = false;
         var previous = SettingsViewModel.UiThreadInvokerOverride;

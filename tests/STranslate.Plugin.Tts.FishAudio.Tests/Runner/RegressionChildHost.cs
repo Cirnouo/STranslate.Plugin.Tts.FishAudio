@@ -22,6 +22,9 @@ internal static class RegressionChildHost
         }
         var selected = request.LegacyArguments is not null || request.Probe is not null ? Array.Empty<RegressionCase>() :
             registry.Where(item => request.CaseIds.Contains(item.Id, StringComparer.Ordinal)).ToArray();
+        // The retired historical ID remains only this explicit owned-child operation.
+        if (selected.Length == 0 && StreamingTextChildCompatibilityTarget.BindExact(request) is { } compatibilityTarget)
+            selected = [compatibilityTarget];
         if (request.LegacyArguments is null && request.Probe is null &&
             (!selected.Select(item => item.Id).SequenceEqual(request.CaseIds, StringComparer.Ordinal) || selected.Any(item => item.Partition != request.Partition))) return 2;
         return await RunCasesAsync(request, physicalProtocolOutput, async index =>

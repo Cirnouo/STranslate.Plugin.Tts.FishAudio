@@ -70,13 +70,14 @@ internal sealed class SnapshotContext
     internal string InputPath(string relativePath)
     {
         var path = Resolve(relativePath);
-        if (File.Exists(path)) return ExistingFile(relativePath);
-        if (Directory.Exists(path))
-        {
-            var prefix = relativePath.Replace('\\', '/').TrimEnd('/') + "/";
-            foreach (var file in Files.Where(file => file.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
-                _ = ExistingFile(file.Path);
-        }
+        var key = relativePath.Replace('\\', '/');
+        // The tree inventory owns existence. A missing materialized file must
+        // not satisfy a caller's assertion that the repository path is absent.
+        if (File.Exists(path) || Files.Any(file => string.Equals(file.Path, key, StringComparison.OrdinalIgnoreCase)))
+            return ExistingFile(relativePath);
+        var prefix = key + "/";
+        foreach (var file in Files.Where(file => file.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            _ = ExistingFile(file.Path);
         return path;
     }
 
