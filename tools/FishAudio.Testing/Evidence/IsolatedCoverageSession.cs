@@ -248,12 +248,28 @@ public static partial class IsolatedCoverageSession
                 // selected canonical case supplies independent declarations.
                 ValidateEmptyProduct(input.EmptyProduct, sourceRoot, locks);
                 var metadata = NUnitEvidence.ReadCaseMetadata(paths[CoverageArtifactKind.Discovery], expected.Identity.CanonicalId);
-                ValidateEmptyProductDeclaration(metadata, input.EmptyProduct!, sourceRoot);
+                if (!metadata.Properties.ContainsKey("FishAudioEmptyProductCoverage") &&
+                    CoverageDependencies.AllowsEmpty(dependencies) &&
+                    dependencies!.Observation.Cases.Single().Responsibility == CoverageResponsibility.RepositoryResourcesOnly)
+                {
+                    var declared = dependencies.Observation.Cases.Single().Resources.ToDictionary(
+                        item => item.RelativePath, item => item.Sha256, StringComparer.OrdinalIgnoreCase);
+                    Require(declared.Count == input.EmptyProduct!.Dependencies.Count &&
+                        input.EmptyProduct.Dependencies.All(item =>
+                            declared.TryGetValue(item.RelativePath, out var hash) && hash == item.Sha256),
+                        "empty-product-dependency-declaration-mismatch");
+                }
+                else ValidateEmptyProductDeclaration(metadata, input.EmptyProduct!, sourceRoot);
             }
             else if (!empty)
             {
                 Require(input.EmptyProduct is null, "unexpected-empty-product-explanation");
-                CoverageDependencies.ValidateNonempty(dependencies);
+                // Retain the full Product envelope alongside a validated modern resource declaration.
+                if (!(CoverageDependencies.AllowsEmpty(dependencies) &&
+                    dependencies!.Observation.Cases.Single().Responsibility == CoverageResponsibility.RepositoryResourcesOnly &&
+                    !NUnitEvidence.ReadCaseMetadata(paths[CoverageArtifactKind.Discovery], expected.Identity.CanonicalId)
+                        .Properties.ContainsKey("FishAudioEmptyProductCoverage")))
+                    CoverageDependencies.ValidateNonempty(dependencies);
             }
             if (dependencies is not null) CoverageDependencies.Recheck(dependencies, sourceRoot, locks);
             var observations = aggregate.Members.Select(member => new UnresolvedCaseCoverageSymbol(member)).ToArray();

@@ -25,11 +25,12 @@ public sealed class DotCoverConsoleDiagnosticException : Exception
 /// </summary>
 public static class DotCoverConsoleDiagnostics
 {
-    public const string Rule = "dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v2";
+    public const string Rule = "dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v3";
     private const int MaximumBytes = 64 * 1024;
     private static readonly string[] TimestampFormats =
     [
         "ddd MM dd yyyy h:mm:ss tt", "ddd MM dd yyyy hh:mm:ss tt",
+        "ddd MM d yyyy h:mm:ss tt", "ddd MM d yyyy hh:mm:ss tt",
     ];
     private static readonly byte[] Banner =
     [

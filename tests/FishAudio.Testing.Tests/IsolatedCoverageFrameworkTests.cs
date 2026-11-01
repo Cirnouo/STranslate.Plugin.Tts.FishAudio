@@ -23,6 +23,147 @@ public sealed partial class IsolatedCoverageSessionTests
         WriteIndented = true,
     };
 
+    [TestCase(false, TestName = "IsolatedFramework_ModernRepositoryResourcesOnly_ZeroHitProduct")]
+    [TestCase(true, TestName = "IsolatedFramework_ModernRepositoryResourcesOnly_AbsentProduct")]
+    public void ModernRepositoryResourceResponsibilityAdmitsEmptyProductWithItsFileWitness(bool absent)
+    {
+        var observation = PrepareDependencyObservation("RepositoryResourcesOnly", resourceAndScope: true);
+        var dependency = observation.Cases.Single();
+        var resource = dependency.Resources.Single();
+        var scope = dependency.Scopes.Single();
+        Assert.That(dependency.Responsibility, Is.EqualTo(CoverageResponsibility.RepositoryResourcesOnly));
+        Assert.That(dependency.TestSourceResolved, Is.True);
+        Assert.That(dependency.CodeSources.Select(item => item.RelativePath), Does.Contain(DependencyTestSource));
+        Assert.That(resource.RelativePath, Is.EqualTo("assets/required.json"));
+        Assert.That(resource.Sha256, Is.EqualTo(Hash(Path.Combine(_expected.SourceDirectory, resource.RelativePath))));
+        Assert.That(scope.Files.Select(item => item.RelativePath), Is.EqualTo(new[] { "assets/catalog/one.json" }));
+        Assert.That(scope.Declaration.ExpectedMissing, Is.EqualTo(new[] { "assets/catalog/not-created.json" }));
+        Assert.That(NUnitEvidence.ReadCaseMetadata(FrameworkArtifactPath(CoverageArtifactKind.Discovery), CanonicalId)
+            .Properties.ContainsKey("FishAudioEmptyProductCoverage"), Is.False);
+
+        SetAggregateEmpty(absent);
+        _input = _input with
+        {
+            EmptyProduct = new(EmptyProductCoverageReason.RepositoryResourcesOnly, dependency.Resources),
+        };
+        ResealDependencyFrameworkFixture();
+        var before = CaptureFrameworkFixtureDigests();
+
+        var admitted = IsolatedCoverageSession.ReadValidated(_input, _expected with { Dependencies = observation });
+
+        Assert.That(admitted.TestResult.CanonicalId, Is.EqualTo(CanonicalId));
+        Assert.That(admitted.Aggregate.TargetAssembly is null, Is.EqualTo(absent));
+        Assert.That(admitted.Aggregate.TargetAssembly?.CoveredStatements ?? 0, Is.Zero);
+        Assert.That(admitted.EmptyProduct!.Reason, Is.EqualTo(EmptyProductCoverageReason.RepositoryResourcesOnly));
+        Assert.That(admitted.EmptyProduct.Dependencies, Is.EqualTo(dependency.Resources));
+        var retained = admitted.Dependencies!.Observation.Cases.Single();
+        Assert.That(retained.Responsibility, Is.EqualTo(CoverageResponsibility.RepositoryResourcesOnly));
+        Assert.That(retained.Resources, Is.EqualTo(dependency.Resources));
+        Assert.That(retained.Scopes.Single().EnumerationSha256, Is.EqualTo(scope.EnumerationSha256));
+        Assert.That(retained.Scopes.Single().Files, Is.EqualTo(scope.Files));
+        Assert.That(retained.UnknownFull, Is.True);
+        Assert.That(admitted.CompleteBaseline || admitted.SourceMappingsResolved ||
+            admitted.Dependencies.DependencyClosureProven || admitted.Dependencies.TiaSelectionAuthorized, Is.False);
+        AssertFrameworkFixtureDigests(before);
+    }
+
+    [TestCase(false, TestName = "IsolatedFramework_ModernResourceWitness_RejectsScopeSubstitution")]
+    [TestCase(true, TestName = "IsolatedFramework_ModernResourceWitness_RejectsMissingDeclaredResource")]
+    public void ModernRepositoryResourceWitnessMustMatchItsValidatedDeclaration(bool missingDeclaredResource)
+    {
+        var observation = PrepareDependencyObservation("RepositoryResourcesOnly", resourceAndScope: true);
+        if (missingDeclaredResource)
+        {
+            AddDependencyFixtureProperty("FishAudioRepositoryDependency", "assets/catalog/one.json");
+            observation = ObserveDependencyFixture();
+        }
+        var dependency = observation.Cases.Single();
+        Assert.That(dependency.Responsibility, Is.EqualTo(CoverageResponsibility.RepositoryResourcesOnly));
+        Assert.That(dependency.TestSourceResolved, Is.True);
+        Assert.That(dependency.CodeSources.Select(item => item.RelativePath), Does.Contain(DependencyTestSource));
+        Assert.That(dependency.Resources.Select(item => item.RelativePath), Is.EquivalentTo(missingDeclaredResource
+            ? new[] { "assets/required.json", "assets/catalog/one.json" }
+            : new[] { "assets/required.json" }));
+        foreach (var resource in dependency.Resources)
+            Assert.That(resource.Sha256, Is.EqualTo(Hash(Path.Combine(_expected.SourceDirectory, resource.RelativePath))));
+        Assert.That(dependency.Scopes.Single().Files.Single().RelativePath, Is.EqualTo("assets/catalog/one.json"));
+        Assert.That(NUnitEvidence.ReadCaseMetadata(FrameworkArtifactPath(CoverageArtifactKind.Discovery), CanonicalId)
+            .Properties.ContainsKey("FishAudioEmptyProductCoverage"), Is.False);
+        var witnessPath = missingDeclaredResource ? "assets/required.json" : "assets/catalog/one.json";
+        var witness = new CoverageRepositoryDependency(witnessPath, Hash(Path.Combine(_expected.SourceDirectory, witnessPath)));
+        SetAggregateEmpty(absent: true);
+        _input = _input with { EmptyProduct = new(EmptyProductCoverageReason.RepositoryResourcesOnly, [witness]) };
+        ResealDependencyFrameworkFixture();
+        var before = CaptureFrameworkFixtureDigests();
+
+        var rejected = Assert.Throws<IsolatedCoverageSessionException>(() =>
+            IsolatedCoverageSession.ReadValidated(_input, _expected with { Dependencies = observation }));
+
+        Assert.That(rejected!.Code, Is.EqualTo("coverage-session-empty-product-dependency-declaration-mismatch"));
+        AssertFrameworkFixtureDigests(before);
+    }
+
+    [TestCase(false, TestName = "IsolatedFramework_ModernRepositoryResourcesOnly_NonemptyProductRetainsEnvelopeDependencies")]
+    [TestCase(true, TestName = "IsolatedFramework_ModernRepositoryResourcesOnly_NonemptyProductRejectsEmptyExplanation")]
+    public void ModernRepositoryResourceResponsibilityRetainsObservedProductEnvelope(bool unexpectedEmptyExplanation)
+    {
+        var observation = PrepareDependencyObservation("RepositoryResourcesOnly", resourceAndScope: true);
+        var dependency = observation.Cases.Single();
+        Assert.That(dependency.Responsibility, Is.EqualTo(CoverageResponsibility.RepositoryResourcesOnly));
+        Assert.That(dependency.TestSourceResolved, Is.True);
+        Assert.That(dependency.CodeSources.Select(item => item.RelativePath), Does.Contain(DependencyTestSource));
+        Assert.That(dependency.Resources.Select(item => item.RelativePath), Is.EqualTo(new[] { "assets/required.json" }));
+        Assert.That(dependency.Resources.Single().Sha256,
+            Is.EqualTo(Hash(Path.Combine(_expected.SourceDirectory, "assets/required.json"))));
+        Assert.That(dependency.Scopes.Single().Files.Select(item => item.RelativePath),
+            Is.EqualTo(new[] { "assets/catalog/one.json" }));
+        Assert.That(dependency.Scopes.Single().Declaration.ExpectedMissing,
+            Is.EqualTo(new[] { "assets/catalog/not-created.json" }));
+        Assert.That(NUnitEvidence.ReadCaseMetadata(FrameworkArtifactPath(CoverageArtifactKind.Discovery), CanonicalId)
+            .Properties.ContainsKey("FishAudioEmptyProductCoverage"), Is.False);
+        Assert.That(_input.EmptyProduct, Is.Null);
+        var product = _expected.Binaries.Single(item => item.Role == CoverageBinaryRole.Product);
+        var aggregate = DotCoverAggregate.ReadValidated(FrameworkArtifactPath(CoverageArtifactKind.AggregateJson),
+            product.ExpectedIdentity.AssemblyName, _expected.DotCoverVersion);
+        Assert.That(aggregate.TargetAssembly?.CoveredStatements ?? 0, Is.GreaterThan(0));
+        var expectedAggregate = JsonSerializer.Serialize(aggregate, FrameworkFixtureJson);
+        var expectedObservations = JsonSerializer.Serialize(aggregate.Members, FrameworkFixtureJson);
+        var expectedDependencies = JsonSerializer.Serialize(observation, FrameworkFixtureJson);
+        var before = CaptureFrameworkFixtureDigests();
+
+        if (unexpectedEmptyExplanation)
+        {
+            _input = _input with
+            {
+                EmptyProduct = new(EmptyProductCoverageReason.RepositoryResourcesOnly, dependency.Resources),
+            };
+            var rejected = Assert.Throws<IsolatedCoverageSessionException>(() =>
+                IsolatedCoverageSession.ReadValidated(_input, _expected with { Dependencies = observation }));
+            Assert.That(rejected!.Code, Is.EqualTo("coverage-session-unexpected-empty-product-explanation"));
+            AssertFrameworkFixtureDigests(before);
+            return;
+        }
+
+        var admitted = IsolatedCoverageSession.ReadValidated(_input, _expected with { Dependencies = observation });
+
+        Assert.That(admitted.Identity, Is.EqualTo(_expected.Identity));
+        Assert.That(admitted.TestResult.CanonicalId, Is.EqualTo(CanonicalId));
+        Assert.That(admitted.EmptyProduct, Is.Null);
+        Assert.That(JsonSerializer.Serialize(admitted.Aggregate, FrameworkFixtureJson), Is.EqualTo(expectedAggregate));
+        Assert.That(JsonSerializer.Serialize(admitted.UnresolvedSymbols.Select(item => item.Observation).ToArray(),
+            FrameworkFixtureJson), Is.EqualTo(expectedObservations));
+        Assert.That(JsonSerializer.Serialize(admitted.Dependencies!.Observation, FrameworkFixtureJson),
+            Is.EqualTo(expectedDependencies));
+        Assert.That(admitted.Dependencies.Observation.Cases.Single().Responsibility,
+            Is.EqualTo(CoverageResponsibility.RepositoryResourcesOnly));
+        Assert.That(admitted.Dependencies.Observation.Cases.Single().UnknownFull, Is.True);
+        Assert.That(admitted.Dependencies.UnknownAction, Is.EqualTo("full"));
+        Assert.That(admitted.CompleteBaseline || admitted.SourceMappingsResolved ||
+            admitted.Dependencies.CompleteBaseline || admitted.Dependencies.SourceMappingsResolved ||
+            admitted.Dependencies.DependencyClosureProven || admitted.Dependencies.TiaSelectionAuthorized, Is.False);
+        AssertFrameworkFixtureDigests(before);
+    }
+
     [Test]
     [Property("FishAudioCaseId", "isolated-framework/validated-host-pair-without-exit-claims")]
     public void CallbackPairBindsControlHostWithoutIndividualProcessCompletionClaims()

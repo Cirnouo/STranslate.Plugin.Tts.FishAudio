@@ -690,7 +690,8 @@ try {
             $arguments += @((Join-Path $root 'tools/Invoke-OrderedProfileCoverage.ps1'), '-Profile', [string]$owner.profile)
         } else {
             Require-FullCoverage ($owner.kind -ceq 'isolated-case' -and @($owner.cases).Count -eq 1) 'full-coverage-invalid-owner-kind'
-            $arguments += @((Join-Path $root 'tools/Invoke-IsolatedCoverage.ps1'), '-CaseId', [string]$owner.cases[0].canonicalId)
+            $arguments += @((Join-Path $root 'tools/Invoke-IsolatedCoverage.ps1'), '-CaseId', [string]$owner.cases[0].canonicalId,
+                '-PreparedPath',$preparedPathValue,'-ExpectedPreparedSha256',$preparedSha256)
         }
         $arguments += @('-TestAssembly',$testDll,'-ProductAssembly',$productDll,'-DotCoverToolFile',$DotCoverToolFile,
             '-MetadataToolAssembly',$metadataTool,'-RunnerMetadataTemplatePath',$templatePath,'-ResultsDirectory',$sessionDirectory,'-RepositoryRoot',$root,'-RunId',$runId)

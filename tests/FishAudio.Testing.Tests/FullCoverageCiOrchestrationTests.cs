@@ -502,6 +502,68 @@ public sealed class FullCoverageCiOrchestrationTests
         });
     }
 
+    private static IEnumerable<TestCaseData> PreparedHandoffFaults()
+    {
+        foreach (var pair in new[]
+        {
+            ("missing-digest", "coverage-prepared-input-pair"),
+            ("missing-path", "coverage-prepared-input-pair"),
+            ("invalid-digest", "coverage-prepared-input-required"),
+            ("missing-template", "coverage-prepared-input-required"),
+        }) yield return Row(pair.Item1, pair.Item2, "prepared-handoff-reject-");
+    }
+
+    [TestCaseSource(nameof(PreparedHandoffFaults))]
+    [Property("FishAudioCoverageResponsibility", "RepositoryResourcesOnly")]
+    [Property("FishAudioCodeDependency", "tests/FishAudio.Testing.Tests/FullCoverageCiOrchestrationTests.cs")]
+    [Property("FishAudioRepositoryDependency", "tools/Invoke-IsolatedCoverage.ps1")]
+    [Property("FishAudioRepositoryDependency", "tools/ci/FullCoverageCi.Common.ps1")]
+    public async Task PreparedHandoffArgumentsRejectBeforeSourceOrLeafLaunch(string fault, string reason)
+    {
+        var collector = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(_helper)!, "..", "Invoke-IsolatedCoverage.ps1"));
+        Assert.That(File.Exists(collector), Is.True, "The actual immutable collector entry must exist.");
+        var foreignRoot = Path.Combine(_root, "collector-foreign-root");
+        Directory.CreateDirectory(foreignRoot);
+        var results = Path.Combine(_root, "collector-output");
+        var arguments = new List<string>
+        {
+            "-CaseId", "fixture/prepared-handoff", "-RunId", Guid.NewGuid().ToString("N"),
+            "-TestAssembly", Path.Combine(_root, "never-tests.dll"),
+            "-ProductAssembly", Path.Combine(_root, "never-product.dll"),
+            "-DotCoverToolFile", Path.Combine(_root, "never-dotcover.dll"),
+            "-ResultsDirectory", results, "-RepositoryRoot", foreignRoot,
+            "-PreparedPath", Path.Combine(_root, "never-prepared.json"),
+            "-ExpectedPreparedSha256", new string('0', 64),
+            "-RunnerMetadataTemplatePath", Path.Combine(_root, "never-template.json"),
+        };
+        // Well-formed arguments must reach the next original guard. No metadata
+        // file is created or admitted, and this deliberate root mismatch starts no leaf.
+        var control = await RunProcessAsync(collector, arguments.ToArray());
+        Assert.Multiple(() =>
+        {
+            Assert.That(control.ExitCode, Is.EqualTo(1), control.Error);
+            Assert.That(control.Error, Does.Contain("coverage-collector: failed stage=preflight reason=coverage-collector-entry-root-mismatch;"));
+            Assert.That(Directory.Exists(results) || File.Exists(results), Is.False);
+            Assert.That(Directory.EnumerateFileSystemEntries(foreignRoot), Is.Empty);
+        });
+        switch (fault)
+        {
+            case "missing-digest": arguments.RemoveRange(arguments.IndexOf("-ExpectedPreparedSha256"), 2); break;
+            case "missing-path": arguments.RemoveRange(arguments.IndexOf("-PreparedPath"), 2); break;
+            case "invalid-digest": arguments[arguments.IndexOf("-ExpectedPreparedSha256") + 1] = new string('0', 63); break;
+            case "missing-template": arguments.RemoveRange(arguments.IndexOf("-RunnerMetadataTemplatePath"), 2); break;
+            default: throw new InvalidOperationException("unknown-prepared-handoff-fault");
+        }
+        var rejected = await RunProcessAsync(collector, arguments.ToArray());
+        Assert.Multiple(() =>
+        {
+            Assert.That(rejected.ExitCode, Is.EqualTo(1), rejected.Error);
+            Assert.That(rejected.Error, Does.Contain("coverage-collector: failed stage=preflight reason=" + reason + ";"));
+            Assert.That(Directory.Exists(results) || File.Exists(results), Is.False, "No owner or phase directory may precede argument rejection.");
+            Assert.That(Directory.EnumerateFileSystemEntries(foreignRoot), Is.Empty);
+        });
+    }
+
     [Test]
     [Property("FishAudioCaseId", "coverage-ci-orchestration/lowercase-diagnostic-retains-original-category-and-stage-without-work")]
     public async Task AcceptedLowercaseDiagnosticDispatchKeepsTheOriginalFailureClassification()

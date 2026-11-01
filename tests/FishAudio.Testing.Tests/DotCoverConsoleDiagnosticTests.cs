@@ -32,6 +32,18 @@ public sealed class DotCoverConsoleDiagnosticTests
         "[JetBrains dotCover] Merging snapshots [Thu 10 29 2026 2:10:45 AM]\r\n" +
         "[JetBrains dotCover] Snapshots merging finished [Thu 10 29 2026 2:10:45 AM]\r\n" +
         "[JetBrains dotCover] Coverage results post-processing finished [Thu 10 29 2026 2:10:45 AM]\r\n";
+    // Literal single-day cover/export timestamps from the retained fixed-runner session.
+    private const string SingleDayCover =
+        "[JetBrains dotCover] Coverage session started [Mon 11 2 2026 3:48:01 AM]\r\n" +
+        "[JetBrains dotCover] Coverage session finished [Mon 11 2 2026 3:48:11 AM]\r\n" +
+        "[JetBrains dotCover] Coverage results post-processing started [Mon 11 2 2026 3:48:11 AM]\r\n" +
+        "[JetBrains dotCover] Merging snapshots [Mon 11 2 2026 3:48:11 AM]\r\n" +
+        "[JetBrains dotCover] Snapshots merging finished [Mon 11 2 2026 3:48:11 AM]\r\n" +
+        "[JetBrains dotCover] Coverage results post-processing finished [Mon 11 2 2026 3:48:11 AM]\r\n";
+    private const string SingleDayExport =
+        "[JetBrains dotCover] Report generation started. [Mon 11 2 2026 3:48:14 AM]\r\n" +
+        "[JetBrains dotCover] JSON report generated. [Mon 11 2 2026 3:48:14 AM]\r\n" +
+        "[JetBrains dotCover] XML report generated. [Mon 11 2 2026 3:48:14 AM]\r\n";
     private string _parent = "";
     private string _root = "";
     private string[] _paths = [];
@@ -80,7 +92,7 @@ public sealed class DotCoverConsoleDiagnosticTests
         Assert.That(before.Select(bytes => bytes.Length), Is.EqualTo(new[] { 632, 0, 372, 0 }));
         var review = Read();
         Assert.That(review.SchemaVersion, Is.EqualTo(1));
-        Assert.That(review.RuleId, Is.EqualTo("dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v2"));
+        Assert.That(review.RuleId, Is.EqualTo("dotcover-2026.2.3.1-build-20260930.210750-windows-x64-console-cp936-v3"));
         Assert.That(review.Evidence.Select(item => item.Path), Is.EqualTo(_paths));
         Assert.That(review.Evidence.Select(item => item.Sha256), Is.EqualTo(before
             .Select(bytes => Convert.ToHexStringLower(SHA256.HashData(bytes)))));
@@ -110,6 +122,45 @@ public sealed class DotCoverConsoleDiagnosticTests
         Assert.That(admitted.Evidence.Select(item => item.Sha256), Is.EqualTo(before
             .Select(bytes => Convert.ToHexStringLower(SHA256.HashData(bytes)))));
         Assert.That(admitted.BaselineClaim, Is.False);
+        for (var index = 0; index < _paths.Length; index++)
+            Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
+    }
+
+    [Test]
+    [Property("FishAudioCaseId", "console-diagnostics/single-day-observed-console-protocol")]
+    public void ObservedSingleDayConsoleProtocolPreservesAllRawDigests()
+    {
+        File.WriteAllBytes(_paths[0], ObservedBytes(SingleDayCover));
+        File.WriteAllBytes(_paths[2], ObservedBytes(SingleDayExport));
+        var before = _paths.Select(File.ReadAllBytes).ToArray();
+        Assert.That(before.Select(bytes => bytes.Length), Is.EqualTo(new[] { 620, 0, 366, 0 }));
+        Assert.That(Convert.ToHexStringLower(SHA256.HashData(before[0])),
+            Is.EqualTo("89e747269e0cc2223c4dcfe32084b03bc1bd8ca9034227e31969bc851a24cdc9"));
+        Assert.That(Convert.ToHexStringLower(SHA256.HashData(before[2])),
+            Is.EqualTo("361df3615e86901dbde356e56dda7399faacabe250db95bdc082687262683344"));
+
+        ConsoleDiagnosticReview? review = null;
+        Assert.DoesNotThrow(() => review = Read(),
+            "console-diagnostics-single-day-observed-form-must-be-admitted");
+        var admitted = review ?? throw new InvalidOperationException("console-diagnostics-single-day-review-missing");
+        Assert.That(admitted.Evidence.Select(item => item.Path), Is.EqualTo(_paths));
+        Assert.That(admitted.Evidence.Select(item => item.Sha256), Is.EqualTo(before
+            .Select(bytes => Convert.ToHexStringLower(SHA256.HashData(bytes)))));
+        Assert.That(admitted.BaselineClaim, Is.False);
+        for (var index = 0; index < _paths.Length; index++)
+            Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
+    }
+
+    [TestCase("Mon 11 002 2026", TestName = "console-diagnostics/single-day-three-digit-day-rejected")]
+    [TestCase("Tue 11 2 2026", TestName = "console-diagnostics/single-day-wrong-weekday-rejected")]
+    public void SingleDaySupportDoesNotAdmitNoncanonicalDates(string invalidDate)
+    {
+        File.WriteAllBytes(_paths[0], ObservedBytes(SingleDayCover.Replace(
+            "Mon 11 2 2026", invalidDate, StringComparison.Ordinal)));
+        File.WriteAllBytes(_paths[2], ObservedBytes(SingleDayExport));
+        var before = _paths.Select(File.ReadAllBytes).ToArray();
+        var failure = Assert.Throws<DotCoverConsoleDiagnosticException>(() => Read());
+        Assert.That(failure!.Code, Is.EqualTo("console-invalid-timestamp"));
         for (var index = 0; index < _paths.Length; index++)
             Assert.That(File.ReadAllBytes(_paths[index]), Is.EqualTo(before[index]));
     }

@@ -19,7 +19,9 @@ param(
     [string]$RunId = [Guid]::NewGuid().ToString('N'),
     [switch]$CollectOnly,
     [string]$MetadataToolAssembly = '',
-    [string]$RunnerMetadataTemplatePath = ''
+    [string]$RunnerMetadataTemplatePath = '',
+    [string]$PreparedPath = '',
+    [string]$ExpectedPreparedSha256 = ''
 )
 
 Set-StrictMode -Version Latest
@@ -35,6 +37,7 @@ $source = $null
 $identity = $null
 $binaries = @()
 $binaryFiles = @()
+$preparedFilePins = $null
 $artifacts = [Collections.Generic.List[object]]::new()
 $phases = [Collections.Generic.List[object]]::new()
 $locks = [Collections.Generic.List[IO.FileStream]]::new()
@@ -351,6 +354,133 @@ function Get-SnapshotIdentity {
     } finally { $hash.Dispose() }
 }
 
+function Pin-PreparedCoverageFile([string]$Path) {
+    Require-Coverage ([IO.Path]::IsPathFullyQualified($Path)) 'coverage-prepared-pin-path'
+    $full = [IO.Path]::GetFullPath($Path)
+    Require-Coverage ($preparedFilePins.ContainsKey($full)) 'coverage-prepared-pin-missing'
+    $pin = $preparedFilePins[$full]
+    Require-RegularFile $full ([IO.Path]::GetDirectoryName($full))
+    $guard = [IO.File]::Open($full, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    $locks.Add($guard)
+    Require-Coverage ($guard.Length -eq $pin.length -and (Get-Digest $full) -ceq $pin.sha256) 'coverage-prepared-pin-changed'
+    return $full
+}
+function Copy-PreparedCoverageFile([string]$Path, [string]$Destination) {
+    $original = Pin-PreparedCoverageFile $Path
+    Require-Coverage (Within-Root $Destination $runRoot) 'coverage-prepared-copy-scope'
+    # File.Copy retains the original metadata; no timestamp is rewritten to imply fresh discovery.
+    [IO.File]::Copy($original, $Destination, $false)
+    $locks.Add([IO.File]::Open($Destination, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read))
+    Require-Coverage ((Get-Digest $Destination) -ceq $preparedFilePins[$original].sha256) 'coverage-prepared-copy-changed'
+}
+function Get-PreparedCoverageMetadata {
+    if ([string]::IsNullOrEmpty($PreparedPath)) { return $null }
+    $path = [IO.Path]::GetFullPath($PreparedPath); $preparation = [IO.Path]::GetDirectoryName($path)
+    Require-Coverage ([IO.Path]::GetFileName($path) -ceq 'prepared.json' -and -not (Within-Root $preparation $root) -and
+        -not (Same-Path $preparation $root)) 'coverage-prepared-path'
+    Require-RegularFile $path $preparation
+    $guard = [IO.File]::Open($path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read); $locks.Add($guard)
+    Require-Coverage ($guard.Length -gt 0 -and $guard.Length -le 67108864 -and (Get-Digest $path) -ceq $ExpectedPreparedSha256) 'coverage-prepared-digest'
+    $text = [IO.File]::ReadAllText($path, [Text.UTF8Encoding]::new($false, $true))
+    $document = [Text.Json.JsonDocument]::Parse($text)
+    try {
+        function Assert-PreparedJson($Element) {
+            if ($Element.ValueKind -eq [Text.Json.JsonValueKind]::Object) {
+                $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+                foreach ($property in $Element.EnumerateObject()) {
+                    Require-Coverage ($seen.Add($property.Name)) 'coverage-prepared-json-duplicate'
+                    Assert-PreparedJson $property.Value
+                }
+            } elseif ($Element.ValueKind -eq [Text.Json.JsonValueKind]::Array) {
+                foreach ($item in $Element.EnumerateArray()) { Assert-PreparedJson $item }
+            }
+        }
+        Assert-PreparedJson $document.RootElement
+        $fields = @('schemaVersion','runId','sourceDirectory','preparationDirectory','snapshotContextPath','source','admission',
+            'metadataToolFile','runtimeEnvironmentPath','runnerMetadataTemplatePath','buildDirectories','files')
+        $properties = @($document.RootElement.EnumerateObject())
+        Require-Coverage ($properties.Count -eq $fields.Count -and @($properties | Where-Object { $fields -cnotcontains $_.Name }).Count -eq 0 -and
+            $document.RootElement.GetProperty('schemaVersion').GetInt32() -eq 1) 'coverage-prepared-shape'
+        $prepared = $text | ConvertFrom-Json
+    } finally { $document.Dispose() }
+    Require-Coverage ($prepared.runId -ceq $RunId -and (Same-Path $prepared.sourceDirectory $root) -and
+        (Same-Path $prepared.preparationDirectory $preparation) -and (Same-Path $prepared.snapshotContextPath $env:FISHAUDIO_SNAPSHOT_CONTEXT) -and
+        (Same-Path $prepared.metadataToolFile $metadataTool) -and (Same-Path $prepared.runnerMetadataTemplatePath $RunnerMetadataTemplatePath) -and
+        $prepared.source.commit -ceq $source.commit -and $prepared.source.tree -ceq $source.tree -and
+        $prepared.source.fingerprint -ceq $source.fingerprint) 'coverage-prepared-identity'
+    Require-Coverage ($prepared.files -is [Array] -and $prepared.files.Count -gt 0 -and $prepared.files.Count -le 200000) 'coverage-prepared-pin-count'
+    $script:preparedFilePins = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase)
+    [long]$bytes = 0
+    foreach ($pin in $prepared.files) {
+        Require-Coverage ($pin.path -is [string] -and [IO.Path]::IsPathFullyQualified($pin.path) -and $pin.sha256 -cmatch '^[a-f0-9]{64}$' -and
+            ($pin.length -is [int] -or $pin.length -is [long]) -and $pin.length -ge 0 -and $pin.length -le 268435456 -and
+            $preparedFilePins.TryAdd([IO.Path]::GetFullPath($pin.path), $pin)) 'coverage-prepared-pin-invalid'
+        $bytes += [long]$pin.length; Require-Coverage ($bytes -le 8589934592) 'coverage-prepared-byte-limit'
+    }
+    # Existing actual byte guards stay authoritative; this handoff must match every tracked input.
+    foreach ($file in $binaryFiles) {
+        $actualPath = [IO.Path]::GetFullPath($file.path)
+        Require-Coverage ($preparedFilePins.ContainsKey($actualPath) -and $preparedFilePins[$actualPath].sha256 -ceq $file.sha256 -and
+            $preparedFilePins[$actualPath].length -eq (Get-Item -LiteralPath $actualPath).Length) 'coverage-prepared-binary-changed'
+    }
+    foreach ($requiredPath in @($shell, $env:FISHAUDIO_SNAPSHOT_CONTEXT, $RunnerMetadataTemplatePath, $metadataTool, [IO.Path]::ChangeExtension($metadataTool, '.pdb'))) {
+        [void](Pin-PreparedCoverageFile $requiredPath)
+    }
+    $catalogs = @($prepared.admission.catalogs)
+    Require-Coverage ($catalogs.Count -eq 2 -and $catalogs[0].key -ceq 'plugin' -and $catalogs[1].key -ceq 'testing-tool') 'coverage-prepared-catalogs'
+    $directories = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    [void]$directories.Add([IO.Path]::GetDirectoryName($metadataTool))
+    foreach ($catalog in $catalogs) {
+        Require-Coverage ((Same-Path $catalog.sourceDirectory $root) -and (Same-Path $catalog.buildDirectory $root) -and
+            @($catalog.binaries).Count -eq 2 -and $catalog.binaries[0].role -ceq 'Product' -and $catalog.binaries[1].role -ceq 'Tests') 'coverage-prepared-catalog-binding'
+        foreach ($binary in $catalog.binaries) {
+            $dll = [IO.Path]::GetFullPath((Join-Path $root $binary.dllRelativePath))
+            Require-Coverage (Within-Root $dll $root) 'coverage-prepared-build-scope'
+            [void]$directories.Add([IO.Path]::GetDirectoryName($dll))
+        }
+    }
+    Require-Coverage (@($prepared.buildDirectories).Count -eq $directories.Count -and
+        @($prepared.buildDirectories | Where-Object { -not $directories.Contains([IO.Path]::GetFullPath($_)) }).Count -eq 0) 'coverage-prepared-build-directories'
+    $current = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    $recorded = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+    foreach ($directory in $directories) {
+        $item = Get-Item -LiteralPath $directory -Force
+        Require-Coverage ($item.PSIsContainer -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) 'coverage-prepared-build-directory'
+        foreach ($file in Get-ChildItem -LiteralPath $directory -File) {
+            if ($file.Extension -in @('.dll','.pdb') -or $file.Name.EndsWith('.deps.json', [StringComparison]::OrdinalIgnoreCase) -or
+                $file.Name.EndsWith('.runtimeconfig.json', [StringComparison]::OrdinalIgnoreCase)) {
+                Require-RegularFile $file.FullName $root
+                Require-Coverage ($current.Count -lt 20000 -and $current.Add($file.FullName)) 'coverage-prepared-build-inventory'
+            }
+        }
+    }
+    foreach ($pin in $prepared.files) {
+        if ($directories.Contains([IO.Path]::GetDirectoryName($pin.path)) -and ([IO.Path]::GetExtension($pin.path) -in @('.dll','.pdb') -or
+            $pin.path.EndsWith('.deps.json', [StringComparison]::OrdinalIgnoreCase) -or $pin.path.EndsWith('.runtimeconfig.json', [StringComparison]::OrdinalIgnoreCase))) { [void]$recorded.Add($pin.path) }
+    }
+    Require-Coverage ($current.SetEquals($recorded)) 'coverage-prepared-build-inventory-drift'
+    $selected = @($catalogs | Where-Object { Same-Path (Join-Path $root $_.binaries[1].dllRelativePath) $TestAssembly })
+    Require-Coverage ($selected.Count -eq 1 -and (Same-Path (Join-Path $root $selected[0].binaries[0].dllRelativePath) $ProductAssembly)) 'coverage-prepared-selected-assembly'
+    $template = [IO.File]::ReadAllText($RunnerMetadataTemplatePath) | ConvertFrom-Json
+    $pair = @($template.assemblies | Where-Object key -CEQ $selected[0].key)
+    Require-Coverage ($pair.Count -eq 1 -and (Same-Path $pair[0].assembly $TestAssembly) -and
+        (Same-Path $pair[0].discovery $selected[0].discoveryPath) -and $pair[0].discoverySha256 -ceq $selected[0].discoverySha256 -and
+        (Within-Root $pair[0].discovery $preparation) -and (Within-Root $pair[0].catalog $preparation)) 'coverage-prepared-selected-metadata'
+    foreach ($path in @($pair[0].discovery, $pair[0].catalog)) { [void](Pin-PreparedCoverageFile $path) }
+    $authorityPath = Pin-PreparedCoverageFile (Join-Path $preparation 'build-authority.json')
+    Require-Coverage ((Get-Digest $authorityPath) -ceq $prepared.admission.buildAuthority.evidenceSha256) 'coverage-prepared-authority'
+    $authority = [IO.File]::ReadAllText($authorityPath) | ConvertFrom-Json
+    $versionFiles = @{}
+    foreach ($name in @('sdkVersionEvidence','sdkVersionInvocation','sdkVersionProcess','dotCoverVersionEvidence','dotCoverVersionInvocation','dotCoverVersionProcess')) {
+        $evidenceFiles = @($prepared.files | Where-Object sha256 -CEQ $authority.($name + 'Sha256'))
+        Require-Coverage ($evidenceFiles.Count -eq 1 -and (Within-Root $evidenceFiles[0].path $preparation)) 'coverage-prepared-version-evidence'
+        $versionFiles[$name] = Pin-PreparedCoverageFile $evidenceFiles[0].path
+    }
+    return @{ catalog = $selected[0]; pair = $pair[0]; preparation = $preparation
+        sdkVersion = [IO.File]::ReadAllText($versionFiles.sdkVersionEvidence, $utf8).Trim()
+        dotCoverVersion = [IO.File]::ReadAllText($versionFiles.dotCoverVersionEvidence, $utf8).Trim()
+        toolVersionPath = $versionFiles.dotCoverVersionEvidence }
+}
 function Get-RunnerCoverageMetadataEnvironment {
     if ([string]::IsNullOrEmpty($RunnerMetadataTemplatePath)) { return @{} }
     Require-Coverage ([IO.Path]::IsPathFullyQualified($RunnerMetadataTemplatePath) -and
@@ -479,6 +609,11 @@ try {
     $parsedRun = [Guid]::Empty
     Require-Coverage ([Guid]::TryParseExact($RunId, 'N', [ref]$parsedRun) -and $parsedRun -ne [Guid]::Empty -and
         -not [string]::IsNullOrWhiteSpace($CaseId) -and $CaseId.Length -le 16384 -and -not @($CaseId.ToCharArray() | Where-Object { [char]::IsControl($_) }).Count) 'coverage-collector-input-identity'
+    Require-Coverage ([string]::IsNullOrEmpty($PreparedPath) -eq [string]::IsNullOrEmpty($ExpectedPreparedSha256)) 'coverage-prepared-input-pair'
+    if (-not [string]::IsNullOrEmpty($PreparedPath)) {
+        Require-Coverage ([IO.Path]::IsPathFullyQualified($PreparedPath) -and $ExpectedPreparedSha256 -cmatch '^[a-f0-9]{64}$' -and
+            -not [string]::IsNullOrEmpty($RunnerMetadataTemplatePath)) 'coverage-prepared-input-required'
+    }
     Require-Coverage (Same-Path $PSScriptRoot (Join-Path $root 'tools')) 'coverage-collector-entry-root-mismatch'
     foreach ($path in @($TestAssembly, $ProductAssembly, $DotCoverToolFile, $ResultsDirectory)) {
         Require-Coverage ([IO.Path]::IsPathFullyQualified($path)) 'coverage-collector-absolute-path-required'
@@ -556,20 +691,41 @@ try {
     })
     $toolSha256 = @($binaryFiles | Where-Object path -CEQ $DotCoverToolFile)[0].sha256
     Write-NewJson (Join-Path $runRoot 'binary-files.json') $binaryFiles
+    $stage = 'prepared-metadata'
+    $preparedMetadata = Get-PreparedCoverageMetadata
     $stage = 'tool-versions'
-    $sdkPhase = Invoke-CoveragePhase 'sdk-version' $dotnet @('--version') 120000
-    $observedSdkVersion = [IO.File]::ReadAllText((Join-Path $sdkPhase 'stdout.log'), $utf8).Trim()
-    Require-Coverage ($observedSdkVersion -ceq '10.0.403') 'coverage-collector-sdk-version-mismatch'
     $toolVersionPath = Join-Path $runRoot 'dotcover-version.txt'
-    [void](Invoke-CoveragePhase 'dotcover-version' $dotnet @($DotCoverToolFile, 'version', '--text-output', $toolVersionPath) 120000)
-    $observedDotCoverVersion = [IO.File]::ReadAllText($toolVersionPath, $utf8).Trim()
-    Require-Coverage ($observedDotCoverVersion -ceq '2026.2.3.1') 'coverage-collector-dotcover-version-mismatch'
+    if ($null -eq $preparedMetadata) {
+        $sdkPhase = Invoke-CoveragePhase 'sdk-version' $dotnet @('--version') 120000
+        $observedSdkVersion = [IO.File]::ReadAllText((Join-Path $sdkPhase 'stdout.log'), $utf8).Trim()
+        Require-Coverage ($observedSdkVersion -ceq '10.0.403') 'coverage-collector-sdk-version-mismatch'
+        [void](Invoke-CoveragePhase 'dotcover-version' $dotnet @($DotCoverToolFile, 'version', '--text-output', $toolVersionPath) 120000)
+        $observedDotCoverVersion = [IO.File]::ReadAllText($toolVersionPath, $utf8).Trim()
+        Require-Coverage ($observedDotCoverVersion -ceq '2026.2.3.1') 'coverage-collector-dotcover-version-mismatch'
+    } else {
+        $observedSdkVersion = $preparedMetadata.sdkVersion; $observedDotCoverVersion = $preparedMetadata.dotCoverVersion
+        Require-Coverage ($observedSdkVersion -ceq '10.0.403') 'coverage-collector-sdk-version-mismatch'
+        Require-Coverage ($observedDotCoverVersion -ceq '2026.2.3.1') 'coverage-collector-dotcover-version-mismatch'
+        Copy-PreparedCoverageFile $preparedMetadata.toolVersionPath $toolVersionPath
+    }
     $stage = 'binary-identity'
     foreach ($pair in @(@('Product',$ProductAssembly), @('Tests',$TestAssembly))) {
         $output = Join-Path $runRoot ($pair[0].ToLowerInvariant() + '-binary.json')
-        [void](Invoke-CoveragePhase ('binary-' + $pair[0].ToLowerInvariant()) $dotnet @($metadataTool, 'evidence-binary', '--assembly', $pair[1], '--pdb', [IO.Path]::ChangeExtension($pair[1], '.pdb'), '--output', $output) 120000)
+        if ($null -eq $preparedMetadata) {
+            [void](Invoke-CoveragePhase ('binary-' + $pair[0].ToLowerInvariant()) $dotnet @($metadataTool, 'evidence-binary', '--assembly', $pair[1], '--pdb', [IO.Path]::ChangeExtension($pair[1], '.pdb'), '--output', $output) 120000)
+        } else {
+            Copy-PreparedCoverageFile (Join-Path $preparedMetadata.preparation ($preparedMetadata.catalog.key + '-' + $pair[0].ToLowerInvariant() + '-binary.json')) $output
+        }
         $record = [IO.File]::ReadAllText($output) | ConvertFrom-Json
         Require-Coverage ($record.complete -eq $true -and $record.kind -ceq 'binary-identity') 'coverage-collector-binary-identity-rejected'
+        if ($null -ne $preparedMetadata) {
+            $binding = @($preparedMetadata.catalog.binaries | Where-Object role -CEQ $pair[0])
+            Require-Coverage ($binding.Count -eq 1 -and (Same-Path (Join-Path $root $binding[0].dllRelativePath) $pair[1]) -and
+                (Same-Path (Join-Path $root $binding[0].pdbRelativePath) ([IO.Path]::ChangeExtension($pair[1], '.pdb'))) -and
+                $record.binary.dllSha256 -ceq (Get-Digest $pair[1]) -and
+                $record.binary.pdbSha256 -ceq (Get-Digest ([IO.Path]::ChangeExtension($pair[1], '.pdb'))) -and
+                ($record.binary | ConvertTo-Json -Depth 12 -Compress) -ceq ($binding[0].expectedIdentity | ConvertTo-Json -Depth 12 -Compress)) 'coverage-prepared-binary-identity'
+        }
         $binaries += [ordered]@{ role = $pair[0]; dllRelativePath = [IO.Path]::GetRelativePath($root, $pair[1]).Replace('\','/')
             pdbRelativePath = [IO.Path]::GetRelativePath($root, [IO.Path]::ChangeExtension($pair[1], '.pdb')).Replace('\','/'); identity = $record.binary }
     }
@@ -588,17 +744,23 @@ try {
     $identity = [ordered]@{ runId = $RunId; sessionId = $sessionId; canonicalId = $CaseId
         source = @{ commit = $source.commit; tree = $source.tree; fingerprint = $source.fingerprint }
         buildId = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($buildBytes)).ToLowerInvariant() }
+    if ($null -ne $preparedMetadata) { Require-Coverage ($identity.buildId -ceq $preparedMetadata.catalog.buildId) 'coverage-prepared-build-id' }
     $stage = 'metadata-discovery'
     $discoverySettings = Join-Path $runRoot 'discovery.runsettings'
     Write-CoverageSettings $discoverySettings (Join-Path $runRoot 'discovery-xml')
-    $dump = Join-Path ([IO.Path]::GetDirectoryName($TestAssembly)) ('Dump/D_' + [IO.Path]::GetFileName($TestAssembly) + '.dump')
-    if ([IO.File]::Exists($dump)) { [IO.File]::Move($dump, (Join-Path $runRoot 'preexisting-discovery.dump')) }
-    [void](Invoke-CoveragePhase 'discovery' $dotnet @('exec', $vstest, $TestAssembly, '--ListTests', ('--Settings:' + $discoverySettings)) 120000)
-    Require-Coverage ([IO.File]::Exists($dump) -and @(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'fixture-created-*.txt').Count -eq 0 -and
-        @(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'host-*.json').Count -eq 0) 'coverage-collector-discovery-evidence-missing-or-constructed'
-    [IO.File]::Copy($dump, (Join-Path $runRoot 'discovery.dump'), $false)
     $catalogPath = Join-Path $runRoot 'catalog.json'
-    [void](Invoke-CoveragePhase 'catalog' $dotnet @($metadataTool, 'evidence-catalog', '--discovery', (Join-Path $runRoot 'discovery.dump'), '--output', $catalogPath) 120000)
+    if ($null -eq $preparedMetadata) {
+        $dump = Join-Path ([IO.Path]::GetDirectoryName($TestAssembly)) ('Dump/D_' + [IO.Path]::GetFileName($TestAssembly) + '.dump')
+        if ([IO.File]::Exists($dump)) { [IO.File]::Move($dump, (Join-Path $runRoot 'preexisting-discovery.dump')) }
+        [void](Invoke-CoveragePhase 'discovery' $dotnet @('exec', $vstest, $TestAssembly, '--ListTests', ('--Settings:' + $discoverySettings)) 120000)
+        Require-Coverage ([IO.File]::Exists($dump) -and @(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'fixture-created-*.txt').Count -eq 0 -and
+            @(Get-ChildItem -LiteralPath $runtimeEvidence -File -Filter 'host-*.json').Count -eq 0) 'coverage-collector-discovery-evidence-missing-or-constructed'
+        [IO.File]::Copy($dump, (Join-Path $runRoot 'discovery.dump'), $false)
+        [void](Invoke-CoveragePhase 'catalog' $dotnet @($metadataTool, 'evidence-catalog', '--discovery', (Join-Path $runRoot 'discovery.dump'), '--output', $catalogPath) 120000)
+    } else {
+        Copy-PreparedCoverageFile $preparedMetadata.pair.discovery (Join-Path $runRoot 'discovery.dump')
+        Copy-PreparedCoverageFile $preparedMetadata.pair.catalog $catalogPath
+    }
     $catalog = [IO.File]::ReadAllText($catalogPath) | ConvertFrom-Json
     Require-Coverage ($catalog.schemaVersion -eq 1 -and $catalog.kind -ceq 'nunit-catalog' -and $catalog.complete -eq $true) 'coverage-collector-catalog-rejected'
     $selected = @($catalog.cases | Where-Object canonicalId -CEQ $CaseId)
