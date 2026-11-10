@@ -25,6 +25,9 @@ internal static class WorkflowTests
         SelfTest.Equal(true, canonical < verify && verify < upload);
         var verifyStep = gate[verify..upload];
         SelfTest.Equal(true, Regex.IsMatch(verifyStep, @"(?m)^\s+run: dotnet run --project tools/FishAudioRelease -c Release -- --verify\s*$"));
+        const string tagObjectBinding = "FISH_AUDIO_V120_TAG_OBJECT: ${{ vars.FISH_AUDIO_V120_TAG_OBJECT }}";
+        SelfTest.Equal(true, verifyStep.Contains(tagObjectBinding, StringComparison.Ordinal));
+        SelfTest.Equal(true, release[Position(release, "\n  publish:")..].Contains(tagObjectBinding, StringComparison.Ordinal));
         SelfTest.Equal(true, gate[upload..].Contains("uses: actions/upload-artifact@", StringComparison.Ordinal));
         SelfTest.Equal(true, Position(gate, "Require every validation prerequisite to succeed") < Position(gate, "Checkout exact validation commit"));
         SelfTest.Equal(true, Position(gate, "--verify-reports") < Position(gate, "run: .\\build.ps1 -Release"));

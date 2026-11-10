@@ -1,6 +1,6 @@
 # Incremental decoding and output
 
-Status: current Unreleased implementation. [StreamingAudioPlayer](../../STranslate.Plugin.Tts.FishAudio/Playback/StreamingAudioPlayer.cs) owns decoder, PCM ring, independent output pump and cleanup for one session. It does not use a full-response memory stream or temporary audio file. This contract is separate from [bounded whole-sample preview](voice-browsing-and-preview.md).
+Status: v1.2.0 implementation. [StreamingAudioPlayer](../../STranslate.Plugin.Tts.FishAudio/Playback/StreamingAudioPlayer.cs) owns decoder, PCM ring, independent output pump and cleanup for one session. It does not use a full-response memory stream or temporary audio file. This contract is separate from [bounded whole-sample preview](voice-browsing-and-preview.md).
 
 ## Formats and continuing decoder state
 

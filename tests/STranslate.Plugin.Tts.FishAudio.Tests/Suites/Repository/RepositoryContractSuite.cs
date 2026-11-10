@@ -70,15 +70,6 @@ internal static class RepositoryContractSuite
 
     internal static void Release112MetadataIsComplete()
     {
-        var pluginJson = File.ReadAllText(FindRepoFile(Path.Combine(
-            "STranslate.Plugin.Tts.FishAudio",
-            "plugin.json")));
-        using var pluginDocument = JsonDocument.Parse(pluginJson);
-        AssertEqual(
-            "1.1.2",
-            pluginDocument.RootElement.GetProperty("Version").GetString(),
-            "Release plugin version should be 1.1.2");
-
         var changelog = File.ReadAllText(FindRepoFile("CHANGELOG.md"));
         var unreleasedIndex = changelog.IndexOf("## [Unreleased]", StringComparison.Ordinal);
         var release112Index = changelog.IndexOf("## [1.1.2] - 2026-10-01", StringComparison.Ordinal);

@@ -47,7 +47,8 @@ try
             "GITHUB_REF",
             "GITHUB_REF_NAME",
             "GITHUB_REPOSITORY",
-            "GITHUB_SHA"
+            "GITHUB_SHA",
+            Context.IsolatedTagObjectVariable
         })
         {
             env[key] = Environment.GetEnvironmentVariable(key) ?? "";
