@@ -105,7 +105,57 @@ internal static class PublisherTests
             Bytes = package
         };
         await Reject(async () => await Publisher.Publish(input, fake, Manifest, package, "## [1.2.3] - 2026-10-23\n- change"));
+        await IsolatedRelease(input, package);
         Console.WriteLine("Release publication transaction tests passed.");
+    }
+
+    private static async Task IsolatedRelease(ReleaseInput standardInput, byte[] standardPackage)
+    {
+        var input = standardInput with { Tag = "v1.2.0" };
+        var manifest = Manifest.Replace("1.2.3", "1.2.0", StringComparison.Ordinal);
+        var package = Package(manifest);
+        const string changelog = "## [1.2.0] - 2026-11-11\n- change";
+        var fake = new Fake { Tag = input.Tag, NotOnMain = true };
+        SelfTest.Equal("published", await Publisher.Publish(input, fake, manifest, package, changelog));
+        SelfTest.Equal(3, fake.Events.Count(x => x == "release-branch"));
+
+        foreach (var local in new[]
+        {
+            new Fake { MissingReleaseTip = true },
+            new Fake { ReleaseTip = TagObject },
+            new Fake { Parents = TagObject },
+            new Fake { Parents = Fake.Cut + " " + TagObject }
+        })
+        {
+            await Reject(() => Publisher.Publish(input, local, manifest, package, changelog));
+            SelfTest.Equal(0, local.Events.Count);
+        }
+
+        foreach (var remote in new[]
+        {
+            new Fake { RemoteReleaseBranch = null },
+            new Fake { RemoteReleaseBranch = "refs/heads/release/v1.2.0-other" },
+            new Fake { RemoteReleaseType = "tag" },
+            new Fake { RemoteReleaseTip = TagObject }
+        })
+        {
+            await Reject(() => Publisher.Publish(input, remote, manifest, package, changelog));
+            SelfTest.Equal(false, remote.Events.Contains("draft"));
+        }
+
+        fake = new Fake { Tag = input.Tag, MoveReleaseAt = 3 };
+        await Reject(() => Publisher.Publish(input, fake, manifest, package, changelog));
+        SelfTest.Equal(true, fake.Events.Contains("upload"));
+        SelfTest.Equal(false, fake.Events.Contains("publish"));
+
+        fake = new Fake { Tag = input.Tag, Published = true, Bytes = package, NotOnMain = true };
+        SelfTest.Equal("skipped", await Publisher.Publish(input, fake, manifest, package, changelog));
+        fake = new Fake { Tag = input.Tag, Published = true, Bytes = package, RemoteReleaseTip = TagObject };
+        await Reject(() => Publisher.Publish(input, fake, manifest, package, changelog));
+
+        fake = new Fake { NotOnMain = true };
+        await Reject(() => Publisher.Publish(standardInput, fake, Manifest, standardPackage, "## [1.2.3] - 2026-10-23\n- change"));
+        SelfTest.Equal(0, fake.Events.Count);
     }
 
     internal static async Task Reject(Func<Task> action)
@@ -124,25 +174,73 @@ internal static class PublisherTests
 
     internal sealed class Fake : IReleaseIO
     {
+        internal const string Cut = "4bc15267a940040d4c485ff74ede45f1d61dc2ec";
+        internal string Tag = "v1.2.3", ReleaseTip = Sha, Parents = Cut;
+        internal string? RemoteReleaseBranch = "refs/heads/release/v1.2.0";
+        internal string RemoteReleaseType = "commit", RemoteReleaseTip = Sha;
+        internal bool MissingReleaseTip, NotOnMain;
+        internal int MoveReleaseAt;
         internal List<string> Events = [];
         internal bool WrongRemote, Published, Draft, BadClassification, DraftUrl;
         internal string? BadGit;
         internal int MoveAt;
         internal string? Fail;
         internal byte[] Bytes = [];
-        public string Git(params string[] args) => BadGit == args[0] ? "wrong" : args[0] == "cat-file" ? "tag" : args[0] == "merge-base" ? "" : args[^1].EndsWith("^{commit}", StringComparison.Ordinal) || args[^1] == "HEAD" ? Sha : TagObject;
+        public string Git(params string[] args)
+        {
+            if (BadGit == args[0])
+            {
+                return "wrong";
+            }
+
+            if (args.SequenceEqual(["rev-parse", "--verify", "refs/remotes/origin/release/v1.2.0"]))
+            {
+                Protocol.Require(!MissingReleaseTip, "Release branch ref is missing.");
+                return ReleaseTip;
+            }
+
+            if (args.SequenceEqual(["rev-list", "--parents", "-n", "1", Sha]))
+            {
+                return $"{Sha} {Parents}";
+            }
+
+            if (args.SequenceEqual(["merge-base", "--is-ancestor", Sha, "refs/remotes/origin/main"]))
+            {
+                Protocol.Require(!NotOnMain, "The release commit is outside main.");
+                return "";
+            }
+
+            return args[0] == "cat-file" ? "tag" : args[^1].EndsWith("^{commit}", StringComparison.Ordinal) || args[^1] == "HEAD" ? Sha : TagObject;
+        }
         internal JsonObject Release(bool draft) => new()
         {
             ["id"] = 1L,
-            ["tag_name"] = "v1.2.3",
-            ["name"] = "v1.2.3",
+            ["tag_name"] = Tag,
+            ["name"] = Tag,
             ["draft"] = draft,
             ["prerelease"] = BadClassification,
             ["html_url"] = draft &&
-            DraftUrl ? "https://github.com/owner/repo/releases/tag/untagged-example" : "https://github.com/owner/repo/releases/tag/v1.2.3"
+            DraftUrl ? "https://github.com/owner/repo/releases/tag/untagged-example" : $"https://github.com/owner/repo/releases/tag/{Tag}"
         };
         public Task<JsonNode?> Request(string method, string endpoint, JsonObject? body = null)
         {
+            if (method == "GET" && endpoint == "/repos/owner/repo/git/ref/heads/release/v1.2.0")
+            {
+                Events.Add("release-branch");
+                Protocol.Require(RemoteReleaseBranch is not null, "Remote release branch is missing.");
+                return Task.FromResult<JsonNode?>(new JsonObject
+                {
+                    ["ref"] = RemoteReleaseBranch,
+                    ["object"] = new JsonObject
+                    {
+                        ["type"] = RemoteReleaseType,
+                        ["sha"] = MoveReleaseAt > 0 && Events.Count(x => x == "release-branch") >= MoveReleaseAt
+                            ? TagObject
+                            : RemoteReleaseTip
+                    }
+                });
+            }
+
             if (endpoint.Contains("/git/ref/", StringComparison.Ordinal))
             {
                 Events.Add("remote");

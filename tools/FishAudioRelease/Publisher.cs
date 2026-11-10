@@ -17,6 +17,9 @@ internal interface IReleaseIO
 internal static class Publisher
 {
     internal const string AssetName = "STranslate.Plugin.Tts.FishAudio.spkg";
+    internal const string IsolatedTag = "v1.2.0";
+    private const string IsolatedBranch = "release/v1.2.0";
+    private const string IsolatedBase = "4bc15267a940040d4c485ff74ede45f1d61dc2ec";
     internal static string Text(JsonNode? node, string name) => node?[name]?.GetValue<string>() ?? throw new InvalidOperationException("Missing GitHub string field.");
     internal static bool Flag(JsonNode? node, string name) => node?[name]?.GetValue<bool>() ?? throw new InvalidOperationException("Missing GitHub boolean field.");
     internal static long Id(JsonNode? node)
@@ -43,6 +46,15 @@ internal static class Publisher
         Protocol.Require(io.Git("rev-parse", "--verify", $"refs/tags/{input.Tag}^{{commit}}") == input.Sha &&
             io.Git("rev-parse", "--verify", "HEAD") == input.Sha &&
             io.Git("rev-parse", "--verify", $"refs/tags/{input.Tag}") == input.TagObject, "Tag object, peeled commit and HEAD must match original push.");
+        if (input.Tag == IsolatedTag)
+        {
+            Protocol.Require(io.Git("rev-parse", "--verify", $"refs/remotes/origin/{IsolatedBranch}") == input.Sha,
+                "The release commit must be the exact release branch tip.");
+            Protocol.Require(io.Git("rev-list", "--parents", "-n", "1", input.Sha) == $"{input.Sha} {IsolatedBase}",
+                "The release commit must have the approved sole parent.");
+            return;
+        }
+
         io.Git("merge-base", "--is-ancestor", input.Sha, "refs/remotes/origin/main");
     }
 
@@ -86,6 +98,14 @@ internal static class Publisher
 
     internal static async Task Remote(ReleaseInput input, IReleaseIO io, string root)
     {
+        if (input.Tag == IsolatedTag)
+        {
+            var branch = await io.Request("GET", $"{root}/git/ref/heads/{IsolatedBranch}");
+            Protocol.Require(Text(branch, "ref") == $"refs/heads/{IsolatedBranch}" &&
+                Text(branch?["object"], "type") == "commit" &&
+                Text(branch?["object"], "sha") == input.Sha, "Remote release branch changed.");
+        }
+
         var value = await io.Request("GET", $"{root}/git/ref/tags/{Uri.EscapeDataString(input.Tag)}");
         Protocol.Require(Text(value?["object"], "type") == "tag" &&
             Text(value?["object"], "sha") == input.TagObject, "Remote annotated tag changed.");

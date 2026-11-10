@@ -1,6 +1,6 @@
 # Native streaming transport and session
 
-Status: current Unreleased implementation. Owners: [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs), [FishAudioSocket](../../STranslate.Plugin.Tts.FishAudio/Streaming/FishAudioSocket.cs), [protocol](../../STranslate.Plugin.Tts.FishAudio/Streaming/FishAudioStreamingProtocol.cs) and [activity accounting](../../STranslate.Plugin.Tts.FishAudio/Streaming/StreamingActivity.cs). This is the plugin's contract; provider capabilities and dated observations are separately documented in the [native WS reference](../references/tts-websocket.md).
+Status: v1.2.0 implementation. Owners: [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs), [FishAudioSocket](../../STranslate.Plugin.Tts.FishAudio/Streaming/FishAudioSocket.cs), [protocol](../../STranslate.Plugin.Tts.FishAudio/Streaming/FishAudioStreamingProtocol.cs) and [activity accounting](../../STranslate.Plugin.Tts.FishAudio/Streaming/StreamingActivity.cs). This is the plugin's contract; provider capabilities and dated observations are separately documented in the [native WS reference](../references/tts-websocket.md).
 
 ## Wire contract
 

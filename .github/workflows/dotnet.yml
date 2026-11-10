@@ -47,3 +47,4 @@ jobs:
         run: dotnet run --project tools/FishAudioRelease -c Release -- --publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          FISH_AUDIO_V120_TAG_OBJECT: ${{ vars.FISH_AUDIO_V120_TAG_OBJECT }}

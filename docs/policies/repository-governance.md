@@ -21,6 +21,10 @@ The intended active branch ruleset applies only to `refs/heads/main`, with no ex
 
 Match the reference's remaining PR-review flags without adding an unrelated approval requirement. Keep auto-merge and automatic branch deletion disabled. A ruleset can enforce these rules without legacy/classic branch protection; inspect effective rules rather than interpreting a classic-protection 404 as an unprotected branch.
 
+## v1.2.0 release branch
+
+The v1.2.0 publication uses the exact protected `refs/heads/release/v1.2.0` tip defined by the [release policy](releases.md#tag-triggered-publication). Scope branch protection to that exact ref, preserve the accepted tip against updates and deletion, and verify the effective rules before creating the tag. Confirm successful Validation and C#/Actions CodeQL checks on the exact release commit. The complete reusable Validation workflow also runs at the tagged commit before publication.
+
 ## Enable checks before requiring them
 
 Implement and successfully run the target's real Windows build/test/package, commit-message, NuGet supply-chain and C#/Actions CodeQL checks on PR and main before making their exact emitted contexts required. Record the actual check name and GitHub Actions integration ID. Do not copy the reference's Node, portable macOS or Real Chrome context strings into this repository.
