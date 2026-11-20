@@ -133,7 +133,7 @@ Long text can start playing before the full synthesis finishes. Emotion, pronunc
 | PCM | New-configuration default. Avoids compressed decoding but uses more network traffic. |
 | MP3 | Try it on a slower connection or to reduce traffic. Choose 64 / 128 / 192 kbps; the default is 192. Higher bitrate needs more bandwidth. |
 
-Older configurations generally retain MP3. PCM hides the entire bitrate setting; switching back to MP3 restores its saved value without changing other speech parameters. WAV and Opus are not selectable. Format alone cannot guarantee first-word speed; the server, connection and output device also matter.
+Upgrading from v1.1.2 or earlier keeps MP3 and its saved bitrate if valid. PCM hides the entire bitrate setting; switching back to MP3 restores its saved value without changing other speech parameters. WAV and Opus are not selectable. Format alone cannot guarantee first-word speed; the server, connection and output device also matter.
 
 <a id="network-and-proxy"></a>
 ### Check the two connections separately

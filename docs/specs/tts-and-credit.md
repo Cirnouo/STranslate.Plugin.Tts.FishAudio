@@ -1,6 +1,6 @@
 # Formal TTS and account credit
 
-Status: current Unreleased implementation, SDK 1.0.15. [Main](../../STranslate.Plugin.Tts.FishAudio/Main.cs) composes formal playback; [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs) owns one synthesis session. Credit remains a host HTTP operation under [FishAudioApi](../../STranslate.Plugin.Tts.FishAudio/FishAudio/FishAudioApi.cs).
+Status: v1.2.0 implementation, SDK 1.0.15. [Main](../../STranslate.Plugin.Tts.FishAudio/Main.cs) composes formal playback; [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs) owns one synthesis session. Credit remains a host HTTP operation under [FishAudioApi](../../STranslate.Plugin.Tts.FishAudio/FishAudio/FishAudioApi.cs).
 
 ## Entry and operation ownership
 

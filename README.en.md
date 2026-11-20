@@ -13,7 +13,7 @@
 </div>
 
 > [!TIP]
-> Register with a `.edu` email and complete student verification to receive **US$5 in credits**. [Apply](https://fish.audio/students/)
+> Sign up with a `.edu` email and complete student verification to apply for free student credits. [Apply](https://fish.audio/students/)
 
 > [!TIP]
 > S2.1 Pro is free through **2026-11-30 UTC**. Select `s2.1-pro-free` in the plugin. [Promotion details](https://fish.audio/blog/s2-1-pro-free-api/)
@@ -27,7 +27,7 @@ Eligibility and promotion conditions are subject to the official Fish Audio page
 
 - **Voice discovery**: Search by name, browse pages and preview voices, look up a voice ID before applying it, and like voices to save them locally.
 - **Streaming speech**: Send text in segments while receiving and playing audio; long text can start before the whole synthesis finishes.
-- **Audio formats**: PCM is the default; choose MP3 and its bitrate for slower connections.
+- **PCM and MP3** are available. New configurations default to PCM and upgrades keep existing MP3 settings. Choose MP3 and adjust its bitrate for slower connections.
 - **Synthesis controls**: Adjust model, speed, volume, loudness normalization, expressiveness, diversity and latency mode.
 - **Account and cache**: View and refresh API credits and manage the cover-image cache shared by all voice entry points.
 - **Interface languages**: 简体中文, 繁體中文, English, 日本語, 한국어, Русский and Türkçe.

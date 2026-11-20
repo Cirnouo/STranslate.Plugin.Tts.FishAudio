@@ -1,6 +1,6 @@
 # Current implementation specifications
 
-These specifications describe current Unreleased code based on v1.1.2, SDK 1.0.15, native WebSocket TTS with incremental local audio, bounded local preview playback and provider-window-aware voice discovery. They describe code contracts; they do not independently establish a successful production streaming run, billing outcome or physical audio measurement.
+These specifications describe the v1.2.0 implementation, with SDK 1.0.15, native WebSocket TTS with incremental local audio, bounded local preview playback and provider-window-aware voice discovery. Dated evidence records production streaming, billing and audio observations separately. [Evidence index](../evidences/README.md)
 
 - [Architecture and lifecycle](architecture-and-lifecycle.md)
 - [Settings and TTS model policy](settings-and-model-policy.md)

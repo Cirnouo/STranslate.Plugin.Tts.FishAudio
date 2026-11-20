@@ -1,6 +1,6 @@
 # Bounded streaming text preparation
 
-Status: current Unreleased implementation. Owners: [StreamingTextReader](../../STranslate.Plugin.Tts.FishAudio/Streaming/StreamingTextReader.cs) and the sender in [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs).
+Status: v1.2.0 implementation. Owners: [StreamingTextReader](../../STranslate.Plugin.Tts.FishAudio/Streaming/StreamingTextReader.cs) and the sender in [NativeStreamingTtsSession](../../STranslate.Plugin.Tts.FishAudio/Streaming/NativeStreamingTtsSession.cs).
 
 The input string already exists at the host boundary. The streaming reader visits it lazily through an indexed source; it does not tokenize, normalize, scan or serialize the whole tail to prepare startup. The first window visits at most 100 Unicode scalars, and later windows visit at most 300. UTF-16 surrogate pairs remain intact. These are scalar limits, not UTF-16 code-unit counts or grapheme-cluster guarantees; combining sequences may span events. The provider receives original text and markup without client phoneme conversion or duplicated control tags.
 
