@@ -28,12 +28,7 @@
     uses Debug.
 
 .PARAMETER Test
-    Run regressions after building and verifying the package. An unfiltered
-    Release run also executes all framework-discovered NUnit cases.
-
-.PARAMETER LegacyOnly
-    Transitional orchestration option: run only the legacy part of -Test.
-    The commit gate owns the separate complete framework run and evidence check.
+    Run the regression test project after building and verifying the package.
 
 .PARAMETER TestGroup
     Select logical regression groups. Requires -Test.
@@ -63,18 +58,15 @@ param(
     [string]$TestResults,
     [string]$RerunFailed,
     [switch]$Affected,
-    [string]$TestBase,
-    [switch]$LegacyOnly
+    [string]$TestBase
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $Configuration = if ($Release) { 'Release' } else { 'Debug' }
-$operationExitCode = 0
-$primaryBuildFailure = $null
 
 if (-not $Test -and ($TestGroup.Count -gt 0 -or $TestCase.Count -gt 0 -or
-    $TestPartition -or $TestResults -or $RerunFailed -or $Affected -or $TestBase -or $LegacyOnly)) {
+    $TestPartition -or $TestResults -or $RerunFailed -or $Affected -or $TestBase)) {
     throw 'Regression selection and result options require -Test.'
 }
 if ($TestBase -and -not $Affected) {
@@ -125,22 +117,10 @@ function Clear-BuildArtifactDirectories {
         (Join-Path $TestProjectDir 'obj'),
         (Join-Path $TestProjectDir 'bin')
     )
-    foreach ($toolProject in @('tests/FishAudio.Testing.Tests', 'tools/FishAudio.Testing')) {
-        foreach ($outputName in @('bin', 'obj', '.artifacts')) {
-            $dirsToClean += Join-Path $RepoRoot ($toolProject + '/' + $outputName)
-        }
-    }
 
-    # Plain package builds also support Windows PowerShell 5.1. Avoid newer
-    # System.IO.Path helpers absent from that host's .NET Framework runtime.
-    $separators = [char[]]@([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
-    $repositoryPrefix = [IO.Path]::GetFullPath($RepoRoot).TrimEnd($separators) + [IO.Path]::DirectorySeparatorChar
     foreach ($dir in $dirsToClean) {
-        $resolvedDirectory = [IO.Path]::GetFullPath($dir)
-        if (-not $resolvedDirectory.StartsWith($repositoryPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'build-cleanup-outside-repository' }
-        if (Test-Path -LiteralPath $resolvedDirectory) {
-            if (((Get-Item -LiteralPath $resolvedDirectory -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'build-cleanup-reparse-point' }
-            Remove-Item -LiteralPath $resolvedDirectory -Recurse -Force
+        if (Test-Path $dir) {
+            Remove-Item $dir -Recurse -Force
             Write-Host "  Removed $dir"
         }
     }
@@ -163,7 +143,6 @@ dotnet build $CsprojPath -c $Configuration
 
 if ($LASTEXITCODE -ne 0) {
     $buildExitCode = $LASTEXITCODE
-    $operationExitCode = $buildExitCode
     Write-Error "Build failed with exit code $buildExitCode" -ErrorAction Continue
     exit $buildExitCode
 }
@@ -174,7 +153,6 @@ if ($Configuration -eq 'Debug') {
     dotnet build $CsprojPath -c $Configuration -t:PackageAsSpkg
     if ($LASTEXITCODE -ne 0) {
         $packageExitCode = $LASTEXITCODE
-        $operationExitCode = $packageExitCode
         Write-Error "Packaging failed with exit code $packageExitCode" -ErrorAction Continue
         exit $packageExitCode
     }
@@ -259,7 +237,6 @@ finally {
 if ($Test) {
     Write-Host ''
     $testArguments = [System.Collections.Generic.List[string]]::new()
-    $testArguments.Add('--legacy')
     foreach ($group in $TestGroup) { $testArguments.Add('--group'); $testArguments.Add($group) }
     foreach ($case in $TestCase) { $testArguments.Add('--case'); $testArguments.Add($case) }
     if ($TestPartition) { $testArguments.Add('--partition'); $testArguments.Add($TestPartition) }
@@ -271,34 +248,16 @@ if ($Test) {
     dotnet run --project $TestCsprojPath -c $Configuration -- @testArguments
     if ($LASTEXITCODE -ne 0) {
         $testExitCode = $LASTEXITCODE
-        $operationExitCode = $testExitCode
         Write-Error "Tests failed with exit code $testExitCode" -ErrorAction Continue
         exit $testExitCode
-    }
-
-    if ($Release -and -not $LegacyOnly -and $TestGroup.Count -eq 0 -and $TestCase.Count -eq 0 -and
-        -not $TestPartition -and -not $RerunFailed -and -not $Affected) {
-        Write-Host '[test] Execute the complete framework-discovered NUnit catalogs.' -ForegroundColor Cyan
-        $frameworkShell = (Get-Command pwsh -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
-        & $frameworkShell -NoLogo -NoProfile -File (Join-Path $RepoRoot 'tools/Test.ps1') -Mode Full
-        if ($LASTEXITCODE -ne 0) { $operationExitCode = $LASTEXITCODE; exit $operationExitCode }
     }
 
     Write-Host '[test] Tests passed.' -ForegroundColor Green
 }
 }
-catch {
-    $primaryBuildFailure = $_
-    throw
-}
 finally {
     if ($Clean) {
-        try {
-            Clear-BuildArtifactDirectories
-            Write-Host '[clean] Done.' -ForegroundColor Green
-        } catch {
-            if ($null -eq $primaryBuildFailure -and $operationExitCode -eq 0) { throw }
-            Write-Error '[clean] Cleanup failed after an earlier operation failure; the original failure is preserved.' -ErrorAction Continue
-        }
+        Clear-BuildArtifactDirectories
+        Write-Host '[clean] Done.' -ForegroundColor Green
     }
 }
