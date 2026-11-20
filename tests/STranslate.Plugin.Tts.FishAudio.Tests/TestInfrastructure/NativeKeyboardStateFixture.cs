@@ -81,24 +81,9 @@ internal static class NativeKeyboardStateFixture
     private static void Verify(INativeKeyboardStateApi api, byte[] planned, NativeKeyboardCondition condition, string phase, bool ownedOnly)
     {
         api.VerifyContext();
-        var table = Read(api, "planned readback");
-        RequireSnapshot(table, planned, "planned mismatch", phase, ownedOnly);
+        RequireSnapshot(Read(api, "planned readback"), planned, "planned mismatch", phase, ownedOnly);
         foreach (var key in ControlledKeys)
-        {
-            var nativeDown = (api.KeyState(key) & 0x8000) != 0;
-            var plannedDown = (planned[key] & 0x80) != 0;
-            if (nativeDown == plannedDown) continue;
-            var error = new InvalidOperationException("Native keyboard fixture failed at native down-bit mismatch.");
-            try
-            {
-                var context = $"phase={phase}; nativeKey=0x{key:X2}; plannedDown={plannedDown}; tableDown={(table[key] & 0x80) != 0}; nativeDown={nativeDown}";
-                error.Data[FailureContextKey] = context;
-                try { Console.Error.WriteLine($"[native-key-state] {context}"); }
-                catch { /* Failure diagnostics cannot replace the strict mismatch. */ }
-            }
-            catch { /* Preserve mismatch type/message even if formatting or Data fails. */ }
-            throw error;
-        }
+            Require(((api.KeyState(key) & 0x8000) != 0) == ((planned[key] & 0x80) != 0), "native down-bit mismatch");
         api.VerifyWpfState(condition);
     }
 
